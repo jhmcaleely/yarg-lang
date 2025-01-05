@@ -13,3 +13,7 @@ add_executable(clox
     object.c
     table.c)
 
+add_compile_definitions(DEBUG_PRINT_CODE)
+#add_compile_definitions(DEBUG_TRACE_EXECUTION)
+add_compile_definitions(DEBUG_STRESS_GC)
+#add_compile_definitions(DEBUG_LOG_GC)
