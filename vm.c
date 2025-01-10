@@ -18,7 +18,7 @@ static void resetStack() {
     vm.openUpvalues = NULL;
 }
 
-static void runtimeError(const char* format, ...) {
+void runtimeError(const char* format, ...) {
     va_list args;
     va_start(args, format);
     vfprintf(stderr, format, args);
@@ -66,6 +66,7 @@ void initVM() {
     vm.initString = copyString("init", 4);
 
     defineNative("clock", clockNative);
+    defineNative("sleep_ms", sleepNative);
 }
 
 void freeVM() {
