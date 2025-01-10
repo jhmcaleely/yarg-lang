@@ -12,10 +12,11 @@
 
 VM vm;
 
-static void resetStack() {
-    vm.stackTop = vm.stack;
-    vm.frameCount = 0;
-    vm.openUpvalues = NULL;
+static void resetThread(int thread) {
+    vm.threads[thread].stackTop = vm.threads[thread].stack;
+    vm.threads[thread].frameCount = 0;
+
+    vm.threads[thread].openUpvalues = NULL;
 }
 
 void runtimeError(const char* format, ...) {
@@ -25,32 +26,40 @@ void runtimeError(const char* format, ...) {
     va_end(args);
     fputs("\n", stderr);
 
-    for (int i = vm.frameCount - 1; i >= 0; i--) {
-        CallFrame* frame = &vm.frames[i];
-        ObjFunction* function = frame->closure->function;
-        size_t instruction = frame->ip - function->chunk.code - 1;
-        fprintf(stderr, "[line %d] in ",
-                function->chunk.lines[instruction]);
-        if (function->name == NULL) {
-            fprintf(stderr, "script\n");
-        } else {
-            fprintf(stderr, "%s()\n", function->name->chars);
+    for (int t = 0; t < THREADS_MAX; t++) {
+        for (int i = vm.threads[t].frameCount - 1; i >= 0; i--) {
+            CallFrame* frame = &vm.threads[t].frames[i];
+            ObjFunction* function = frame->closure->function;
+            size_t instruction = frame->ip - function->chunk.code - 1;
+            fprintf(stderr, "[%d][line %d] in ",
+                    t,
+                    function->chunk.lines[instruction]);
+            if (function->name == NULL) {
+                fprintf(stderr, "script\n");
+            } else {
+                fprintf(stderr, "%s()\n", function->name->chars);
+            }
         }
+        
+        // ?? Probably a bug - reset only the erroring thread?
+        resetThread(t);
     }
-
-    resetStack();
 }
 
 static void defineNative(const char* name, NativeFn function) {
-    push(OBJ_VAL(copyString(name, (int)strlen(name))));
-    push(OBJ_VAL(newNative(function)));
-    tableSet(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1]);
-    pop();
-    pop();
+    stash_push(OBJ_VAL(copyString(name, (int)strlen(name))));
+    stash_push(OBJ_VAL(newNative(function)));
+    tableSet(&vm.globals, AS_STRING(vm.allocationStash[0]), vm.allocationStash[1]);
+    stash_pop();
+    stash_pop();
 }
 
 void initVM() {
-    resetStack();
+    resetThread(0);
+    resetThread(1);
+
+    vm.allocationTop = vm.allocationStash;
+
     vm.objects = NULL;
     vm.bytesAllocated = 0;
     vm.nextGC = 1024 * 1024;
@@ -82,53 +91,67 @@ void freeVM() {
     freeObjects();
 }
 
+void stash_push(Value value) {
+    *vm.allocationTop = value;
+    vm.allocationTop++;
+
+    if (vm.allocationTop - vm.allocationStash[0] > ALLOCATION_STASH_MAX) {
+        runtimeError("Allocation Stash Max Exeeded.");
+    }
+}
+
+Value stash_pop() {
+    vm.allocationTop--;
+    return *vm.allocationTop;
+}
+
 void push(Value value) {
-    *vm.stackTop = value;
-    vm.stackTop++;
+    *vm.threads[0].stackTop = value;
+    vm.threads[0].stackTop++;
 }
 
 Value pop() {
-    vm.stackTop--;
-    return *vm.stackTop;
+    vm.threads[0].stackTop--;
+    return *vm.threads[0].stackTop;
 }
 
 static Value peek(int distance) {
-    return vm.stackTop[-1 - distance];
+    return vm.threads[0].stackTop[-1 - distance];
 }
 
-static bool call(ObjClosure* closure, int argCount) {
+static bool call(int thread, ObjClosure* closure, int argCount) {
     if (argCount != closure->function->arity) {
         runtimeError("Expected %d arguments but got %d.",
                      closure->function->arity, argCount);
         return false;
     }
 
-    if (vm.frameCount == FRAMES_MAX) {
+    if (vm.threads[thread].frameCount == FRAMES_MAX) {
         runtimeError("Stack overflow.");
         return false;
     }
 
-    CallFrame* frame = &vm.frames[vm.frameCount++];
+    CallFrame* frame = &vm.threads[thread].frames[vm.threads[thread].frameCount++];
     frame->closure = closure;
     frame->ip = closure->function->chunk.code;
-    frame->slots = vm.stackTop - argCount - 1;
+    frame->slots = vm.threads[thread].stackTop - argCount - 1;
     return true;
 }
 
-static bool callValue(Value callee, int argCount) {
+static bool callValue(int thread, Value callee, int argCount) {
     if (IS_OBJ(callee)) {
         switch (OBJ_TYPE(callee)) {
             case OBJ_BOUND_METHOD: {
                 ObjBoundMethod* bound = AS_BOUND_METHOD(callee);
-                vm.stackTop[-argCount - 1] = bound->reciever;
-                return call(bound->method, argCount);
+                vm.threads[thread].stackTop[-argCount - 1] = bound->reciever;
+                return call(thread, bound->method, argCount);
             }
             case OBJ_CLASS: {
                 ObjClass* klass = AS_CLASS(callee);
-                vm.stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
+                vm.threads[thread].stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
                 Value initializer;
                 if (tableGet(&klass->methods, vm.initString, &initializer)) {
-                    return call(AS_CLOSURE(initializer), argCount);
+                    return call(thread, AS_CLOSURE(initializer), argCount);
                 } else if (argCount != 0) {
                     runtimeError("Expected 0 arguments but got %d.");
                     return false;
@@ -136,11 +159,11 @@ static bool callValue(Value callee, int argCount) {
                 return true;
             }
             case OBJ_CLOSURE:
-                return call(AS_CLOSURE(callee), argCount);
+                return call(thread, AS_CLOSURE(callee), argCount);
             case OBJ_NATIVE: {
                 NativeFn native = AS_NATIVE(callee);
-                Value result = native(argCount, vm.stackTop - argCount);
-                vm.stackTop -= argCount + 1;
+                Value result = native(argCount, vm.threads[thread].stackTop - argCount);
+                vm.threads[thread].stackTop -= argCount + 1;
                 push(result);
                 return true;
             }
@@ -152,17 +175,17 @@ static bool callValue(Value callee, int argCount) {
     return false;
 }
 
-static bool invokeFromClass(ObjClass* klass, ObjString* name,
+static bool invokeFromClass(int thread, ObjClass* klass, ObjString* name,
                             int argCount) {
     Value method;
     if (!tableGet(&klass->methods, name, &method)) {
         runtimeError("Undefined property '%s'.", name->chars);
         return false;
     }
-    return call(AS_CLOSURE(method), argCount);
+    return call(thread, AS_CLOSURE(method), argCount);
 }
 
-static bool invoke(ObjString* name, int argCount) {
+static bool invoke(int thread, ObjString* name, int argCount) {
     Value receiver = peek(argCount);
 
     if (!IS_INSTANCE(receiver)) {
@@ -174,11 +197,11 @@ static bool invoke(ObjString* name, int argCount) {
 
     Value value;
     if (tableGet(&instance->fields, name, &value)) {
-        vm.stackTop[-argCount - 1] = value;
-        return callValue(value, argCount);
+        vm.threads[thread].stackTop[-argCount - 1] = value;
+        return callValue(thread, value, argCount);
     }
 
-    return invokeFromClass(instance->klass, name, argCount);
+    return invokeFromClass(thread, instance->klass, name, argCount);
 }
 
 static bool bindMethod(ObjClass* klass, ObjString* name) {
@@ -194,9 +217,9 @@ static bool bindMethod(ObjClass* klass, ObjString* name) {
     return true;
 }
 
-static ObjUpvalue* captureUpvalue(Value* local) {
+static ObjUpvalue* captureUpvalue(int thread, Value* local) {
     ObjUpvalue* prevUpvalue = NULL;
-    ObjUpvalue* upvalue = vm.openUpvalues;
+    ObjUpvalue* upvalue = vm.threads[thread].openUpvalues;
     while (upvalue != NULL && upvalue->location > local) {
         prevUpvalue = upvalue;
         upvalue = upvalue->next;
@@ -210,7 +233,7 @@ static ObjUpvalue* captureUpvalue(Value* local) {
     createdUpvalue->next = upvalue;
 
     if (prevUpvalue == NULL) {
-        vm.openUpvalues = createdUpvalue;
+        vm.threads[thread].openUpvalues = createdUpvalue;
     } else {
         prevUpvalue->next = createdUpvalue;
     }
@@ -218,12 +241,12 @@ static ObjUpvalue* captureUpvalue(Value* local) {
     return createdUpvalue;
 }
 
-static void closeUpvalues(Value* last) {
-    while (vm.openUpvalues != NULL && vm.openUpvalues->location >= last) {
-        ObjUpvalue* upvalue = vm.openUpvalues;
+static void closeUpvalues(int thread, Value* last) {
+    while (vm.threads[thread].openUpvalues != NULL && vm.threads[thread].openUpvalues->location >= last) {
+        ObjUpvalue* upvalue = vm.threads[thread].openUpvalues;
         upvalue->closed = *upvalue->location;
         upvalue->location = &upvalue->closed;
-        vm.openUpvalues = upvalue->next;
+        vm.threads[thread].openUpvalues = upvalue->next;
     }
 }
 
@@ -254,8 +277,8 @@ static void concatenate() {
     push(OBJ_VAL(result));
 }
 
-static InterpretResult run() {
-    CallFrame* frame = &vm.frames[vm.frameCount - 1];
+static InterpretResult run(int thread) {
+    CallFrame* frame = &vm.threads[thread].frames[vm.threads[thread].frameCount - 1];
 
 #define READ_BYTE() (*frame->ip++)
 
@@ -443,29 +466,29 @@ static InterpretResult run() {
             }
             case OP_CALL: {
                 int argCount = READ_BYTE();
-                if (!callValue(peek(argCount), argCount)) {
+                if (!callValue(thread, peek(argCount), argCount)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                frame = &vm.frames[vm.frameCount - 1];
+                frame = &vm.threads[thread].frames[vm.threads[thread].frameCount - 1];
                 break;
             }
             case OP_INVOKE: {
                 ObjString* method = READ_STRING();
                 int argCount = READ_BYTE();
-                if (!invoke(method, argCount)) {
+                if (!invoke(thread, method, argCount)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                frame = &vm.frames[vm.frameCount - 1];
+                frame = &vm.threads[thread].frames[vm.threads[thread].frameCount - 1];
                 break;
             }
             case OP_SUPER_INVOKE: {
                 ObjString* method = READ_STRING();
                 int argCount = READ_BYTE();
                 ObjClass* superclass = AS_CLASS(pop());
-                if (!invokeFromClass(superclass, method, argCount)) {
+                if (!invokeFromClass(thread, superclass, method, argCount)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                frame = &vm.frames[vm.frameCount - 1];
+                frame = &vm.threads[thread].frames[vm.threads[thread].frameCount - 1];
                 break;
             }
             case OP_CLOSURE: {
@@ -476,7 +499,7 @@ static InterpretResult run() {
                     uint8_t isLocal = READ_BYTE();
                     uint8_t index = READ_BYTE();
                     if (isLocal) {
-                        closure->upvalues[i] = captureUpvalue(frame->slots + index);
+                        closure->upvalues[i] = captureUpvalue(thread, frame->slots + index);
                     } else {
                         closure->upvalues[i] = frame->closure->upvalues[index];
                     }
@@ -484,21 +507,21 @@ static InterpretResult run() {
                 break;
             }
             case OP_CLOSE_UPVALUE:
-                closeUpvalues(vm.stackTop - 1);
+                closeUpvalues(thread, vm.threads[thread].stackTop - 1);
                 pop();
                 break;
             case OP_RETURN: {
                 Value result = pop();
-                closeUpvalues(frame->slots);
-                vm.frameCount--;
-                if (vm.frameCount == 0) {
+                closeUpvalues(thread, frame->slots);
+                vm.threads[thread].frameCount--;
+                if (vm.threads[thread].frameCount == 0) {
                     pop();
                     return INTERPRET_OK;
                 }
 
-                vm.stackTop = frame->slots;
+                vm.threads[thread].stackTop = frame->slots;
                 push(result);
-                frame = &vm.frames[vm.frameCount - 1];
+                frame = &vm.threads[thread].frames[vm.threads[thread].frameCount - 1];
                 break;
             }
             case OP_CLASS:
@@ -536,7 +559,7 @@ InterpretResult interpret(const char* source) {
     ObjClosure* closure = newClosure(function);
     pop();
     push(OBJ_VAL(closure));
-    call(closure, 0);
+    call(0, closure, 0);
 
-    return run();
+    return run(0);
 }

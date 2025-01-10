@@ -163,18 +163,24 @@ static void freeObject(Obj* object) {
 }
 
 static void markRoots() {
-    for (Value* slot = vm.stack; slot < vm.stackTop; slot++) {
+    for (int t = 0; t < THREADS_MAX; t++) {
+        for (Value* slot = vm.threads[t].stack; slot < vm.threads[t].stackTop; slot++) {
+            markValue(*slot);
+        }
+
+        for (int i = 0; i < vm.threads[t].frameCount; i++) {
+            markObject((Obj*)vm.threads[t].frames[i].closure);
+        }
+
+        for (ObjUpvalue* upvalue = vm.threads[t].openUpvalues;
+            upvalue != NULL;
+            upvalue = upvalue->next) {
+            markObject((Obj*)upvalue);
+        }
+    }
+
+    for (Value* slot = vm.allocationStash; slot < vm.allocationTop; slot++) {
         markValue(*slot);
-    }
-
-    for (int i = 0; i < vm.frameCount; i++) {
-        markObject((Obj*)vm.frames[i].closure);
-    }
-
-    for (ObjUpvalue* upvalue = vm.openUpvalues;
-         upvalue != NULL;
-         upvalue = upvalue->next) {
-        markObject((Obj*)upvalue);
     }
 
     markTable(&vm.globals);

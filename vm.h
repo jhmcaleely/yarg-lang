@@ -8,6 +8,9 @@
 #define FRAMES_MAX 64
 #define STACK_MAX (FRAMES_MAX * (UINT8_COUNT / 2))
 
+#define THREADS_MAX 2
+#define ALLOCATION_STASH_MAX 4
+
 typedef struct {
     ObjClosure* closure;
     uint8_t* ip;
@@ -20,11 +23,20 @@ typedef struct {
 
     Value stack[STACK_MAX];
     Value* stackTop;
+
+    ObjUpvalue* openUpvalues;
+} Thread;
+
+typedef struct {
+    Thread threads[THREADS_MAX];
+
     Table globals;
     Table strings;
     ObjString* initString;
-    ObjUpvalue* openUpvalues;
 
+    Value allocationStash[ALLOCATION_STASH_MAX];
+    Value* allocationTop;
+    
     size_t bytesAllocated;
     size_t nextGC;
     Obj* objects;
@@ -46,6 +58,9 @@ void freeVM();
 InterpretResult interpret(const char* source);
 void push(Value value);
 Value pop();
+
+void stash_push(Value value);
+Value stash_pop();
 
 void runtimeError(const char* format, ...);
 
