@@ -1,7 +1,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 
 #include "common.h"
 #include "compiler.h"
@@ -9,12 +8,9 @@
 #include "object.h"
 #include "memory.h"
 #include "vm.h"
+#include "native.h"
 
 VM vm;
-
-static Value clockNative(int argCount, Value* args) {
-    return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
-}
 
 static void resetStack() {
     vm.stackTop = vm.stack;
@@ -22,7 +18,7 @@ static void resetStack() {
     vm.openUpvalues = NULL;
 }
 
-static void runtimeError(const char* format, ...) {
+void runtimeError(const char* format, ...) {
     va_list args;
     va_start(args, format);
     vfprintf(stderr, format, args);
@@ -70,6 +66,11 @@ void initVM() {
     vm.initString = copyString("init", 4);
 
     defineNative("clock", clockNative);
+    defineNative("sleep_ms", sleepNative);
+
+    defineNative("gpio_init", gpioInitNative);
+    defineNative("gpio_set_direction", gpioSetDirectionNative);
+    defineNative("gpio_put", gpioPutNative);
 }
 
 void freeVM() {
