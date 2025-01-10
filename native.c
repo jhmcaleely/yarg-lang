@@ -14,7 +14,7 @@ Value clockNative(int argCount, Value* args) {
 
 Value sleepNative(int argCount, Value* args) {
     if (argCount != 1) {
-        runtimeError("Expected 0 arguments but got %d.", argCount);
+        runtimeError("Expected 1 arguments but got %d.", argCount);
     }
     if (!IS_NUMBER(args[0])) {
         runtimeError("Argument must be a number");
