@@ -1,4 +1,7 @@
 #include <stdio.h>
+#ifdef LOX_PICO_SDK
+    #include "pico/stdlib.h"
+#endif
 #include <stdlib.h>
 #include <string.h>
 
@@ -59,6 +62,19 @@ static void runFile(const char* path) {
     if (result == INTERPRET_RUNTIME_ERROR) exit(70);
 }
 
+#ifdef HOST_REPL
+int main() {
+#ifdef LOX_PICO_SDK
+    stdio_init_all();
+#endif
+    initVM();
+
+    repl();
+    
+    freeVM();
+    return 0;
+}
+#else
 int main(int argc, const char* argv[]) {
     initVM();
 
@@ -74,3 +90,4 @@ int main(int argc, const char* argv[]) {
     freeVM();
     return 0;
 }
+#endif
