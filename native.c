@@ -2,6 +2,7 @@
     #include "pico/stdlib.h"
 #endif
 
+#include <stdio.h>
 #include <time.h>
 
 #include "common.h"
@@ -71,4 +72,23 @@ Value gpioPutNative(int argCount, Value* args) {
     gpio_put(AS_NUMBER(args[0]), AS_BOOL(args[1]));
 
     return NIL_VAL;
+}
+
+static int64_t nativeAlarmCallback(alarm_id_t id, __unused void* user_data) {
+    printf("#nativeAlarmCallback %d", id);
+
+    // get to vm.run(lox-callback);
+
+    return 0;
+}
+
+Value alarmAddInMSNative(int argCount, Value* args) {
+    if (argCount != 1) {
+        runtimeError("Expected 1 arguments but got %d.", argCount);
+    }
+    if (!IS_NUMBER(args[0])) {
+        runtimeError("Argument must be a number");
+    }
+
+    add_alarm_in_ms(AS_NUMBER(args[0]), nativeAlarmCallback, NULL, false);
 }

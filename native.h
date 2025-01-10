@@ -10,4 +10,6 @@ Value gpioInitNative(int argCount, Value* args);
 Value gpioSetDirectionNative(int argCount, Value* args);
 Value gpioPutNative(int argCount, Value* args);
 
+Value alarmAddInMSNative(int argCount, Value* args);
+
 #endif

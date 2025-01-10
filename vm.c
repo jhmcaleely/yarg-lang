@@ -71,6 +71,8 @@ void initVM() {
     defineNative("gpio_init", gpioInitNative);
     defineNative("gpio_set_direction", gpioSetDirectionNative);
     defineNative("gpio_put", gpioPutNative);
+
+    defineNative("alarm_add_in_ms", alarmAddInMSNative);
 }
 
 void freeVM() {
