@@ -67,6 +67,10 @@ void initVM() {
 
     defineNative("clock", clockNative);
     defineNative("sleep_ms", sleepNative);
+
+    defineNative("gpio_init", gpioInitNative);
+    defineNative("gpio_set_direction", gpioSetDirectionNative);
+    defineNative("gpio_put", gpioPutNative);
 }
 
 void freeVM() {

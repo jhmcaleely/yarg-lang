@@ -6,4 +6,8 @@
 Value clockNative(int argCount, Value* args);
 Value sleepNative(int argCount, Value* args);
 
+Value gpioInitNative(int argCount, Value* args);
+Value gpioSetDirectionNative(int argCount, Value* args);
+Value gpioPutNative(int argCount, Value* args);
+
 #endif
