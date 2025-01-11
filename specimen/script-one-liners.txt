@@ -7,5 +7,6 @@ var pico_led = 25; gpio_init(pico_led); gpio_set_direction(pico_led, true);
 while (true) { gpio_put(pico_led, true); sleep_ms(500); gpio_put(pico_led, false); sleep_ms(500); }
 
 var led_state = true; fun led() { led_state = !led_state; gpio_put(pico_led, led_state); } 
+var led_state = true; isr led() { led_state = !led_state; gpio_put(pico_led, led_state); } 
 var timer = alarm_add_repeating_ms(-500, led); sleep_ms(3000); alarm_cancel_repeating(timer);
 fun test(val) { var t = alarm_add_repeating_ms(val, led); sleep_ms(3000); alarm_cancel_repeating(t); } test(-500);

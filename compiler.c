@@ -51,13 +51,6 @@ typedef struct {
     bool isLocal;
 } Upvalue;
 
-typedef enum {
-    TYPE_FUNCTION,
-    TYPE_INITIALIZER,
-    TYPE_METHOD,
-    TYPE_SCRIPT
-} FunctionType;
-
 typedef struct Compiler {
     struct Compiler* enclosing;
     ObjFunction* function;
@@ -205,7 +198,7 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     compiler->type = type;
     compiler->localCount = 0;
     compiler->scopeDepth = 0;
-    compiler->function = newFunction();
+    compiler->function = newFunction(type);
     current = compiler;
     if (type != TYPE_SCRIPT) {
         current->function->name = copyString(parser.previous.start,
@@ -215,7 +208,7 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     Local* local = &current->locals[current->localCount++];
     local->depth = 0;
     local->isCaptured = false;
-    if (type != TYPE_FUNCTION) {
+    if (type != TYPE_FUNCTION && type != TYPE_ISR) {
         local->name.start = "this";
         local->name.length = 4;
     } else {
@@ -728,10 +721,10 @@ static void classDeclaration() {
     currentClass = currentClass->enclosing;
 }
 
-static void funDeclaration() {
+static void funDeclaration(FunctionType type) {
     uint8_t global = parseVariable("Expect function name.");
     markInitialized();
-    function(TYPE_FUNCTION);
+    function(type);
     defineVariable(global);
 }
 
@@ -864,6 +857,7 @@ static void synchronize() {
         switch (parser.current.type) {
             case TOKEN_CLASS:
             case TOKEN_FUN:
+            case TOKEN_ISR:
             case TOKEN_VAR:
             case TOKEN_FOR:
             case TOKEN_IF:
@@ -884,7 +878,9 @@ static void declaration() {
     if (match(TOKEN_CLASS)) {
         classDeclaration();
     } else if (match(TOKEN_FUN)) {
-        funDeclaration();
+        funDeclaration(TYPE_FUNCTION);
+    } else if (match(TOKEN_ISR)) {
+        funDeclaration(TYPE_ISR);
     } else if (match(TOKEN_VAR)) {
         varDeclaration();
     } else {

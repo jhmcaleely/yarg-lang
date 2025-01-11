@@ -53,9 +53,10 @@ ObjClosure* newClosure(ObjFunction* function) {
     return closure;
 }
 
-ObjFunction* newFunction() {
+ObjFunction* newFunction(FunctionType type) {
     ObjFunction* function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
     function->arity = 0;
+    function->type = type;
     function->upvalueCount = 0;
     function->name = NULL;
     initChunk(&function->chunk);
@@ -78,7 +79,7 @@ ObjNative* newNative(NativeFn function) {
 ObjBlob* newBlob(size_t count) {
     ObjBlob* blob = ALLOCATE_OBJ(ObjBlob, OBJ_BLOB);
     blob->blob = NULL;
-    
+
     stash_push(OBJ_VAL(blob));
     blob->blob = reallocate(NULL, 0, count);
     stash_pop();
