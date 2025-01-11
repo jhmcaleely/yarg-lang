@@ -88,6 +88,21 @@ static int64_t nativeAlarmCallback(alarm_id_t id, void* user_data) {
     return 0;
 }
 
+static bool nativeRepeatingCallback(struct repeating_timer* t) {
+    ObjClosure* closure = AS_CLOSURE((uintptr_t)t->user_data);
+
+    printf("#nativeRepeatingAlarmCallback %d", t->alarm_id);
+    printObject(OBJ_VAL(closure));
+    printf("\n");
+
+    push(1, OBJ_VAL(closure));
+    callfn(1, closure, 0);
+
+    run(1);
+
+    return true;
+}
+
 Value alarmAddInMSNative(int thread, int argCount, Value* args) {
     if (argCount != 2) {
         runtimeError(thread, "Expected 2 arguments but got %d.", argCount);
@@ -102,3 +117,35 @@ Value alarmAddInMSNative(int thread, int argCount, Value* args) {
 
     add_alarm_in_ms(AS_NUMBER(args[0]), nativeAlarmCallback, closure, false);
 }
+
+Value alarmAddRepeatingMSNative(int thread, int argCount, Value* args) {
+    if (argCount != 2) {
+        runtimeError(thread, "Expected 2 arguments but got %d.", argCount);
+    }
+    if (!IS_NUMBER(args[0]) || !IS_CLOSURE(args[1])) {
+        runtimeError(thread, "Argument must be a number and a function.");
+    }
+
+    ObjClosure* closure = AS_CLOSURE(args[1]);
+    ObjBlob* handle = newBlob(sizeof(repeating_timer_t));
+
+    add_repeating_timer_ms(AS_NUMBER(args[0]), nativeRepeatingCallback, closure, (repeating_timer_t*)handle->blob);
+
+    return OBJ_VAL(handle);
+}
+
+Value alarmCancelRepeatingMSNative(int thread, int argCount, Value* args) {
+    if (argCount != 1) {
+        runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
+    }
+    if (!IS_BLOB(args[0])) {
+        runtimeError(thread, "Argument must be a native blob.");
+    }
+
+    ObjBlob* blob = AS_BLOB(args[0]);
+
+    bool cancelled = cancel_repeating_timer((repeating_timer_t*)blob->blob);
+
+    return BOOL_VAL(cancelled);
+}
+

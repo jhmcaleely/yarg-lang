@@ -89,6 +89,8 @@ void initVM() {
     defineNative("gpio_put", gpioPutNative);
 
     defineNative("alarm_add_in_ms", alarmAddInMSNative);
+    defineNative("alarm_add_repeating_ms", alarmAddRepeatingMSNative);
+    defineNative("alarm_cancel_repeating", alarmCancelRepeatingMSNative);
 }
 
 void freeVM() {
