@@ -5,3 +5,5 @@ var start = clock(); print "hello"; sleep_ms(1000); print clock() - start;
 
 var pico_led = 25; gpio_init(pico_led); gpio_set_direction(pico_led, true); 
 while (true) { gpio_put(pico_led, true); sleep_ms(500); gpio_put(pico_led, false); sleep_ms(500); }
+
+fun led() { gpio_put(pico_led, true); } alarm_add_in_ms(2000, led);

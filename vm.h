@@ -36,7 +36,7 @@ typedef struct {
 
     Value allocationStash[ALLOCATION_STASH_MAX];
     Value* allocationTop;
-    
+
     size_t bytesAllocated;
     size_t nextGC;
     Obj* objects;
@@ -56,12 +56,15 @@ extern VM vm;
 void initVM();
 void freeVM();
 InterpretResult interpret(const char* source);
-void push(Value value);
-Value pop();
+void push(int thread, Value value);
+Value pop(int thread);
 
 void stash_push(Value value);
 Value stash_pop();
 
-void runtimeError(const char* format, ...);
+InterpretResult run(int thread);
+bool callfn(int thread, ObjClosure* closure, int argCount);
+void runtimeError(int thread, const char* format, ...);
+void fatalMemoryError(const char* format, ...);
 
 #endif
