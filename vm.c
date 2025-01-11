@@ -315,7 +315,7 @@ InterpretResult run(int thread) {
     for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
         printf("          ");
-        for (Value* slot = vm.stack; slot < vm.stackTop; slot++) {
+        for (Value* slot = vm.threads[thread].stack; slot < vm.threads[thread].stackTop; slot++) {
             printf("[ ");
             printValue(*slot);
             printf(" ]");
