@@ -90,7 +90,7 @@ static int64_t nativeAlarmCallback(alarm_id_t id, void* user_data) {
 
 Value alarmAddInMSNative(int thread, int argCount, Value* args) {
     if (argCount != 2) {
-        runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
+        runtimeError(thread, "Expected 2 arguments but got %d.", argCount);
     }
     if (!IS_NUMBER(args[0]) || !IS_CLOSURE(args[1])) {
         runtimeError(thread, "Argument must be a number and a function.");
