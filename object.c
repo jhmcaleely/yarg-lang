@@ -75,6 +75,16 @@ ObjNative* newNative(NativeFn function) {
     return native;
 }
 
+ObjBlob* newBlob(size_t count) {
+    ObjBlob* blob = ALLOCATE_OBJ(ObjBlob, OBJ_BLOB);
+    blob->blob = NULL;
+    
+    stash_push(OBJ_VAL(blob));
+    blob->blob = reallocate(NULL, 0, count);
+    stash_pop();
+    return blob;
+}
+
 static ObjString* allocateString(char* chars, int length, uint32_t hash) {
     ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
     string->length = length;
@@ -152,6 +162,9 @@ void printObject(Value value) {
             break;
         case OBJ_NATIVE:
             printf("<native fn>");
+            break;
+        case OBJ_BLOB:
+            printf("<blob 0x%.8x>", AS_BLOB(value)->blob);
             break;
         case OBJ_STRING:
             printf("%s", AS_CSTRING(value));

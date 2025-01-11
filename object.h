@@ -14,6 +14,7 @@
 #define IS_FUNCTION(value)     isObjType(value, OBJ_FUNCTION)
 #define IS_INSTANCE(value)     isObjType(value, OBJ_INSTANCE)
 #define IS_NATIVE(value)       isObjType(value, OBJ_NATIVE)
+#define IS_BLOB(value)         isObjType(value, OBJ_BLOB)
 #define IS_STRING(value)       isObjType(value, OBJ_STRING)
 
 #define AS_BOUND_METHOD(value) ((ObjBoundMethod*)AS_OBJ(value))
@@ -23,6 +24,7 @@
 #define AS_INSTANCE(value)     ((ObjInstance*)AS_OBJ(value))
 #define AS_NATIVE(value) \
     (((ObjNative*)AS_OBJ(value))->function)
+#define AS_BLOB(value)         ((ObjBlob*)AS_OBJ(value))
 #define AS_STRING(value)       ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value)      (((ObjString*)AS_OBJ(value))->chars)
 
@@ -33,6 +35,7 @@ typedef enum {
     OBJ_FUNCTION,
     OBJ_INSTANCE,
     OBJ_NATIVE,
+    OBJ_BLOB,
     OBJ_STRING,
     OBJ_UPVALUE
 } ObjType;
@@ -57,6 +60,11 @@ typedef struct {
     Obj obj;
     NativeFn function;
 } ObjNative;
+
+typedef struct {
+    Obj obj;
+    void* blob;
+} ObjBlob;
 
 struct ObjString {
     Obj obj;
@@ -104,6 +112,7 @@ ObjClosure* newClosure(ObjFunction* function);
 ObjFunction* newFunction();
 ObjInstance* newInstance(ObjClass* klass);
 ObjNative* newNative(NativeFn function);
+ObjBlob* newBlob(size_t size);
 ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);
 ObjUpvalue* newUpvalue(Value* slot);

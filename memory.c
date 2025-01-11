@@ -109,6 +109,7 @@ static void blackenObject(Obj* object) {
             markValue(((ObjUpvalue*)object)->closed);
             break;
         case OBJ_NATIVE:
+        case OBJ_BLOB:
         case OBJ_STRING:
             break;
     }
@@ -150,6 +151,12 @@ static void freeObject(Obj* object) {
         case OBJ_NATIVE:
             FREE(ObjNative, object);
             break;
+        case OBJ_BLOB: {
+            ObjBlob* blob = (ObjBlob*)object;
+            free(blob->blob);
+            FREE(ObjBlob, object);
+            break;
+        }
         case OBJ_STRING: {
             ObjString* string = (ObjString*)object;
             FREE_ARRAY(char, string->chars, string->length + 1);
