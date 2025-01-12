@@ -112,10 +112,6 @@ Value alarmAddInMSNative(int thread, int argCount, Value* args) {
     }
 
     ObjClosure* closure = AS_CLOSURE(args[1]);
-    if (closure->function->type != TYPE_ISR) {
-        runtimeError(thread, "Argument must be an isr function");
-    }
-
     push(1, OBJ_VAL(closure));
     callfn(1, closure, 0);
 
@@ -131,10 +127,6 @@ Value alarmAddRepeatingMSNative(int thread, int argCount, Value* args) {
     }
 
     ObjClosure* closure = AS_CLOSURE(args[1]);
-    if (closure->function->type != TYPE_ISR) {
-        runtimeError(thread, "Argument must be an isr function");
-    }
-
     ObjBlob* handle = newBlob(sizeof(repeating_timer_t));
 
     add_repeating_timer_ms(AS_NUMBER(args[0]), nativeRepeatingCallback, closure, (repeating_timer_t*)handle->blob);

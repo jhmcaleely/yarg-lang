@@ -46,18 +46,9 @@ struct Obj {
     struct Obj* next;
 };
 
-typedef enum {
-    TYPE_FUNCTION,
-    TYPE_ISR,
-    TYPE_INITIALIZER,
-    TYPE_METHOD,
-    TYPE_SCRIPT
-} FunctionType;
-
 typedef struct {
     Obj obj;
     int arity;
-    FunctionType type;
     int upvalueCount;
     Chunk chunk;
     ObjString* name;
@@ -118,7 +109,7 @@ ObjBoundMethod* newBoundMethod(Value receiver,
                                ObjClosure* method);
 ObjClass* newClass(ObjString* name);
 ObjClosure* newClosure(ObjFunction* function);
-ObjFunction* newFunction(FunctionType type);
+ObjFunction* newFunction();
 ObjInstance* newInstance(ObjClass* klass);
 ObjNative* newNative(NativeFn function);
 ObjBlob* newBlob(size_t size);
