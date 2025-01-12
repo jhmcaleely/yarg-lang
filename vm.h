@@ -4,31 +4,14 @@
 #include "object.h"
 #include "table.h"
 #include "value.h"
-
-#define FRAMES_MAX 64
-#define STACK_MAX (FRAMES_MAX * (UINT8_COUNT / 2))
-
-#define THREADS_MAX 2
-#define ALLOCATION_STASH_MAX 4
+#include "threadstack.h"
 
 typedef struct {
-    ObjClosure* closure;
-    uint8_t* ip;
-    Value* slots;
-} CallFrame;
+    // temp hack. should be on heap...
+    ObjThreadStack core0;
 
-typedef struct {
-    CallFrame frames[FRAMES_MAX];
-    int frameCount;
-
-    Value stack[STACK_MAX];
-    Value* stackTop;
-
-    ObjUpvalue* openUpvalues;
-} Thread;
-
-typedef struct {
-    Thread threads[THREADS_MAX];
+    ObjThreadStack* isrStack;
+    int isrCount;
 
     Table globals;
     Table strings;
@@ -56,15 +39,12 @@ extern VM vm;
 void initVM();
 void freeVM();
 InterpretResult interpret(const char* source);
-void push(int thread, Value value);
-Value pop(int thread);
 
 void stash_push(Value value);
 Value stash_pop();
 
-InterpretResult run(int thread);
-bool callfn(int thread, ObjClosure* closure, int argCount);
-void runtimeError(int thread, const char* format, ...);
+InterpretResult run(ObjThreadStack* thread);
+bool callfn(ObjThreadStack* thread, ObjClosure* closure, int argCount);
 void fatalMemoryError(const char* format, ...);
 
 #endif

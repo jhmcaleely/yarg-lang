@@ -41,6 +41,7 @@ add_executable(clox
     memory.c
     debug.c
     value.c
+    threadstack.c
     vm.c
     compiler.c
     scanner.c

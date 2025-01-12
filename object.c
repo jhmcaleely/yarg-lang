@@ -10,7 +10,7 @@
 #define ALLOCATE_OBJ(type, objectType) \
     (type*)allocateObject(sizeof(type), objectType)
 
-static Obj* allocateObject(size_t size, ObjType type) {
+Obj* allocateObject(size_t size, ObjType type) {
     Obj* object = (Obj*)reallocate(NULL, 0, size);
     object->type = type;
     object->isMarked = false;
@@ -143,6 +143,12 @@ static void printFunction(ObjFunction* function) {
     printf("<fn %s>", function->name->chars);
 }
 
+static void printThreadStack(ObjThreadStack* thread) {
+    printf("<ts 0x%8.x:%s>"
+          , thread
+          , thread->type == THREAD_ISR ? "i" : "n");
+}
+
 void printObject(Value value) {
     switch (OBJ_TYPE(value)) {
         case OBJ_BOUND_METHOD:
@@ -165,6 +171,9 @@ void printObject(Value value) {
             break;
         case OBJ_BLOB:
             printf("<blob 0x%.8x>", AS_BLOB(value)->blob);
+            break;
+        case OBJ_THREAD_STACK:
+            printThreadStack(AS_THREAD_STACK(value));
             break;
         case OBJ_STRING:
             printf("%s", AS_CSTRING(value));

@@ -15,6 +15,7 @@
 #define IS_INSTANCE(value)     isObjType(value, OBJ_INSTANCE)
 #define IS_NATIVE(value)       isObjType(value, OBJ_NATIVE)
 #define IS_BLOB(value)         isObjType(value, OBJ_BLOB)
+#define IS_THREAD_STACK(value) isObjType(value, OBJ_THREAD_STACK)
 #define IS_STRING(value)       isObjType(value, OBJ_STRING)
 
 #define AS_BOUND_METHOD(value) ((ObjBoundMethod*)AS_OBJ(value))
@@ -25,6 +26,7 @@
 #define AS_NATIVE(value) \
     (((ObjNative*)AS_OBJ(value))->function)
 #define AS_BLOB(value)         ((ObjBlob*)AS_OBJ(value))
+#define AS_THREAD_STACK(value) ((ObjThreadStack*)AS_OBJ(value))
 #define AS_STRING(value)       ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value)      (((ObjString*)AS_OBJ(value))->chars)
 
@@ -36,6 +38,7 @@ typedef enum {
     OBJ_INSTANCE,
     OBJ_NATIVE,
     OBJ_BLOB,
+    OBJ_THREAD_STACK,
     OBJ_STRING,
     OBJ_UPVALUE
 } ObjType;
@@ -54,7 +57,7 @@ typedef struct {
     ObjString* name;
 } ObjFunction;
 
-typedef Value (*NativeFn)(int thread, int argCount, Value* args);
+typedef Value (*NativeFn)(ObjThreadStack* thread, int argCount, Value* args);
 
 typedef struct {
     Obj obj;
@@ -104,6 +107,13 @@ typedef struct {
     Value reciever;
     ObjClosure* method;
 } ObjBoundMethod;
+
+typedef struct ObjThreadStack ObjThreadStack;
+
+#define ALLOCATE_OBJ(type, objectType) \
+    (type*)allocateObject(sizeof(type), objectType)
+
+Obj* allocateObject(size_t size, ObjType type);
 
 ObjBoundMethod* newBoundMethod(Value receiver, 
                                ObjClosure* method);

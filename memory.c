@@ -110,6 +110,12 @@ static void blackenObject(Obj* object) {
             break;
         case OBJ_NATIVE:
         case OBJ_BLOB:
+            break;
+        case OBJ_THREAD_STACK: {
+            ObjThreadStack* stack = (ObjThreadStack*)object;
+            markThread(stack);
+            break;
+        }
         case OBJ_STRING:
             break;
     }
@@ -157,6 +163,9 @@ static void freeObject(Obj* object) {
             FREE(ObjBlob, object);
             break;
         }
+        case OBJ_THREAD_STACK:
+            FREE(ObjThreadStack, object);
+            break;
         case OBJ_STRING: {
             ObjString* string = (ObjString*)object;
             FREE_ARRAY(char, string->chars, string->length + 1);
@@ -170,20 +179,13 @@ static void freeObject(Obj* object) {
 }
 
 static void markRoots() {
-    for (int t = 0; t < THREADS_MAX; t++) {
-        for (Value* slot = vm.threads[t].stack; slot < vm.threads[t].stackTop; slot++) {
-            markValue(*slot);
-        }
 
-        for (int i = 0; i < vm.threads[t].frameCount; i++) {
-            markObject((Obj*)vm.threads[t].frames[i].closure);
-        }
+    markThread(&vm.core0);
 
-        for (ObjUpvalue* upvalue = vm.threads[t].openUpvalues;
-            upvalue != NULL;
-            upvalue = upvalue->next) {
-            markObject((Obj*)upvalue);
-        }
+    ObjThreadStack* cursor = vm.isrStack;
+    while (cursor != NULL) {
+        markThread(cursor);
+        cursor = cursor->nextThread;
     }
 
     for (Value* slot = vm.allocationStash; slot < vm.allocationTop; slot++) {

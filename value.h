@@ -7,6 +7,7 @@
 
 typedef struct Obj Obj;
 typedef struct ObjString ObjString;
+typedef struct ObjThreadStack ObjThreadStack;
 
 #ifdef NAN_BOXING
 
