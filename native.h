@@ -14,6 +14,4 @@ Value alarmAddInMSNative(ObjThreadStack* thread, int argCount, Value* args);
 Value alarmAddRepeatingMSNative(ObjThreadStack* thread, int argCount, Value* args);
 Value alarmCancelRepeatingMSNative(ObjThreadStack* thread, int argCount, Value* args);
 
-Value makeIsrNative(ObjThreadStack* thread, int argCount, Value* args);
-
 #endif
