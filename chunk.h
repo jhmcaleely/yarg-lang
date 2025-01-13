@@ -54,7 +54,8 @@ typedef struct {
 } Chunk;
 
 typedef enum {
-    BUILTIN_MAKE_ISR
+    BUILTIN_MAKE_ISR,
+    BUILTIN_MAKE_CORO
 } BuiltinFn;
 
 void initChunk(Chunk* chunk);

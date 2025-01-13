@@ -10,6 +10,7 @@
 #include "memory.h"
 #include "vm.h"
 #include "native.h"
+#include "builtin.h"
 #include "threadstack.h"
 
 VM vm;
@@ -296,7 +297,12 @@ InterpretResult run(ObjThreadStack* thread) {
                 uint8_t builtin = READ_BYTE();
                 switch (builtin) {
                     case BUILTIN_MAKE_ISR: {
-                        Value builtinFn = OBJ_VAL(newNative(makeIsrNative));
+                        Value builtinFn = OBJ_VAL(newNative(makeIsrBuiltin));
+                        push(thread, builtinFn);
+                        break;
+                    }
+                    case BUILTIN_MAKE_CORO: {
+                        Value builtinFn = OBJ_VAL(newNative(makeCoroBuiltin));
                         push(thread, builtinFn);
                         break;
                     }

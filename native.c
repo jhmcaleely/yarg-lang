@@ -12,29 +12,6 @@
 #include "threadstack.h"
 #include "vm.h"
 
-Value makeIsrNative(ObjThreadStack* thread, int argCount, Value* args) {
-    if (argCount != 1) {
-        runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
-    }
-    if (!IS_CLOSURE(args[0])) {
-        runtimeError(thread, "Argument to make_isr must be function.");
-    }
-
-    ObjClosure* closure = AS_CLOSURE(args[0]);
-
-    ObjThreadStack* isrThread = newThread(THREAD_ISR);
-    isrThread->entryFunction = closure;
-    isrThread->nextThread = vm.isrStack;
-    vm.isrStack = isrThread;
-    vm.isrCount++;
-
-
-    push(isrThread, OBJ_VAL(closure));
-    callfn(isrThread, closure, 0);
-
-    return OBJ_VAL(isrThread);
-}
-
 Value clockNative(ObjThreadStack* thread, int argCount, Value* args) {
     if (argCount != 0) {
         runtimeError(thread, "Expected 0 arguments but got %d.", argCount);

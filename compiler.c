@@ -444,6 +444,7 @@ static void dot(bool canAssign) {
 static void literal(bool canAssign) {
     switch (parser.previous.type) {
         case TOKEN_MAKE_ISR: emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_ISR); break;
+        case TOKEN_MAKE_CORO: emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_CORO); break;
         case TOKEN_FALSE: emitByte(OP_FALSE); break;
         case TOKEN_NIL: emitByte(OP_NIL); break;
         case TOKEN_TRUE: emitByte(OP_TRUE); break;
@@ -587,6 +588,7 @@ ParseRule rules[] = {
     [TOKEN_FOR]           = {NULL,     NULL,   PREC_NONE},
     [TOKEN_FUN]           = {NULL,     NULL,   PREC_NONE},
     [TOKEN_IF]            = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_MAKE_CORO]     = {literal,  NULL,   PREC_NONE},
     [TOKEN_MAKE_ISR]      = {literal,  NULL,   PREC_NONE},
     [TOKEN_NIL]           = {literal,  NULL,   PREC_NONE},
     [TOKEN_OR]            = {NULL,     or_,    PREC_OR},
