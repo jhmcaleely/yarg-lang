@@ -2,7 +2,7 @@ fun flash(led) {
     fun on() {
         gpio_put(led, true);
         sleep_ms(500);
-        yeild();
+        yield;
     }
     flasher = make_coro(on);
     fun off() {
