@@ -54,8 +54,6 @@ void initVM() {
     vm.initString = NULL;
     vm.initString = copyString("init", 4);
 
-    defineNative("make_isr", makeIsrNative);
-
     defineNative("clock", clockNative);
     defineNative("sleep_ms", sleepNative);
 
@@ -294,6 +292,17 @@ InterpretResult run(ObjThreadStack* thread) {
             case OP_TRUE: push(thread, BOOL_VAL(true)); break;
             case OP_FALSE: push(thread, BOOL_VAL(false)); break;
             case OP_POP: pop(thread); break;
+            case OP_GET_BUILTIN: {
+                uint8_t builtin = READ_BYTE();
+                switch (builtin) {
+                    case BUILTIN_MAKE_ISR: {
+                        Value builtinFn = OBJ_VAL(newNative(makeIsrNative));
+                        push(thread, builtinFn);
+                        break;
+                    }
+                }
+                break;
+            }
             case OP_SET_LOCAL: {
                 uint8_t slot = READ_BYTE();
                 frame->slots[slot] = peek(thread, 0);

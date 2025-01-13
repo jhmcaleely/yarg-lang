@@ -10,6 +10,7 @@ typedef enum {
     OP_TRUE,
     OP_FALSE,
     OP_POP,
+    OP_GET_BUILTIN,
     OP_GET_LOCAL,
     OP_SET_LOCAL,
     OP_GET_GLOBAL,
@@ -51,6 +52,10 @@ typedef struct {
     int* lines;
     ValueArray constants;
 } Chunk;
+
+typedef enum {
+    BUILTIN_MAKE_ISR
+} BuiltinFn;
 
 void initChunk(Chunk* chunk);
 void freeChunk(Chunk* chunk);

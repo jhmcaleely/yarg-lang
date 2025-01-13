@@ -123,6 +123,7 @@ static TokenType identifierType() {
             }
             break;
         case 'i': return checkKeyword(1, 1, "f", TOKEN_IF);
+        case 'm': return checkKeyword(1, 7, "ake_isr", TOKEN_MAKE_ISR);
         case 'n': return checkKeyword(1, 2, "il", TOKEN_NIL);
         case 'o': return checkKeyword(1, 1, "r", TOKEN_OR);
         case 'p': return checkKeyword(1, 4, "rint", TOKEN_PRINT); 
