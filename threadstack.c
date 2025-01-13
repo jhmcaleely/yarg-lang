@@ -46,7 +46,7 @@ void markThread(ObjThreadStack* thread) {
         markObject((Obj*)upvalue);
     }
 
-    markObject(thread->entryFunction);
+    markObject((Obj*)thread->entryFunction);
 }
 
 void runtimeError(ObjThreadStack* thread, const char* format, ...) {
