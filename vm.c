@@ -36,6 +36,8 @@ static void defineNative(const char* name, NativeFn function) {
 void initVM() {
     initThread(&vm.core0, THREAD_NORMAL);
 
+    vm.coroList = NULL;
+
     vm.isrStack = NULL;
     vm.isrCount = 0;
 
@@ -310,6 +312,11 @@ InterpretResult run(ObjThreadStack* thread) {
                         push(thread, builtinFn);
                         break;
                     }
+                    case BUILTIN_RESUME: {
+                        Value builtinFn = OBJ_VAL(newNative(resumeBuiltin));
+                        push(thread, builtinFn);
+                        break;
+                    }
                 }
                 break;
             }
@@ -499,6 +506,10 @@ InterpretResult run(ObjThreadStack* thread) {
                 closeUpvalues(thread, thread->stackTop - 1);
                 pop(thread);
                 break;
+            case OP_YIELD: {
+                Value result = pop(thread); // ignored for now
+                return INTERPRET_OK;
+            }
             case OP_RETURN: {
                 Value result = pop(thread);
                 closeUpvalues(thread, frame->slots);

@@ -445,6 +445,7 @@ static void literal(bool canAssign) {
     switch (parser.previous.type) {
         case TOKEN_MAKE_ISR: emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_ISR); break;
         case TOKEN_MAKE_CORO: emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_CORO); break;
+        case TOKEN_RESUME: emitBytes(OP_GET_BUILTIN, BUILTIN_RESUME); break;
         case TOKEN_FALSE: emitByte(OP_FALSE); break;
         case TOKEN_NIL: emitByte(OP_NIL); break;
         case TOKEN_TRUE: emitByte(OP_TRUE); break;
@@ -593,12 +594,14 @@ ParseRule rules[] = {
     [TOKEN_NIL]           = {literal,  NULL,   PREC_NONE},
     [TOKEN_OR]            = {NULL,     or_,    PREC_OR},
     [TOKEN_PRINT]         = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_RESUME]        = {literal,  NULL,   PREC_NONE},
     [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
     [TOKEN_SUPER]         = {super_,   NULL,   PREC_NONE},
     [TOKEN_THIS]          = {this_,    NULL,   PREC_NONE},
     [TOKEN_TRUE]          = {literal,  NULL,   PREC_NONE},
     [TOKEN_VAR]           = {NULL,     NULL,   PREC_NONE},
     [TOKEN_WHILE]         = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_YIELD]         = {NULL,     NULL,   PREC_NONE},
     [TOKEN_ERROR]         = {NULL,     NULL,   PREC_NONE},
     [TOKEN_EOF]           = {NULL,     NULL,   PREC_NONE},
 };
@@ -845,6 +848,21 @@ static void returnStatement() {
     }
 }
 
+static void yieldStatement() {
+    if (current->type == TYPE_SCRIPT) {
+        error("Can't yield from top-level code.");
+    }
+    
+    if (match(TOKEN_SEMICOLON)) {
+        emitBytes(OP_NIL, OP_YIELD);
+    } else {
+
+        expression();
+        consume(TOKEN_SEMICOLON, "Expect ';' after yield value.");
+        emitByte(OP_YIELD);
+    }
+}
+
 static void whileStatement() {
     int loopStart = currentChunk()->count;
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
@@ -905,6 +923,8 @@ static void statement() {
         forStatement();
     } else if (match(TOKEN_IF)) {
         ifStatement();
+    } else if (match(TOKEN_YIELD)) {
+        yieldStatement();
     } else if (match(TOKEN_RETURN)) {
         returnStatement();
     } else if (match(TOKEN_WHILE)) {

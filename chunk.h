@@ -40,6 +40,7 @@ typedef enum {
     OP_CLOSURE,
     OP_CLOSE_UPVALUE,
     OP_RETURN,
+    OP_YIELD,
     OP_CLASS,
     OP_INHERIT,
     OP_METHOD
@@ -55,7 +56,8 @@ typedef struct {
 
 typedef enum {
     BUILTIN_MAKE_ISR,
-    BUILTIN_MAKE_CORO
+    BUILTIN_MAKE_CORO,
+    BUILTIN_RESUME,
 } BuiltinFn;
 
 void initChunk(Chunk* chunk);

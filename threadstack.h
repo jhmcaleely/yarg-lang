@@ -21,6 +21,13 @@ typedef enum {
     THREAD_ISR
 } ThreadType;
 
+typedef enum {
+    EXEC_RUNNING,
+    EXEC_SUSPENDED,
+    EXEC_CLOSED,
+    EXEC_ERROR
+} ThreadState;
+
 typedef struct ObjThreadStack {
     Obj obj;
 
@@ -35,6 +42,7 @@ typedef struct ObjThreadStack {
     ObjUpvalue* openUpvalues;
 
     ThreadType type;
+    ThreadState state;
     ObjThreadStack* nextThread;
 } ObjThreadStack;
 

@@ -13,6 +13,7 @@ void initThread(ObjThreadStack* thread, ThreadType type) {
     thread->type = type;
     thread->nextThread = NULL;
     thread->entryFunction = NULL;
+    thread->state = EXEC_SUSPENDED;
 
     resetThread(thread);
 }
@@ -70,6 +71,8 @@ void runtimeError(ObjThreadStack* thread, const char* format, ...) {
             fprintf(stderr, "%s()\n", function->name->chars);
         }
     }
+
+    thread->state = EXEC_ERROR;
     resetThread(thread);
 }
 

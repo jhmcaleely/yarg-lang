@@ -48,14 +48,40 @@ bool makeCoroBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* r
 
     ObjThreadStack* coroThread = newThread(THREAD_NORMAL);
     coroThread->entryFunction = closure;
-//    isrThread->nextThread = vm.isrStack;
-//    vm.isrStack = isrThread;
-//    vm.isrCount++;
-
+    coroThread->nextThread = vm.coroList;
+    vm.coroList = coroThread;
 
     push(coroThread, OBJ_VAL(closure));
     callfn(coroThread, closure, 0);
 
     *result = OBJ_VAL(coroThread);
+    return true;
+}
+
+bool resumeBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+    if (argCount != 1) {
+        runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
+        return false;
+    }
+    if (!IS_THREAD_STACK(args[0])) {
+        runtimeError(thread, "Argument to resume must be coroutine.");
+        return false;
+    }
+
+    ObjThreadStack* coroThread = AS_THREAD_STACK(args[0]);
+
+    if (coroThread->state != EXEC_SUSPENDED) {
+        runtimeError(thread, "coroutine must be suspended to resume.");
+        return false;
+    }
+
+    coroThread->state = EXEC_RUNNING;
+    run(coroThread);
+
+    if (coroThread->state != EXEC_ERROR) {
+        coroThread->state = EXEC_CLOSED;
+    }
+
+    *result = NIL_VAL;
     return true;
 }

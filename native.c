@@ -100,6 +100,10 @@ static int64_t nativeAlarmCallback(alarm_id_t id, void* user_data) {
 
     run(thread);
 
+    if (thread->state != EXEC_ERROR) {
+        thread->state = EXEC_CLOSED;
+    }
+
     return 0;
 }
 
@@ -130,6 +134,8 @@ bool alarmAddInMSNative(ObjThreadStack* thread, int argCount, Value* args, Value
 
     ObjThreadStack* isrThread = AS_THREAD_STACK(args[1]);
 
+    //! racy
+    isrThread->state = EXEC_RUNNING;
     add_alarm_in_ms(AS_NUMBER(args[0]), nativeAlarmCallback, isrThread, false);
 
     *result = NIL_VAL;
@@ -149,6 +155,8 @@ bool alarmAddRepeatingMSNative(ObjThreadStack* thread, int argCount, Value* args
     ObjThreadStack* isrThread = AS_THREAD_STACK(args[1]);
     ObjBlob* handle = newBlob(sizeof(repeating_timer_t));
 
+    //! racy
+    isrThread->state = EXEC_RUNNING;
     add_repeating_timer_ms(AS_NUMBER(args[0]), nativeRepeatingCallback, isrThread, (repeating_timer_t*)handle->blob);
 
     *result = OBJ_VAL(handle);
@@ -168,6 +176,8 @@ bool alarmCancelRepeatingMSNative(ObjThreadStack* thread, int argCount, Value* a
     ObjBlob* blob = AS_BLOB(args[0]);
 
     bool cancelled = cancel_repeating_timer((repeating_timer_t*)blob->blob);
+
+    // EXEC_CLOSED ?
 
     *result = BOOL_VAL(cancelled);
     return true;
