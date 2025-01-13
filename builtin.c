@@ -75,11 +75,9 @@ bool resumeBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* res
         return false;
     }
 
-    coroThread->state = EXEC_RUNNING;
-    run(coroThread);
-
-    if (coroThread->state != EXEC_ERROR) {
-        coroThread->state = EXEC_CLOSED;
+    InterpretResult execResult = run(coroThread);
+    if (execResult != INTERPRET_OK) {
+        return false;
     }
 
     *result = NIL_VAL;

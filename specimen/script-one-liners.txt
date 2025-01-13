@@ -18,4 +18,4 @@ fun test(val) { var t = alarm_add_repeating_ms(val, isr_led); sleep_ms(3000); al
 
 var coro = make_coro(led); resume(coro);
 
-fun test() { yield; }
+fun test() { print 1; yield; print 2; } var coro = make_coro(test); resume(coro); print 0; resume(coro);

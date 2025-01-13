@@ -254,6 +254,7 @@ static void concatenate(ObjThreadStack* thread) {
 
 InterpretResult run(ObjThreadStack* thread) {
     CallFrame* frame = &thread->frames[thread->frameCount - 1];
+    thread->state = EXEC_RUNNING;
 
 #define READ_BYTE() (*frame->ip++)
 
@@ -507,7 +508,12 @@ InterpretResult run(ObjThreadStack* thread) {
                 pop(thread);
                 break;
             case OP_YIELD: {
+                if (thread == &vm.core0) {
+                    runtimeError(thread, "Cannot yield from initial thread.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
                 Value result = pop(thread); // ignored for now
+                thread->state = EXEC_SUSPENDED;
                 return INTERPRET_OK;
             }
             case OP_RETURN: {

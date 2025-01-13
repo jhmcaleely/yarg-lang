@@ -134,7 +134,6 @@ bool alarmAddInMSNative(ObjThreadStack* thread, int argCount, Value* args, Value
 
     ObjThreadStack* isrThread = AS_THREAD_STACK(args[1]);
 
-    //! racy
     isrThread->state = EXEC_RUNNING;
     add_alarm_in_ms(AS_NUMBER(args[0]), nativeAlarmCallback, isrThread, false);
 
@@ -155,7 +154,6 @@ bool alarmAddRepeatingMSNative(ObjThreadStack* thread, int argCount, Value* args
     ObjThreadStack* isrThread = AS_THREAD_STACK(args[1]);
     ObjBlob* handle = newBlob(sizeof(repeating_timer_t));
 
-    //! racy
     isrThread->state = EXEC_RUNNING;
     add_repeating_timer_ms(AS_NUMBER(args[0]), nativeRepeatingCallback, isrThread, (repeating_timer_t*)handle->blob);
 
