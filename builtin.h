@@ -3,8 +3,8 @@
 
 #include "value.h"
 
-Value makeIsrBuiltin(ObjThreadStack* thread, int argCount, Value* args);
-Value makeCoroBuiltin(ObjThreadStack* thread, int argCount, Value* args);
+bool makeIsrBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result);
+bool makeCoroBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result);
 
 
 #endif

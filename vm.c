@@ -131,10 +131,14 @@ static bool callValue(ObjThreadStack* thread, Value callee, int argCount) {
                 return callfn(thread, AS_CLOSURE(callee), argCount);
             case OBJ_NATIVE: {
                 NativeFn native = AS_NATIVE(callee);
-                Value result = native(thread, argCount, thread->stackTop - argCount);
-                thread->stackTop -= argCount + 1;
-                push(thread, result);
-                return true;
+                Value result = NIL_VAL; 
+                if (native(thread, argCount, thread->stackTop - argCount, &result)) {
+                    thread->stackTop -= argCount + 1;
+                    push(thread, result);
+                    return true;
+                } else {
+                    return false;
+                }
             }
             default:
                 break; // Non-callable object type.

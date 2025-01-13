@@ -12,46 +12,56 @@
 #include "threadstack.h"
 #include "vm.h"
 
-Value clockNative(ObjThreadStack* thread, int argCount, Value* args) {
+bool clockNative(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
     if (argCount != 0) {
         runtimeError(thread, "Expected 0 arguments but got %d.", argCount);
+        return false;
     }
 
-    return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
+    *result = NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
+    return true;
 }
 
-Value sleepNative(ObjThreadStack* thread, int argCount, Value* args) {
+bool sleepNative(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
     if (argCount != 1) {
         runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
+        return false;
     }
     if (!IS_NUMBER(args[0])) {
         runtimeError(thread, "Argument must be a number");
+        return false;
     }
 
     sleep_ms(AS_NUMBER(args[0]));
 
-    return NIL_VAL;
+    *result = NIL_VAL;
+    return true;
 }
 
-Value gpioInitNative(ObjThreadStack* thread, int argCount, Value* args) {
+bool gpioInitNative(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
     if (argCount != 1) {
         runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
+        return false;
     }
     if (!IS_NUMBER(args[0])) {
         runtimeError(thread, "Argument must be a number");
+        return false;
     }
 
     gpio_init(AS_NUMBER(args[0]));
 
-    return NIL_VAL;
+    *result = NIL_VAL;
+    return true;
 }
 
-Value gpioSetDirectionNative(ObjThreadStack* thread, int argCount, Value* args) {
+bool gpioSetDirectionNative(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
     if (argCount != 2) {
         runtimeError(thread, "Expected 2 arguments but got %d.", argCount);
+        return false;
     }
     if (!IS_NUMBER(args[0]) || !IS_BOOL(args[1])) {
         runtimeError(thread, "Arguments must be a number and a bool");
+        return false;
     }
 
     bool direction = AS_BOOL(args[1]);
@@ -61,20 +71,24 @@ Value gpioSetDirectionNative(ObjThreadStack* thread, int argCount, Value* args) 
         gpio_set_dir(AS_NUMBER(args[0]), GPIO_IN);
     }
 
-    return NIL_VAL;
+    *result = NIL_VAL;
+    return true;
 }
 
-Value gpioPutNative(ObjThreadStack* thread, int argCount, Value* args) {
+bool gpioPutNative(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
     if (argCount != 2) {
         runtimeError(thread, "Expected 2 arguments but got %d.", argCount);
+        return false;
     }
     if (!IS_NUMBER(args[0]) || !IS_BOOL(args[1])) {
         runtimeError(thread, "Arguments must be a number and a bool");
+        return false;
     }
 
     gpio_put(AS_NUMBER(args[0]), AS_BOOL(args[1]));
 
-    return NIL_VAL;
+    *result = NIL_VAL;
+    return true;
 }
 
 static int64_t nativeAlarmCallback(alarm_id_t id, void* user_data) {
@@ -104,25 +118,32 @@ static bool nativeRepeatingCallback(struct repeating_timer* t) {
     return true;
 }
 
-Value alarmAddInMSNative(ObjThreadStack* thread, int argCount, Value* args) {
+bool alarmAddInMSNative(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
     if (argCount != 2) {
         runtimeError(thread, "Expected 2 arguments but got %d.", argCount);
+        return false;
     }
     if (!IS_NUMBER(args[0]) || !IS_THREAD_STACK(args[1])) {
         runtimeError(thread, "Argument must be a number and an isr stack.");
+        return false;
     }
 
     ObjThreadStack* isrThread = AS_THREAD_STACK(args[1]);
 
     add_alarm_in_ms(AS_NUMBER(args[0]), nativeAlarmCallback, isrThread, false);
+
+    *result = NIL_VAL;
+    return true;
 }
 
-Value alarmAddRepeatingMSNative(ObjThreadStack* thread, int argCount, Value* args) {
+bool alarmAddRepeatingMSNative(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
     if (argCount != 2) {
         runtimeError(thread, "Expected 2 arguments but got %d.", argCount);
+        return false;
     }
     if (!IS_NUMBER(args[0]) || !IS_THREAD_STACK(args[1])) {
         runtimeError(thread, "Argument must be a number and an isr stack.");
+        return false;
     }
 
     ObjThreadStack* isrThread = AS_THREAD_STACK(args[1]);
@@ -130,21 +151,25 @@ Value alarmAddRepeatingMSNative(ObjThreadStack* thread, int argCount, Value* arg
 
     add_repeating_timer_ms(AS_NUMBER(args[0]), nativeRepeatingCallback, isrThread, (repeating_timer_t*)handle->blob);
 
-    return OBJ_VAL(handle);
+    *result = OBJ_VAL(handle);
+    return true;
 }
 
-Value alarmCancelRepeatingMSNative(ObjThreadStack* thread, int argCount, Value* args) {
+bool alarmCancelRepeatingMSNative(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
     if (argCount != 1) {
         runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
+        return false;
     }
     if (!IS_BLOB(args[0])) {
         runtimeError(thread, "Argument must be a native blob.");
+        return false;
     }
 
     ObjBlob* blob = AS_BLOB(args[0]);
 
     bool cancelled = cancel_repeating_timer((repeating_timer_t*)blob->blob);
 
-    return BOOL_VAL(cancelled);
+    *result = BOOL_VAL(cancelled);
+    return true;
 }
 

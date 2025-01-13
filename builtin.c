@@ -8,12 +8,14 @@
 #include "threadstack.h"
 #include "vm.h"
 
-Value makeIsrBuiltin(ObjThreadStack* thread, int argCount, Value* args) {
+bool makeIsrBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
     if (argCount != 1) {
         runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
+        return false;
     }
     if (!IS_CLOSURE(args[0])) {
         runtimeError(thread, "Argument to make_isr must be function.");
+        return false;
     }
 
     ObjClosure* closure = AS_CLOSURE(args[0]);
@@ -28,15 +30,18 @@ Value makeIsrBuiltin(ObjThreadStack* thread, int argCount, Value* args) {
     push(isrThread, OBJ_VAL(closure));
     callfn(isrThread, closure, 0);
 
-    return OBJ_VAL(isrThread);
+    *result = OBJ_VAL(isrThread);
+    return true;
 }
 
-Value makeCoroBuiltin(ObjThreadStack* thread, int argCount, Value* args) {
+bool makeCoroBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
     if (argCount != 1) {
         runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
+        return false;
     }
     if (!IS_CLOSURE(args[0])) {
         runtimeError(thread, "Argument to make_coro must be function.");
+        return false;
     }
 
     ObjClosure* closure = AS_CLOSURE(args[0]);
@@ -51,5 +56,6 @@ Value makeCoroBuiltin(ObjThreadStack* thread, int argCount, Value* args) {
     push(coroThread, OBJ_VAL(closure));
     callfn(coroThread, closure, 0);
 
-    return OBJ_VAL(coroThread);
+    *result = OBJ_VAL(coroThread);
+    return true;
 }

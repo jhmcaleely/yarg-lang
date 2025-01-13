@@ -57,7 +57,7 @@ typedef struct {
     ObjString* name;
 } ObjFunction;
 
-typedef Value (*NativeFn)(ObjThreadStack* thread, int argCount, Value* args);
+typedef bool (*NativeFn)(ObjThreadStack* thread, int argCount, Value* args, Value* result);
 
 typedef struct {
     Obj obj;
