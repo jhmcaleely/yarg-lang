@@ -33,6 +33,20 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
     return result;
 }
 
+void tempRootPush(Value value) {
+    *vm.tempRootsTop = value;
+    vm.tempRootsTop++;
+
+    if (vm.tempRootsTop - &vm.tempRoots[0] > TEMP_ROOTS_MAX) {
+        fatalMemoryError("Allocation Stash Max Exeeded.");
+    }
+}
+
+Value tempRootPop() {
+    vm.tempRootsTop--;
+    return *vm.tempRootsTop;
+}
+
 void markObject(Obj* object) {
     if (object == NULL) return;
     if (object->isMarked) return;
@@ -185,7 +199,7 @@ static void markRoots() {
 
     markThread(&vm.core0);
 
-    for (Value* slot = vm.allocationStash; slot < vm.allocationTop; slot++) {
+    for (Value* slot = vm.tempRoots; slot < vm.tempRootsTop; slot++) {
         markValue(*slot);
     }
 

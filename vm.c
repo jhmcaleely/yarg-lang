@@ -27,17 +27,17 @@ void fatalMemoryError(const char* format, ...) {
 }
 
 static void defineNative(const char* name, NativeFn function) {
-    stash_push(OBJ_VAL(copyString(name, (int)strlen(name))));
-    stash_push(OBJ_VAL(newNative(function)));
-    tableSet(&vm.globals, AS_STRING(vm.allocationStash[0]), vm.allocationStash[1]);
-    stash_pop();
-    stash_pop();
+    tempRootPush(OBJ_VAL(copyString(name, (int)strlen(name))));
+    tempRootPush(OBJ_VAL(newNative(function)));
+    tableSet(&vm.globals, AS_STRING(vm.tempRoots[0]), vm.tempRoots[1]);
+    tempRootPop();
+    tempRootPop();
 }
 
 void initVM() {
     initThread(&vm.core0, THREAD_NORMAL);
 
-    vm.allocationTop = vm.allocationStash;
+    vm.tempRootsTop = vm.tempRoots;
 
     vm.objects = NULL;
     vm.bytesAllocated = 0;
@@ -70,20 +70,6 @@ void freeVM() {
     freeTable(&vm.strings);
     vm.initString = NULL;
     freeObjects();
-}
-
-void stash_push(Value value) {
-    *vm.allocationTop = value;
-    vm.allocationTop++;
-
-    if (vm.allocationTop - &vm.allocationStash[0] > ALLOCATION_STASH_MAX) {
-        fatalMemoryError("Allocation Stash Max Exeeded.");
-    }
-}
-
-Value stash_pop() {
-    vm.allocationTop--;
-    return *vm.allocationTop;
 }
 
 bool callfn(ObjThreadStack* thread, ObjClosure* closure, int argCount) {
@@ -582,9 +568,9 @@ InterpretResult interpret(const char* source) {
     ObjFunction* function = compile(source);
     if (function == NULL) return INTERPRET_COMPILE_ERROR;
 
-    stash_push(OBJ_VAL(function));
+    tempRootPush(OBJ_VAL(function));
     ObjClosure* closure = newClosure(function);
-    stash_pop();
+    tempRootPop();
     push(&vm.core0, OBJ_VAL(closure));
     callfn(&vm.core0, closure, 0);
 

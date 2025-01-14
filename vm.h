@@ -4,6 +4,8 @@
 #include "object.h"
 #include "table.h"
 #include "value.h"
+
+#include "memory.h"
 #include "threadstack.h"
 
 typedef struct {
@@ -13,8 +15,8 @@ typedef struct {
     Table strings;
     ObjString* initString;
 
-    Value allocationStash[ALLOCATION_STASH_MAX];
-    Value* allocationTop;
+    Value tempRoots[TEMP_ROOTS_MAX];
+    Value* tempRootsTop;
 
     size_t bytesAllocated;
     size_t nextGC;
@@ -36,8 +38,7 @@ void initVM();
 void freeVM();
 InterpretResult interpret(const char* source);
 
-void stash_push(Value value);
-Value stash_pop();
+
 
 InterpretResult run(ObjThreadStack* thread);
 bool callfn(ObjThreadStack* thread, ObjClosure* closure, int argCount);

@@ -4,6 +4,8 @@
 #include "common.h"
 #include "object.h"
 
+#define TEMP_ROOTS_MAX 4
+
 #define ALLOCATE(type, count) \
     (type*)reallocate(NULL, 0, sizeof(type) * (count))
 
@@ -20,6 +22,10 @@
     reallocate(pointer, sizeof(type) * oldCount, 0)
 
 void* reallocate(void* pointer, size_t oldSize, size_t newSize);
+
+void tempRootPush(Value value);
+Value tempRootPop();
+
 void markObject(Obj* object);
 void markValue(Value value);
 void collectGarbage();

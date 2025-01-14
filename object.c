@@ -79,9 +79,9 @@ ObjBlob* newBlob(size_t count) {
     ObjBlob* blob = ALLOCATE_OBJ(ObjBlob, OBJ_BLOB);
     blob->blob = NULL;
     
-    stash_push(OBJ_VAL(blob));
+    tempRootPush(OBJ_VAL(blob));
     blob->blob = reallocate(NULL, 0, count);
-    stash_pop();
+    tempRootPop();
     return blob;
 }
 
@@ -90,9 +90,9 @@ static ObjString* allocateString(char* chars, int length, uint32_t hash) {
     string->length = length;
     string->chars = chars;
     string->hash = hash;
-    stash_push(OBJ_VAL(string));
+    tempRootPush(OBJ_VAL(string));
     tableSet(&vm.strings, string, NIL_VAL);
-    stash_pop();
+    tempRootPop();
     return string;
 }
 
