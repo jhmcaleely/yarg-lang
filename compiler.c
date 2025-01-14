@@ -447,6 +447,10 @@ static void literal(bool canAssign) {
         case TOKEN_MAKE_CORO: emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_CORO); break;
         case TOKEN_MAKE_CHANNEL: emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_CHANNEL); break;
         case TOKEN_RESUME: emitBytes(OP_GET_BUILTIN, BUILTIN_RESUME); break;
+        case TOKEN_SEND: emitBytes(OP_GET_BUILTIN, BUILTIN_SEND); break;
+        case TOKEN_RECEIVE: emitBytes(OP_GET_BUILTIN, BUILTIN_RECEIVE); break;
+        case TOKEN_SHARE: emitBytes(OP_GET_BUILTIN, BUILTIN_SHARE); break;
+        case TOKEN_PEEK: emitBytes(OP_GET_BUILTIN, BUILTIN_PEEK); break;
         case TOKEN_FALSE: emitByte(OP_FALSE); break;
         case TOKEN_NIL: emitByte(OP_NIL); break;
         case TOKEN_TRUE: emitByte(OP_TRUE); break;
@@ -595,9 +599,13 @@ ParseRule rules[] = {
     [TOKEN_MAKE_ISR]      = {literal,  NULL,   PREC_NONE},
     [TOKEN_NIL]           = {literal,  NULL,   PREC_NONE},
     [TOKEN_OR]            = {NULL,     or_,    PREC_OR},
+    [TOKEN_PEEK]          = {literal,     NULL,   PREC_NONE},
     [TOKEN_PRINT]         = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_RECEIVE]       = {literal,  NULL,   PREC_NONE},
     [TOKEN_RESUME]        = {literal,  NULL,   PREC_NONE},
     [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_SEND]          = {literal,   NULL,   PREC_NONE},
+    [TOKEN_SHARE]         = {literal,   NULL,   PREC_NONE},
     [TOKEN_SUPER]         = {super_,   NULL,   PREC_NONE},
     [TOKEN_THIS]          = {this_,    NULL,   PREC_NONE},
     [TOKEN_TRUE]          = {literal,  NULL,   PREC_NONE},

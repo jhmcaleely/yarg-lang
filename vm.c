@@ -12,6 +12,7 @@
 #include "native.h"
 #include "builtin.h"
 #include "threadstack.h"
+#include "channel.h"
 
 VM vm;
 
@@ -320,6 +321,26 @@ InterpretResult run(ObjThreadStack* thread) {
                     }
                     case BUILTIN_MAKE_CHANNEL: {
                         Value builtinFn = OBJ_VAL(newNative(makeChannelBuiltin));
+                        push(thread, builtinFn);
+                        break;
+                    }
+                    case BUILTIN_SEND: {
+                        Value builtinFn = OBJ_VAL(newNative(sendChannelBuiltin));
+                        push(thread, builtinFn);
+                        break;
+                    }
+                    case BUILTIN_RECEIVE: {
+                        Value builtinFn = OBJ_VAL(newNative(receiveChannelBuiltin));
+                        push(thread, builtinFn);
+                        break;
+                    }
+                    case BUILTIN_SHARE: {
+                        Value builtinFn = OBJ_VAL(newNative(shareChannelBuiltin));
+                        push(thread, builtinFn);
+                        break;
+                    }
+                    case BUILTIN_PEEK: {
+                        Value builtinFn = OBJ_VAL(newNative(peekChannelBuiltin));
                         push(thread, builtinFn);
                         break;
                     }

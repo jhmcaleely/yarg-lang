@@ -59,6 +59,10 @@ typedef enum {
     BUILTIN_MAKE_CORO,
     BUILTIN_MAKE_CHANNEL,
     BUILTIN_RESUME,
+    BUILTIN_RECEIVE,
+    BUILTIN_SEND,
+    BUILTIN_PEEK,
+    BUILTIN_SHARE
 } BuiltinFn;
 
 void initChunk(Chunk* chunk);

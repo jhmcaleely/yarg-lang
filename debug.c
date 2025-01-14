@@ -54,6 +54,10 @@ static int builtinInstruction(const char* name, Chunk* chunk, int offset) {
         case BUILTIN_MAKE_CORO: printf("make_coro"); break;
         case BUILTIN_MAKE_CHANNEL: printf("make_channel"); break;
         case BUILTIN_RESUME: printf("resume"); break;
+        case BUILTIN_SEND: printf("send"); break;
+        case BUILTIN_RECEIVE: printf("receive"); break;
+        case BUILTIN_SHARE: printf("share"); break;
+        case BUILTIN_PEEK: printf("peek"); break;
         default: printf("<unknown %4d>", slot); break;
     }
     printf("\n");

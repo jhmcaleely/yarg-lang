@@ -10,3 +10,19 @@ ObjChannel* newChannel() {
     channel->overflow = false;
     return channel;
 }
+
+bool sendChannelBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+    return false;
+}
+
+bool receiveChannelBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+    return false;
+}
+
+bool shareChannelBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+    return false;
+}
+
+bool peekChannelBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+    return false;
+}
