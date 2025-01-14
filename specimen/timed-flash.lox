@@ -20,4 +20,11 @@ var isr = make_isr(led_toggle);
 var timer_isr = make_isr(timer_set);
 
 var timer = alarm_add_repeating_ms(-500, isr);
-alarm_add_in_ms(3000, timer_isr); var msg = receive(chan); print 2; alarm_cancel_repeating(timer);
+
+fun stop_in(n) {
+    alarm_add_in_ms(n, timer_isr); 
+    var msg = receive(chan); 
+    print msg; 
+    alarm_cancel_repeating(timer);
+}
+
