@@ -1,0 +1,23 @@
+var led = 25;
+gpio_init(led);
+gpio_set_direction(led, true);
+
+var led_state = false;
+
+fun led_toggle() {
+    led_state = !led_state;
+    gpio_put(led, led_state);
+}
+
+var chan = make_channel();
+
+fun timer_set() {
+    share(chan, true);
+}
+
+var isr = make_isr(led_toggle);
+
+var timer_isr = make_isr(timer_set);
+
+var timer = alarm_add_repeating_ms(-500, isr);
+alarm_add_in_ms(3000, timer_isr); var msg = receive(chan); print 2; alarm_cancel_repeating(timer);

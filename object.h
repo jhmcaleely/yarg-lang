@@ -16,7 +16,7 @@
 #define IS_NATIVE(value)       isObjType(value, OBJ_NATIVE)
 #define IS_BLOB(value)         isObjType(value, OBJ_BLOB)
 #define IS_THREAD_STACK(value) isObjType(value, OBJ_THREAD_STACK)
-#define IS_CHANNEL(value)      isObjType(value, OBJ_CHANNEL);
+#define IS_CHANNEL(value)      isObjType(value, OBJ_CHANNEL)
 #define IS_STRING(value)       isObjType(value, OBJ_STRING)
 
 #define AS_BOUND_METHOD(value) ((ObjBoundMethod*)AS_OBJ(value))
@@ -113,7 +113,7 @@ typedef struct {
 
 typedef struct {
     Obj obj;
-    bool present;
+    volatile bool present;
     bool overflow;
     Value data;
 } ObjChannel;
