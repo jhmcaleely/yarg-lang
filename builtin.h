@@ -6,5 +6,6 @@
 bool makeIsrBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result);
 bool makeCoroBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result);
 bool resumeBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result);
+bool makeChannelBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result);
 
 #endif

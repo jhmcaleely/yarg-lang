@@ -108,14 +108,14 @@ static void blackenObject(Obj* object) {
         case OBJ_UPVALUE:
             markValue(((ObjUpvalue*)object)->closed);
             break;
-        case OBJ_NATIVE:
-        case OBJ_BLOB:
-            break;
         case OBJ_THREAD_STACK: {
             ObjThreadStack* stack = (ObjThreadStack*)object;
             markThread(stack);
             break;
         }
+        case OBJ_NATIVE:
+        case OBJ_BLOB:
+        case OBJ_CHANNEL:
         case OBJ_STRING:
             break;
     }
@@ -174,6 +174,9 @@ static void freeObject(Obj* object) {
         }
         case OBJ_UPVALUE:
             FREE(ObjUpvalue, object);
+            break;
+        case OBJ_CHANNEL:
+            FREE(ObjChannel, object);
             break;
     }
 }

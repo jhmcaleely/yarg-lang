@@ -48,7 +48,8 @@ add_executable(clox
     object.c
     table.c
     native.c
-    builtin.c)
+    builtin.c
+    channel.c)
 
 add_compile_definitions(NAN_BOXING)
 add_compile_definitions(DEBUG_PRINT_CODE)

@@ -6,6 +6,7 @@
 #include "builtin.h"
 #include "native.h"
 #include "threadstack.h"
+#include "channel.h"
 #include "vm.h"
 
 bool makeIsrBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
@@ -81,5 +82,17 @@ bool resumeBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* res
     }
 
     *result = NIL_VAL;
+    return true;
+}
+
+bool makeChannelBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+    if (argCount != 0) {
+        runtimeError(thread, "Expected 0 arguments but got %d.", argCount);
+        return false;
+    }
+
+    ObjChannel* channel = newChannel();
+
+    *result = OBJ_VAL(channel);
     return true;
 }

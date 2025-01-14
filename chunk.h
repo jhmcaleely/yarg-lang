@@ -57,6 +57,7 @@ typedef struct {
 typedef enum {
     BUILTIN_MAKE_ISR,
     BUILTIN_MAKE_CORO,
+    BUILTIN_MAKE_CHANNEL,
     BUILTIN_RESUME,
 } BuiltinFn;
 

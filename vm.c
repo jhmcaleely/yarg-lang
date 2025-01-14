@@ -318,6 +318,11 @@ InterpretResult run(ObjThreadStack* thread) {
                         push(thread, builtinFn);
                         break;
                     }
+                    case BUILTIN_MAKE_CHANNEL: {
+                        Value builtinFn = OBJ_VAL(newNative(makeChannelBuiltin));
+                        push(thread, builtinFn);
+                        break;
+                    }
                 }
                 break;
             }

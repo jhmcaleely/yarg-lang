@@ -16,6 +16,7 @@
 #define IS_NATIVE(value)       isObjType(value, OBJ_NATIVE)
 #define IS_BLOB(value)         isObjType(value, OBJ_BLOB)
 #define IS_THREAD_STACK(value) isObjType(value, OBJ_THREAD_STACK)
+#define IS_CHANNEL(value)      isObjType(value, OBJ_CHANNEL);
 #define IS_STRING(value)       isObjType(value, OBJ_STRING)
 
 #define AS_BOUND_METHOD(value) ((ObjBoundMethod*)AS_OBJ(value))
@@ -27,6 +28,7 @@
     (((ObjNative*)AS_OBJ(value))->function)
 #define AS_BLOB(value)         ((ObjBlob*)AS_OBJ(value))
 #define AS_THREAD_STACK(value) ((ObjThreadStack*)AS_OBJ(value))
+#define AS_CHANNEL(value)      ((ObjChannel*)AS_OBJ(value))
 #define AS_STRING(value)       ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value)      (((ObjString*)AS_OBJ(value))->chars)
 
@@ -39,6 +41,7 @@ typedef enum {
     OBJ_NATIVE,
     OBJ_BLOB,
     OBJ_THREAD_STACK,
+    OBJ_CHANNEL,
     OBJ_STRING,
     OBJ_UPVALUE
 } ObjType;
@@ -107,6 +110,13 @@ typedef struct {
     Value reciever;
     ObjClosure* method;
 } ObjBoundMethod;
+
+typedef struct {
+    Obj obj;
+    bool present;
+    bool overflow;
+    Value data;
+} ObjChannel;
 
 typedef struct ObjThreadStack ObjThreadStack;
 

@@ -46,6 +46,20 @@ static int jumpInstruction(const char* name, int sign, Chunk* chunk, int offset)
     return offset + 3;
 }
 
+static int builtinInstruction(const char* name, Chunk* chunk, int offset) {
+    uint8_t slot = chunk->code[offset + 1];
+    printf("%-16s ", name);
+    switch (slot) {
+        case BUILTIN_MAKE_ISR: printf("make_isr"); break;
+        case BUILTIN_MAKE_CORO: printf("make_coro"); break;
+        case BUILTIN_MAKE_CHANNEL: printf("make_channel"); break;
+        case BUILTIN_RESUME: printf("resume"); break;
+        default: printf("<unknown %4d>", slot); break;
+    }
+    printf("\n");
+    return offset + 2;
+}
+
 int disassembleInstruction(Chunk* chunk, int offset) {
     printf("%04d ", offset);
     if (offset > 0 && chunk->lines[offset] == chunk->lines[offset - 1]) {
@@ -67,7 +81,7 @@ int disassembleInstruction(Chunk* chunk, int offset) {
         case OP_POP:
             return simpleInstruction("OP_POP", offset);
         case OP_GET_BUILTIN:
-            return byteInstruction("OP_GET_BUILTIN", chunk, offset);
+            return builtinInstruction("OP_GET_BUILTIN", chunk, offset);
         case OP_GET_LOCAL:
             return byteInstruction("OP_GET_LOCAL", chunk, offset);
         case OP_SET_LOCAL:

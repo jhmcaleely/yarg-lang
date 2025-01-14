@@ -149,6 +149,17 @@ static void printThreadStack(ObjThreadStack* thread) {
           , thread->type == THREAD_ISR ? "i" : "n");
 }
 
+static void printChannel(ObjChannel* channel) {
+    printf("<ch ");
+    if (channel->present) {
+        printValue(channel->data);
+    }
+    else {
+        printf(" NIL");
+    }
+    printf(">");
+}
+
 void printObject(Value value) {
     switch (OBJ_TYPE(value)) {
         case OBJ_BOUND_METHOD:
@@ -174,6 +185,9 @@ void printObject(Value value) {
             break;
         case OBJ_THREAD_STACK:
             printThreadStack(AS_THREAD_STACK(value));
+            break;
+        case OBJ_CHANNEL:
+            printChannel(AS_CHANNEL(value));
             break;
         case OBJ_STRING:
             printf("%s", AS_CSTRING(value));
