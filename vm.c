@@ -37,11 +37,6 @@ static void defineNative(const char* name, NativeFn function) {
 void initVM() {
     initThread(&vm.core0, THREAD_NORMAL);
 
-    vm.coroList = NULL;
-
-    vm.isrStack = NULL;
-    vm.isrCount = 0;
-
     vm.allocationTop = vm.allocationStash;
 
     vm.objects = NULL;

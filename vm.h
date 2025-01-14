@@ -7,13 +7,7 @@
 #include "threadstack.h"
 
 typedef struct {
-    // temp hack. should be on heap...
     ObjThreadStack core0;
-
-    ObjThreadStack* coroList;
-
-    ObjThreadStack* isrStack;
-    int isrCount;
 
     Table globals;
     Table strings;

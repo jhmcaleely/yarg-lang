@@ -43,7 +43,6 @@ typedef struct ObjThreadStack {
 
     ThreadType type;
     ThreadState state;
-    ObjThreadStack* nextThread;
 } ObjThreadStack;
 
 void initThread(ObjThreadStack* thread, ThreadType type);

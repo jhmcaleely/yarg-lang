@@ -11,7 +11,6 @@
 
 void initThread(ObjThreadStack* thread, ThreadType type) {
     thread->type = type;
-    thread->nextThread = NULL;
     thread->entryFunction = NULL;
     thread->state = EXEC_SUSPENDED;
 

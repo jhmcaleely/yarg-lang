@@ -185,18 +185,6 @@ static void markRoots() {
 
     markThread(&vm.core0);
 
-    ObjThreadStack* coros = vm.coroList;
-    while (coros != NULL) {
-        markThread(coros);
-        coros = coros->nextThread;
-    }
-
-    ObjThreadStack* isrs = vm.isrStack;
-    while (isrs != NULL) {
-        markThread(isrs);
-        isrs = isrs->nextThread;
-    }
-
     for (Value* slot = vm.allocationStash; slot < vm.allocationTop; slot++) {
         markValue(*slot);
     }

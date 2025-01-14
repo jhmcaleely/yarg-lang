@@ -23,9 +23,6 @@ bool makeIsrBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* re
 
     ObjThreadStack* isrThread = newThread(THREAD_ISR);
     isrThread->entryFunction = closure;
-    isrThread->nextThread = vm.isrStack;
-    vm.isrStack = isrThread;
-    vm.isrCount++;
 
 
     push(isrThread, OBJ_VAL(closure));
@@ -49,8 +46,6 @@ bool makeCoroBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* r
 
     ObjThreadStack* coroThread = newThread(THREAD_NORMAL);
     coroThread->entryFunction = closure;
-    coroThread->nextThread = vm.coroList;
-    vm.coroList = coroThread;
 
     push(coroThread, OBJ_VAL(closure));
     callfn(coroThread, closure, 0);
