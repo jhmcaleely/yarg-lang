@@ -15,9 +15,9 @@ fun timer_set() {
     share(chan, true);
 }
 
-var isr = make_isr(led_toggle);
+var isr = make_routine(led_toggle, true);
 
-var timer_isr = make_isr(timer_set);
+var timer_isr = make_routine(timer_set, true);
 
 var timer = alarm_add_repeating_ms(-500, isr);
 
