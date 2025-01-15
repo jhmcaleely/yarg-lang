@@ -7,7 +7,7 @@ fun flash(count) {
     var state = false;
 
     fun sleep() {
-        while (true) {
+        for (var i = 0; i < count; i = i + 1) {
             sleep_ms(500);
             yield;
         }
@@ -15,7 +15,7 @@ fun flash(count) {
     var sleeper = make_routine(sleep, false);
 
     fun toggle() {
-        while (true) {
+        for (var i = 0; i < count; i = i + 1) {
             state = !state;
             gpio_put(led, state);
             resume(sleeper);
@@ -25,7 +25,7 @@ fun flash(count) {
 
     var flasher = make_routine(toggle, false);
 
-    for (var i = 0; i < count * 2; i = i + 1) {
+    while (true) {
         resume(flasher);
     }
 }
