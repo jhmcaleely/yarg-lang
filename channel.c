@@ -15,7 +15,7 @@ ObjChannel* newChannel() {
     return channel;
 }
 
-bool sendChannelBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+bool sendChannelBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
     if (argCount != 2) {
         runtimeError(thread, "Expected 2 arguments, got %d.", argCount);
         return false;
@@ -39,7 +39,7 @@ bool sendChannelBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value
     return true;
 }
 
-bool receiveChannelBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+bool receiveChannelBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
     if (argCount != 1) {
         runtimeError(thread, "Expected 1 arguments, got %d.", argCount);
         return false;
@@ -62,7 +62,7 @@ bool receiveChannelBuiltin(ObjThreadStack* thread, int argCount, Value* args, Va
     return true;
 }
 
-bool shareChannelBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+bool shareChannelBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
     if (argCount != 2) {
         runtimeError(thread, "Expected 2 arguments, got %d.", argCount);
         return false;
@@ -83,7 +83,7 @@ bool shareChannelBuiltin(ObjThreadStack* thread, int argCount, Value* args, Valu
     return true;
 }
 
-bool peekChannelBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+bool peekChannelBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
     if (argCount != 1) {
         runtimeError(thread, "Expected 1 arguments, got %d.", argCount);
         return false;

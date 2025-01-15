@@ -25,7 +25,7 @@ typedef enum {
     EXEC_ERROR
 } ThreadState;
 
-typedef struct ObjThreadStack {
+typedef struct ObjRoutine {
     Obj obj;
 
     CallFrame frames[FRAMES_MAX];
@@ -40,18 +40,18 @@ typedef struct ObjThreadStack {
 
     ThreadType type;
     ThreadState state;
-} ObjThreadStack;
+} ObjRoutine;
 
-void initThread(ObjThreadStack* thread, ThreadType type);
-ObjThreadStack* newThreadStack(ThreadType type);
-void resetThread(ObjThreadStack* thread);
+void initRoutine(ObjRoutine* thread, ThreadType type);
+ObjRoutine* newRoutine(ThreadType type);
+void resetRoutine(ObjRoutine* thread);
 
-void markThread(ObjThreadStack* thread);
+void markRoutine(ObjRoutine* thread);
 
-void push(ObjThreadStack* thread, Value value);
-Value pop(ObjThreadStack* thread);
-Value peek(ObjThreadStack* thread, int distance);
+void push(ObjRoutine* thread, Value value);
+Value pop(ObjRoutine* thread);
+Value peek(ObjRoutine* thread, int distance);
 
-void runtimeError(ObjThreadStack* thread, const char* format, ...);
+void runtimeError(ObjRoutine* thread, const char* format, ...);
 
 #endif

@@ -12,7 +12,7 @@
 #include "channel.h"
 #include "vm.h"
 
-bool makeRoutineBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+bool makeRoutineBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
     if (argCount != 2) {
         runtimeError(thread, "Expected 2 arguments but got %d.", argCount);
         return false;
@@ -25,7 +25,7 @@ bool makeRoutineBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value
     ObjClosure* closure = AS_CLOSURE(args[0]);
     bool isISR = AS_BOOL(args[1]);
 
-    ObjThreadStack* newThread = newThreadStack(isISR ? THREAD_ISR : THREAD_NORMAL);
+    ObjRoutine* newThread = newRoutine(isISR ? THREAD_ISR : THREAD_NORMAL);
     newThread->entryFunction = closure;
 
 
@@ -36,20 +36,20 @@ bool makeRoutineBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value
     return true;
 }
 
-bool resumeBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+bool resumeBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
     if (argCount != 1) {
         runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
         return false;
     }
-    if (!IS_THREAD_STACK(args[0])) {
-        runtimeError(thread, "Argument to resume must be coroutine.");
+    if (!IS_ROUTINE(args[0])) {
+        runtimeError(thread, "Argument to resume must be a routine.");
         return false;
     }
 
-    ObjThreadStack* coroThread = AS_THREAD_STACK(args[0]);
+    ObjRoutine* coroThread = AS_ROUTINE(args[0]);
 
     if (coroThread->state != EXEC_SUSPENDED) {
-        runtimeError(thread, "coroutine must be suspended to resume.");
+        runtimeError(thread, "routine must be suspended to resume.");
         return false;
     }
 
@@ -76,17 +76,17 @@ void nativeCoreEntry() {
 }
 
 
-bool startBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+bool startBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
     if (argCount != 1) {
         runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
         return false;
     }
-    if (!IS_THREAD_STACK(args[0])) {
+    if (!IS_ROUTINE(args[0])) {
         runtimeError(thread, "Argument to start must be coroutine.");
         return false;
     }
 
-    ObjThreadStack* coroThread = AS_THREAD_STACK(args[0]);
+    ObjRoutine* coroThread = AS_ROUTINE(args[0]);
 
     if (coroThread->state != EXEC_SUSPENDED) {
         runtimeError(thread, "coroutine must be suspended to resume.");
@@ -109,7 +109,7 @@ bool startBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* resu
     return true;
 }
 
-bool makeChannelBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+bool makeChannelBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
     if (argCount != 0) {
         runtimeError(thread, "Expected 0 arguments but got %d.", argCount);
         return false;

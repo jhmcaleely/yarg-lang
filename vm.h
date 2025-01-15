@@ -9,8 +9,8 @@
 #include "routine.h"
 
 typedef struct {
-    ObjThreadStack core0;
-    ObjThreadStack* core1;
+    ObjRoutine core0;
+    ObjRoutine* core1;
 
     Table globals;
     Table strings;
@@ -41,8 +41,8 @@ InterpretResult interpret(const char* source);
 
 
 
-InterpretResult run(ObjThreadStack* thread);
-bool callfn(ObjThreadStack* thread, ObjClosure* closure, int argCount);
+InterpretResult run(ObjRoutine* thread);
+bool callfn(ObjRoutine* thread, ObjClosure* closure, int argCount);
 void fatalMemoryError(const char* format, ...);
 
 #endif

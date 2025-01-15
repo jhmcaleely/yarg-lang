@@ -9,29 +9,28 @@
 
 #include "memory.h"
 
-void initThread(ObjThreadStack* thread, ThreadType type) {
+void initRoutine(ObjRoutine* thread, ThreadType type) {
     thread->type = type;
     thread->entryFunction = NULL;
     thread->state = EXEC_SUSPENDED;
 
-    resetThread(thread);
+    resetRoutine(thread);
 }
 
-void resetThread(ObjThreadStack* thread) {
+void resetRoutine(ObjRoutine* thread) {
     thread->stackTop = thread->stack;
     thread->frameCount = 0;
 
     thread->openUpvalues = NULL;
 }
 
-ObjThreadStack* newThreadStack(ThreadType type) {
-    ObjThreadStack* thread = ALLOCATE_OBJ(ObjThreadStack,
-                                          OBJ_THREAD_STACK);
-    initThread(thread, type);
+ObjRoutine* newRoutine(ThreadType type) {
+    ObjRoutine* thread = ALLOCATE_OBJ(ObjRoutine, OBJ_ROUTINE);
+    initRoutine(thread, type);
     return thread;
 }
 
-void markThread(ObjThreadStack* thread) {
+void markRoutine(ObjRoutine* thread) {
     for (Value* slot = thread->stack; slot < thread->stackTop; slot++) {
         markValue(*slot);
     }
@@ -49,7 +48,7 @@ void markThread(ObjThreadStack* thread) {
     markObject((Obj*)thread->entryFunction);
 }
 
-void runtimeError(ObjThreadStack* thread, const char* format, ...) {
+void runtimeError(ObjRoutine* thread, const char* format, ...) {
     va_list args;
     va_start(args, format);
     vfprintf(stderr, format, args);
@@ -72,10 +71,10 @@ void runtimeError(ObjThreadStack* thread, const char* format, ...) {
     }
 
     thread->state = EXEC_ERROR;
-    resetThread(thread);
+    resetRoutine(thread);
 }
 
-void push(ObjThreadStack* thread, Value value) {
+void push(ObjRoutine* thread, Value value) {
     *thread->stackTop = value;
     thread->stackTop++;
 
@@ -84,11 +83,11 @@ void push(ObjThreadStack* thread, Value value) {
     }
 }
 
-Value pop(ObjThreadStack* thread) {
+Value pop(ObjRoutine* thread) {
     thread->stackTop--;
     return *thread->stackTop;
 }
 
-Value peek(ObjThreadStack* thread, int distance) {
+Value peek(ObjRoutine* thread, int distance) {
     return thread->stackTop[-1 - distance];
 }

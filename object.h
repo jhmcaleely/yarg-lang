@@ -15,7 +15,7 @@
 #define IS_INSTANCE(value)     isObjType(value, OBJ_INSTANCE)
 #define IS_NATIVE(value)       isObjType(value, OBJ_NATIVE)
 #define IS_BLOB(value)         isObjType(value, OBJ_BLOB)
-#define IS_THREAD_STACK(value) isObjType(value, OBJ_THREAD_STACK)
+#define IS_ROUTINE(value)      isObjType(value, OBJ_ROUTINE)
 #define IS_CHANNEL(value)      isObjType(value, OBJ_CHANNEL)
 #define IS_STRING(value)       isObjType(value, OBJ_STRING)
 
@@ -27,7 +27,7 @@
 #define AS_NATIVE(value) \
     (((ObjNative*)AS_OBJ(value))->function)
 #define AS_BLOB(value)         ((ObjBlob*)AS_OBJ(value))
-#define AS_THREAD_STACK(value) ((ObjThreadStack*)AS_OBJ(value))
+#define AS_ROUTINE(value)      ((ObjRoutine*)AS_OBJ(value))
 #define AS_CHANNEL(value)      ((ObjChannel*)AS_OBJ(value))
 #define AS_STRING(value)       ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value)      (((ObjString*)AS_OBJ(value))->chars)
@@ -40,7 +40,7 @@ typedef enum {
     OBJ_INSTANCE,
     OBJ_NATIVE,
     OBJ_BLOB,
-    OBJ_THREAD_STACK,
+    OBJ_ROUTINE,
     OBJ_CHANNEL,
     OBJ_STRING,
     OBJ_UPVALUE
@@ -60,7 +60,7 @@ typedef struct {
     ObjString* name;
 } ObjFunction;
 
-typedef bool (*NativeFn)(ObjThreadStack* thread, int argCount, Value* args, Value* result);
+typedef bool (*NativeFn)(ObjRoutine* thread, int argCount, Value* args, Value* result);
 
 typedef struct {
     Obj obj;
@@ -118,7 +118,7 @@ typedef struct {
     Value data;
 } ObjChannel;
 
-typedef struct ObjThreadStack ObjThreadStack;
+typedef struct ObjRoutine ObjRoutine;
 
 #define ALLOCATE_OBJ(type, objectType) \
     (type*)allocateObject(sizeof(type), objectType)

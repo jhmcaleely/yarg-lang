@@ -12,7 +12,7 @@
 #include "routine.h"
 #include "vm.h"
 
-bool clockNative(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+bool clockNative(ObjRoutine* thread, int argCount, Value* args, Value* result) {
     if (argCount != 0) {
         runtimeError(thread, "Expected 0 arguments but got %d.", argCount);
         return false;
@@ -22,7 +22,7 @@ bool clockNative(ObjThreadStack* thread, int argCount, Value* args, Value* resul
     return true;
 }
 
-bool sleepNative(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+bool sleepNative(ObjRoutine* thread, int argCount, Value* args, Value* result) {
     if (argCount != 1) {
         runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
         return false;
@@ -38,7 +38,7 @@ bool sleepNative(ObjThreadStack* thread, int argCount, Value* args, Value* resul
     return true;
 }
 
-bool gpioInitNative(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+bool gpioInitNative(ObjRoutine* thread, int argCount, Value* args, Value* result) {
     if (argCount != 1) {
         runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
         return false;
@@ -54,7 +54,7 @@ bool gpioInitNative(ObjThreadStack* thread, int argCount, Value* args, Value* re
     return true;
 }
 
-bool gpioSetDirectionNative(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+bool gpioSetDirectionNative(ObjRoutine* thread, int argCount, Value* args, Value* result) {
     if (argCount != 2) {
         runtimeError(thread, "Expected 2 arguments but got %d.", argCount);
         return false;
@@ -75,7 +75,7 @@ bool gpioSetDirectionNative(ObjThreadStack* thread, int argCount, Value* args, V
     return true;
 }
 
-bool gpioPutNative(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+bool gpioPutNative(ObjRoutine* thread, int argCount, Value* args, Value* result) {
     if (argCount != 2) {
         runtimeError(thread, "Expected 2 arguments but got %d.", argCount);
         return false;
@@ -92,7 +92,7 @@ bool gpioPutNative(ObjThreadStack* thread, int argCount, Value* args, Value* res
 }
 
 static int64_t nativeAlarmCallback(alarm_id_t id, void* user_data) {
-    ObjThreadStack* thread = AS_THREAD_STACK((uintptr_t)user_data);
+    ObjRoutine* thread = AS_ROUTINE((uintptr_t)user_data);
 
     printf("#nativeAlarmCallback %d", id);
     printObject(OBJ_VAL(thread));
@@ -108,7 +108,7 @@ static int64_t nativeAlarmCallback(alarm_id_t id, void* user_data) {
 }
 
 static bool nativeRepeatingCallback(struct repeating_timer* t) {
-    ObjThreadStack* thread = AS_THREAD_STACK((uintptr_t)t->user_data);
+    ObjRoutine* thread = AS_ROUTINE((uintptr_t)t->user_data);
 
     printf("#nativeRepeatingAlarmCallback %d", t->alarm_id);
     printObject(OBJ_VAL(thread));
@@ -122,17 +122,21 @@ static bool nativeRepeatingCallback(struct repeating_timer* t) {
     return true;
 }
 
-bool alarmAddInMSNative(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+bool alarmAddInMSNative(ObjRoutine* thread, int argCount, Value* args, Value* result) {
     if (argCount != 2) {
         runtimeError(thread, "Expected 2 arguments but got %d.", argCount);
         return false;
     }
-    if (!IS_NUMBER(args[0]) || !IS_THREAD_STACK(args[1])) {
-        runtimeError(thread, "Argument must be a number and an isr stack.");
+    if (!IS_NUMBER(args[0]) || !IS_ROUTINE(args[1])) {
+        runtimeError(thread, "Argument must be a number and a routine.");
         return false;
     }
 
-    ObjThreadStack* isrThread = AS_THREAD_STACK(args[1]);
+    ObjRoutine* isrThread = AS_ROUTINE(args[1]);
+    if (isrThread->type != THREAD_ISR) {
+        runtimeError(thread, "Argument must be an ISR routine.");
+        return false;
+    }
 
     isrThread->state = EXEC_RUNNING;
     add_alarm_in_ms(AS_NUMBER(args[0]), nativeAlarmCallback, isrThread, false);
@@ -141,17 +145,22 @@ bool alarmAddInMSNative(ObjThreadStack* thread, int argCount, Value* args, Value
     return true;
 }
 
-bool alarmAddRepeatingMSNative(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+bool alarmAddRepeatingMSNative(ObjRoutine* thread, int argCount, Value* args, Value* result) {
     if (argCount != 2) {
         runtimeError(thread, "Expected 2 arguments but got %d.", argCount);
         return false;
     }
-    if (!IS_NUMBER(args[0]) || !IS_THREAD_STACK(args[1])) {
+    if (!IS_NUMBER(args[0]) || !IS_ROUTINE(args[1])) {
         runtimeError(thread, "Argument must be a number and an isr stack.");
         return false;
     }
 
-    ObjThreadStack* isrThread = AS_THREAD_STACK(args[1]);
+    ObjRoutine* isrThread = AS_ROUTINE(args[1]);
+    if (isrThread->type != THREAD_ISR) {
+        runtimeError(thread, "Argument must be an ISR routine.");
+        return false;
+    }
+
     ObjBlob* handle = newBlob(sizeof(repeating_timer_t));
 
     isrThread->state = EXEC_RUNNING;
@@ -161,7 +170,7 @@ bool alarmAddRepeatingMSNative(ObjThreadStack* thread, int argCount, Value* args
     return true;
 }
 
-bool alarmCancelRepeatingMSNative(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+bool alarmCancelRepeatingMSNative(ObjRoutine* thread, int argCount, Value* args, Value* result) {
     if (argCount != 1) {
         runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
         return false;

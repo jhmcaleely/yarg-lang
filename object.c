@@ -143,10 +143,10 @@ static void printFunction(ObjFunction* function) {
     printf("<fn %s>", function->name->chars);
 }
 
-static void printThreadStack(ObjThreadStack* thread) {
-    printf("<ts 0x%8.x:%s>"
-          , thread
-          , thread->type == THREAD_ISR ? "i" : "n");
+static void printRoutine(ObjRoutine* thread) {
+    printf("<R%s 0x%8.x>"
+          , thread->type == THREAD_ISR ? "i" : "n"
+          , thread);
 }
 
 static void printChannel(ObjChannel* channel) {
@@ -183,8 +183,8 @@ void printObject(Value value) {
         case OBJ_BLOB:
             printf("<blob 0x%.8x>", AS_BLOB(value)->blob);
             break;
-        case OBJ_THREAD_STACK:
-            printThreadStack(AS_THREAD_STACK(value));
+        case OBJ_ROUTINE:
+            printRoutine(AS_ROUTINE(value));
             break;
         case OBJ_CHANNEL:
             printChannel(AS_CHANNEL(value));

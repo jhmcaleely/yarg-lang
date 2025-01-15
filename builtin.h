@@ -3,9 +3,9 @@
 
 #include "value.h"
 
-bool makeRoutineBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result);
-bool resumeBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result);
-bool startBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result);
-bool makeChannelBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result);
+bool makeRoutineBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result);
+bool resumeBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result);
+bool startBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result);
+bool makeChannelBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result);
 
 #endif

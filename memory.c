@@ -126,9 +126,9 @@ static void blackenObject(Obj* object) {
         case OBJ_UPVALUE:
             markValue(((ObjUpvalue*)object)->closed);
             break;
-        case OBJ_THREAD_STACK: {
-            ObjThreadStack* stack = (ObjThreadStack*)object;
-            markThread(stack);
+        case OBJ_ROUTINE: {
+            ObjRoutine* stack = (ObjRoutine*)object;
+            markRoutine(stack);
             break;
         }
         case OBJ_NATIVE:
@@ -181,8 +181,8 @@ static void freeObject(Obj* object) {
             FREE(ObjBlob, object);
             break;
         }
-        case OBJ_THREAD_STACK:
-            FREE(ObjThreadStack, object);
+        case OBJ_ROUTINE:
+            FREE(ObjRoutine, object);
             break;
         case OBJ_STRING: {
             ObjString* string = (ObjString*)object;
@@ -202,7 +202,7 @@ static void freeObject(Obj* object) {
 static void markRoots() {
 
     // Don't use markObject, as this is not on the heap.
-    markThread(&vm.core0);
+    markRoutine(&vm.core0);
     
     markObject((Obj*)vm.core1);
 

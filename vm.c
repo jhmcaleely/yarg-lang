@@ -37,10 +37,10 @@ static void defineNative(const char* name, NativeFn function) {
 void initVM() {
     
     // We have an Obj here not on the heap. hack up its init.
-    vm.core0.obj.type = OBJ_THREAD_STACK;
+    vm.core0.obj.type = OBJ_ROUTINE;
     vm.core0.obj.isMarked = false;
     vm.core0.obj.next = NULL;
-    initThread(&vm.core0, THREAD_NORMAL);
+    initRoutine(&vm.core0, THREAD_NORMAL);
 
     vm.core1 = NULL;
 
@@ -79,7 +79,7 @@ void freeVM() {
     freeObjects();
 }
 
-bool callfn(ObjThreadStack* thread, ObjClosure* closure, int argCount) {
+bool callfn(ObjRoutine* thread, ObjClosure* closure, int argCount) {
     if (argCount != closure->function->arity) {
         runtimeError(thread, "Expected %d arguments but got %d.",
                      closure->function->arity, argCount);
@@ -98,7 +98,7 @@ bool callfn(ObjThreadStack* thread, ObjClosure* closure, int argCount) {
     return true;
 }
 
-static bool callValue(ObjThreadStack* thread, Value callee, int argCount) {
+static bool callValue(ObjRoutine* thread, Value callee, int argCount) {
     if (IS_OBJ(callee)) {
         switch (OBJ_TYPE(callee)) {
             case OBJ_BOUND_METHOD: {
@@ -139,7 +139,7 @@ static bool callValue(ObjThreadStack* thread, Value callee, int argCount) {
     return false;
 }
 
-static bool invokeFromClass(ObjThreadStack* thread, ObjClass* klass, ObjString* name,
+static bool invokeFromClass(ObjRoutine* thread, ObjClass* klass, ObjString* name,
                             int argCount) {
     Value method;
     if (!tableGet(&klass->methods, name, &method)) {
@@ -149,7 +149,7 @@ static bool invokeFromClass(ObjThreadStack* thread, ObjClass* klass, ObjString* 
     return callfn(thread, AS_CLOSURE(method), argCount);
 }
 
-static bool invoke(ObjThreadStack* thread, ObjString* name, int argCount) {
+static bool invoke(ObjRoutine* thread, ObjString* name, int argCount) {
     Value receiver = peek(thread, argCount);
 
     if (!IS_INSTANCE(receiver)) {
@@ -168,7 +168,7 @@ static bool invoke(ObjThreadStack* thread, ObjString* name, int argCount) {
     return invokeFromClass(thread, instance->klass, name, argCount);
 }
 
-static bool bindMethod(ObjThreadStack* thread, ObjClass* klass, ObjString* name) {
+static bool bindMethod(ObjRoutine* thread, ObjClass* klass, ObjString* name) {
     Value method;
     if (!tableGet(&klass->methods, name, &method)) {
         runtimeError(thread, "Undefined property '%s'.", name->chars);
@@ -181,7 +181,7 @@ static bool bindMethod(ObjThreadStack* thread, ObjClass* klass, ObjString* name)
     return true;
 }
 
-static ObjUpvalue* captureUpvalue(ObjThreadStack* thread, Value* local) {
+static ObjUpvalue* captureUpvalue(ObjRoutine* thread, Value* local) {
     ObjUpvalue* prevUpvalue = NULL;
     ObjUpvalue* upvalue = thread->openUpvalues;
     while (upvalue != NULL && upvalue->location > local) {
@@ -205,7 +205,7 @@ static ObjUpvalue* captureUpvalue(ObjThreadStack* thread, Value* local) {
     return createdUpvalue;
 }
 
-static void closeUpvalues(ObjThreadStack* thread, Value* last) {
+static void closeUpvalues(ObjRoutine* thread, Value* last) {
     while (thread->openUpvalues != NULL && thread->openUpvalues->location >= last) {
         ObjUpvalue* upvalue = thread->openUpvalues;
         upvalue->closed = *upvalue->location;
@@ -214,7 +214,7 @@ static void closeUpvalues(ObjThreadStack* thread, Value* last) {
     }
 }
 
-static void defineMethod(ObjThreadStack* thread, ObjString* name) {
+static void defineMethod(ObjRoutine* thread, ObjString* name) {
     Value method = peek(thread, 0);
     ObjClass* klass = AS_CLASS(peek(thread, 1));
     tableSet(&klass->methods, name, method);
@@ -225,7 +225,7 @@ static bool isFalsey(Value value) {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
-static void concatenate(ObjThreadStack* thread) {
+static void concatenate(ObjRoutine* thread) {
     ObjString* b = AS_STRING(peek(thread, 0));
     ObjString* a = AS_STRING(peek(thread, 1));
 
@@ -241,7 +241,7 @@ static void concatenate(ObjThreadStack* thread) {
     push(thread, OBJ_VAL(result));
 }
 
-InterpretResult run(ObjThreadStack* thread) {
+InterpretResult run(ObjRoutine* thread) {
     CallFrame* frame = &thread->frames[thread->frameCount - 1];
     thread->state = EXEC_RUNNING;
 
