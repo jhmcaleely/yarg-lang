@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "compiler.h"
 #include "memory.h"
@@ -29,7 +30,10 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
     }
 
     void* result = realloc(pointer, newSize);
-    if (result == NULL) exit(1);
+    if (result == NULL) {
+        printf("help! no memory.");
+        exit(1);
+    }
     return result;
 }
 
@@ -197,7 +201,10 @@ static void freeObject(Obj* object) {
 
 static void markRoots() {
 
+    // Don't use markObject, as this is not on the heap.
     markThread(&vm.core0);
+    
+    markObject((Obj*)vm.core1);
 
     for (Value* slot = vm.tempRoots; slot < vm.tempRootsTop; slot++) {
         markValue(*slot);

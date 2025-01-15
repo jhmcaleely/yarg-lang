@@ -35,7 +35,14 @@ static void defineNative(const char* name, NativeFn function) {
 }
 
 void initVM() {
+    
+    // We have an Obj here not on the heap. hack up its init.
+    vm.core0.obj.type = OBJ_THREAD_STACK;
+    vm.core0.obj.isMarked = false;
+    vm.core0.obj.next = NULL;
     initThread(&vm.core0, THREAD_NORMAL);
+
+    vm.core1 = NULL;
 
     vm.tempRootsTop = vm.tempRoots;
 
@@ -295,8 +302,19 @@ InterpretResult run(ObjThreadStack* thread) {
                         push(thread, builtinFn);
                         break;
                     }
+                    case BUILTIN_MAKE_MAIN: {
+                        Value builtinFn = OBJ_VAL(newNative(makeMainBuiltin));
+                        push(thread, builtinFn);
+                        break;
+
+                    }
                     case BUILTIN_RESUME: {
                         Value builtinFn = OBJ_VAL(newNative(resumeBuiltin));
+                        push(thread, builtinFn);
+                        break;
+                    }
+                    case BUILTIN_START: {
+                        Value builtinFn = OBJ_VAL(newNative(startBuiltin));
                         push(thread, builtinFn);
                         break;
                     }

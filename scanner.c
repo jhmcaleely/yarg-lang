@@ -136,6 +136,7 @@ static TokenType identifierType() {
                             }
                         }
                         break;
+                    case 'm': return checkKeyword(6, 3, "ain", TOKEN_MAKE_MAIN);
                 }
             }
             break;
@@ -169,6 +170,7 @@ static TokenType identifierType() {
                 switch (scanner.start[1]) {
                     case 'e': return checkKeyword(2, 2, "nd", TOKEN_SEND);
                     case 'h': return checkKeyword(2, 3, "are", TOKEN_SHARE);
+                    case 't': return checkKeyword(2, 3, "art", TOKEN_START);
                     case 'u': return checkKeyword(2, 3, "per", TOKEN_SUPER);
                 }
             }

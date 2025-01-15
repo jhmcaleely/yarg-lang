@@ -445,11 +445,13 @@ static void literal(bool canAssign) {
     switch (parser.previous.type) {
         case TOKEN_MAKE_ISR: emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_ISR); break;
         case TOKEN_MAKE_CORO: emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_CORO); break;
+        case TOKEN_MAKE_MAIN: emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_MAIN); break;
         case TOKEN_MAKE_CHANNEL: emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_CHANNEL); break;
         case TOKEN_RESUME: emitBytes(OP_GET_BUILTIN, BUILTIN_RESUME); break;
         case TOKEN_SEND: emitBytes(OP_GET_BUILTIN, BUILTIN_SEND); break;
         case TOKEN_RECEIVE: emitBytes(OP_GET_BUILTIN, BUILTIN_RECEIVE); break;
         case TOKEN_SHARE: emitBytes(OP_GET_BUILTIN, BUILTIN_SHARE); break;
+        case TOKEN_START: emitBytes(OP_GET_BUILTIN, BUILTIN_START); break;
         case TOKEN_PEEK: emitBytes(OP_GET_BUILTIN, BUILTIN_PEEK); break;
         case TOKEN_FALSE: emitByte(OP_FALSE); break;
         case TOKEN_NIL: emitByte(OP_NIL); break;
@@ -597,15 +599,17 @@ ParseRule rules[] = {
     [TOKEN_MAKE_CHANNEL]  = {literal,  NULL,   PREC_NONE},
     [TOKEN_MAKE_CORO]     = {literal,  NULL,   PREC_NONE},
     [TOKEN_MAKE_ISR]      = {literal,  NULL,   PREC_NONE},
+    [TOKEN_MAKE_MAIN]      = {literal, NULL,   PREC_NONE},
     [TOKEN_NIL]           = {literal,  NULL,   PREC_NONE},
     [TOKEN_OR]            = {NULL,     or_,    PREC_OR},
-    [TOKEN_PEEK]          = {literal,     NULL,   PREC_NONE},
+    [TOKEN_PEEK]          = {literal,  NULL,   PREC_NONE},
     [TOKEN_PRINT]         = {NULL,     NULL,   PREC_NONE},
     [TOKEN_RECEIVE]       = {literal,  NULL,   PREC_NONE},
     [TOKEN_RESUME]        = {literal,  NULL,   PREC_NONE},
     [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_SEND]          = {literal,   NULL,   PREC_NONE},
-    [TOKEN_SHARE]         = {literal,   NULL,   PREC_NONE},
+    [TOKEN_SEND]          = {literal,  NULL,   PREC_NONE},
+    [TOKEN_SHARE]         = {literal,  NULL,   PREC_NONE},
+    [TOKEN_START]         = {literal,  NULL,   PREC_NONE},
     [TOKEN_SUPER]         = {super_,   NULL,   PREC_NONE},
     [TOKEN_THIS]          = {this_,    NULL,   PREC_NONE},
     [TOKEN_TRUE]          = {literal,  NULL,   PREC_NONE},

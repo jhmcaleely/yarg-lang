@@ -1,0 +1,26 @@
+var led = 25;
+var led_state = false;
+gpio_init(led); 
+gpio_set_direction(led, true); 
+
+fun led_toggle() { 
+    led_state = !led_state; 
+    gpio_put(led, led_state); 
+}
+
+var channel = make_channel();
+
+fun core1loop() {
+    for (var tick = 0; tick < 20; tick = tick + 1) { 
+        led_toggle();
+        sleep_ms(500);
+    }
+    send(channel, "stop");
+}
+
+var core1 = make_main(core1loop);
+
+start(core1);
+
+print "hello";
+print receive(channel);

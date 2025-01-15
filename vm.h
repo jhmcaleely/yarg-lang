@@ -10,6 +10,7 @@
 
 typedef struct {
     ObjThreadStack core0;
+    ObjThreadStack* core1;
 
     Table globals;
     Table strings;
