@@ -6,7 +6,7 @@
 #include "value.h"
 
 #include "memory.h"
-#include "threadstack.h"
+#include "routine.h"
 
 typedef struct {
     ObjThreadStack core0;

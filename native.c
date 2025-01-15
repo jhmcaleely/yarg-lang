@@ -9,7 +9,7 @@
 #include "object.h"
 #include "value.h"
 #include "native.h"
-#include "threadstack.h"
+#include "routine.h"
 #include "vm.h"
 
 bool clockNative(ObjThreadStack* thread, int argCount, Value* args, Value* result) {

@@ -1,5 +1,5 @@
-#ifndef clox_thread_stack_h
-#define clox_thread_stack_h
+#ifndef clox_routine_h
+#define clox_routine_h
 
 #include "value.h"
 #include "object.h"
