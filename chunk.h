@@ -10,6 +10,7 @@ typedef enum {
     OP_TRUE,
     OP_FALSE,
     OP_POP,
+    OP_GET_BUILTIN,
     OP_GET_LOCAL,
     OP_SET_LOCAL,
     OP_GET_GLOBAL,
@@ -39,6 +40,7 @@ typedef enum {
     OP_CLOSURE,
     OP_CLOSE_UPVALUE,
     OP_RETURN,
+    OP_YIELD,
     OP_CLASS,
     OP_INHERIT,
     OP_METHOD
@@ -51,6 +53,17 @@ typedef struct {
     int* lines;
     ValueArray constants;
 } Chunk;
+
+typedef enum {
+    BUILTIN_MAKE_ROUTINE,
+    BUILTIN_MAKE_CHANNEL,
+    BUILTIN_RESUME,
+    BUILTIN_START,
+    BUILTIN_RECEIVE,
+    BUILTIN_SEND,
+    BUILTIN_PEEK,
+    BUILTIN_SHARE
+} BuiltinFn;
 
 void initChunk(Chunk* chunk);
 void freeChunk(Chunk* chunk);

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "compiler.h"
 #include "memory.h"
@@ -29,8 +30,25 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
     }
 
     void* result = realloc(pointer, newSize);
-    if (result == NULL) exit(1);
+    if (result == NULL) {
+        printf("help! no memory.");
+        exit(1);
+    }
     return result;
+}
+
+void tempRootPush(Value value) {
+    *vm.tempRootsTop = value;
+    vm.tempRootsTop++;
+
+    if (vm.tempRootsTop - &vm.tempRoots[0] > TEMP_ROOTS_MAX) {
+        fatalMemoryError("Allocation Stash Max Exeeded.");
+    }
+}
+
+Value tempRootPop() {
+    vm.tempRootsTop--;
+    return *vm.tempRootsTop;
 }
 
 void markObject(Obj* object) {
@@ -108,7 +126,14 @@ static void blackenObject(Obj* object) {
         case OBJ_UPVALUE:
             markValue(((ObjUpvalue*)object)->closed);
             break;
+        case OBJ_ROUTINE: {
+            ObjRoutine* stack = (ObjRoutine*)object;
+            markRoutine(stack);
+            break;
+        }
         case OBJ_NATIVE:
+        case OBJ_BLOB:
+        case OBJ_CHANNEL:
         case OBJ_STRING:
             break;
     }
@@ -150,6 +175,15 @@ static void freeObject(Obj* object) {
         case OBJ_NATIVE:
             FREE(ObjNative, object);
             break;
+        case OBJ_BLOB: {
+            ObjBlob* blob = (ObjBlob*)object;
+            free(blob->blob);
+            FREE(ObjBlob, object);
+            break;
+        }
+        case OBJ_ROUTINE:
+            FREE(ObjRoutine, object);
+            break;
         case OBJ_STRING: {
             ObjString* string = (ObjString*)object;
             FREE_ARRAY(char, string->chars, string->length + 1);
@@ -159,22 +193,21 @@ static void freeObject(Obj* object) {
         case OBJ_UPVALUE:
             FREE(ObjUpvalue, object);
             break;
+        case OBJ_CHANNEL:
+            FREE(ObjChannel, object);
+            break;
     }
 }
 
 static void markRoots() {
-    for (Value* slot = vm.stack; slot < vm.stackTop; slot++) {
+
+    // Don't use markObject, as this is not on the heap.
+    markRoutine(&vm.core0);
+    
+    markObject((Obj*)vm.core1);
+
+    for (Value* slot = vm.tempRoots; slot < vm.tempRootsTop; slot++) {
         markValue(*slot);
-    }
-
-    for (int i = 0; i < vm.frameCount; i++) {
-        markObject((Obj*)vm.frames[i].closure);
-    }
-
-    for (ObjUpvalue* upvalue = vm.openUpvalues;
-         upvalue != NULL;
-         upvalue = upvalue->next) {
-        markObject((Obj*)upvalue);
     }
 
     markTable(&vm.globals);

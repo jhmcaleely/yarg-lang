@@ -46,6 +46,23 @@ static int jumpInstruction(const char* name, int sign, Chunk* chunk, int offset)
     return offset + 3;
 }
 
+static int builtinInstruction(const char* name, Chunk* chunk, int offset) {
+    uint8_t slot = chunk->code[offset + 1];
+    printf("%-16s ", name);
+    switch (slot) {
+        case BUILTIN_MAKE_ROUTINE: printf("make_routine"); break;
+        case BUILTIN_MAKE_CHANNEL: printf("make_channel"); break;
+        case BUILTIN_RESUME: printf("resume"); break;
+        case BUILTIN_SEND: printf("send"); break;
+        case BUILTIN_RECEIVE: printf("receive"); break;
+        case BUILTIN_SHARE: printf("share"); break;
+        case BUILTIN_PEEK: printf("peek"); break;
+        default: printf("<unknown %4d>", slot); break;
+    }
+    printf("\n");
+    return offset + 2;
+}
+
 int disassembleInstruction(Chunk* chunk, int offset) {
     printf("%04d ", offset);
     if (offset > 0 && chunk->lines[offset] == chunk->lines[offset - 1]) {
@@ -66,6 +83,8 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return simpleInstruction("OP_FALSE", offset);
         case OP_POP:
             return simpleInstruction("OP_POP", offset);
+        case OP_GET_BUILTIN:
+            return builtinInstruction("OP_GET_BUILTIN", chunk, offset);
         case OP_GET_LOCAL:
             return byteInstruction("OP_GET_LOCAL", chunk, offset);
         case OP_SET_LOCAL:
@@ -138,6 +157,8 @@ int disassembleInstruction(Chunk* chunk, int offset) {
         }
         case OP_CLOSE_UPVALUE:
             return simpleInstruction("OP_CLOSE_UPVALUE", offset);
+        case OP_YIELD:
+            return simpleInstruction("OP_YIELD", offset);
         case OP_RETURN:
             return simpleInstruction("OP_RETURN", offset);
         case OP_CLASS:

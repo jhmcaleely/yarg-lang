@@ -10,7 +10,7 @@
 #define ALLOCATE_OBJ(type, objectType) \
     (type*)allocateObject(sizeof(type), objectType)
 
-static Obj* allocateObject(size_t size, ObjType type) {
+Obj* allocateObject(size_t size, ObjType type) {
     Obj* object = (Obj*)reallocate(NULL, 0, size);
     object->type = type;
     object->isMarked = false;
@@ -75,14 +75,24 @@ ObjNative* newNative(NativeFn function) {
     return native;
 }
 
+ObjBlob* newBlob(size_t count) {
+    ObjBlob* blob = ALLOCATE_OBJ(ObjBlob, OBJ_BLOB);
+    blob->blob = NULL;
+    
+    tempRootPush(OBJ_VAL(blob));
+    blob->blob = reallocate(NULL, 0, count);
+    tempRootPop();
+    return blob;
+}
+
 static ObjString* allocateString(char* chars, int length, uint32_t hash) {
     ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
     string->length = length;
     string->chars = chars;
     string->hash = hash;
-    push(OBJ_VAL(string));
+    tempRootPush(OBJ_VAL(string));
     tableSet(&vm.strings, string, NIL_VAL);
-    pop();
+    tempRootPop();
     return string;
 }
 
@@ -133,6 +143,23 @@ static void printFunction(ObjFunction* function) {
     printf("<fn %s>", function->name->chars);
 }
 
+static void printRoutine(ObjRoutine* thread) {
+    printf("<R%s 0x%8.x>"
+          , thread->type == THREAD_ISR ? "i" : "n"
+          , thread);
+}
+
+static void printChannel(ObjChannel* channel) {
+    printf("<ch ");
+    if (channel->present) {
+        printValue(channel->data);
+    }
+    else {
+        printf(" NIL");
+    }
+    printf(">");
+}
+
 void printObject(Value value) {
     switch (OBJ_TYPE(value)) {
         case OBJ_BOUND_METHOD:
@@ -152,6 +179,15 @@ void printObject(Value value) {
             break;
         case OBJ_NATIVE:
             printf("<native fn>");
+            break;
+        case OBJ_BLOB:
+            printf("<blob 0x%.8x>", AS_BLOB(value)->blob);
+            break;
+        case OBJ_ROUTINE:
+            printRoutine(AS_ROUTINE(value));
+            break;
+        case OBJ_CHANNEL:
+            printChannel(AS_CHANNEL(value));
             break;
         case OBJ_STRING:
             printf("%s", AS_CSTRING(value));

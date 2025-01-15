@@ -1,7 +1,21 @@
 fun fib(n) { if (n < 2) return n; return fib(n - 2) + fib(n - 1); }
-var start = clock(); print fib(10); print clock() - start;
-var start = clock(); print fib(35); print clock() - start;
-var start = clock(); print "hello"; sleep_ms(1000); print clock() - start;
+var start1 = clock(); print fib(10); print clock() - start1;
+var start1 = clock(); print fib(35); print clock() - start1;
+var start1 = clock(); print "hello"; sleep_ms(1000); print clock() - start1;
 
-var pico_led = 25; gpio_init(pico_led); gpio_set_direction(pico_led, true); 
+var pico_led = 25; gpio_init(pico_led); gpio_set_direction(pico_led, true);
 while (true) { gpio_put(pico_led, true); sleep_ms(500); gpio_put(pico_led, false); sleep_ms(500); }
+
+var led_state = false; fun led() { led_state = !led_state; gpio_put(pico_led, led_state); } 
+
+var isr_led = make_routine(led, true);
+
+alarm_add_in_ms(500, isr_led);
+
+var timer = alarm_add_repeating_ms(-500, isr_led); sleep_ms(3000); alarm_cancel_repeating(timer);
+
+fun test(val) { var t = alarm_add_repeating_ms(val, isr_led); sleep_ms(3000); alarm_cancel_repeating(t); } test(-500);
+
+var coro = make_routine(led, false); resume(coro);
+
+fun test() { print 1; yield; print 2; } var coro = make_routine(test, false); resume(coro); print 0; resume(coro);

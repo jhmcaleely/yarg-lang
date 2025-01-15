@@ -123,11 +123,50 @@ static TokenType identifierType() {
             }
             break;
         case 'i': return checkKeyword(1, 1, "f", TOKEN_IF);
+        case 'm': 
+            if (   scanner.current - scanner.start > 5
+                && memcmp(scanner.start + 1, "ake_", 4) == 0) {
+                switch (scanner.start[5]) {
+                    case 'c': return checkKeyword(6, 6, "hannel", TOKEN_MAKE_CHANNEL);
+                    case 'r': return checkKeyword(6, 6, "outine", TOKEN_MAKE_ROUTINE);
+                }
+            }
+            break;
         case 'n': return checkKeyword(1, 2, "il", TOKEN_NIL);
         case 'o': return checkKeyword(1, 1, "r", TOKEN_OR);
-        case 'p': return checkKeyword(1, 4, "rint", TOKEN_PRINT); 
-        case 'r': return checkKeyword(1, 5, "eturn", TOKEN_RETURN);
-        case 's': return checkKeyword(1, 4, "uper", TOKEN_SUPER);
+        case 'p': 
+            if (scanner.current - scanner.start > 1) {
+                switch (scanner.start[1]) {
+                    case 'e': return checkKeyword(2, 2, "ek", TOKEN_PEEK);
+                    case 'r': return checkKeyword(2, 3, "int", TOKEN_PRINT); 
+                }
+            }
+            break;
+        case 'r': 
+            if (scanner.current - scanner.start > 1) {
+                switch (scanner.start[1]) {
+                    case 'e': 
+                        if (scanner.current - scanner.start > 2) {
+                            switch (scanner.start[2]) {
+                                case 'c': return checkKeyword(3, 4, "eive", TOKEN_RECEIVE);                                
+                                case 's': return checkKeyword(3, 3, "ume", TOKEN_RESUME);
+                                case 't': return checkKeyword(3, 3, "urn", TOKEN_RETURN);
+                            }
+                        }
+                        break;
+                }
+            }
+            break;
+        case 's':
+            if (scanner.current - scanner.start > 1) {
+                switch (scanner.start[1]) {
+                    case 'e': return checkKeyword(2, 2, "nd", TOKEN_SEND);
+                    case 'h': return checkKeyword(2, 3, "are", TOKEN_SHARE);
+                    case 't': return checkKeyword(2, 3, "art", TOKEN_START);
+                    case 'u': return checkKeyword(2, 3, "per", TOKEN_SUPER);
+                }
+            }
+            break;
         case 't':
             if (scanner.current - scanner.start > 1) {
                 switch (scanner.start[1]) {
@@ -138,6 +177,7 @@ static TokenType identifierType() {
             break;
         case 'v': return checkKeyword(1, 2, "ar", TOKEN_VAR);
         case 'w': return checkKeyword(1, 4, "hile", TOKEN_WHILE);
+        case 'y': return checkKeyword(1, 4, "ield", TOKEN_YIELD);
     }
 
     return TOKEN_IDENTIFIER;

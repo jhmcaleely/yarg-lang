@@ -3,11 +3,15 @@
 
 #include "value.h"
 
-Value clockNative(int argCount, Value* args);
-Value sleepNative(int argCount, Value* args);
+bool clockNative(ObjRoutine* thread, int argCount, Value* args, Value* result);
+bool sleepNative(ObjRoutine* thread, int argCount, Value* args, Value* result);
 
-Value gpioInitNative(int argCount, Value* args);
-Value gpioSetDirectionNative(int argCount, Value* args);
-Value gpioPutNative(int argCount, Value* args);
+bool gpioInitNative(ObjRoutine* thread, int argCount, Value* args, Value* result);
+bool gpioSetDirectionNative(ObjRoutine* thread, int argCount, Value* args, Value* result);
+bool gpioPutNative(ObjRoutine* thread, int argCount, Value* args, Value* result);
+
+bool alarmAddInMSNative(ObjRoutine* thread, int argCount, Value* args, Value* result);
+bool alarmAddRepeatingMSNative(ObjRoutine* thread, int argCount, Value* args, Value* result);
+bool alarmCancelRepeatingMSNative(ObjRoutine* thread, int argCount, Value* args, Value* result);
 
 #endif
