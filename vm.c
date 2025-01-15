@@ -578,8 +578,8 @@ InterpretResult interpret(const char* source) {
     tempRootPush(OBJ_VAL(function));
     ObjClosure* closure = newClosure(function);
     tempRootPop();
-    push(&vm.core0, OBJ_VAL(closure));
-    callfn(&vm.core0, closure, 0);
+
+    prepareRoutine(&vm.core0, closure);
 
     return run(&vm.core0);
 }

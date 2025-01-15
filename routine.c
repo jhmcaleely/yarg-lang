@@ -8,6 +8,7 @@
 #include "routine.h"
 
 #include "memory.h"
+#include "vm.h"
 
 void initRoutine(ObjRoutine* thread, ThreadType type) {
     thread->type = type;
@@ -28,6 +29,13 @@ ObjRoutine* newRoutine(ThreadType type) {
     ObjRoutine* thread = ALLOCATE_OBJ(ObjRoutine, OBJ_ROUTINE);
     initRoutine(thread, type);
     return thread;
+}
+
+void prepareRoutine(ObjRoutine* newThread, ObjClosure* closure) {
+
+    newThread->entryFunction = closure;
+    push(newThread, OBJ_VAL(closure));
+    callfn(newThread, closure, 0);
 }
 
 void markRoutine(ObjRoutine* thread) {

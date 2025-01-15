@@ -26,11 +26,8 @@ bool makeRoutineBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* re
     bool isISR = AS_BOOL(args[1]);
 
     ObjRoutine* newThread = newRoutine(isISR ? THREAD_ISR : THREAD_NORMAL);
-    newThread->entryFunction = closure;
 
-
-    push(newThread, OBJ_VAL(closure));
-    callfn(newThread, closure, 0);
+    prepareRoutine(newThread, closure);
 
     *result = OBJ_VAL(newThread);
     return true;
