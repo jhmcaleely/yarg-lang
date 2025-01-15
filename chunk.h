@@ -55,9 +55,7 @@ typedef struct {
 } Chunk;
 
 typedef enum {
-    BUILTIN_MAKE_ISR,
-    BUILTIN_MAKE_CORO,
-    BUILTIN_MAKE_MAIN,
+    BUILTIN_MAKE_ROUTINE,
     BUILTIN_MAKE_CHANNEL,
     BUILTIN_RESUME,
     BUILTIN_START,

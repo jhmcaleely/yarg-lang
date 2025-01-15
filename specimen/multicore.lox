@@ -18,7 +18,7 @@ fun core1loop() {
     send(channel, "stop");
 }
 
-var core1 = make_main(core1loop);
+var core1 = make_routine(core1loop, false);
 
 start(core1);
 

@@ -43,7 +43,7 @@ typedef struct ObjThreadStack {
 } ObjThreadStack;
 
 void initThread(ObjThreadStack* thread, ThreadType type);
-ObjThreadStack* newThread(ThreadType type);
+ObjThreadStack* newThreadStack(ThreadType type);
 void resetThread(ObjThreadStack* thread);
 
 void markThread(ObjThreadStack* thread);

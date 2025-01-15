@@ -50,8 +50,7 @@ static int builtinInstruction(const char* name, Chunk* chunk, int offset) {
     uint8_t slot = chunk->code[offset + 1];
     printf("%-16s ", name);
     switch (slot) {
-        case BUILTIN_MAKE_ISR: printf("make_isr"); break;
-        case BUILTIN_MAKE_CORO: printf("make_coro"); break;
+        case BUILTIN_MAKE_ROUTINE: printf("make_routine"); break;
         case BUILTIN_MAKE_CHANNEL: printf("make_channel"); break;
         case BUILTIN_RESUME: printf("resume"); break;
         case BUILTIN_SEND: printf("send"); break;

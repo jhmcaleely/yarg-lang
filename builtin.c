@@ -12,70 +12,27 @@
 #include "channel.h"
 #include "vm.h"
 
-bool makeIsrBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
-    if (argCount != 1) {
-        runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
+bool makeRoutineBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
+    if (argCount != 2) {
+        runtimeError(thread, "Expected 2 arguments but got %d.", argCount);
         return false;
     }
-    if (!IS_CLOSURE(args[0])) {
-        runtimeError(thread, "Argument to make_isr must be function.");
-        return false;
-    }
-
-    ObjClosure* closure = AS_CLOSURE(args[0]);
-
-    ObjThreadStack* isrThread = newThread(THREAD_ISR);
-    isrThread->entryFunction = closure;
-
-
-    push(isrThread, OBJ_VAL(closure));
-    callfn(isrThread, closure, 0);
-
-    *result = OBJ_VAL(isrThread);
-    return true;
-}
-
-bool makeCoroBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
-    if (argCount != 1) {
-        runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
-        return false;
-    }
-    if (!IS_CLOSURE(args[0])) {
-        runtimeError(thread, "Argument to make_coro must be function.");
+    if (!IS_CLOSURE(args[0]) || !IS_BOOL(args[1])) {
+        runtimeError(thread, "Argument to make_routine must be a function and a boolean.");
         return false;
     }
 
     ObjClosure* closure = AS_CLOSURE(args[0]);
+    bool isISR = AS_BOOL(args[1]);
 
-    ObjThreadStack* coroThread = newThread(THREAD_NORMAL);
-    coroThread->entryFunction = closure;
+    ObjThreadStack* newThread = newThreadStack(isISR ? THREAD_ISR : THREAD_NORMAL);
+    newThread->entryFunction = closure;
 
-    push(coroThread, OBJ_VAL(closure));
-    callfn(coroThread, closure, 0);
 
-    *result = OBJ_VAL(coroThread);
-    return true;
-}
+    push(newThread, OBJ_VAL(closure));
+    callfn(newThread, closure, 0);
 
-bool makeMainBuiltin(ObjThreadStack* thread, int argCount, Value* args, Value* result) {
-    if (argCount != 1) {
-        runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
-        return false;
-    }
-    if (!IS_CLOSURE(args[0])) {
-        runtimeError(thread, "Argument to make_main must be function.");
-        return false;
-    }
-
-    ObjClosure* closure = AS_CLOSURE(args[0]);
-
-    ObjThreadStack* coroThread = newThread(THREAD_NORMAL);
-    coroThread->entryFunction = closure;
-
-    push(coroThread, OBJ_VAL(closure));
-    callfn(coroThread, closure, 0);
-
-    *result = OBJ_VAL(coroThread);
+    *result = OBJ_VAL(newThread);
     return true;
 }
 

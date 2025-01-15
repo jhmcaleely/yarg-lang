@@ -292,21 +292,10 @@ InterpretResult run(ObjThreadStack* thread) {
             case OP_GET_BUILTIN: {
                 uint8_t builtin = READ_BYTE();
                 switch (builtin) {
-                    case BUILTIN_MAKE_ISR: {
-                        Value builtinFn = OBJ_VAL(newNative(makeIsrBuiltin));
+                    case BUILTIN_MAKE_ROUTINE: {
+                        Value builtinFn = OBJ_VAL(newNative(makeRoutineBuiltin));
                         push(thread, builtinFn);
                         break;
-                    }
-                    case BUILTIN_MAKE_CORO: {
-                        Value builtinFn = OBJ_VAL(newNative(makeCoroBuiltin));
-                        push(thread, builtinFn);
-                        break;
-                    }
-                    case BUILTIN_MAKE_MAIN: {
-                        Value builtinFn = OBJ_VAL(newNative(makeMainBuiltin));
-                        push(thread, builtinFn);
-                        break;
-
                     }
                     case BUILTIN_RESUME: {
                         Value builtinFn = OBJ_VAL(newNative(resumeBuiltin));

@@ -127,16 +127,8 @@ static TokenType identifierType() {
             if (   scanner.current - scanner.start > 5
                 && memcmp(scanner.start + 1, "ake_", 4) == 0) {
                 switch (scanner.start[5]) {
-                    case 'i': return checkKeyword(6, 2, "sr", TOKEN_MAKE_ISR);
-                    case 'c': 
-                        if (scanner.current - scanner.start > 6) {
-                            switch (scanner.start[6]) {
-                                case 'h': return checkKeyword(7, 5, "annel", TOKEN_MAKE_CHANNEL);
-                                case 'o': return checkKeyword(7, 2, "ro", TOKEN_MAKE_CORO);
-                            }
-                        }
-                        break;
-                    case 'm': return checkKeyword(6, 3, "ain", TOKEN_MAKE_MAIN);
+                    case 'c': return checkKeyword(6, 6, "hannel", TOKEN_MAKE_CHANNEL);
+                    case 'r': return checkKeyword(6, 6, "outine", TOKEN_MAKE_ROUTINE);
                 }
             }
             break;

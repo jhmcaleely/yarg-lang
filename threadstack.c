@@ -24,7 +24,7 @@ void resetThread(ObjThreadStack* thread) {
     thread->openUpvalues = NULL;
 }
 
-ObjThreadStack* newThread(ThreadType type) {
+ObjThreadStack* newThreadStack(ThreadType type) {
     ObjThreadStack* thread = ALLOCATE_OBJ(ObjThreadStack,
                                           OBJ_THREAD_STACK);
     initThread(thread, type);
