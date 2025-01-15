@@ -1,19 +1,19 @@
 var led = 25;
 
 fun flash(n) {
-    gpio_init(led);
-    gpio_set_direction(led, true);
-
-    var state = false;
-
-    fun toggle() {
-        state = !state;
-        gpio_put(led, state);
-    }
-
     var done = make_channel();
 
     fun core1() {
+        gpio_init(led);
+        gpio_set_direction(led, true);
+
+        var state = false;
+
+        fun toggle() {
+            state = !state;
+            gpio_put(led, state);
+        }
+
         for (var tick = 0; tick < n * 2; tick = tick + 1) {
             toggle();
             sleep_ms(500);
