@@ -269,7 +269,7 @@ InterpretResult run(ObjRoutine* thread) {
     for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
         printf("          ");
-        for (Value* slot = vm.threads[thread].stack; slot < vm.threads[thread].stackTop; slot++) {
+        for (Value* slot = thread->stack; slot < thread->stackTop; slot++) {
             printf("[ ");
             printValue(*slot);
             printf(" ]");
