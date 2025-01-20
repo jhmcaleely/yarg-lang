@@ -528,7 +528,6 @@ InterpretResult run(ObjRoutine* thread) {
                     runtimeError(thread, "Cannot yield from initial thread.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                Value result = pop(thread); // ignored for now
                 thread->state = EXEC_SUSPENDED;
                 return INTERPRET_OK;
             }
@@ -582,6 +581,9 @@ InterpretResult interpret(const char* source) {
     tempRootPop();
 
     prepareRoutine(&vm.core0, closure);
+
+    push(&vm.core0, OBJ_VAL(closure));
+    callfn(&vm.core0, closure, 0);
 
     return run(&vm.core0);
 }

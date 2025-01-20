@@ -1,0 +1,22 @@
+var pico_led = 25; 
+gpio_init(pico_led); 
+gpio_set_direction(pico_led, true);
+
+var led_state = false; 
+
+fun led(n) { 
+    led_state = !led_state; 
+    gpio_put(n, led_state); 
+} 
+
+var isr_led = make_routine(led, true);
+
+alarm_add_in_ms(500, isr_led, pico_led);
+
+sleep_ms(1000);
+
+var timer = alarm_add_repeating_ms(-500, isr_led, pico_led);
+
+sleep_ms(3000); 
+
+alarm_cancel_repeating(timer);

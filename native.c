@@ -116,27 +116,50 @@ static bool nativeRepeatingCallback(struct repeating_timer* t) {
 
     run(thread);
 
+    Value result = pop(thread); // unused.
+
     push(thread, OBJ_VAL(thread->entryFunction));
-    callfn(thread, thread->entryFunction, 0);
+
+    for (int arg = thread->entryFunction->function->arity; arg > 0; arg--) {
+        push(thread, peek(thread, arg));
+    }
+
+    callfn(thread, thread->entryFunction, thread->entryFunction->function->arity);
 
     return true;
 }
 
 bool alarmAddInMSNative(ObjRoutine* thread, int argCount, Value* args, Value* result) {
-    if (argCount != 2) {
-        runtimeError(thread, "Expected 2 arguments but got %d.", argCount);
-        return false;
-    }
-    if (!IS_NUMBER(args[0]) || !IS_ROUTINE(args[1])) {
-        runtimeError(thread, "Argument must be a number and a routine.");
+    if (argCount < 2 || !IS_ROUTINE(args[1])) {
+        runtimeError(thread, "Second argument must be a routine.");
         return false;
     }
 
     ObjRoutine* isrThread = AS_ROUTINE(args[1]);
+
+    int isrArity = 2 + isrThread->entryFunction->function->arity;
+    if (argCount != isrArity) {
+        runtimeError(thread, "Expected %d arguments but got %d.", isrArity, argCount);
+        return false;
+    }
+
+    if (!IS_NUMBER(args[0])) {
+        runtimeError(thread, "First argument must be a number.");
+        return false;
+    }
+
     if (isrThread->type != THREAD_ISR) {
         runtimeError(thread, "Argument must be an ISR routine.");
         return false;
     }
+
+    push(isrThread, OBJ_VAL(isrThread->entryFunction));
+
+    for (int arg = 0; arg < isrThread->entryFunction->function->arity; arg++) {
+        push(isrThread, args[arg + 2]);
+    }
+
+    callfn(isrThread, isrThread->entryFunction, isrThread->entryFunction->function->arity);
 
     isrThread->state = EXEC_RUNNING;
     add_alarm_in_ms(AS_NUMBER(args[0]), nativeAlarmCallback, isrThread, false);
@@ -146,22 +169,42 @@ bool alarmAddInMSNative(ObjRoutine* thread, int argCount, Value* args, Value* re
 }
 
 bool alarmAddRepeatingMSNative(ObjRoutine* thread, int argCount, Value* args, Value* result) {
-    if (argCount != 2) {
-        runtimeError(thread, "Expected 2 arguments but got %d.", argCount);
-        return false;
-    }
-    if (!IS_NUMBER(args[0]) || !IS_ROUTINE(args[1])) {
-        runtimeError(thread, "Argument must be a number and an isr stack.");
+    if (argCount < 2 || !IS_ROUTINE(args[1])) {
+        runtimeError(thread, "Second argument must be a routine.");
         return false;
     }
 
     ObjRoutine* isrThread = AS_ROUTINE(args[1]);
+
+    int isrArity = 2 + isrThread->entryFunction->function->arity;
+    if (argCount != isrArity) {
+        runtimeError(thread, "Expected %d arguments but got %d.", isrArity, argCount);
+        return false;
+    }
+
+    if (!IS_NUMBER(args[0])) {
+        runtimeError(thread, "First argument must be a number.");
+        return false;
+    }
+
     if (isrThread->type != THREAD_ISR) {
         runtimeError(thread, "Argument must be an ISR routine.");
         return false;
     }
 
     ObjBlob* handle = newBlob(sizeof(repeating_timer_t));
+
+    for (int arg = 0; arg < isrThread->entryFunction->function->arity; arg++) {
+        push(isrThread, args[arg + 2]);
+    }
+
+    push(isrThread, OBJ_VAL(isrThread->entryFunction));
+
+    for (int arg = 0; arg < isrThread->entryFunction->function->arity; arg++) {
+        push(isrThread, args[arg + 2]);
+    }
+
+    callfn(isrThread, isrThread->entryFunction, isrThread->entryFunction->function->arity);
 
     isrThread->state = EXEC_RUNNING;
     add_repeating_timer_ms(AS_NUMBER(args[0]), nativeRepeatingCallback, isrThread, (repeating_timer_t*)handle->blob);

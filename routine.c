@@ -34,8 +34,6 @@ ObjRoutine* newRoutine(ThreadType type) {
 void prepareRoutine(ObjRoutine* newThread, ObjClosure* closure) {
 
     newThread->entryFunction = closure;
-    push(newThread, OBJ_VAL(closure));
-    callfn(newThread, closure, 0);
 }
 
 void markRoutine(ObjRoutine* thread) {
@@ -67,9 +65,9 @@ void runtimeError(ObjRoutine* thread, const char* format, ...) {
         CallFrame* frame = &thread->frames[i];
         ObjFunction* function = frame->closure->function;
         size_t instruction = frame->ip - function->chunk.code - 1;
-        fprintf(stderr, "[0x%8.x:%d][line %d] in ",
+        fprintf(stderr, "<R%s 0x%8.x>[line %d] in ",
+                thread->type == THREAD_ISR ? "i" : "n",
                 thread,
-                thread->type,
                 function->chunk.lines[instruction]);
         if (function->name == NULL) {
             fprintf(stderr, "script\n");

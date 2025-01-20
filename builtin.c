@@ -34,10 +34,6 @@ bool makeRoutineBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* re
 }
 
 bool resumeBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
-    if (argCount != 1) {
-        runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
-        return false;
-    }
     if (!IS_ROUTINE(args[0])) {
         runtimeError(thread, "Argument to resume must be a routine.");
         return false;
@@ -50,18 +46,34 @@ bool resumeBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result)
         return false;
     }
 
+    int resumeArity = 1 + coroThread->entryFunction->function->arity;
+    if (argCount != resumeArity) {
+        runtimeError(thread, "Expected %d arguments but got %d.", resumeArity, argCount);
+        return false;
+    }
+
+    push(coroThread, OBJ_VAL(coroThread->entryFunction));
+
+    for (int arg = 0; arg < coroThread->entryFunction->function->arity; arg++) {
+        push(coroThread, args[arg + 1]);
+    }
+
+    callfn(coroThread, coroThread->entryFunction, coroThread->entryFunction->function->arity);
+
     InterpretResult execResult = run(coroThread);
     if (execResult != INTERPRET_OK) {
         return false;
     }
 
-    *result = NIL_VAL;
+    Value coroResult = pop(coroThread);
+
+    *result = coroResult;
     return true;
 }
 
 #define FLAG_VALUE 123
 
-void nativeCoreEntry() {
+void nativeCore1Entry() {
     multicore_fifo_push_blocking(FLAG_VALUE);
     uint32_t g = multicore_fifo_pop_blocking();
 
@@ -69,30 +81,42 @@ void nativeCoreEntry() {
         fatalMemoryError("Core1 Entry amd sync failed.");
     }
 
-    InterpretResult execResult = run(vm.core1);
+    ObjRoutine* core = vm.core1;
+
+    InterpretResult execResult = run(core);
+
 }
 
-
 bool startBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
-    if (argCount != 1) {
-        runtimeError(thread, "Expected 1 arguments but got %d.", argCount);
-        return false;
-    }
     if (!IS_ROUTINE(args[0])) {
-        runtimeError(thread, "Argument to start must be coroutine.");
+        runtimeError(thread, "Argument to start must be a routine.");
         return false;
     }
 
-    ObjRoutine* coroThread = AS_ROUTINE(args[0]);
+    ObjRoutine* coreThread = AS_ROUTINE(args[0]);
 
-    if (coroThread->state != EXEC_SUSPENDED) {
-        runtimeError(thread, "coroutine must be suspended to resume.");
+    if (coreThread->state != EXEC_SUSPENDED) {
+        runtimeError(thread, "routine must be suspended to resume.");
         return false;
     }
 
-    vm.core1 = coroThread;
+    int startArity = 1 + coreThread->entryFunction->function->arity;
+    if (argCount != startArity) {
+        runtimeError(thread, "Expected %d arguments but got %d.", startArity, argCount);
+        return false;
+    }
 
-    multicore_launch_core1(nativeCoreEntry);
+    push(coreThread, OBJ_VAL(coreThread->entryFunction));
+
+    for (int arg = 0; arg < coreThread->entryFunction->function->arity; arg++) {
+        push(coreThread, args[arg + 1]);
+    }
+
+    callfn(coreThread, coreThread->entryFunction, coreThread->entryFunction->function->arity);
+
+    vm.core1 = coreThread;
+
+    multicore_launch_core1(nativeCore1Entry);
 
     // Wait for it to start up
     uint32_t g = multicore_fifo_pop_blocking();
