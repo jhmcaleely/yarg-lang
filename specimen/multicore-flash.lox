@@ -1,17 +1,16 @@
-var led = 25;
-
+var gpio = 25;
 fun flash(n) {
     var done = make_channel();
 
-    fun core1() {
-        gpio_init(led);
-        gpio_set_direction(led, true);
+    fun core1(led_pin) {
+        gpio_init(led_pin);
+        gpio_set_direction(led_pin, true);
 
         var state = false;
 
         fun toggle() {
             state = !state;
-            gpio_put(led, state);
+            gpio_put(led_pin, state);
         }
 
         for (var tick = 0; tick < n * 2; tick = tick + 1) {
@@ -22,7 +21,7 @@ fun flash(n) {
     }
 
     var core = make_routine(core1, false);
-    start(core);
+    start(core, gpio);
     print "core0";
-    receive(done);
+    return receive(done);
 }

@@ -77,7 +77,8 @@ pico_enable_stdio_usb(clox 1)
 # Add the standard library to the build
 target_link_libraries(clox
         pico_stdlib
-        pico_multicore)
+        pico_multicore
+        pico_sync)
 
 # Add the standard include files to the build
 target_include_directories(clox PRIVATE

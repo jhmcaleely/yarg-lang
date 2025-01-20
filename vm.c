@@ -44,6 +44,8 @@ void initVM() {
 
     vm.core1 = NULL;
 
+    recursive_mutex_init(&vm.heap);
+
     vm.tempRootsTop = vm.tempRoots;
 
     vm.objects = NULL;
@@ -269,7 +271,7 @@ InterpretResult run(ObjRoutine* thread) {
     for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
         printf("          ");
-        for (Value* slot = vm.threads[thread].stack; slot < vm.threads[thread].stackTop; slot++) {
+        for (Value* slot = thread->stack; slot < thread->stackTop; slot++) {
             printf("[ ");
             printValue(*slot);
             printf(" ]");
@@ -526,7 +528,6 @@ InterpretResult run(ObjRoutine* thread) {
                     runtimeError(thread, "Cannot yield from initial thread.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                Value result = pop(thread); // ignored for now
                 thread->state = EXEC_SUSPENDED;
                 return INTERPRET_OK;
             }
@@ -580,6 +581,9 @@ InterpretResult interpret(const char* source) {
     tempRootPop();
 
     prepareRoutine(&vm.core0, closure);
+
+    push(&vm.core0, OBJ_VAL(closure));
+    callfn(&vm.core0, closure, 0);
 
     return run(&vm.core0);
 }
