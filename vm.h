@@ -8,6 +8,8 @@
 #include "memory.h"
 #include "routine.h"
 
+#include <pico/sync.h>
+
 typedef struct {
     ObjRoutine core0;
     ObjRoutine* core1;
@@ -15,6 +17,8 @@ typedef struct {
     Table globals;
     Table strings;
     ObjString* initString;
+
+    recursive_mutex_t heap;
 
     Value tempRoots[TEMP_ROOTS_MAX];
     Value* tempRootsTop;

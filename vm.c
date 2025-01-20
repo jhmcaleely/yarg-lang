@@ -44,6 +44,8 @@ void initVM() {
 
     vm.core1 = NULL;
 
+    recursive_mutex_init(&vm.heap);
+
     vm.tempRootsTop = vm.tempRoots;
 
     vm.objects = NULL;
