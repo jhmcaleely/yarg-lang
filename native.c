@@ -91,12 +91,8 @@ bool gpioPutNative(ObjRoutine* thread, int argCount, Value* args, Value* result)
     return true;
 }
 
-static int64_t nativeAlarmCallback(alarm_id_t id, void* user_data) {
+static int64_t nativeOneShotCallback(alarm_id_t id, void* user_data) {
     ObjRoutine* thread = AS_ROUTINE((uintptr_t)user_data);
-
-    printf("#nativeAlarmCallback %d", id);
-    printObject(OBJ_VAL(thread));
-    printf("\n");
 
     run(thread);
 
@@ -107,12 +103,8 @@ static int64_t nativeAlarmCallback(alarm_id_t id, void* user_data) {
     return 0;
 }
 
-static bool nativeRepeatingCallback(struct repeating_timer* t) {
+static bool nativeRecurringCallback(struct repeating_timer* t) {
     ObjRoutine* thread = AS_ROUTINE((uintptr_t)t->user_data);
-
-    printf("#nativeRepeatingAlarmCallback %d", t->alarm_id);
-    printObject(OBJ_VAL(thread));
-    printf("\n");
 
     run(thread);
 
@@ -153,16 +145,10 @@ bool alarmAddInMSNative(ObjRoutine* thread, int argCount, Value* args, Value* re
         return false;
     }
 
-    push(isrThread, OBJ_VAL(isrThread->entryFunction));
-
-    for (int arg = 0; arg < isrThread->entryFunction->function->arity; arg++) {
-        push(isrThread, args[arg + 2]);
-    }
-
-    callfn(isrThread, isrThread->entryFunction, isrThread->entryFunction->function->arity);
+    prepareRoutineStack(isrThread, argCount - 2, &args[2]);
 
     isrThread->state = EXEC_RUNNING;
-    add_alarm_in_ms(AS_NUMBER(args[0]), nativeAlarmCallback, isrThread, false);
+    add_alarm_in_ms(AS_NUMBER(args[0]), nativeOneShotCallback, isrThread, false);
 
     *result = NIL_VAL;
     return true;
@@ -198,16 +184,10 @@ bool alarmAddRepeatingMSNative(ObjRoutine* thread, int argCount, Value* args, Va
         push(isrThread, args[arg + 2]);
     }
 
-    push(isrThread, OBJ_VAL(isrThread->entryFunction));
-
-    for (int arg = 0; arg < isrThread->entryFunction->function->arity; arg++) {
-        push(isrThread, args[arg + 2]);
-    }
-
-    callfn(isrThread, isrThread->entryFunction, isrThread->entryFunction->function->arity);
+    prepareRoutineStack(isrThread, isrThread->entryFunction->function->arity, &args[2]);
 
     isrThread->state = EXEC_RUNNING;
-    add_repeating_timer_ms(AS_NUMBER(args[0]), nativeRepeatingCallback, isrThread, (repeating_timer_t*)handle->blob);
+    add_repeating_timer_ms(AS_NUMBER(args[0]), nativeRecurringCallback, isrThread, (repeating_timer_t*)handle->blob);
 
     *result = OBJ_VAL(handle);
     return true;

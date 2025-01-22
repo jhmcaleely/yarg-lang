@@ -31,9 +31,20 @@ ObjRoutine* newRoutine(ThreadType type) {
     return thread;
 }
 
-void prepareRoutine(ObjRoutine* newThread, ObjClosure* closure) {
+void prepareRoutine(ObjRoutine* routine, ObjClosure* closure) {
 
-    newThread->entryFunction = closure;
+    routine->entryFunction = closure;
+}
+
+void prepareRoutineStack(ObjRoutine* routine, int argCount, Value* args) {
+
+    push(routine, OBJ_VAL(routine->entryFunction));
+
+    for (int arg = 0; arg < routine->entryFunction->function->arity; arg++) {
+        push(routine, args[arg]);
+    }
+
+    callfn(routine, routine->entryFunction, routine->entryFunction->function->arity);
 }
 
 void markRoutine(ObjRoutine* thread) {

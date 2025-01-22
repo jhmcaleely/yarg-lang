@@ -52,13 +52,7 @@ bool resumeBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result)
         return false;
     }
 
-    push(coroThread, OBJ_VAL(coroThread->entryFunction));
-
-    for (int arg = 0; arg < coroThread->entryFunction->function->arity; arg++) {
-        push(coroThread, args[arg + 1]);
-    }
-
-    callfn(coroThread, coroThread->entryFunction, coroThread->entryFunction->function->arity);
+    prepareRoutineStack(coroThread, coroThread->entryFunction->function->arity, &args[1]);
 
     InterpretResult execResult = run(coroThread);
     if (execResult != INTERPRET_OK) {
@@ -106,13 +100,7 @@ bool startBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) 
         return false;
     }
 
-    push(coreThread, OBJ_VAL(coreThread->entryFunction));
-
-    for (int arg = 0; arg < coreThread->entryFunction->function->arity; arg++) {
-        push(coreThread, args[arg + 1]);
-    }
-
-    callfn(coreThread, coreThread->entryFunction, coreThread->entryFunction->function->arity);
+    prepareRoutineStack(coreThread, coreThread->entryFunction->function->arity, &args[1]);
 
     vm.core1 = coreThread;
 
