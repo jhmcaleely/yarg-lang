@@ -140,7 +140,7 @@ bool alarmAddInMSNative(ObjRoutine* thread, int argCount, Value* args, Value* re
         return false;
     }
 
-    if (isrThread->type != THREAD_ISR) {
+    if (isrThread->type != ROUTINE_ISR) {
         runtimeError(thread, "Argument must be an ISR routine.");
         return false;
     }
@@ -173,7 +173,7 @@ bool alarmAddRepeatingMSNative(ObjRoutine* thread, int argCount, Value* args, Va
         return false;
     }
 
-    if (isrThread->type != THREAD_ISR) {
+    if (isrThread->type != ROUTINE_ISR) {
         runtimeError(thread, "Argument must be an ISR routine.");
         return false;
     }

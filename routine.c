@@ -10,25 +10,25 @@
 #include "memory.h"
 #include "vm.h"
 
-void initRoutine(ObjRoutine* thread, ThreadType type) {
-    thread->type = type;
-    thread->entryFunction = NULL;
-    thread->state = EXEC_SUSPENDED;
+void initRoutine(ObjRoutine* routine, RoutineKind type) {
+    routine->type = type;
+    routine->entryFunction = NULL;
+    routine->state = EXEC_SUSPENDED;
 
-    resetRoutine(thread);
+    resetRoutine(routine);
 }
 
-void resetRoutine(ObjRoutine* thread) {
-    thread->stackTop = thread->stack;
-    thread->frameCount = 0;
+void resetRoutine(ObjRoutine* routine) {
+    routine->stackTop = routine->stack;
+    routine->frameCount = 0;
 
-    thread->openUpvalues = NULL;
+    routine->openUpvalues = NULL;
 }
 
-ObjRoutine* newRoutine(ThreadType type) {
-    ObjRoutine* thread = ALLOCATE_OBJ(ObjRoutine, OBJ_ROUTINE);
-    initRoutine(thread, type);
-    return thread;
+ObjRoutine* newRoutine(RoutineKind type) {
+    ObjRoutine* routine = ALLOCATE_OBJ(ObjRoutine, OBJ_ROUTINE);
+    initRoutine(routine, type);
+    return routine;
 }
 
 void prepareRoutine(ObjRoutine* routine, ObjClosure* closure) {
@@ -47,38 +47,38 @@ void prepareRoutineStack(ObjRoutine* routine, int argCount, Value* args) {
     callfn(routine, routine->entryFunction, routine->entryFunction->function->arity);
 }
 
-void markRoutine(ObjRoutine* thread) {
-    for (Value* slot = thread->stack; slot < thread->stackTop; slot++) {
+void markRoutine(ObjRoutine* routine) {
+    for (Value* slot = routine->stack; slot < routine->stackTop; slot++) {
         markValue(*slot);
     }
 
-    for (int i = 0; i < thread->frameCount; i++) {
-        markObject((Obj*)thread->frames[i].closure);
+    for (int i = 0; i < routine->frameCount; i++) {
+        markObject((Obj*)routine->frames[i].closure);
     }
 
-    for (ObjUpvalue* upvalue = thread->openUpvalues;
+    for (ObjUpvalue* upvalue = routine->openUpvalues;
         upvalue != NULL;
         upvalue = upvalue->next) {
         markObject((Obj*)upvalue);
     }
 
-    markObject((Obj*)thread->entryFunction);
+    markObject((Obj*)routine->entryFunction);
 }
 
-void runtimeError(ObjRoutine* thread, const char* format, ...) {
+void runtimeError(ObjRoutine* routine, const char* format, ...) {
     va_list args;
     va_start(args, format);
     vfprintf(stderr, format, args);
     va_end(args);
     fputs("\n", stderr);
 
-    for (int i = thread->frameCount - 1; i >= 0; i--) {
-        CallFrame* frame = &thread->frames[i];
+    for (int i = routine->frameCount - 1; i >= 0; i--) {
+        CallFrame* frame = &routine->frames[i];
         ObjFunction* function = frame->closure->function;
         size_t instruction = frame->ip - function->chunk.code - 1;
         fprintf(stderr, "<R%s 0x%8.x>[line %d] in ",
-                thread->type == THREAD_ISR ? "i" : "n",
-                thread,
+                routine->type == ROUTINE_ISR ? "i" : "n",
+                routine,
                 function->chunk.lines[instruction]);
         if (function->name == NULL) {
             fprintf(stderr, "script\n");
@@ -87,24 +87,24 @@ void runtimeError(ObjRoutine* thread, const char* format, ...) {
         }
     }
 
-    thread->state = EXEC_ERROR;
-    resetRoutine(thread);
+    routine->state = EXEC_ERROR;
+    resetRoutine(routine);
 }
 
-void push(ObjRoutine* thread, Value value) {
-    *thread->stackTop = value;
-    thread->stackTop++;
+void push(ObjRoutine* routine, Value value) {
+    *routine->stackTop = value;
+    routine->stackTop++;
 
-    if (thread->stackTop - &thread->stack[0] > STACK_MAX) {
-        runtimeError(thread, "Value stack size exceeded.");
+    if (routine->stackTop - &routine->stack[0] > STACK_MAX) {
+        runtimeError(routine, "Value stack size exceeded.");
     }
 }
 
-Value pop(ObjRoutine* thread) {
-    thread->stackTop--;
-    return *thread->stackTop;
+Value pop(ObjRoutine* routine) {
+    routine->stackTop--;
+    return *routine->stackTop;
 }
 
-Value peek(ObjRoutine* thread, int distance) {
-    return thread->stackTop[-1 - distance];
+Value peek(ObjRoutine* routine, int distance) {
+    return routine->stackTop[-1 - distance];
 }

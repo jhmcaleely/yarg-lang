@@ -143,10 +143,10 @@ static void printFunction(ObjFunction* function) {
     printf("<fn %s>", function->name->chars);
 }
 
-static void printRoutine(ObjRoutine* thread) {
+static void printRoutine(ObjRoutine* routine) {
     printf("<R%s 0x%8.x>"
-          , thread->type == THREAD_ISR ? "i" : "n"
-          , thread);
+          , routine->type == ROUTINE_ISR ? "i" : "n"
+          , routine);
 }
 
 static void printChannel(ObjChannel* channel) {

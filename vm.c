@@ -40,7 +40,7 @@ void initVM() {
     vm.core0.obj.type = OBJ_ROUTINE;
     vm.core0.obj.isMarked = false;
     vm.core0.obj.next = NULL;
-    initRoutine(&vm.core0, THREAD_NORMAL);
+    initRoutine(&vm.core0, ROUTINE_THREAD);
 
     vm.core1 = NULL;
 

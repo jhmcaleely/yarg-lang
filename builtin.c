@@ -25,7 +25,7 @@ bool makeRoutineBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* re
     ObjClosure* closure = AS_CLOSURE(args[0]);
     bool isISR = AS_BOOL(args[1]);
 
-    ObjRoutine* newThread = newRoutine(isISR ? THREAD_ISR : THREAD_NORMAL);
+    ObjRoutine* newThread = newRoutine(isISR ? ROUTINE_ISR : ROUTINE_THREAD);
 
     prepareRoutine(newThread, closure);
 

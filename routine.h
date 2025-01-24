@@ -14,16 +14,16 @@ typedef struct {
 } CallFrame;
 
 typedef enum {
-    THREAD_NORMAL,
-    THREAD_ISR
-} ThreadType;
+    ROUTINE_THREAD,
+    ROUTINE_ISR
+} RoutineKind;
 
 typedef enum {
     EXEC_RUNNING,
     EXEC_SUSPENDED,
     EXEC_CLOSED,
     EXEC_ERROR
-} ThreadState;
+} ExecState;
 
 typedef struct ObjRoutine {
     Obj obj;
@@ -38,22 +38,22 @@ typedef struct ObjRoutine {
 
     ObjUpvalue* openUpvalues;
 
-    ThreadType type;
-    ThreadState state;
+    RoutineKind type;
+    ExecState state;
 } ObjRoutine;
 
-void initRoutine(ObjRoutine* thread, ThreadType type);
-ObjRoutine* newRoutine(ThreadType type);
-void resetRoutine(ObjRoutine* thread);
+void initRoutine(ObjRoutine* routine, RoutineKind type);
+ObjRoutine* newRoutine(RoutineKind type);
+void resetRoutine(ObjRoutine* routine);
 void prepareRoutine(ObjRoutine* routine, ObjClosure* closure);
 void prepareRoutineStack(ObjRoutine* routine, int argCount, Value* args);
 
-void markRoutine(ObjRoutine* thread);
+void markRoutine(ObjRoutine* routine);
 
-void push(ObjRoutine* thread, Value value);
-Value pop(ObjRoutine* thread);
-Value peek(ObjRoutine* thread, int distance);
+void push(ObjRoutine* routine, Value value);
+Value pop(ObjRoutine* routine);
+Value peek(ObjRoutine* routine, int distance);
 
-void runtimeError(ObjRoutine* thread, const char* format, ...);
+void runtimeError(ObjRoutine* routine, const char* format, ...);
 
 #endif

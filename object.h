@@ -60,7 +60,7 @@ typedef struct {
     ObjString* name;
 } ObjFunction;
 
-typedef bool (*NativeFn)(ObjRoutine* thread, int argCount, Value* args, Value* result);
+typedef bool (*NativeFn)(ObjRoutine* routine, int argCount, Value* args, Value* result);
 
 typedef struct {
     Obj obj;
