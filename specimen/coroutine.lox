@@ -1,4 +1,4 @@
-fun input(n) {
+fun input(n, m) {
     print n;
     print m;
     yield n - 1;
@@ -6,4 +6,4 @@ fun input(n) {
 
 var coro = make_routine(input, false);
 
-print resume(coro, 10);
+print resume(coro, 10, 20);
