@@ -19,6 +19,7 @@ typedef enum {
 } RoutineKind;
 
 typedef enum {
+    EXEC_UNBOUND,
     EXEC_RUNNING,
     EXEC_SUSPENDED,
     EXEC_CLOSED,
@@ -39,7 +40,7 @@ typedef struct ObjRoutine {
     ObjUpvalue* openUpvalues;
 
     RoutineKind type;
-    ExecState state;
+    volatile ExecState state;
 } ObjRoutine;
 
 void initRoutine(ObjRoutine* routine, RoutineKind type);

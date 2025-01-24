@@ -13,7 +13,7 @@
 void initRoutine(ObjRoutine* routine, RoutineKind type) {
     routine->type = type;
     routine->entryFunction = NULL;
-    routine->state = EXEC_SUSPENDED;
+    routine->state = EXEC_UNBOUND;
 
     resetRoutine(routine);
 }
@@ -45,6 +45,8 @@ void prepareRoutineStack(ObjRoutine* routine, int argCount, Value* args) {
     }
 
     callfn(routine, routine->entryFunction, routine->entryFunction->function->arity);
+
+    routine->state = EXEC_SUSPENDED;
 }
 
 void markRoutine(ObjRoutine* routine) {

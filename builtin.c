@@ -41,18 +41,31 @@ bool resumeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value*
 
     ObjRoutine* target = AS_ROUTINE(args[0]);
 
-    if (target->state != EXEC_SUSPENDED) {
-        runtimeError(routineContext, "routine must be suspended to resume.");
+    if (target->state != EXEC_SUSPENDED && target->state != EXEC_UNBOUND) {
+        runtimeError(routineContext, "routine must be suspended or unbound to resume.");
         return false;
     }
 
-    int resumeArity = 1 + target->entryFunction->function->arity;
+    int resumeArity = 1;
+    if (target->state == EXEC_UNBOUND) {
+        resumeArity += target->entryFunction->function->arity;
+    }
+    else if (target->state == EXEC_SUSPENDED) {
+        // yeild arity is 1 (nil or something)
+        resumeArity += 1;
+    }
+
     if (argCount != resumeArity) {
         runtimeError(routineContext, "Expected %d arguments but got %d.", resumeArity, argCount);
         return false;
     }
 
-    prepareRoutineStack(target, target->entryFunction->function->arity, &args[1]);
+    if (target->state == EXEC_UNBOUND) {
+        prepareRoutineStack(target, target->entryFunction->function->arity, &args[1]);
+    }
+    else if (target->state == EXEC_SUSPENDED) {
+        push(target, args[1]);
+    }
 
     InterpretResult execResult = run(target);
     if (execResult != INTERPRET_OK) {
@@ -79,6 +92,12 @@ void nativeCore1Entry() {
     ObjRoutine* core = vm.core1;
 
     InterpretResult execResult = run(core);
+
+    if (core->state != EXEC_ERROR) {
+        core->state = EXEC_CLOSED;
+    }
+
+ //   vm.core1 = NULL;
 }
 
 bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
@@ -89,8 +108,8 @@ bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* 
 
     ObjRoutine* target = AS_ROUTINE(args[0]);
 
-    if (target->state != EXEC_SUSPENDED) {
-        runtimeError(routineContext, "routine must be suspended to resume.");
+    if (target->state != EXEC_UNBOUND) {
+        runtimeError(routineContext, "routine must be unbound to start.");
         return false;
     }
 
@@ -108,6 +127,7 @@ bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* 
     prepareRoutineStack(target, target->entryFunction->function->arity, &args[1]);
 
     vm.core1 = target;
+    vm.core1->state = EXEC_RUNNING;
 
     multicore_launch_core1(nativeCore1Entry);
 

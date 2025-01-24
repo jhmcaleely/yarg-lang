@@ -537,6 +537,8 @@ InterpretResult run(ObjRoutine* routine) {
                 routine->frameCount--;
                 if (routine->frameCount == 0) {
                     pop(routine);
+                    push(routine, result);
+                    routine->state = EXEC_CLOSED;
                     return INTERPRET_OK;
                 }
 
