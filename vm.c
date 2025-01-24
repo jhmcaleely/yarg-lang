@@ -100,34 +100,34 @@ bool callfn(ObjRoutine* routine, ObjClosure* closure, int argCount) {
     return true;
 }
 
-static bool callValue(ObjRoutine* thread, Value callee, int argCount) {
+static bool callValue(ObjRoutine* routine, Value callee, int argCount) {
     if (IS_OBJ(callee)) {
         switch (OBJ_TYPE(callee)) {
             case OBJ_BOUND_METHOD: {
                 ObjBoundMethod* bound = AS_BOUND_METHOD(callee);
-                thread->stackTop[-argCount - 1] = bound->reciever;
-                return callfn(thread, bound->method, argCount);
+                routine->stackTop[-argCount - 1] = bound->reciever;
+                return callfn(routine, bound->method, argCount);
             }
             case OBJ_CLASS: {
                 ObjClass* klass = AS_CLASS(callee);
-                thread->stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
+                routine->stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
                 Value initializer;
                 if (tableGet(&klass->methods, vm.initString, &initializer)) {
-                    return callfn(thread, AS_CLOSURE(initializer), argCount);
+                    return callfn(routine, AS_CLOSURE(initializer), argCount);
                 } else if (argCount != 0) {
-                    runtimeError(thread, "Expected 0 arguments but got %d.");
+                    runtimeError(routine, "Expected 0 arguments but got %d.");
                     return false;
                 }
                 return true;
             }
             case OBJ_CLOSURE:
-                return callfn(thread, AS_CLOSURE(callee), argCount);
+                return callfn(routine, AS_CLOSURE(callee), argCount);
             case OBJ_NATIVE: {
                 NativeFn native = AS_NATIVE(callee);
                 Value result = NIL_VAL; 
-                if (native(thread, argCount, thread->stackTop - argCount, &result)) {
-                    thread->stackTop -= argCount + 1;
-                    push(thread, result);
+                if (native(routine, argCount, routine->stackTop - argCount, &result)) {
+                    routine->stackTop -= argCount + 1;
+                    push(routine, result);
                     return true;
                 } else {
                     return false;
@@ -137,25 +137,25 @@ static bool callValue(ObjRoutine* thread, Value callee, int argCount) {
                 break; // Non-callable object type.
         }
     }
-    runtimeError(thread, "Can only call functions and classes.");
+    runtimeError(routine, "Can only call functions and classes.");
     return false;
 }
 
-static bool invokeFromClass(ObjRoutine* thread, ObjClass* klass, ObjString* name,
+static bool invokeFromClass(ObjRoutine* routine, ObjClass* klass, ObjString* name,
                             int argCount) {
     Value method;
     if (!tableGet(&klass->methods, name, &method)) {
-        runtimeError(thread, "Undefined property '%s'.", name->chars);
+        runtimeError(routine, "Undefined property '%s'.", name->chars);
         return false;
     }
-    return callfn(thread, AS_CLOSURE(method), argCount);
+    return callfn(routine, AS_CLOSURE(method), argCount);
 }
 
-static bool invoke(ObjRoutine* thread, ObjString* name, int argCount) {
-    Value receiver = peek(thread, argCount);
+static bool invoke(ObjRoutine* routine, ObjString* name, int argCount) {
+    Value receiver = peek(routine, argCount);
 
     if (!IS_INSTANCE(receiver)) {
-        runtimeError(thread, "Only instances have methods.");
+        runtimeError(routine, "Only instances have methods.");
         return false;
     }
 
@@ -163,29 +163,29 @@ static bool invoke(ObjRoutine* thread, ObjString* name, int argCount) {
 
     Value value;
     if (tableGet(&instance->fields, name, &value)) {
-        thread->stackTop[-argCount - 1] = value;
-        return callValue(thread, value, argCount);
+        routine->stackTop[-argCount - 1] = value;
+        return callValue(routine, value, argCount);
     }
 
-    return invokeFromClass(thread, instance->klass, name, argCount);
+    return invokeFromClass(routine, instance->klass, name, argCount);
 }
 
-static bool bindMethod(ObjRoutine* thread, ObjClass* klass, ObjString* name) {
+static bool bindMethod(ObjRoutine* routine, ObjClass* klass, ObjString* name) {
     Value method;
     if (!tableGet(&klass->methods, name, &method)) {
-        runtimeError(thread, "Undefined property '%s'.", name->chars);
+        runtimeError(routine, "Undefined property '%s'.", name->chars);
         return false;
     }
 
-    ObjBoundMethod* bound = newBoundMethod(peek(thread, 0), AS_CLOSURE(method));
-    pop(thread);
-    push(thread, OBJ_VAL(bound));
+    ObjBoundMethod* bound = newBoundMethod(peek(routine, 0), AS_CLOSURE(method));
+    pop(routine);
+    push(routine, OBJ_VAL(bound));
     return true;
 }
 
-static ObjUpvalue* captureUpvalue(ObjRoutine* thread, Value* local) {
+static ObjUpvalue* captureUpvalue(ObjRoutine* routine, Value* local) {
     ObjUpvalue* prevUpvalue = NULL;
-    ObjUpvalue* upvalue = thread->openUpvalues;
+    ObjUpvalue* upvalue = routine->openUpvalues;
     while (upvalue != NULL && upvalue->location > local) {
         prevUpvalue = upvalue;
         upvalue = upvalue->next;
@@ -199,7 +199,7 @@ static ObjUpvalue* captureUpvalue(ObjRoutine* thread, Value* local) {
     createdUpvalue->next = upvalue;
 
     if (prevUpvalue == NULL) {
-        thread->openUpvalues = createdUpvalue;
+        routine->openUpvalues = createdUpvalue;
     } else {
         prevUpvalue->next = createdUpvalue;
     }
@@ -207,29 +207,29 @@ static ObjUpvalue* captureUpvalue(ObjRoutine* thread, Value* local) {
     return createdUpvalue;
 }
 
-static void closeUpvalues(ObjRoutine* thread, Value* last) {
-    while (thread->openUpvalues != NULL && thread->openUpvalues->location >= last) {
-        ObjUpvalue* upvalue = thread->openUpvalues;
+static void closeUpvalues(ObjRoutine* routine, Value* last) {
+    while (routine->openUpvalues != NULL && routine->openUpvalues->location >= last) {
+        ObjUpvalue* upvalue = routine->openUpvalues;
         upvalue->closed = *upvalue->location;
         upvalue->location = &upvalue->closed;
-        thread->openUpvalues = upvalue->next;
+        routine->openUpvalues = upvalue->next;
     }
 }
 
-static void defineMethod(ObjRoutine* thread, ObjString* name) {
-    Value method = peek(thread, 0);
-    ObjClass* klass = AS_CLASS(peek(thread, 1));
+static void defineMethod(ObjRoutine* routine, ObjString* name) {
+    Value method = peek(routine, 0);
+    ObjClass* klass = AS_CLASS(peek(routine, 1));
     tableSet(&klass->methods, name, method);
-    pop(thread);
+    pop(routine);
 }
 
 static bool isFalsey(Value value) {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
-static void concatenate(ObjRoutine* thread) {
-    ObjString* b = AS_STRING(peek(thread, 0));
-    ObjString* a = AS_STRING(peek(thread, 1));
+static void concatenate(ObjRoutine* routine) {
+    ObjString* b = AS_STRING(peek(routine, 0));
+    ObjString* a = AS_STRING(peek(routine, 1));
 
     int length = a->length + b->length;
     char* chars = ALLOCATE(char, length + 1);
@@ -238,9 +238,9 @@ static void concatenate(ObjRoutine* thread) {
     chars[length] = '\0';
 
     ObjString* result = takeString(chars, length);
-    pop(thread);
-    pop(thread);
-    push(thread, OBJ_VAL(result));
+    pop(routine);
+    pop(routine);
+    push(routine, OBJ_VAL(result));
 }
 
 InterpretResult run(ObjRoutine* routine) {
@@ -257,7 +257,7 @@ InterpretResult run(ObjRoutine* routine) {
     (frame->closure->function->chunk.constants.values[READ_BYTE()])
 
 #define READ_STRING() AS_STRING(READ_CONSTANT())
-#define BINARY_OP(thread, valueType, op) \
+#define BINARY_OP(routine, valueType, op) \
     do { \
         if (!IS_NUMBER(peek(routine, 0)) || !IS_NUMBER(peek(routine, 1))) { \
             runtimeError(routine, "Operands must be numbers."); \
@@ -525,7 +525,7 @@ InterpretResult run(ObjRoutine* routine) {
                 break;
             case OP_YIELD: {
                 if (routine == &vm.core0) {
-                    runtimeError(routine, "Cannot yield from initial thread.");
+                    runtimeError(routine, "Cannot yield from initial routine.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 routine->state = EXEC_SUSPENDED;
