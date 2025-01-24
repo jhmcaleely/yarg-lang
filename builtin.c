@@ -64,20 +64,20 @@ bool resumeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value*
     return true;
 }
 
-#define FLAG_VALUE 123
+// use ascii 'c' 'l' 'o' 'x'
+#define FLAG_VALUE 0x636c6f78
 
 void nativeCore1Entry() {
     multicore_fifo_push_blocking(FLAG_VALUE);
     uint32_t g = multicore_fifo_pop_blocking();
 
     if (g != FLAG_VALUE) {
-        fatalVMError("Core1 Entry amd sync failed.");
+        fatalVMError("Core1 entry and sync failed.");
     }
 
     ObjRoutine* core = vm.core1;
 
     InterpretResult execResult = run(core);
-
 }
 
 bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
@@ -108,7 +108,7 @@ bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* 
     // Wait for it to start up
     uint32_t g = multicore_fifo_pop_blocking();
     if (g != FLAG_VALUE) {
-        fatalVMError("Core startup failure.");
+        fatalVMError("Core1 startup failure.");
         return false;
     }
     multicore_fifo_push_blocking(FLAG_VALUE);
