@@ -3,8 +3,8 @@
 
 #include "value.h"
 
-bool makeRoutineBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result);
-bool resumeBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result);
-bool startBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result);
+bool makeRoutineBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result);
+bool resumeBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result);
+bool startBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result);
 
 #endif

@@ -11,13 +11,13 @@
 #include "routine.h"
 #include "vm.h"
 
-bool makeRoutineBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
+bool makeRoutineBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result) {
     if (argCount != 2) {
-        runtimeError(thread, "Expected 2 arguments but got %d.", argCount);
+        runtimeError(routine, "Expected 2 arguments but got %d.", argCount);
         return false;
     }
     if (!IS_CLOSURE(args[0]) || !IS_BOOL(args[1])) {
-        runtimeError(thread, "Argument to make_routine must be a function and a boolean.");
+        runtimeError(routine, "Argument to make_routine must be a function and a boolean.");
         return false;
     }
 
@@ -32,22 +32,22 @@ bool makeRoutineBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* re
     return true;
 }
 
-bool resumeBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
+bool resumeBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result) {
     if (!IS_ROUTINE(args[0])) {
-        runtimeError(thread, "Argument to resume must be a routine.");
+        runtimeError(routine, "Argument to resume must be a routine.");
         return false;
     }
 
     ObjRoutine* coroThread = AS_ROUTINE(args[0]);
 
     if (coroThread->state != EXEC_SUSPENDED) {
-        runtimeError(thread, "routine must be suspended to resume.");
+        runtimeError(routine, "routine must be suspended to resume.");
         return false;
     }
 
     int resumeArity = 1 + coroThread->entryFunction->function->arity;
     if (argCount != resumeArity) {
-        runtimeError(thread, "Expected %d arguments but got %d.", resumeArity, argCount);
+        runtimeError(routine, "Expected %d arguments but got %d.", resumeArity, argCount);
         return false;
     }
 
@@ -80,22 +80,22 @@ void nativeCore1Entry() {
 
 }
 
-bool startBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
+bool startBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result) {
     if (!IS_ROUTINE(args[0])) {
-        runtimeError(thread, "Argument to start must be a routine.");
+        runtimeError(routine, "Argument to start must be a routine.");
         return false;
     }
 
     ObjRoutine* coreThread = AS_ROUTINE(args[0]);
 
     if (coreThread->state != EXEC_SUSPENDED) {
-        runtimeError(thread, "routine must be suspended to resume.");
+        runtimeError(routine, "routine must be suspended to resume.");
         return false;
     }
 
     int startArity = 1 + coreThread->entryFunction->function->arity;
     if (argCount != startArity) {
-        runtimeError(thread, "Expected %d arguments but got %d.", startArity, argCount);
+        runtimeError(routine, "Expected %d arguments but got %d.", startArity, argCount);
         return false;
     }
 
