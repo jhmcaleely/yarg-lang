@@ -81,22 +81,22 @@ void freeVM() {
     freeObjects();
 }
 
-bool callfn(ObjRoutine* thread, ObjClosure* closure, int argCount) {
+bool callfn(ObjRoutine* routine, ObjClosure* closure, int argCount) {
     if (argCount != closure->function->arity) {
-        runtimeError(thread, "Expected %d arguments but got %d.",
+        runtimeError(routine, "Expected %d arguments but got %d.",
                      closure->function->arity, argCount);
         return false;
     }
 
-    if (thread->frameCount == FRAMES_MAX) {
-        runtimeError(thread, "Stack overflow.");
+    if (routine->frameCount == FRAMES_MAX) {
+        runtimeError(routine, "Stack overflow.");
         return false;
     }
 
-    CallFrame* frame = &thread->frames[thread->frameCount++];
+    CallFrame* frame = &routine->frames[routine->frameCount++];
     frame->closure = closure;
     frame->ip = closure->function->chunk.code;
-    frame->slots = thread->stackTop - argCount - 1;
+    frame->slots = routine->stackTop - argCount - 1;
     return true;
 }
 
@@ -243,9 +243,9 @@ static void concatenate(ObjRoutine* thread) {
     push(thread, OBJ_VAL(result));
 }
 
-InterpretResult run(ObjRoutine* thread) {
-    CallFrame* frame = &thread->frames[thread->frameCount - 1];
-    thread->state = EXEC_RUNNING;
+InterpretResult run(ObjRoutine* routine) {
+    CallFrame* frame = &routine->frames[routine->frameCount - 1];
+    routine->state = EXEC_RUNNING;
 
 #define READ_BYTE() (*frame->ip++)
 
@@ -259,19 +259,19 @@ InterpretResult run(ObjRoutine* thread) {
 #define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(thread, valueType, op) \
     do { \
-        if (!IS_NUMBER(peek(thread, 0)) || !IS_NUMBER(peek(thread, 1))) { \
-            runtimeError(thread, "Operands must be numbers."); \
+        if (!IS_NUMBER(peek(routine, 0)) || !IS_NUMBER(peek(routine, 1))) { \
+            runtimeError(routine, "Operands must be numbers."); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
-        double b = AS_NUMBER(pop(thread)); \
-        double a = AS_NUMBER(pop(thread)); \
-        push(thread, valueType(a op b)); \
+        double b = AS_NUMBER(pop(routine)); \
+        double a = AS_NUMBER(pop(routine)); \
+        push(routine, valueType(a op b)); \
     } while (false)
 
     for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
         printf("          ");
-        for (Value* slot = thread->stack; slot < thread->stackTop; slot++) {
+        for (Value* slot = routine->stack; slot < routine->stackTop; slot++) {
             printf("[ ");
             printValue(*slot);
             printf(" ]");
@@ -284,54 +284,54 @@ InterpretResult run(ObjRoutine* thread) {
         switch (instruction = READ_BYTE()) {
             case OP_CONSTANT: {
                 Value constant = READ_CONSTANT();
-                push(thread, constant);
+                push(routine, constant);
                 break;
             }
-            case OP_NIL: push(thread, NIL_VAL); break;
-            case OP_TRUE: push(thread, BOOL_VAL(true)); break;
-            case OP_FALSE: push(thread, BOOL_VAL(false)); break;
-            case OP_POP: pop(thread); break;
+            case OP_NIL: push(routine, NIL_VAL); break;
+            case OP_TRUE: push(routine, BOOL_VAL(true)); break;
+            case OP_FALSE: push(routine, BOOL_VAL(false)); break;
+            case OP_POP: pop(routine); break;
             case OP_GET_BUILTIN: {
                 uint8_t builtin = READ_BYTE();
                 switch (builtin) {
                     case BUILTIN_MAKE_ROUTINE: {
                         Value builtinFn = OBJ_VAL(newNative(makeRoutineBuiltin));
-                        push(thread, builtinFn);
+                        push(routine, builtinFn);
                         break;
                     }
                     case BUILTIN_RESUME: {
                         Value builtinFn = OBJ_VAL(newNative(resumeBuiltin));
-                        push(thread, builtinFn);
+                        push(routine, builtinFn);
                         break;
                     }
                     case BUILTIN_START: {
                         Value builtinFn = OBJ_VAL(newNative(startBuiltin));
-                        push(thread, builtinFn);
+                        push(routine, builtinFn);
                         break;
                     }
                     case BUILTIN_MAKE_CHANNEL: {
                         Value builtinFn = OBJ_VAL(newNative(makeChannelBuiltin));
-                        push(thread, builtinFn);
+                        push(routine, builtinFn);
                         break;
                     }
                     case BUILTIN_SEND: {
                         Value builtinFn = OBJ_VAL(newNative(sendChannelBuiltin));
-                        push(thread, builtinFn);
+                        push(routine, builtinFn);
                         break;
                     }
                     case BUILTIN_RECEIVE: {
                         Value builtinFn = OBJ_VAL(newNative(receiveChannelBuiltin));
-                        push(thread, builtinFn);
+                        push(routine, builtinFn);
                         break;
                     }
                     case BUILTIN_SHARE: {
                         Value builtinFn = OBJ_VAL(newNative(shareChannelBuiltin));
-                        push(thread, builtinFn);
+                        push(routine, builtinFn);
                         break;
                     }
                     case BUILTIN_PEEK: {
                         Value builtinFn = OBJ_VAL(newNative(peekChannelBuiltin));
-                        push(thread, builtinFn);
+                        push(routine, builtinFn);
                         break;
                     }
                 }
@@ -339,126 +339,126 @@ InterpretResult run(ObjRoutine* thread) {
             }
             case OP_SET_LOCAL: {
                 uint8_t slot = READ_BYTE();
-                frame->slots[slot] = peek(thread, 0);
+                frame->slots[slot] = peek(routine, 0);
                 break;
             }
             case OP_GET_LOCAL: {
                 uint8_t slot = READ_BYTE();
-                push(thread, frame->slots[slot]);
+                push(routine, frame->slots[slot]);
                 break;
             }
             case OP_GET_GLOBAL: {
                 ObjString* name = READ_STRING();
                 Value value;
                 if (!tableGet(&vm.globals, name, &value)) {
-                    runtimeError(thread, "Undefined variable '%s'.", name->chars);
+                    runtimeError(routine, "Undefined variable '%s'.", name->chars);
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                push(thread, value);
+                push(routine, value);
                 break;
             }
             case OP_DEFINE_GLOBAL: {
                 ObjString* name = READ_STRING();
-                tableSet(&vm.globals, name, peek(thread, 0));
-                pop(thread);
+                tableSet(&vm.globals, name, peek(routine, 0));
+                pop(routine);
                 break;
             }
             case OP_SET_GLOBAL: {
                 ObjString* name = READ_STRING();
-                if (tableSet(&vm.globals, name, peek(thread, 0))) {
+                if (tableSet(&vm.globals, name, peek(routine, 0))) {
                     tableDelete(&vm.globals, name);
-                    runtimeError(thread, "Undefined variable '%s'.", name->chars);
+                    runtimeError(routine, "Undefined variable '%s'.", name->chars);
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
             }
             case OP_GET_UPVALUE: {
                 uint8_t slot = READ_BYTE();
-                push(thread, *frame->closure->upvalues[slot]->location);
+                push(routine, *frame->closure->upvalues[slot]->location);
                 break;
             }
             case OP_SET_UPVALUE: {
                 uint8_t slot = READ_BYTE();
-                *frame->closure->upvalues[slot]->location = peek(thread, 0);
+                *frame->closure->upvalues[slot]->location = peek(routine, 0);
                 break;
             }
             case OP_GET_PROPERTY: {
-                if (!IS_INSTANCE(peek(thread, 0))) {
-                    runtimeError(thread, "Only instances have properties.");
+                if (!IS_INSTANCE(peek(routine, 0))) {
+                    runtimeError(routine, "Only instances have properties.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                ObjInstance* instance = AS_INSTANCE(peek(thread, 0));
+                ObjInstance* instance = AS_INSTANCE(peek(routine, 0));
                 ObjString* name = READ_STRING();
 
                 Value value;
                 if (tableGet(&instance->fields, name, &value)) {
-                    pop(thread); // Instance
-                    push(thread, value);
+                    pop(routine); // Instance
+                    push(routine, value);
                     break;
                 }
 
-                if (!bindMethod(thread, instance->klass, name)) {
+                if (!bindMethod(routine, instance->klass, name)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
             }
             case OP_SET_PROPERTY: {
-                if (!IS_INSTANCE(peek(thread, 1))) {
-                    runtimeError(thread, "Only instances have fields.");
+                if (!IS_INSTANCE(peek(routine, 1))) {
+                    runtimeError(routine, "Only instances have fields.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                ObjInstance* instance = AS_INSTANCE(peek(thread, 1));
-                tableSet(&instance->fields, READ_STRING(), peek(thread, 0));
-                Value value = pop(thread);
-                pop(thread);
-                push(thread, value);
+                ObjInstance* instance = AS_INSTANCE(peek(routine, 1));
+                tableSet(&instance->fields, READ_STRING(), peek(routine, 0));
+                Value value = pop(routine);
+                pop(routine);
+                push(routine, value);
                 break;
             }
             case OP_GET_SUPER: {
                 ObjString* name = READ_STRING();
-                ObjClass* superclass = AS_CLASS(pop(thread));
+                ObjClass* superclass = AS_CLASS(pop(routine));
 
-                if (!bindMethod(thread, superclass, name)) {
+                if (!bindMethod(routine, superclass, name)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
             }
             case OP_EQUAL: {
-                Value b = pop(thread);
-                Value a = pop(thread);
-                push(thread, BOOL_VAL(valuesEqual(a, b)));
+                Value b = pop(routine);
+                Value a = pop(routine);
+                push(routine, BOOL_VAL(valuesEqual(a, b)));
                 break;
             }
-            case OP_GREATER:  BINARY_OP(thread, BOOL_VAL, >); break;
-            case OP_LESS:     BINARY_OP(thread, BOOL_VAL, <); break;
+            case OP_GREATER:  BINARY_OP(routine, BOOL_VAL, >); break;
+            case OP_LESS:     BINARY_OP(routine, BOOL_VAL, <); break;
             case OP_ADD: {
-                if (IS_STRING(peek(thread, 0)) && IS_STRING(peek(thread, 1))) {
-                    concatenate(thread);
-                } else if (IS_NUMBER(peek(thread, 0)) && IS_NUMBER(peek(thread, 1))) {
-                    double b = AS_NUMBER(pop(thread));
-                    double a = AS_NUMBER(pop(thread));
-                    push(thread, NUMBER_VAL(a + b));
+                if (IS_STRING(peek(routine, 0)) && IS_STRING(peek(routine, 1))) {
+                    concatenate(routine);
+                } else if (IS_NUMBER(peek(routine, 0)) && IS_NUMBER(peek(routine, 1))) {
+                    double b = AS_NUMBER(pop(routine));
+                    double a = AS_NUMBER(pop(routine));
+                    push(routine, NUMBER_VAL(a + b));
                 } else {
-                    runtimeError(thread, "Operands must be two numbers or two strings.");
+                    runtimeError(routine, "Operands must be two numbers or two strings.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
             }
-            case OP_SUBTRACT: BINARY_OP(thread, NUMBER_VAL, -); break;
-            case OP_MULTIPLY: BINARY_OP(thread, NUMBER_VAL, *); break;
-            case OP_DIVIDE:   BINARY_OP(thread, NUMBER_VAL, /); break;
+            case OP_SUBTRACT: BINARY_OP(routine, NUMBER_VAL, -); break;
+            case OP_MULTIPLY: BINARY_OP(routine, NUMBER_VAL, *); break;
+            case OP_DIVIDE:   BINARY_OP(routine, NUMBER_VAL, /); break;
             case OP_NOT:
-                push(thread, BOOL_VAL(isFalsey(pop(thread))));
+                push(routine, BOOL_VAL(isFalsey(pop(routine))));
                 break;
             case OP_NEGATE:
-                if (!IS_NUMBER(peek(thread, 0))) {
-                    runtimeError(thread, "Operand must be a number.");
+                if (!IS_NUMBER(peek(routine, 0))) {
+                    runtimeError(routine, "Operand must be a number.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                push(thread, NUMBER_VAL(-AS_NUMBER(pop(thread))));
+                push(routine, NUMBER_VAL(-AS_NUMBER(pop(routine))));
                 break;
             case OP_PRINT: {
-                printValue(pop(thread));
+                printValue(pop(routine));
                 printf("\n");
                 break;
             }
@@ -469,7 +469,7 @@ InterpretResult run(ObjRoutine* thread) {
             }
             case OP_JUMP_IF_FALSE: {
                 uint16_t offset = READ_SHORT();
-                if (isFalsey(peek(thread, 0))) frame->ip += offset;
+                if (isFalsey(peek(routine, 0))) frame->ip += offset;
                 break;
             }
             case OP_LOOP: {
@@ -479,40 +479,40 @@ InterpretResult run(ObjRoutine* thread) {
             }
             case OP_CALL: {
                 int argCount = READ_BYTE();
-                if (!callValue(thread, peek(thread, argCount), argCount)) {
+                if (!callValue(routine, peek(routine, argCount), argCount)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                frame = &thread->frames[thread->frameCount - 1];
+                frame = &routine->frames[routine->frameCount - 1];
                 break;
             }
             case OP_INVOKE: {
                 ObjString* method = READ_STRING();
                 int argCount = READ_BYTE();
-                if (!invoke(thread, method, argCount)) {
+                if (!invoke(routine, method, argCount)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                frame = &thread->frames[thread->frameCount - 1];
+                frame = &routine->frames[routine->frameCount - 1];
                 break;
             }
             case OP_SUPER_INVOKE: {
                 ObjString* method = READ_STRING();
                 int argCount = READ_BYTE();
-                ObjClass* superclass = AS_CLASS(pop(thread));
-                if (!invokeFromClass(thread, superclass, method, argCount)) {
+                ObjClass* superclass = AS_CLASS(pop(routine));
+                if (!invokeFromClass(routine, superclass, method, argCount)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                frame = &thread->frames[thread->frameCount - 1];
+                frame = &routine->frames[routine->frameCount - 1];
                 break;
             }
             case OP_CLOSURE: {
                 ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
                 ObjClosure* closure = newClosure(function);
-                push(thread, OBJ_VAL(closure));
+                push(routine, OBJ_VAL(closure));
                 for (int i = 0; i < closure->upvalueCount; i++) {
                     uint8_t isLocal = READ_BYTE();
                     uint8_t index = READ_BYTE();
                     if (isLocal) {
-                        closure->upvalues[i] = captureUpvalue(thread, frame->slots + index);
+                        closure->upvalues[i] = captureUpvalue(routine, frame->slots + index);
                     } else {
                         closure->upvalues[i] = frame->closure->upvalues[index];
                     }
@@ -520,47 +520,47 @@ InterpretResult run(ObjRoutine* thread) {
                 break;
             }
             case OP_CLOSE_UPVALUE:
-                closeUpvalues(thread, thread->stackTop - 1);
-                pop(thread);
+                closeUpvalues(routine, routine->stackTop - 1);
+                pop(routine);
                 break;
             case OP_YIELD: {
-                if (thread == &vm.core0) {
-                    runtimeError(thread, "Cannot yield from initial thread.");
+                if (routine == &vm.core0) {
+                    runtimeError(routine, "Cannot yield from initial thread.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                thread->state = EXEC_SUSPENDED;
+                routine->state = EXEC_SUSPENDED;
                 return INTERPRET_OK;
             }
             case OP_RETURN: {
-                Value result = pop(thread);
-                closeUpvalues(thread, frame->slots);
-                thread->frameCount--;
-                if (thread->frameCount == 0) {
-                    pop(thread);
+                Value result = pop(routine);
+                closeUpvalues(routine, frame->slots);
+                routine->frameCount--;
+                if (routine->frameCount == 0) {
+                    pop(routine);
                     return INTERPRET_OK;
                 }
 
-                thread->stackTop = frame->slots;
-                push(thread, result);
-                frame = &thread->frames[thread->frameCount - 1];
+                routine->stackTop = frame->slots;
+                push(routine, result);
+                frame = &routine->frames[routine->frameCount - 1];
                 break;
             }
             case OP_CLASS:
-                push(thread, OBJ_VAL(newClass(READ_STRING())));
+                push(routine, OBJ_VAL(newClass(READ_STRING())));
                 break;
             case OP_INHERIT: {
-                Value superclass = peek(thread, 1);
+                Value superclass = peek(routine, 1);
                 if (!IS_CLASS(superclass)) {
-                    runtimeError(thread, "Superclass must be a class.");
+                    runtimeError(routine, "Superclass must be a class.");
                 }
 
-                ObjClass* subclass = AS_CLASS(peek(thread, 0));
+                ObjClass* subclass = AS_CLASS(peek(routine, 0));
                 tableAddAll(&AS_CLASS(superclass)->methods, &subclass->methods);
-                pop(thread); // Subclass.
+                pop(routine); // Subclass.
                 break;
             }
             case OP_METHOD:
-                defineMethod(thread, READ_STRING());
+                defineMethod(routine, READ_STRING());
                 break;
         }
     }

@@ -43,10 +43,8 @@ void initVM();
 void freeVM();
 InterpretResult interpret(const char* source);
 
-
-
-InterpretResult run(ObjRoutine* thread);
-bool callfn(ObjRoutine* thread, ObjClosure* closure, int argCount);
+InterpretResult run(ObjRoutine* routine);
+bool callfn(ObjRoutine* routine, ObjClosure* closure, int argCount);
 void fatalMemoryError(const char* format, ...);
 
 #endif
