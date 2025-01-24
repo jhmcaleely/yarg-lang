@@ -15,6 +15,18 @@ ObjChannel* newChannel() {
     return channel;
 }
 
+bool makeChannelBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
+    if (argCount != 0) {
+        runtimeError(thread, "Expected 0 arguments but got %d.", argCount);
+        return false;
+    }
+
+    ObjChannel* channel = newChannel();
+
+    *result = OBJ_VAL(channel);
+    return true;
+}
+
 bool sendChannelBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result) {
     if (argCount != 2) {
         runtimeError(routine, "Expected 2 arguments, got %d.", argCount);

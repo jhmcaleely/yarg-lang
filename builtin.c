@@ -9,7 +9,6 @@
 #include "builtin.h"
 #include "native.h"
 #include "routine.h"
-#include "channel.h"
 #include "vm.h"
 
 bool makeRoutineBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
@@ -115,17 +114,5 @@ bool startBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) 
     multicore_fifo_push_blocking(FLAG_VALUE);
 
     *result = NIL_VAL;
-    return true;
-}
-
-bool makeChannelBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
-    if (argCount != 0) {
-        runtimeError(thread, "Expected 0 arguments but got %d.", argCount);
-        return false;
-    }
-
-    ObjChannel* channel = newChannel();
-
-    *result = OBJ_VAL(channel);
     return true;
 }
