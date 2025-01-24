@@ -71,7 +71,7 @@ void nativeCore1Entry() {
     uint32_t g = multicore_fifo_pop_blocking();
 
     if (g != FLAG_VALUE) {
-        fatalMemoryError("Core1 Entry amd sync failed.");
+        fatalVMError("Core1 Entry amd sync failed.");
     }
 
     ObjRoutine* core = vm.core1;
@@ -108,7 +108,7 @@ bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* 
     // Wait for it to start up
     uint32_t g = multicore_fifo_pop_blocking();
     if (g != FLAG_VALUE) {
-        fatalMemoryError("Core startup failure.");
+        fatalVMError("Core startup failure.");
         return false;
     }
     multicore_fifo_push_blocking(FLAG_VALUE);

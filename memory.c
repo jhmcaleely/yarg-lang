@@ -42,7 +42,7 @@ void tempRootPush(Value value) {
     vm.tempRootsTop++;
 
     if (vm.tempRootsTop - &vm.tempRoots[0] > TEMP_ROOTS_MAX) {
-        fatalMemoryError("Allocation Stash Max Exeeded.");
+        fatalVMError("Allocation Stash Max Exeeded.");
     }
 }
 

@@ -45,6 +45,6 @@ InterpretResult interpret(const char* source);
 
 InterpretResult run(ObjRoutine* routine);
 bool callfn(ObjRoutine* routine, ObjClosure* closure, int argCount);
-void fatalMemoryError(const char* format, ...);
+void fatalVMError(const char* format, ...);
 
 #endif
