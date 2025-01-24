@@ -99,6 +99,11 @@ bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* 
         return false;
     }
 
+    if (vm.core1 != NULL) {
+        runtimeError(routineContext, "Core1 already occupied.");
+        return false;
+    }
+
     prepareRoutineStack(target, target->entryFunction->function->arity, &args[1]);
 
     vm.core1 = target;
