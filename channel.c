@@ -15,13 +15,13 @@ ObjChannel* newChannel() {
     return channel;
 }
 
-bool sendChannelBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
+bool sendChannelBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result) {
     if (argCount != 2) {
-        runtimeError(thread, "Expected 2 arguments, got %d.", argCount);
+        runtimeError(routine, "Expected 2 arguments, got %d.", argCount);
         return false;
     }
     if (!IS_CHANNEL(args[0])) {
-        runtimeError(thread, "Argument must be a channel.");
+        runtimeError(routine, "Argument must be a channel.");
         return false;
     }
 
@@ -39,13 +39,13 @@ bool sendChannelBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* re
     return true;
 }
 
-bool receiveChannelBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
+bool receiveChannelBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result) {
     if (argCount != 1) {
-        runtimeError(thread, "Expected 1 arguments, got %d.", argCount);
+        runtimeError(routine, "Expected 1 arguments, got %d.", argCount);
         return false;
     }
     if (!IS_CHANNEL(args[0])) {
-        runtimeError(thread, "Argument must be a channel.");
+        runtimeError(routine, "Argument must be a channel.");
         return false;
     }
 
@@ -62,13 +62,13 @@ bool receiveChannelBuiltin(ObjRoutine* thread, int argCount, Value* args, Value*
     return true;
 }
 
-bool shareChannelBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
+bool shareChannelBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result) {
     if (argCount != 2) {
-        runtimeError(thread, "Expected 2 arguments, got %d.", argCount);
+        runtimeError(routine, "Expected 2 arguments, got %d.", argCount);
         return false;
     }
     if (!IS_CHANNEL(args[0])) {
-        runtimeError(thread, "Argument must be a channel.");
+        runtimeError(routine, "Argument must be a channel.");
         return false;
     }
 
@@ -83,13 +83,13 @@ bool shareChannelBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* r
     return true;
 }
 
-bool peekChannelBuiltin(ObjRoutine* thread, int argCount, Value* args, Value* result) {
+bool peekChannelBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result) {
     if (argCount != 1) {
-        runtimeError(thread, "Expected 1 arguments, got %d.", argCount);
+        runtimeError(routine, "Expected 1 arguments, got %d.", argCount);
         return false;
     }
     if (!IS_CHANNEL(args[0])) {
-        runtimeError(thread, "Argument must be a channel.");
+        runtimeError(routine, "Argument must be a channel.");
         return false;
     }
 
