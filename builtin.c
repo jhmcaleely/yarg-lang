@@ -11,54 +11,54 @@
 #include "routine.h"
 #include "vm.h"
 
-bool makeRoutineBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result) {
+bool makeRoutineBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
     if (argCount != 2) {
-        runtimeError(routine, "Expected 2 arguments but got %d.", argCount);
+        runtimeError(routineContext, "Expected 2 arguments but got %d.", argCount);
         return false;
     }
     if (!IS_CLOSURE(args[0]) || !IS_BOOL(args[1])) {
-        runtimeError(routine, "Argument to make_routine must be a function and a boolean.");
+        runtimeError(routineContext, "Argument to make_routine must be a function and a boolean.");
         return false;
     }
 
     ObjClosure* closure = AS_CLOSURE(args[0]);
     bool isISR = AS_BOOL(args[1]);
 
-    ObjRoutine* newThread = newRoutine(isISR ? ROUTINE_ISR : ROUTINE_THREAD);
+    ObjRoutine* routine = newRoutine(isISR ? ROUTINE_ISR : ROUTINE_THREAD);
 
-    prepareRoutine(newThread, closure);
+    prepareRoutine(routine, closure);
 
-    *result = OBJ_VAL(newThread);
+    *result = OBJ_VAL(routine);
     return true;
 }
 
-bool resumeBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result) {
+bool resumeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
     if (!IS_ROUTINE(args[0])) {
-        runtimeError(routine, "Argument to resume must be a routine.");
+        runtimeError(routineContext, "Argument to resume must be a routine.");
         return false;
     }
 
-    ObjRoutine* coroThread = AS_ROUTINE(args[0]);
+    ObjRoutine* target = AS_ROUTINE(args[0]);
 
-    if (coroThread->state != EXEC_SUSPENDED) {
-        runtimeError(routine, "routine must be suspended to resume.");
+    if (target->state != EXEC_SUSPENDED) {
+        runtimeError(routineContext, "routine must be suspended to resume.");
         return false;
     }
 
-    int resumeArity = 1 + coroThread->entryFunction->function->arity;
+    int resumeArity = 1 + target->entryFunction->function->arity;
     if (argCount != resumeArity) {
-        runtimeError(routine, "Expected %d arguments but got %d.", resumeArity, argCount);
+        runtimeError(routineContext, "Expected %d arguments but got %d.", resumeArity, argCount);
         return false;
     }
 
-    prepareRoutineStack(coroThread, coroThread->entryFunction->function->arity, &args[1]);
+    prepareRoutineStack(target, target->entryFunction->function->arity, &args[1]);
 
-    InterpretResult execResult = run(coroThread);
+    InterpretResult execResult = run(target);
     if (execResult != INTERPRET_OK) {
         return false;
     }
 
-    Value coroResult = pop(coroThread);
+    Value coroResult = pop(target);
 
     *result = coroResult;
     return true;
@@ -80,28 +80,28 @@ void nativeCore1Entry() {
 
 }
 
-bool startBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result) {
+bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
     if (!IS_ROUTINE(args[0])) {
-        runtimeError(routine, "Argument to start must be a routine.");
+        runtimeError(routineContext, "Argument to start must be a routine.");
         return false;
     }
 
-    ObjRoutine* coreThread = AS_ROUTINE(args[0]);
+    ObjRoutine* target = AS_ROUTINE(args[0]);
 
-    if (coreThread->state != EXEC_SUSPENDED) {
-        runtimeError(routine, "routine must be suspended to resume.");
+    if (target->state != EXEC_SUSPENDED) {
+        runtimeError(routineContext, "routine must be suspended to resume.");
         return false;
     }
 
-    int startArity = 1 + coreThread->entryFunction->function->arity;
+    int startArity = 1 + target->entryFunction->function->arity;
     if (argCount != startArity) {
-        runtimeError(routine, "Expected %d arguments but got %d.", startArity, argCount);
+        runtimeError(routineContext, "Expected %d arguments but got %d.", startArity, argCount);
         return false;
     }
 
-    prepareRoutineStack(coreThread, coreThread->entryFunction->function->arity, &args[1]);
+    prepareRoutineStack(target, target->entryFunction->function->arity, &args[1]);
 
-    vm.core1 = coreThread;
+    vm.core1 = target;
 
     multicore_launch_core1(nativeCore1Entry);
 
