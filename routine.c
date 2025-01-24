@@ -31,7 +31,7 @@ ObjRoutine* newRoutine(RoutineKind type) {
     return routine;
 }
 
-void prepareRoutine(ObjRoutine* routine, ObjClosure* closure) {
+void prepareRoutineEntry(ObjRoutine* routine, ObjClosure* closure) {
 
     routine->entryFunction = closure;
 }

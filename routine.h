@@ -45,7 +45,7 @@ typedef struct ObjRoutine {
 void initRoutine(ObjRoutine* routine, RoutineKind type);
 ObjRoutine* newRoutine(RoutineKind type);
 void resetRoutine(ObjRoutine* routine);
-void prepareRoutine(ObjRoutine* routine, ObjClosure* closure);
+void prepareRoutineEntry(ObjRoutine* routine, ObjClosure* closure);
 void prepareRoutineStack(ObjRoutine* routine, int argCount, Value* args);
 
 void markRoutine(ObjRoutine* routine);

@@ -26,7 +26,7 @@ bool makeRoutineBuiltin(ObjRoutine* routineContext, int argCount, Value* args, V
 
     ObjRoutine* routine = newRoutine(isISR ? ROUTINE_ISR : ROUTINE_THREAD);
 
-    prepareRoutine(routine, closure);
+    prepareRoutineEntry(routine, closure);
 
     *result = OBJ_VAL(routine);
     return true;
