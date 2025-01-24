@@ -6,6 +6,7 @@
 #include "channel.h"
 #include "memory.h"
 #include "vm.h"
+#include "debug.h"
 
 ObjChannel* newChannel() {
     ObjChannel* channel = ALLOCATE_OBJ(ObjChannel, OBJ_CHANNEL);

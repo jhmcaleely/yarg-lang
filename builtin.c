@@ -10,6 +10,7 @@
 #include "native.h"
 #include "routine.h"
 #include "vm.h"
+#include "debug.h"
 
 bool makeRoutineBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
     if (argCount != 2) {

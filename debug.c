@@ -3,6 +3,7 @@
 #include "debug.h"
 #include "object.h"
 #include "value.h"
+#include "routine.h"
 
 void disassembleChunk(Chunk* chunk, const char* name) {
     printf("== %s ==\n", name);
@@ -171,4 +172,14 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             printf("Unknown opcode %d\n", instruction);
             return offset + 1;
     }
+}
+
+void printValueStack(ObjRoutine* routine, const char* message) {
+    printf("%8s", message);
+    for (Value* slot = routine->stack; slot < routine->stackTop; slot++) {
+        printf("[ ");
+        printValue(*slot);
+        printf(" ]");
+    }
+    printf("\n");
 }
