@@ -13,6 +13,7 @@
 void initRoutine(ObjRoutine* routine, RoutineKind type) {
     routine->type = type;
     routine->entryFunction = NULL;
+    routine->entryArg = NIL_VAL;
     routine->state = EXEC_UNBOUND;
 
     resetRoutine(routine);
@@ -31,19 +32,31 @@ ObjRoutine* newRoutine(RoutineKind type) {
     return routine;
 }
 
-void prepareRoutineEntry(ObjRoutine* routine, ObjClosure* closure) {
+bool bindEntryFn(ObjRoutine* routine, ObjClosure* closure) {
 
-    routine->entryFunction = closure;
+    if (closure->function->arity == 0 || closure->function->arity == 1) {
+        routine->entryFunction = closure;
+        return true;
+    }
+    else {
+        return false;
+    }
+
 }
 
-void prepareRoutineStack(ObjRoutine* routine, int argCount, Value* args) {
+void bindEntryArgs(ObjRoutine* routine, Value entryArg) {
+
+    routine->entryArg = entryArg;
+}
+
+void prepareRoutineStack(ObjRoutine* routine) {
 
     push(routine, OBJ_VAL(routine->entryFunction));
 
-    for (int arg = 0; arg < routine->entryFunction->function->arity; arg++) {
-        push(routine, args[arg]);
+    if (routine->entryFunction->function->arity == 1) {
+        push(routine, routine->entryArg);
     }
-
+    
     callfn(routine, routine->entryFunction, routine->entryFunction->function->arity);
 
     routine->state = EXEC_SUSPENDED;

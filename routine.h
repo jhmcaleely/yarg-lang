@@ -36,6 +36,7 @@ typedef struct ObjRoutine {
     Value* stackTop;
 
     ObjClosure* entryFunction;
+    Value entryArg;
 
     ObjUpvalue* openUpvalues;
 
@@ -46,8 +47,9 @@ typedef struct ObjRoutine {
 void initRoutine(ObjRoutine* routine, RoutineKind type);
 ObjRoutine* newRoutine(RoutineKind type);
 void resetRoutine(ObjRoutine* routine);
-void prepareRoutineEntry(ObjRoutine* routine, ObjClosure* closure);
-void prepareRoutineStack(ObjRoutine* routine, int argCount, Value* args);
+bool bindEntryFn(ObjRoutine* routine, ObjClosure* closure);
+void bindEntryArgs(ObjRoutine* routine, Value entryArg);
+void prepareRoutineStack(ObjRoutine* routine);
 
 void markRoutine(ObjRoutine* routine);
 

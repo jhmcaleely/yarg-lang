@@ -5,24 +5,22 @@ fun flash(count) {
     gpio_set_direction(led, true);
 
     var state = false;
-    var sleeps = 0;
     var flashes = 0;
 
     fun sleep() {
         while (true) {
             sleep_ms(500);
-            sleeps = sleeps + 1;
-            yield sleeps;
+            yield 1;
         }
     }
     var sleeper = make_routine(sleep, false);
 
     fun toggle() {
-        while (flashes < count) {
+        while (flashes < count * 2) {
             state = !state;
             if (state) { flashes = flashes + 1; }
             gpio_put(led, state);
-            resume(sleeper);
+            flashes = flashes + resume(sleeper);
             yield flashes;
         }
         return flashes;
@@ -30,8 +28,8 @@ fun flash(count) {
 
     var flasher = make_routine(toggle, false);
 
-    var x = 1;
-    while (x < count + 1) {
+    var x = 0;
+    while (x < count * 2) {
         x = resume(flasher);
     }
 }

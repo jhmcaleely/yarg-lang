@@ -1,9 +1,8 @@
-fun input(n, m) {
+fun input(n) {
     print n;
-    print m;
     yield n - 1;
 }
 
 var coro = make_routine(input, false);
 
-print resume(coro, 10, 20);
+print resume(coro, 10);

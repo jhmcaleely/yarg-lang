@@ -582,7 +582,7 @@ InterpretResult interpret(const char* source) {
     ObjClosure* closure = newClosure(function);
     tempRootPop();
 
-    prepareRoutineEntry(&vm.core0, closure);
+    bindEntryFn(&vm.core0, closure);
 
     push(&vm.core0, OBJ_VAL(closure));
     callfn(&vm.core0, closure, 0);

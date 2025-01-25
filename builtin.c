@@ -27,13 +27,22 @@ bool makeRoutineBuiltin(ObjRoutine* routineContext, int argCount, Value* args, V
 
     ObjRoutine* routine = newRoutine(isISR ? ROUTINE_ISR : ROUTINE_THREAD);
 
-    prepareRoutineEntry(routine, closure);
-
-    *result = OBJ_VAL(routine);
-    return true;
+    if (bindEntryFn(routine, closure)) {
+        *result = OBJ_VAL(routine);
+        return true;
+    }
+    else {
+        runtimeError(routineContext, "Function must take 0 or 1 arguments.");
+        return false;
+    }
 }
 
 bool resumeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
+    if (argCount < 1 || argCount > 2) {
+        runtimeError(routineContext, "Expected one or two arguments to resume.");
+        return false;
+    }
+
     if (!IS_ROUTINE(args[0])) {
         runtimeError(routineContext, "Argument to resume must be a routine.");
         return false;
@@ -46,25 +55,15 @@ bool resumeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value*
         return false;
     }
 
-    int resumeArity = 1;
-    if (target->state == EXEC_UNBOUND) {
-        resumeArity += target->entryFunction->function->arity;
-    }
-    else if (target->state == EXEC_SUSPENDED) {
-        // yeild arity is 1 (nil or something)
-        resumeArity += 1;
-    }
-
-    if (argCount != resumeArity) {
-        runtimeError(routineContext, "Expected %d arguments but got %d.", resumeArity, argCount);
-        return false;
+    if (argCount > 1) {
+        bindEntryArgs(target, args[1]);
     }
 
     if (target->state == EXEC_UNBOUND) {
-        prepareRoutineStack(target, target->entryFunction->function->arity, &args[1]);
+        prepareRoutineStack(target);
     }
     else if (target->state == EXEC_SUSPENDED) {
-        push(target, args[1]);
+        push(target, target->entryArg);
     }
 
     InterpretResult execResult = run(target);
@@ -101,6 +100,11 @@ void nativeCore1Entry() {
 }
 
 bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
+    if (argCount < 1 || argCount > 2) {
+        runtimeError(routineContext, "Expected one or two arguments to start.");
+        return false;
+    }
+
     if (!IS_ROUTINE(args[0])) {
         runtimeError(routineContext, "Argument to start must be a routine.");
         return false;
@@ -113,18 +117,16 @@ bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* 
         return false;
     }
 
-    int startArity = 1 + target->entryFunction->function->arity;
-    if (argCount != startArity) {
-        runtimeError(routineContext, "Expected %d arguments but got %d.", startArity, argCount);
-        return false;
-    }
-
     if (vm.core1 != NULL) {
         runtimeError(routineContext, "Core1 already occupied.");
         return false;
     }
 
-    prepareRoutineStack(target, target->entryFunction->function->arity, &args[1]);
+    if (argCount > 1) {
+        bindEntryArgs(target, args[1]);
+    }
+
+    prepareRoutineStack(target);
 
     vm.core1 = target;
     vm.core1->state = EXEC_RUNNING;

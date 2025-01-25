@@ -111,9 +111,8 @@ static bool nativeRecurringCallback(struct repeating_timer* t) {
     Value result = pop(routine); // unused.
 
     push(routine, OBJ_VAL(routine->entryFunction));
-
-    for (int arg = routine->entryFunction->function->arity; arg > 0; arg--) {
-        push(routine, peek(routine, arg));
+    if (routine->entryFunction->function->arity == 1) {
+        push(routine, routine->entryArg);
     }
 
     callfn(routine, routine->entryFunction, routine->entryFunction->function->arity);
@@ -122,7 +121,12 @@ static bool nativeRecurringCallback(struct repeating_timer* t) {
 }
 
 bool alarmAddInMSNative(ObjRoutine* routine, int argCount, Value* args, Value* result) {
-    if (argCount < 2 || !IS_ROUTINE(args[1])) {
+    if (argCount < 2 || argCount > 3) {
+        runtimeError(routine, "Unexpected argument count adding alarm");
+        return false;
+    }
+
+    if (!IS_ROUTINE(args[1])) {
         runtimeError(routine, "Second argument must be a routine.");
         return false;
     }
@@ -145,7 +149,10 @@ bool alarmAddInMSNative(ObjRoutine* routine, int argCount, Value* args, Value* r
         return false;
     }
 
-    prepareRoutineStack(isrRoutine, argCount - 2, &args[2]);
+    if (argCount > 2) {
+        bindEntryArgs(isrRoutine, args[2]);
+    }
+    prepareRoutineStack(isrRoutine);
 
     isrRoutine->state = EXEC_RUNNING;
     add_alarm_in_ms(AS_NUMBER(args[0]), nativeOneShotCallback, isrRoutine, false);
@@ -155,7 +162,12 @@ bool alarmAddInMSNative(ObjRoutine* routine, int argCount, Value* args, Value* r
 }
 
 bool alarmAddRepeatingMSNative(ObjRoutine* routine, int argCount, Value* args, Value* result) {
-    if (argCount < 2 || !IS_ROUTINE(args[1])) {
+    if (argCount < 2 || argCount > 3) {
+        runtimeError(routine, "Unexpected argument count adding alarm");
+        return false;
+    }
+
+    if (!IS_ROUTINE(args[1])) {
         runtimeError(routine, "Second argument must be a routine.");
         return false;
     }
@@ -180,11 +192,10 @@ bool alarmAddRepeatingMSNative(ObjRoutine* routine, int argCount, Value* args, V
 
     ObjBlob* handle = newBlob(sizeof(repeating_timer_t));
 
-    for (int arg = 0; arg < isrRoutine->entryFunction->function->arity; arg++) {
-        push(isrRoutine, args[arg + 2]);
+    if (argCount > 2) {
+        bindEntryArgs(isrRoutine, args[2]);
     }
-
-    prepareRoutineStack(isrRoutine, isrRoutine->entryFunction->function->arity, &args[2]);
+    prepareRoutineStack(isrRoutine);
 
     isrRoutine->state = EXEC_RUNNING;
     add_repeating_timer_ms(AS_NUMBER(args[0]), nativeRecurringCallback, isrRoutine, (repeating_timer_t*)handle->blob);
