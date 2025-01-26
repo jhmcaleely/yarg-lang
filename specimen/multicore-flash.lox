@@ -6,15 +6,11 @@ fun flash(n) {
         gpio_set_direction(led_pin, true);
 
         var state = false;
-
-        fun toggle() {
+        var tick = 0;
+        
+        while (tick < n * 2) {
             state = !state;
             gpio_put(led_pin, state);
-        }
-
-        var tick = 0;
-        while (tick < n * 2) {
-            toggle();
             sleep_ms(500);
             tick = tick + 1;
         }
