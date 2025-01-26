@@ -1,7 +1,8 @@
-# clox-exercises
+# proto-lang
 
-clox from crafting interpreters, extended to experiment with some microcontoller features.
+A repo to experiment with a prototype language (TODO: name!) that will suit dynamic 
+programming on microcontollers.
 
-Not intended for use. Additional documentation on the [wiki][wiki]
+Not (yet) intended for use. Additional documentation on the [wiki][wiki]
 
-[wiki]: https://github.com/jhmcaleely/clox-exercises/wiki
+[wiki]: https://github.com/jhmcaleely/proto-lang/wiki
