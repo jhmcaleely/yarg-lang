@@ -110,12 +110,7 @@ static bool nativeRecurringCallback(struct repeating_timer* t) {
 
     Value result = pop(routine); // unused.
 
-    push(routine, OBJ_VAL(routine->entryFunction));
-    if (routine->entryFunction->function->arity == 1) {
-        push(routine, routine->entryArg);
-    }
-
-    callfn(routine, routine->entryFunction, routine->entryFunction->function->arity);
+    prepareRoutineStack(routine);
 
     return true;
 }

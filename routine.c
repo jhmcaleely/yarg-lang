@@ -58,8 +58,6 @@ void prepareRoutineStack(ObjRoutine* routine) {
     }
     
     callfn(routine, routine->entryFunction, routine->entryFunction->function->arity);
-
-    routine->state = EXEC_SUSPENDED;
 }
 
 void markRoutine(ObjRoutine* routine) {
