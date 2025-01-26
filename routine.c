@@ -78,6 +78,7 @@ void markRoutine(ObjRoutine* routine) {
     }
 
     markObject((Obj*)routine->entryFunction);
+    markValue(routine->entryArg);
 }
 
 void runtimeError(ObjRoutine* routine, const char* format, ...) {
