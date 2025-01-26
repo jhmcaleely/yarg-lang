@@ -587,5 +587,9 @@ InterpretResult interpret(const char* source) {
     push(&vm.core0, OBJ_VAL(closure));
     callfn(&vm.core0, closure, 0);
 
-    return run(&vm.core0);
+    InterpretResult result = run(&vm.core0);
+
+    pop(&vm.core0);
+
+    return result;
 }
