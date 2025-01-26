@@ -96,7 +96,7 @@ void nativeCore1Entry() {
         core->state = EXEC_CLOSED;
     }
 
- //   vm.core1 = NULL;
+    vm.core1 = NULL;
 }
 
 bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
@@ -131,6 +131,7 @@ bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* 
     vm.core1 = target;
     vm.core1->state = EXEC_RUNNING;
 
+    multicore_reset_core1();
     multicore_launch_core1(nativeCore1Entry);
 
     // Wait for it to start up
