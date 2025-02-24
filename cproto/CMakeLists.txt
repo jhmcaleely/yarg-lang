@@ -49,7 +49,10 @@ add_executable(clox
     table.c
     native.c
     builtin.c
-    channel.c)
+    channel.c
+    pico_lfs_hal.c
+    ../hostproto/littlefs/lfs.c
+    ../hostproto/littlefs/lfs_util.c)
 
 add_compile_definitions(NAN_BOXING)
 add_compile_definitions(DEBUG_PRINT_CODE)
