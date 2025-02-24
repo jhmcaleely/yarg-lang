@@ -71,7 +71,7 @@ pico_set_program_name(clox "clox")
 pico_set_program_version(clox "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(clox 0)
+pico_enable_stdio_uart(clox 1)
 pico_enable_stdio_usb(clox 1)
 
 # Add the standard library to the build
