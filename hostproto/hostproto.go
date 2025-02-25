@@ -67,7 +67,14 @@ func list_files(fs LittleFs, dirEntry string) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println(info.Name)
+		switch info.Type {
+		case EntryTypeDir:
+			fmt.Printf("'%v' (dir)\n", info.Name)
+		case EntryTypeReg:
+			fmt.Printf("'%v' (%v)\n", info.Name, info.Size)
+		default:
+			log.Fatal("unexpected entry type.")
+		}
 	}
 
 }
