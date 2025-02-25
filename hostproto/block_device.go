@@ -84,6 +84,22 @@ func (bd BlockDevice) CountPages() uint32 {
 	return count
 }
 
+func (bd BlockDevice) CountBlocks() uint32 {
+	count := uint32(0)
+
+	for b := range bd.BlockCount() {
+		pagePresent := false
+		for p := range bd.PagePerBlock() {
+			pagePresent = pagePresent || bd.PagePresent(b, p)
+		}
+		if pagePresent {
+			count++
+		}
+	}
+
+	return count
+}
+
 func (bd BlockDevice) DebugPrint() {
 	for b := range bd.BlockCount() {
 		for p := range bd.PagePerBlock() {
