@@ -24,6 +24,8 @@ set(PICO_BOARD pico CACHE STRING "Board type")
 if(PICO_BOARD)
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
+
+set(PICO_USE_FASTEST_SUPPORTED_CLOCK 1)
 endif()
 
 # The PICO SDK will also need CXX & ASM toolchains to assemble the firmware image
@@ -63,6 +65,7 @@ add_compile_definitions(DEBUG_STRESS_GC)
 if (PICO_BOARD)
 add_compile_definitions(HOST_REPL)
 add_compile_definitions(LOX_PICO_SDK)
+set(PICO_USE_FASTEST_SUPPORTED_CLOCK 1)
 endif()
 
 
