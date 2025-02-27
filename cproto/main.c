@@ -14,8 +14,7 @@
 #include "pico_lfs_hal.h"
 #include "pico_flash_fs.h"
 
-const char* defaultScript = "coffee.lox";
-#define USE_SCRIPT
+const char* defaultScript = "main.lox";
 
 static void repl() {
     char line[1024];
@@ -107,35 +106,33 @@ static char* readFile(const char* path) {
     int err = lfs_mount(&lfs, &cfg);
     if (err < 0) {
         fprintf(stderr, "Could not mount filesystem (%d).\n", err);
-        exit(74);
+        return NULL;
     }
     struct lfs_info info;
     memset(&info, 0, sizeof(info));
 
     err = lfs_stat(&lfs, path, &info);
     if (err < 0) {
-        fprintf(stderr, "Could not stat file \"%s\" (%d).\n", path, err);
-        exit(74);
+        return NULL;
     }
     int fileSize = info.size;
 
     char* buffer = (char*)malloc(fileSize + 1);
     if (buffer == NULL) {
         fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
-        exit(74);
+        return NULL;
     }
 
     err = lfs_file_open(&lfs, &file, path, LFS_O_RDONLY);
     if (err < 0) {
         fprintf(stderr, "Could not open file \"%s\".\n", path);
-        exit(74);
+        return NULL;
     }
 
     int bytesRead = lfs_file_read(&lfs, &file, buffer, fileSize);
     if (bytesRead < fileSize) {
         fprintf(stderr, "could not read file \"%s\".\n", path);
-        exit(74);
-
+        return NULL;
     }
     buffer[bytesRead] = '\0';
     
@@ -147,11 +144,13 @@ static char* readFile(const char* path) {
 
 static void runFile(const char* path) {
     char* source = readFile(path);
-    InterpretResult result = interpret(source);
-    free(source);
+    if (source) {
+        InterpretResult result = interpret(source);
+        free(source);
 
-    if (result == INTERPRET_COMPILE_ERROR) exit(65);
-    if (result == INTERPRET_RUNTIME_ERROR) exit(70);
+        if (result == INTERPRET_COMPILE_ERROR) exit(65);
+        if (result == INTERPRET_RUNTIME_ERROR) exit(70);
+    }
 }
 
 #ifdef HOST_REPL
@@ -161,12 +160,9 @@ int main() {
 #endif
     initVM();
 
-#ifdef USE_SCRIPT
-    lsDir("/");
     runFile(defaultScript);
-#else
     repl();
-#endif
+
     freeVM();
     return 0;
 }
