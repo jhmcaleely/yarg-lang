@@ -2,3 +2,4 @@ hostproto/hostproto
 *.uf2
 .vscode
 build
+bin
