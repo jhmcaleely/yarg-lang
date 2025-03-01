@@ -78,7 +78,7 @@ bool resumeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value*
     return true;
 }
 
-// use ascii 'c' 'l' 'o' 'x'
+// clox: use ascii 'c' 'l' 'o' 'x'
 #define FLAG_VALUE 0x636c6f78
 
 void nativeCore1Entry() {
