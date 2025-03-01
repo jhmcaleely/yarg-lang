@@ -1,6 +1,4 @@
-#ifdef LOX_PICO_SDK
-    #include "pico/stdlib.h"
-#endif
+#include "pico/stdlib.h"
 
 #include <stdio.h>
 #include <time.h>

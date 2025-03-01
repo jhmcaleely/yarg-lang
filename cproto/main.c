@@ -1,7 +1,5 @@
 #include <stdio.h>
-#ifdef LOX_PICO_SDK
-    #include "pico/stdlib.h"
-#endif
+#include "pico/stdlib.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -154,9 +152,8 @@ static void runFile(const char* path) {
 }
 
 int main() {
-#ifdef LOX_PICO_SDK
     stdio_init_all();
-#endif
+
     initVM();
 
     runFile(defaultScript);

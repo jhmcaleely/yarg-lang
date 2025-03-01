@@ -63,7 +63,6 @@ add_compile_definitions(DEBUG_STRESS_GC)
 #add_compile_definitions(DEBUG_LOG_GC)
 
 if (PICO_BOARD)
-add_compile_definitions(LOX_PICO_SDK)
 set(PICO_USE_FASTEST_SUPPORTED_CLOCK 1)
 endif()
 
