@@ -1,8 +1,5 @@
-# proto-lang
+# cproto
 
-A repo to experiment with a prototype language (TODO: name!) that will suit dynamic 
-programming on microcontollers.
+A bytecode interpreter for proto, based on clox from Crafting Interpreters.
 
-Not (yet) intended for use. Additional documentation on the [wiki][wiki]
-
-[wiki]: https://github.com/jhmcaleely/proto-lang/wiki
+Targets microcontroller devices, currently starting with the Raspberry Pi Pico (RP2040/RP2350)
