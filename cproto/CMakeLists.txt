@@ -11,9 +11,9 @@ if(WIN32)
 else()
     set(USERHOME $ENV{HOME})
 endif()
-set(sdkVersion 2.1.0)
-set(toolchainVersion 13_3_Rel1)
-set(picotoolVersion 2.1.0)
+set(sdkVersion 2.1.1)
+set(toolchainVersion 14_2_Rel1)
+set(picotoolVersion 2.1.1)
 set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
 if (EXISTS ${picoVscode})
     include(${picoVscode})
@@ -24,6 +24,8 @@ set(PICO_BOARD pico CACHE STRING "Board type")
 if(PICO_BOARD)
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
+
+set(PICO_USE_FASTEST_SUPPORTED_CLOCK 1)
 endif()
 
 # The PICO SDK will also need CXX & ASM toolchains to assemble the firmware image
@@ -49,7 +51,10 @@ add_executable(clox
     table.c
     native.c
     builtin.c
-    channel.c)
+    channel.c
+    pico_lfs_hal.c
+    ../hostproto/littlefs/lfs.c
+    ../hostproto/littlefs/lfs_util.c)
 
 add_compile_definitions(NAN_BOXING)
 add_compile_definitions(DEBUG_PRINT_CODE)
@@ -60,6 +65,7 @@ add_compile_definitions(DEBUG_STRESS_GC)
 if (PICO_BOARD)
 add_compile_definitions(HOST_REPL)
 add_compile_definitions(LOX_PICO_SDK)
+set(PICO_USE_FASTEST_SUPPORTED_CLOCK 1)
 endif()
 
 
@@ -71,7 +77,7 @@ pico_set_program_name(clox "clox")
 pico_set_program_version(clox "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(clox 0)
+pico_enable_stdio_uart(clox 1)
 pico_enable_stdio_usb(clox 1)
 
 # Add the standard library to the build

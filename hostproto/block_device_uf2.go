@@ -55,12 +55,18 @@ func (device BlockDevice) ReadFromUF2(input io.Reader) {
 }
 
 func (device BlockDevice) WriteAsUF2(output io.Writer) {
-	pageTotal := device.CountPages()
+	pageTotal := device.CountBlocks() * device.PagePerBlock()
 	pageCursor := uint32(0)
 
 	for b := range device.BlockCount() {
+		// RP2040-E14, must write uf2's in multiples of whole blocks
+		// (we could skip this for the last block, but that complicates things)
+		pagesPresent := false
 		for p := range device.PagePerBlock() {
-			if device.PagePresent(b, p) {
+			pagesPresent = pagesPresent || device.PagePresent(b, p)
+		}
+		if pagesPresent {
+			for p := range device.PagePerBlock() {
 				frame := Uf2Frame{
 					MagicStart0: UF2_MAGIC_START0,
 					MagicStart1: UF2_MAGIC_START1,
@@ -73,12 +79,14 @@ func (device BlockDevice) WriteAsUF2(output io.Writer) {
 					MagicEnd:    UF2_MAGIC_END,
 				}
 
-				copy(frame.Data[0:frame.PayloadSize], device.ReadBlock(frame.TargetAddr, frame.PayloadSize))
+				if device.PagePresent(b, p) {
+					copy(frame.Data[0:frame.PayloadSize], device.ReadBlock(frame.TargetAddr, frame.PayloadSize))
 
-				log.Printf("uf2page: %08x, %d\n", frame.TargetAddr, frame.PayloadSize)
-
+					log.Printf("uf2page: %08x, %d\n", frame.TargetAddr, frame.PayloadSize)
+				} else {
+					log.Printf("zero uf2page: %08x, %d\n", frame.TargetAddr, frame.PayloadSize)
+				}
 				binary.Write(output, binary.LittleEndian, &frame)
-
 				pageCursor++
 			}
 		}
