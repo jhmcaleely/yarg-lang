@@ -9,7 +9,7 @@ Not (yet) intended for use. Additional documentation on the [wiki][wiki]
 
 [wiki]: https://github.com/jhmcaleely/proto-lang/wiki
 
-|---|---|
+| --- | --- |
 | cproto/ | device build targetting pico |
 | hostproto/ | host tooling to make uf2 files |
 | tools/ | Miscellaneous tools |
