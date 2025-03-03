@@ -12,6 +12,6 @@ Not (yet) intended for use. Additional documentation on the [wiki][wiki]
 | dir | Description |
 | :--- | :--- |
 | `cproto/` | device build targetting pico |
-| `hostproto/` | host tooling to make uf2 files |
+| `hostproto/` | host tooling to make device images for proto |
 | `tools/` | Miscellaneous tools |
 | `proto/specimen/` | Samples of proto |
