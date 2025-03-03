@@ -11,6 +11,77 @@
 #include "routine.h"
 #include "vm.h"
 #include "debug.h"
+#include "files.h"
+#include "compiler.h"
+
+InterpretResult interpretImport(const char* source) {
+
+    ObjFunction* function = compile(source);
+    if (function == NULL) return INTERPRET_COMPILE_ERROR;
+    tempRootPush(OBJ_VAL(function));
+
+    ObjRoutine* routine = newRoutine(ROUTINE_THREAD);
+    tempRootPush(OBJ_VAL(routine));
+
+    ObjClosure* closure = newClosure(function);
+    tempRootPop();
+    tempRootPop();
+
+    bindEntryFn(routine, closure);
+
+    push(routine, OBJ_VAL(closure));
+    callfn(routine, closure, 0);
+
+    InterpretResult result = run(routine);
+
+    pop(routine);
+
+    return result;
+}
+
+static char* libraryNameFor(const char* importname) {
+    size_t namelen = strlen(importname);
+    char* filename = malloc(namelen + 5);
+    if (filename) {
+        strcpy(filename, importname);
+        strcat(filename, ".lox");
+    }
+    return filename;
+}
+
+bool importBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
+    if (argCount != 1) {
+        runtimeError(routineContext, "Expected 1 arguments but got %d.", argCount);
+        return false;
+    }
+    if (!IS_STRING(args[0])) {
+        runtimeError(routineContext, "Argument to import must be string.");
+        return false;
+    }
+
+    char* source = NULL;
+    char* library = libraryNameFor(AS_CSTRING(args[0]));
+    if (library) {
+        source = readFile(library);
+        free(library);
+    }
+
+    if (source) {
+        InterpretResult result = interpretImport(source);        
+        free(source);
+
+        if (result == INTERPRET_COMPILE_ERROR) {
+            runtimeError(routineContext, "Interpret error");
+            return false;
+        }
+        else if (result == INTERPRET_RUNTIME_ERROR) {
+            runtimeError(routineContext, "Interpret error");
+            return false;
+        }
+    }
+
+    return true;
+}
 
 bool makeRoutineBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
     if (argCount != 2) {

@@ -55,6 +55,7 @@ typedef struct {
 } Chunk;
 
 typedef enum {
+    BUILTIN_IMPORT,
     BUILTIN_MAKE_ROUTINE,
     BUILTIN_MAKE_CHANNEL,
     BUILTIN_RESUME,

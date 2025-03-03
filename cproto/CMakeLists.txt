@@ -52,6 +52,7 @@ add_executable(clox
     native.c
     builtin.c
     channel.c
+    files.c
     pico_lfs_hal.c
     ../hostproto/littlefs/lfs.c
     ../hostproto/littlefs/lfs_util.c)
