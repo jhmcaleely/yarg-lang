@@ -1,0 +1,14 @@
+import("gpio");
+
+gpio_init(pico_led);
+gpio_set_direction(pico_led, true);
+
+var n = 5;
+var state = false;
+
+while (n > 0) {
+    state = !state;
+    gpio_put(pico_led, state);
+    sleep_ms(500);
+    n = n - 1;
+}

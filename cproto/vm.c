@@ -66,8 +66,6 @@ void initVM() {
     defineNative("sleep_ms", sleepNative);
 
     defineNative("gpio_init", gpioInitNative);
-    defineNative("gpio_set_direction", gpioSetDirectionNative);
-    defineNative("gpio_put", gpioPutNative);
 
     defineNative("alarm_add_in_ms", alarmAddInMSNative);
     defineNative("alarm_add_repeating_ms", alarmAddRepeatingMSNative);
@@ -294,6 +292,16 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_GET_BUILTIN: {
                 uint8_t builtin = READ_BYTE();
                 switch (builtin) {
+                    case BUILTIN_RPEEK: {
+                        Value builtinFn = OBJ_VAL(newNative(rpeekBuiltin));
+                        push(routine, builtinFn);
+                        break;                        
+                    }
+                    case BUILTIN_RPOKE: {
+                        Value builtinFn = OBJ_VAL(newNative(rpokeBuiltin));
+                        push(routine, builtinFn);
+                        break;                        
+                    }
                     case BUILTIN_IMPORT: {
                         Value builtinFn = OBJ_VAL(newNative(importBuiltin));
                         push(routine, builtinFn);
@@ -356,7 +364,7 @@ InterpretResult run(ObjRoutine* routine) {
                 ObjString* name = READ_STRING();
                 Value value;
                 if (!tableGet(&vm.globals, name, &value)) {
-                    runtimeError(routine, "Undefined variable '%s'.", name->chars);
+                    runtimeError(routine, "Undefined variable (OP_GET_GLOBAL) '%s'.", name->chars);
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 push(routine, value);
@@ -372,7 +380,7 @@ InterpretResult run(ObjRoutine* routine) {
                 ObjString* name = READ_STRING();
                 if (tableSet(&vm.globals, name, peek(routine, 0))) {
                     tableDelete(&vm.globals, name);
-                    runtimeError(routine, "Undefined variable '%s'.", name->chars);
+                    runtimeError(routine, "Undefined variable (OP_SET_GLOBAL) '%s'.", name->chars);
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;

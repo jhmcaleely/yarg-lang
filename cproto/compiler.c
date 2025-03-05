@@ -443,12 +443,14 @@ static void dot(bool canAssign) {
 
 static void literal(bool canAssign) {
     switch (parser.previous.type) {
+        case TOKEN_RPEEK: emitBytes(OP_GET_BUILTIN, BUILTIN_RPEEK); break;
+        case TOKEN_RPOKE: emitBytes(OP_GET_BUILTIN, BUILTIN_RPOKE); break;
         case TOKEN_IMPORT: emitBytes(OP_GET_BUILTIN, BUILTIN_IMPORT); break;
         case TOKEN_MAKE_ROUTINE: emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_ROUTINE); break;
         case TOKEN_MAKE_CHANNEL: emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_CHANNEL); break;
         case TOKEN_RESUME: emitBytes(OP_GET_BUILTIN, BUILTIN_RESUME); break;
         case TOKEN_SEND: emitBytes(OP_GET_BUILTIN, BUILTIN_SEND); break;
-        case TOKEN_RECEIVE: emitBytes(OP_GET_BUILTIN, BUILTIN_RECEIVE); break;
+        case TOKEN_RECEIVE: emitBytes(OP_GET_BUILTIN, BUILTIN_RECEIVE); break;        
         case TOKEN_SHARE: emitBytes(OP_GET_BUILTIN, BUILTIN_SHARE); break;
         case TOKEN_START: emitBytes(OP_GET_BUILTIN, BUILTIN_START); break;
         case TOKEN_PEEK: emitBytes(OP_GET_BUILTIN, BUILTIN_PEEK); break;
@@ -605,6 +607,8 @@ ParseRule rules[] = {
     [TOKEN_RECEIVE]       = {literal,  NULL,   PREC_NONE},
     [TOKEN_RESUME]        = {literal,  NULL,   PREC_NONE},
     [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_RPEEK]         = {literal,  NULL,   PREC_NONE},
+    [TOKEN_RPOKE]         = {literal,  NULL,   PREC_NONE},
     [TOKEN_SEND]          = {literal,  NULL,   PREC_NONE},
     [TOKEN_SHARE]         = {literal,  NULL,   PREC_NONE},
     [TOKEN_START]         = {literal,  NULL,   PREC_NONE},

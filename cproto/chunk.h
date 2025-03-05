@@ -63,7 +63,9 @@ typedef enum {
     BUILTIN_RECEIVE,
     BUILTIN_SEND,
     BUILTIN_PEEK,
-    BUILTIN_SHARE
+    BUILTIN_SHARE,
+    BUILTIN_RPEEK,
+    BUILTIN_RPOKE
 } BuiltinFn;
 
 void initChunk(Chunk* chunk);

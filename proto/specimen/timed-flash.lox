@@ -1,14 +1,14 @@
-var led = 25;
+import("gpio");
 
 fun flash(seconds) {
-    gpio_init(led);
-    gpio_set_direction(led, true);
+    gpio_init(pico_led);
+    gpio_set_direction(pico_led, true);
 
     var state = false;
 
     fun toggle() {
         state = !state;
-        gpio_put(led, state);
+        gpio_put(pico_led, state);
     }
 
     var done = make_channel();

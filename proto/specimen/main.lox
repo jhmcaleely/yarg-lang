@@ -1,3 +1,0 @@
-import("gpio");
-
-print "hello world";

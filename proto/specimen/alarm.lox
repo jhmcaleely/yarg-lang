@@ -1,4 +1,5 @@
-var pico_led = 25; 
+import("gpio");
+
 gpio_init(pico_led); 
 gpio_set_direction(pico_led, true);
 

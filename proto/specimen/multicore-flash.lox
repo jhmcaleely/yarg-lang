@@ -1,7 +1,12 @@
-var gpio = 25;
+import("machine");
+import("gpio");
+
 fun flash(n) {
 
     fun core1(led_pin) {
+        print "core:";
+        print coreNum();
+
         gpio_init(led_pin);
         gpio_set_direction(led_pin, true);
 
@@ -19,7 +24,9 @@ fun flash(n) {
     }
 
     var core = make_routine(core1, false);
-    start(core, gpio);
-    print "core0";
+    start(core, pico_led);
+    print "core:";
+    print coreNum();
+    print "count:";
     print receive(core);
 }

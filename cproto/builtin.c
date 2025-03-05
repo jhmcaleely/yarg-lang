@@ -32,8 +32,10 @@ InterpretResult interpretImport(const char* source) {
     push(routine, OBJ_VAL(closure));
     callfn(routine, closure, 0);
 
+    tempRootPush(OBJ_VAL(routine));
     InterpretResult result = run(routine);
-
+    tempRootPop();
+    
     pop(routine);
 
     return result;
@@ -215,5 +217,34 @@ bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* 
     multicore_fifo_push_blocking(FLAG_VALUE);
 
     *result = NIL_VAL;
+    return true;
+}
+
+struct Register {
+    volatile uint32_t value;
+};
+
+bool rpeekBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
+    
+    double nominal_address = AS_NUMBER(args[0]);
+    uintptr_t memptr = (uint32_t) nominal_address;
+    struct Register* reg = (struct Register*) memptr;
+
+    double res = reg->value;
+
+    *result = NUMBER_VAL(res);
+    return true;
+}
+
+bool rpokeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
+
+    double nominal_address = AS_NUMBER(args[0]);
+    uintptr_t memptr = (uint32_t) nominal_address;
+    struct Register* reg = (struct Register*) memptr;
+
+    double val = AS_NUMBER(args[1]);
+
+    reg->value = (uint32_t) val;
+
     return true;
 }

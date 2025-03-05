@@ -1,8 +1,8 @@
-var led = 25;
+import("gpio");
 
 fun flash(count) {
-    gpio_init(led);
-    gpio_set_direction(led, true);
+    gpio_init(pico_led);
+    gpio_set_direction(pico_led, true);
 
     var state = false;
     var flashes = 0;
@@ -19,7 +19,7 @@ fun flash(count) {
         while (flashes < count * 2) {
             state = !state;
             if (state) { flashes = flashes + 1; }
-            gpio_put(led, state);
+            gpio_put(pico_led, state);
             flashes = flashes + resume(sleeper);
             yield flashes;
         }

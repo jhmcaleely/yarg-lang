@@ -52,43 +52,6 @@ bool gpioInitNative(ObjRoutine* routine, int argCount, Value* args, Value* resul
     return true;
 }
 
-bool gpioSetDirectionNative(ObjRoutine* routine, int argCount, Value* args, Value* result) {
-    if (argCount != 2) {
-        runtimeError(routine, "Expected 2 arguments but got %d.", argCount);
-        return false;
-    }
-    if (!IS_NUMBER(args[0]) || !IS_BOOL(args[1])) {
-        runtimeError(routine, "Arguments must be a number and a bool");
-        return false;
-    }
-
-    bool direction = AS_BOOL(args[1]);
-    if (direction) {
-        gpio_set_dir(AS_NUMBER(args[0]), GPIO_OUT);
-    } else {
-        gpio_set_dir(AS_NUMBER(args[0]), GPIO_IN);
-    }
-
-    *result = NIL_VAL;
-    return true;
-}
-
-bool gpioPutNative(ObjRoutine* routine, int argCount, Value* args, Value* result) {
-    if (argCount != 2) {
-        runtimeError(routine, "Expected 2 arguments but got %d.", argCount);
-        return false;
-    }
-    if (!IS_NUMBER(args[0]) || !IS_BOOL(args[1])) {
-        runtimeError(routine, "Arguments must be a number and a bool");
-        return false;
-    }
-
-    gpio_put(AS_NUMBER(args[0]), AS_BOOL(args[1]));
-
-    *result = NIL_VAL;
-    return true;
-}
-
 static int64_t nativeOneShotCallback(alarm_id_t id, void* user_data) {
     ObjRoutine* routine = AS_ROUTINE((uintptr_t)user_data);
 

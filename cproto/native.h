@@ -7,8 +7,6 @@ bool clockNative(ObjRoutine* routine, int argCount, Value* args, Value* result);
 bool sleepNative(ObjRoutine* routine, int argCount, Value* args, Value* result);
 
 bool gpioInitNative(ObjRoutine* routine, int argCount, Value* args, Value* result);
-bool gpioSetDirectionNative(ObjRoutine* routine, int argCount, Value* args, Value* result);
-bool gpioPutNative(ObjRoutine* routine, int argCount, Value* args, Value* result);
 
 bool alarmAddInMSNative(ObjRoutine* routine, int argCount, Value* args, Value* result);
 bool alarmAddRepeatingMSNative(ObjRoutine* routine, int argCount, Value* args, Value* result);

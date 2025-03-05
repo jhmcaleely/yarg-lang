@@ -161,6 +161,14 @@ static TokenType identifierType() {
                             }
                         }
                         break;
+                    case 'p':
+                        if (scanner.current - scanner.start > 2) {
+                            switch (scanner.start[2]) {
+                                case 'e': return checkKeyword(3, 2, "ek", TOKEN_RPEEK);                                
+                                case 'o': return checkKeyword(3, 2, "ke", TOKEN_RPOKE);
+                            }
+                        }
+                        break;
                 }
             }
             break;
