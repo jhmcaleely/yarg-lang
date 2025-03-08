@@ -56,7 +56,7 @@ add_executable(clox
 if (PICO_BOARD)
 target_sources(clox
     PRIVATE
-      files.c
+      files_littlefs.c
       pico_lfs_hal.c
         ../hostproto/littlefs/lfs.c
         ../hostproto/littlefs/lfs_util.c)
