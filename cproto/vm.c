@@ -44,9 +44,7 @@ void initVM() {
 
     vm.core1 = NULL;
 
-#ifdef CLOX_PICO_TARGET
-    recursive_mutex_init(&vm.heap);
-#endif
+    platform_mutex_init(&vm.heap);
 
     vm.tempRootsTop = vm.tempRoots;
 
