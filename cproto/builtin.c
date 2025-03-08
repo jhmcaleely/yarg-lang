@@ -136,7 +136,7 @@ bool resumeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value*
 
     if (target->state == EXEC_UNBOUND) {
         prepareRoutineStack(target);
-        target->state == EXEC_SUSPENDED;
+        target->state = EXEC_SUSPENDED;
     }
     else if (target->state == EXEC_SUSPENDED) {
         push(target, target->entryArg);
