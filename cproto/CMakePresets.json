@@ -3,7 +3,7 @@
     "configurePresets": [
         {
             "name": "host",
-            "displayName": "Default build for VS Code Host",
+            "displayName": "Host (default build for VS Code)",
             "description": "Using defaults for your cmake install",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
@@ -12,7 +12,7 @@
         },
         {
             "name": "pico",
-            "displayName": "PICO SDK 2.1.1 for Pico (rp2040)",
+            "displayName": "Pico (SDK 2.1.1 for Pico/RP2040)",
             "description": "Using the Pico SDK ARM toolchain",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {

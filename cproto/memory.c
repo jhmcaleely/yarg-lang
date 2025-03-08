@@ -246,7 +246,7 @@ static void sweep() {
 
 void collectGarbage() {
 
-#ifdef CLOX_PICO_TAGET
+#ifdef CLOX_PICO_TARGET
     recursive_mutex_enter_blocking(&vm.heap);
 #endif
 
@@ -269,7 +269,7 @@ void collectGarbage() {
            vm.nextGC);
 #endif
 
-#ifdef CLOX_PICO_TAGET
+#ifdef CLOX_PICO_TARGET
     recursive_mutex_exit(&vm.heap);
 #endif
 }
