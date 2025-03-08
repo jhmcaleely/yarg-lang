@@ -37,6 +37,7 @@ static void runFile(const char* path) {
     }
 }
 
+#ifdef CLOX_PICO_TARGET
 int main() {
     plaform_hal_init();
 
@@ -48,3 +49,21 @@ int main() {
     freeVM();
     return 0;
 }
+#else
+int main(int argc, const char* argv[]) {
+    plaform_hal_init();
+    initVM();
+
+    if (argc == 1) {
+        repl();
+    } else if (argc == 2) {
+        runFile(argv[1]);
+    } else {
+        fprintf(stderr, "Usage: clox [path]\n");
+        exit(64);
+    }
+
+    freeVM();
+    return 0;
+}
+#endif
