@@ -4,6 +4,10 @@ A bytecode interpreter for proto, based on clox from Crafting Interpreters.
 
 Targets microcontroller devices, currently starting with the Raspberry Pi Pico (RP2040/RP2350)
 
+## Host Build
+
+At this time, the host build is 'single-threaded'. TODO: support emulations of multicore and ISR support on host.
+
 ## Pico Build
 
 The cmake preset 'pico' will build cproto/clox for the Raspberry Pi Pico (RP2040). It assumes that the Raspberry Pi VS Code extension is in use, and downloaded the Pico tools, SDK and toolchains into ~/.pico-sdk . It assumes two settings have been adjusted from the default, as recommended in the Extension docs:
