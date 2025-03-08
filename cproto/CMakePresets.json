@@ -1,0 +1,26 @@
+{
+    "version": 8,
+    "configurePresets": [
+        {
+            "name": "host",
+            "displayName": "Default build for VS Code Host",
+            "description": "Using defaults for your cmake install",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "pico",
+            "displayName": "PICO SDK 2.1.1 for Pico (rp2040)",
+            "description": "Using the Pico SDK ARM toolchain",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "PICO_BOARD": "pico",
+                "PICO_SDK_PATH": "$env{HOME}/.pico-sdk/sdk/2.1.1",
+                "PICO_TOOLCHAIN_PATH": "$env{HOME}/.pico-sdk/toolchain/14_2_Rel1",
+                "CMAKE_BUILD_TYPE": "Release"
+            } 
+        }
+    ]
+}
