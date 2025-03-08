@@ -246,7 +246,7 @@ static void sweep() {
 
 void collectGarbage() {
 
-    recursive_mutex_enter_blocking(&vm.heap);
+    platform_mutex_enter(&vm.heap);
 
 #ifdef DEBUG_LOG_GC
     printf("-- gc begin\n");
@@ -267,7 +267,7 @@ void collectGarbage() {
            vm.nextGC);
 #endif
 
-    recursive_mutex_exit(&vm.heap);
+    platform_mutex_leave(&vm.heap);
 }
 
 void freeObjects() {

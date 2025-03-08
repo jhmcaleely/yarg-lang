@@ -7,8 +7,7 @@
 
 #include "memory.h"
 #include "routine.h"
-
-#include <pico/sync.h>
+#include "platform_hal.h"
 
 typedef struct {
     ObjRoutine core0;
@@ -18,7 +17,7 @@ typedef struct {
     Table strings;
     ObjString* initString;
 
-    recursive_mutex_t heap;
+    platform_mutex heap;
 
     Value tempRoots[TEMP_ROOTS_MAX];
     Value* tempRootsTop;

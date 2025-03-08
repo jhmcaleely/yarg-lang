@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include "pico/stdlib.h"
 
 #include "common.h"
 
@@ -29,6 +28,7 @@ bool makeChannelBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* r
 }
 
 bool sendChannelBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result) {
+#ifdef CLOX_PICO_TARGET
     if (argCount != 2) {
         runtimeError(routine, "Expected 2 arguments, got %d.", argCount);
         return false;
@@ -48,11 +48,13 @@ bool sendChannelBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* r
     channel->present = true;
     channel->overflow = false;
     *result = BOOL_VAL(channel->overflow);
+#endif
 
     return true;
 }
 
 bool receiveChannelBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result) {
+#ifdef CLOX_PICO_TARGET
     if (argCount != 1) {
         runtimeError(routine, "Expected 1 arguments, got %d.", argCount);
         return false;
@@ -88,7 +90,7 @@ bool receiveChannelBuiltin(ObjRoutine* routine, int argCount, Value* args, Value
             *result = NIL_VAL;
         }
     }
-    
+#endif    
     return true;
 }
 

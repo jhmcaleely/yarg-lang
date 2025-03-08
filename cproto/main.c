@@ -1,7 +1,8 @@
 #include <stdio.h>
-#include "pico/stdlib.h"
 #include <stdlib.h>
 #include <string.h>
+
+#include "platform_hal.h"
 
 #include "common.h"
 #include "chunk.h"
@@ -36,8 +37,9 @@ static void runFile(const char* path) {
     }
 }
 
+#ifdef CLOX_PICO_TARGET
 int main() {
-    stdio_init_all();
+    plaform_hal_init();
 
     initVM();
 
@@ -47,3 +49,21 @@ int main() {
     freeVM();
     return 0;
 }
+#else
+int main(int argc, const char* argv[]) {
+    plaform_hal_init();
+    initVM();
+
+    if (argc == 1) {
+        repl();
+    } else if (argc == 2) {
+        runFile(argv[1]);
+    } else {
+        fprintf(stderr, "Usage: clox [path]\n");
+        exit(64);
+    }
+
+    freeVM();
+    return 0;
+}
+#endif

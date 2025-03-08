@@ -9,14 +9,13 @@ popd
 
 cp hostproto/hostproto bin/
 
-mkdir cproto/build
-pushd cproto/build
-cmake ..
-cmake --build .
+pushd cproto
+cmake --preset pico .
+cmake --build build/pico
 
 popd
 
 mkdir build
-cp cproto/build/clox.uf2 build/proto-lang.uf2
+cp cproto/build/pico/clox.uf2 build/proto-lang.uf2
 
 ./bin/hostproto format -fs build/proto-lang.uf2

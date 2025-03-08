@@ -19,7 +19,6 @@ if (EXISTS ${picoVscode})
     include(${picoVscode})
 endif()
 # ====================================================================================
-set(PICO_BOARD pico CACHE STRING "Board type")
 
 if(PICO_BOARD)
 # Pull in Raspberry Pi Pico SDK (must be before project)
@@ -52,10 +51,20 @@ add_executable(clox
     native.c
     builtin.c
     channel.c
-    files.c
-    pico_lfs_hal.c
-    ../hostproto/littlefs/lfs.c
-    ../hostproto/littlefs/lfs_util.c)
+    platform_hal.c)
+
+if (PICO_BOARD)
+target_sources(clox
+    PRIVATE
+      files_littlefs.c
+      pico_lfs_hal.c
+        ../hostproto/littlefs/lfs.c
+        ../hostproto/littlefs/lfs_util.c)
+else()
+target_sources(clox
+    PRIVATE
+      files_stdlib.c)
+endif()
 
 add_compile_definitions(NAN_BOXING)
 add_compile_definitions(DEBUG_PRINT_CODE)
@@ -65,6 +74,8 @@ add_compile_definitions(DEBUG_STRESS_GC)
 
 if (PICO_BOARD)
 set(PICO_USE_FASTEST_SUPPORTED_CLOCK 1)
+
+add_compile_definitions(CLOX_PICO_TARGET)
 endif()
 
 

@@ -44,7 +44,7 @@ void initVM() {
 
     vm.core1 = NULL;
 
-    recursive_mutex_init(&vm.heap);
+    platform_mutex_init(&vm.heap);
 
     vm.tempRootsTop = vm.tempRoots;
 
@@ -63,6 +63,7 @@ void initVM() {
     vm.initString = copyString("init", 4);
 
     defineNative("clock", clockNative);
+#ifdef CLOX_PICO_TARGET
     defineNative("sleep_ms", sleepNative);
 
     defineNative("gpio_init", gpioInitNative);
@@ -70,6 +71,7 @@ void initVM() {
     defineNative("alarm_add_in_ms", alarmAddInMSNative);
     defineNative("alarm_add_repeating_ms", alarmAddRepeatingMSNative);
     defineNative("alarm_cancel_repeating", alarmCancelRepeatingMSNative);
+#endif
 }
 
 void freeVM() {

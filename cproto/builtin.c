@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "pico/stdlib.h"
-#include "pico/multicore.h"
+
+#ifdef CLOX_PICO_TARGET
+#include <pico/multicore.h>
+#endif
 
 #include "common.h"
 #include "object.h"
@@ -134,7 +136,7 @@ bool resumeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value*
 
     if (target->state == EXEC_UNBOUND) {
         prepareRoutineStack(target);
-        target->state == EXEC_SUSPENDED;
+        target->state = EXEC_SUSPENDED;
     }
     else if (target->state == EXEC_SUSPENDED) {
         push(target, target->entryArg);
@@ -154,6 +156,7 @@ bool resumeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value*
 // clox: use ascii 'c' 'l' 'o' 'x'
 #define FLAG_VALUE 0x636c6f78
 
+#ifdef CLOX_PICO_TARGET
 void nativeCore1Entry() {
     multicore_fifo_push_blocking(FLAG_VALUE);
     uint32_t g = multicore_fifo_pop_blocking();
@@ -172,8 +175,10 @@ void nativeCore1Entry() {
 
     vm.core1 = NULL;
 }
+#endif
 
 bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
+#ifdef CLOX_PICO_TARGET
     if (argCount < 1 || argCount > 2) {
         runtimeError(routineContext, "Expected one or two arguments to start.");
         return false;
@@ -216,6 +221,7 @@ bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* 
     }
     multicore_fifo_push_blocking(FLAG_VALUE);
 
+#endif
     *result = NIL_VAL;
     return true;
 }
