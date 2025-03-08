@@ -1,5 +1,3 @@
-#include "pico/stdlib.h"
-
 #include <stdio.h>
 #include <time.h>
 
@@ -9,6 +7,10 @@
 #include "native.h"
 #include "routine.h"
 #include "vm.h"
+
+#ifdef CLOX_PICO_TARGET
+#include <hardware/gpio.h>
+#endif
 
 bool clockNative(ObjRoutine* routine, int argCount, Value* args, Value* result) {
     if (argCount != 0) {
@@ -20,6 +22,7 @@ bool clockNative(ObjRoutine* routine, int argCount, Value* args, Value* result) 
     return true;
 }
 
+#ifdef CLOX_PICO_TARGET
 bool sleepNative(ObjRoutine* routine, int argCount, Value* args, Value* result) {
     if (argCount != 1) {
         runtimeError(routine, "Expected 1 arguments but got %d.", argCount);
@@ -35,7 +38,9 @@ bool sleepNative(ObjRoutine* routine, int argCount, Value* args, Value* result) 
     *result = NIL_VAL;
     return true;
 }
+#endif
 
+#ifdef CLOX_PICO_TARGET
 bool gpioInitNative(ObjRoutine* routine, int argCount, Value* args, Value* result) {
     if (argCount != 1) {
         runtimeError(routine, "Expected 1 arguments but got %d.", argCount);
@@ -51,7 +56,9 @@ bool gpioInitNative(ObjRoutine* routine, int argCount, Value* args, Value* resul
     *result = NIL_VAL;
     return true;
 }
+#endif
 
+#ifdef CLOX_PICO_TARGET
 static int64_t nativeOneShotCallback(alarm_id_t id, void* user_data) {
     ObjRoutine* routine = AS_ROUTINE((uintptr_t)user_data);
 
@@ -179,4 +186,4 @@ bool alarmCancelRepeatingMSNative(ObjRoutine* routine, int argCount, Value* args
     *result = BOOL_VAL(cancelled);
     return true;
 }
-
+#endif

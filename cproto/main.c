@@ -1,7 +1,8 @@
 #include <stdio.h>
-#include "pico/stdlib.h"
 #include <stdlib.h>
 #include <string.h>
+
+#include "platform_hal.h"
 
 #include "common.h"
 #include "chunk.h"
@@ -37,7 +38,7 @@ static void runFile(const char* path) {
 }
 
 int main() {
-    stdio_init_all();
+    plaform_hal_init();
 
     initVM();
 

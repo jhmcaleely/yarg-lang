@@ -246,7 +246,9 @@ static void sweep() {
 
 void collectGarbage() {
 
+#ifdef CLOX_PICO_TAGET
     recursive_mutex_enter_blocking(&vm.heap);
+#endif
 
 #ifdef DEBUG_LOG_GC
     printf("-- gc begin\n");
@@ -267,7 +269,9 @@ void collectGarbage() {
            vm.nextGC);
 #endif
 
+#ifdef CLOX_PICO_TAGET
     recursive_mutex_exit(&vm.heap);
+#endif
 }
 
 void freeObjects() {

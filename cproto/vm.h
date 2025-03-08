@@ -8,7 +8,9 @@
 #include "memory.h"
 #include "routine.h"
 
+#ifdef CLOX_PICO_TARGET
 #include <pico/sync.h>
+#endif
 
 typedef struct {
     ObjRoutine core0;
@@ -18,7 +20,9 @@ typedef struct {
     Table strings;
     ObjString* initString;
 
+#ifdef CLOX_PICO_TARGET
     recursive_mutex_t heap;
+#endif
 
     Value tempRoots[TEMP_ROOTS_MAX];
     Value* tempRootsTop;
