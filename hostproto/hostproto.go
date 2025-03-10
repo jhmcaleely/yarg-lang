@@ -114,6 +114,8 @@ func main() {
 	lsDirFS := lsDirCmd.String("fs", "test.uf2", "filesystem to mount")
 	lsDirEntry := lsDirCmd.String("dir", "/", "directory to ls")
 
+	testrunCmd := flag.NewFlagSet("runtests", flag.ExitOnError)
+
 	if len(os.Args) < 2 {
 		fmt.Println("expected command")
 		os.Exit(64)
@@ -137,8 +139,15 @@ func main() {
 		}
 		cmdAddFile(*fs, *addFileFS, *addFileName)
 	case "ls":
-		lsDirCmd.Parse((os.Args[2:]))
+		lsDirCmd.Parse(os.Args[2:])
 		cmdLs(*fs, *lsDirFS, *lsDirEntry)
+	case "runtests":
+		testrunCmd.Parse(os.Args[2:])
+		if len(os.Args) < 3 {
+			fmt.Println("expected a test location")
+			os.Exit(64)
+		}
+		cmdRunTests(os.Args[2])
 	default:
 		fmt.Println("unknown command")
 		os.Exit(64)
