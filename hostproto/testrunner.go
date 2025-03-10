@@ -31,6 +31,11 @@ func cmdRunTests(test string) {
 			if err != nil {
 				log.Fatal(err)
 			}
+
+			if path == "benchmark" {
+				return fs.SkipDir
+			}
+
 			if !d.IsDir() {
 				target := filepath.Join(test, path)
 				total, pass := runTestFile(target)
@@ -56,19 +61,19 @@ func runTestFile(test string) (total, pass int) {
 
 	test_friendly_name := test_name[:len(test_name)-len(extension)]
 
-	fmt.Printf("test suite: %v:%v\n", parent_name, test_friendly_name)
-
 	expectedResults := expectedResults(test)
 	total = len(expectedResults)
 
 	output := parseTest(test)
 
-	fmt.Printf("tests supplied: %v\n", len(expectedResults))
-	fmt.Printf("tests run: %v\n", len(output))
-
 	if reflect.DeepEqual(expectedResults[0:len(output)], output) {
 		pass = len(output)
-		fmt.Printf("tests passed: %v\n", len(output))
+	}
+
+	if total == 0 || pass != total {
+		fmt.Printf("test suite: %v:%v\n", parent_name, test_friendly_name)
+		fmt.Printf("tests supplied: %v\n", total)
+		fmt.Printf("tests passed: %v\n", pass)
 	}
 
 	return total, pass
