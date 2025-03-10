@@ -115,7 +115,8 @@ func main() {
 	lsDirEntry := lsDirCmd.String("dir", "/", "directory to ls")
 
 	if len(os.Args) < 2 {
-		log.Fatal("expected command")
+		fmt.Println("expected command")
+		os.Exit(64)
 	}
 
 	device := newBlockDevice()
@@ -131,13 +132,15 @@ func main() {
 	case "addfile":
 		addFileCmd.Parse(os.Args[2:])
 		if *addFileName == "" {
-			log.Fatal("expect filename to add")
+			fmt.Println("expect filename to add")
+			os.Exit(64)
 		}
 		cmdAddFile(*fs, *addFileFS, *addFileName)
 	case "ls":
 		lsDirCmd.Parse((os.Args[2:]))
 		cmdLs(*fs, *lsDirFS, *lsDirEntry)
 	default:
-		log.Fatal("unknown command")
+		fmt.Println("unknown command")
+		os.Exit(64)
 	}
 }
