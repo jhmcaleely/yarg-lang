@@ -1,41 +1,12 @@
 package main
 
 import (
-	"encoding/binary"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"os"
 )
-
-func ensure_mount(cfg LittleFsConfig) LittleFs {
-	var lfs LittleFs
-
-	lfs, err := cfg.Mount()
-	if err != nil {
-		cfg.Format()
-		lfs, _ = cfg.Mount()
-	}
-	return lfs
-}
-
-func update_boot_count(lfs LittleFs) {
-
-	file := newLfsFile(lfs)
-	file.Open("boot_count")
-	defer file.Close()
-
-	var boot_count uint32
-	binary.Read(file, binary.LittleEndian, &boot_count)
-
-	boot_count += 1
-	file.Rewind()
-
-	binary.Write(file, binary.LittleEndian, boot_count)
-
-	fmt.Printf("boot count: %d\n", boot_count)
-}
 
 func add_file(lfs LittleFs, fileToAdd string) {
 
@@ -100,17 +71,6 @@ func (bd BlockDevice) writeToUF2File(filename string) error {
 	return nil
 }
 
-func cmdBootCountDemo(fs BdFS, fsFilename string) {
-	fs.flash_fs.device.readFromUF2File(fsFilename)
-
-	lfs := ensure_mount(fs.cfg)
-	defer lfs.Close()
-
-	update_boot_count(lfs)
-
-	fs.flash_fs.device.writeToUF2File(fsFilename)
-}
-
 func formatCmd(fs BdFS, fsFilename string) {
 	fs.flash_fs.device.readFromUF2File(fsFilename)
 
@@ -143,9 +103,6 @@ func main() {
 
 	log.SetOutput(io.Discard)
 
-	bootCountDemoCmd := flag.NewFlagSet("bootcount", flag.ExitOnError)
-	bootCountFS := bootCountDemoCmd.String("fs", "test.uf2", "mount and increment boot_count on fs")
-
 	formatFSCmd := flag.NewFlagSet("format", flag.ExitOnError)
 	formatFSFS := formatFSCmd.String("fs", "test.uf2", "format fs on this image")
 
@@ -168,9 +125,6 @@ func main() {
 	defer fs.Close()
 
 	switch os.Args[1] {
-	case "bootcount":
-		bootCountDemoCmd.Parse(os.Args[2:])
-		cmdBootCountDemo(*fs, *bootCountFS)
 	case "format":
 		formatFSCmd.Parse(os.Args[2:])
 		formatCmd(*fs, *formatFSFS)
