@@ -35,7 +35,8 @@ func cmdRunTests(interpreter string, test string) {
 
 	info, err := os.Stat(test)
 	if err != nil {
-		log.Fatal("nothing to test")
+		fmt.Printf("Could not stat %v, nothing to test\n", test)
+		return
 	}
 
 	var grandtotal, grandpass int
@@ -93,24 +94,18 @@ func runTestFile(interpreter string, testfile string) (total, pass int) {
 		if test.validateCode(code) {
 
 			if code == RUNTIME_ERROR {
-				test.validateRuntimeError(errors, &pass)
+				test.accountRuntimeErrorExpectations(errors, &pass)
 			} else if code == COMPILE_ERROR {
-				test.validateCompileError(errors, &pass)
+				test.accountCompileErrorExpectations(errors, &pass)
 			}
 
-			if len(test.ExpectedError) == 0 && len(test.ExpectedOutput) == 0 && test.Expectations == 1 {
-				if len(output) == 0 && len(errors) == 0 {
-					pass += 1
-				}
-			}
+			test.accountEmptyTestExpectations(output, errors, &pass)
 
-			if reflect.DeepEqual(test.ExpectedOutput[0:len(output)], output) {
-				pass += len(output)
-			}
+			test.accountOutputExpectations(output, &pass)
 		}
 	}
 
-	if total == 0 || pass != total {
+	if pass != total {
 		fmt.Printf("test: %v\n", test.Name)
 		fmt.Printf("tests supplied: %v\n", total)
 		fmt.Printf("tests passed: %v\n", pass)
@@ -131,7 +126,16 @@ func (test *Test) validateCode(code int) bool {
 	return code == test.ExpectedExitCode
 }
 
-func (test *Test) validateCompileError(errors []string, pass *int) bool {
+func (test *Test) accountEmptyTestExpectations(output, errors []string, pass *int) {
+
+	if len(test.ExpectedError) == 0 && len(test.ExpectedOutput) == 0 && test.Expectations == 1 {
+		if len(output) == 0 && len(errors) == 0 {
+			*pass += 1
+		}
+	}
+}
+
+func (test *Test) accountCompileErrorExpectations(errors []string, pass *int) bool {
 
 	if len(test.ExpectedError) > 0 &&
 		reflect.DeepEqual(test.ExpectedError, errors) {
@@ -141,21 +145,25 @@ func (test *Test) validateCompileError(errors []string, pass *int) bool {
 	return false
 }
 
-func (test *Test) validateRuntimeError(errors []string, pass *int) {
+func (test *Test) accountRuntimeErrorExpectations(errors []string, pass *int) {
 	if len(test.ExpectedError) > 0 {
 		if errors[0] == test.ExpectedError[0] {
 			*pass++
 		}
 
+		// examine the first line of the stack dump.
 		r := regexp.MustCompile(`\[line (\d+)\]`)
 		match := r.FindStringSubmatch(errors[1])
-		if match != nil {
-			candidate := strconv.Itoa(test.ExpectedRuntimeErrorLine)
-			if match[1] == candidate {
-				*pass++
-			}
+		candidate := strconv.Itoa(test.ExpectedRuntimeErrorLine)
+		if match != nil && match[1] == candidate {
+			*pass++
 		}
+	}
+}
 
+func (test *Test) accountOutputExpectations(output []string, pass *int) {
+	if reflect.DeepEqual(test.ExpectedOutput[0:len(output)], output) {
+		*pass += len(output)
 	}
 }
 
