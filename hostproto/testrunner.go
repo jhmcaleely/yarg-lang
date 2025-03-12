@@ -87,7 +87,14 @@ func runTestFile(interpreter string, testfile string) (total, pass int) {
 	test.parseTestSource()
 	total = test.Expectations
 
-	output, error, code := runTest(interpreter, test.FileName)
+	output, error, code, ok := runInterpreter(interpreter, test.FileName)
+	if !ok {
+		fmt.Printf("test: %v\n", test.Name)
+		fmt.Printf("tests supplied: %v\n", total)
+		fmt.Printf("tests passed: %v\n", pass)
+
+		return total, pass
+	}
 
 	if !test.validateCode(code) {
 		fmt.Printf("test: %v\n", test.Name)
@@ -210,7 +217,7 @@ func (test *Test) parseLine(lineNo int, line string) {
 
 }
 
-func parseOutput(stream bytes.Buffer) (lines []string) {
+func streamToLines(stream bytes.Buffer) (lines []string) {
 	scanner := bufio.NewScanner(&stream)
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
@@ -218,18 +225,9 @@ func parseOutput(stream bytes.Buffer) (lines []string) {
 	return lines
 }
 
-func runTest(interpreter, name string) (output []string, errors []string, exitcode int) {
-	stdout, stderr, exit, ok := runtestexecutable(interpreter, name)
-	if ok {
-		output = parseOutput(stdout)
-		errors = parseOutput(stderr)
-		exitcode = exit
-	}
-	return output, errors, exitcode
-}
-
-func runtestexecutable(interpreter, name string) (cstdout, cstderr bytes.Buffer, exitcode int, ok bool) {
-	runner := exec.Command(interpreter, name)
+func runInterpreter(interpreter, argument string) (output, errors []string, exitcode int, ok bool) {
+	var cstdout, cstderr bytes.Buffer
+	runner := exec.Command(interpreter, argument)
 	runner.Stdout = &cstdout
 	runner.Stderr = &cstderr
 
@@ -246,5 +244,10 @@ func runtestexecutable(interpreter, name string) (cstdout, cstderr bytes.Buffer,
 		}
 	}
 
-	return cstdout, cstderr, exitcode, ok
+	if ok {
+		output = streamToLines(cstdout)
+		errors = streamToLines(cstderr)
+	}
+
+	return output, errors, exitcode, ok
 }
