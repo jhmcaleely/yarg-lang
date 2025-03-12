@@ -11,14 +11,22 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"strconv"
+)
+
+const (
+	RUNTIME_ERROR = 70
+	COMPILE_ERROR = 65
 )
 
 type Test struct {
-	Expectations   int
-	Name           string
-	FileName       string
-	ExpectedOutput []string
-	ExpectedError  []string
+	Expectations             int
+	Name                     string
+	FileName                 string
+	ExpectedExitCode         int
+	ExpectedRuntimeErrorLine int
+	ExpectedOutput           []string
+	ExpectedError            []string
 }
 
 func cmdRunTests(test string) {
@@ -77,7 +85,17 @@ func runTestFile(testfile string) (total, pass int) {
 	test.parseTestSource()
 	total = test.Expectations
 
-	output, error, _ := runTest(test.FileName)
+	output, error, code := runTest(test.FileName)
+
+	if !test.validateCode(code) {
+		return total, pass
+	}
+
+	if code == RUNTIME_ERROR {
+		test.validateRuntimeError(error, &pass)
+	} else if code == COMPILE_ERROR {
+		test.validateCompileError(error, &pass)
+	}
 
 	if len(test.ExpectedError) == 0 && len(test.ExpectedOutput) == 0 && test.Expectations == 1 {
 		if len(output) == 0 && len(error) == 0 {
@@ -89,11 +107,6 @@ func runTestFile(testfile string) (total, pass int) {
 		pass += len(output)
 	}
 
-	if len(test.ExpectedError) > 0 &&
-		reflect.DeepEqual(test.ExpectedError, error) {
-		pass += len(error)
-	}
-
 	if total == 0 || pass != total {
 		fmt.Printf("test: %v\n", test.Name)
 		fmt.Printf("tests supplied: %v\n", total)
@@ -101,6 +114,38 @@ func runTestFile(testfile string) (total, pass int) {
 	}
 
 	return total, pass
+}
+
+func (test *Test) validateCode(code int) bool {
+	return code == test.ExpectedExitCode
+}
+
+func (test *Test) validateCompileError(errors []string, pass *int) bool {
+
+	if len(test.ExpectedError) > 0 &&
+		reflect.DeepEqual(test.ExpectedError, errors) {
+		*pass += len(errors)
+		return true
+	}
+	return false
+}
+
+func (test *Test) validateRuntimeError(errors []string, pass *int) {
+	if len(test.ExpectedError) > 0 {
+		if errors[0] == test.ExpectedError[0] {
+			*pass++
+		}
+
+		r := regexp.MustCompile(`\[line (\d+)\]`)
+		match := r.FindStringSubmatch(errors[1])
+		if match != nil {
+			candidate := strconv.Itoa(test.ExpectedRuntimeErrorLine)
+			if match[1] == candidate {
+				*pass++
+			}
+		}
+
+	}
 }
 
 func (test *Test) parseTestSource() {
@@ -133,6 +178,7 @@ func (test *Test) parseLine(lineNo int, line string) {
 	r = regexp.MustCompile(`// (Error.*)`)
 	match = r.FindStringSubmatch(line)
 	if match != nil {
+		test.ExpectedExitCode = COMPILE_ERROR
 		expected := fmt.Sprintf("[line %v] %v", lineNo, match[1])
 		test.ExpectedError = append(test.ExpectedError, expected)
 		test.Expectations++
@@ -141,15 +187,17 @@ func (test *Test) parseLine(lineNo int, line string) {
 	r = regexp.MustCompile(`// expect runtime error: (.+)`)
 	match = r.FindStringSubmatch(line)
 	if match != nil {
+		test.ExpectedExitCode = RUNTIME_ERROR
 		test.ExpectedError = append(test.ExpectedError, match[1])
 		test.Expectations++
-		test.ExpectedError = append(test.ExpectedError, fmt.Sprintf("[line %v] in script", lineNo))
+		test.ExpectedRuntimeErrorLine = lineNo
 		test.Expectations++
 	}
 
 	r = regexp.MustCompile(`// \[line (\d+)\] (Error.*)`)
 	match = r.FindStringSubmatch(line)
 	if match != nil {
+		test.ExpectedExitCode = COMPILE_ERROR
 		test.ExpectedError = append(test.ExpectedError, fmt.Sprintf("[line %v] %v", match[1], match[2]))
 		test.Expectations++
 	}
