@@ -29,7 +29,7 @@ type Test struct {
 	ExpectedError            []string
 }
 
-func cmdRunTests(test string) {
+func cmdRunTests(interpreter string, test string) {
 
 	test = filepath.Clean(test)
 
@@ -54,18 +54,20 @@ func cmdRunTests(test string) {
 
 			if !d.IsDir() {
 				target := filepath.Join(test, path)
-				total, pass := runTestFile(target)
+				total, pass := runTestFile(interpreter, target)
 				grandtotal += total
 				grandpass += pass
 			}
 			return nil
 		})
 	} else {
-		total, pass := runTestFile(test)
+		total, pass := runTestFile(interpreter, test)
 		grandtotal += total
 		grandpass += pass
 	}
 
+	fmt.Printf("Interpreter: %v\n", interpreter)
+	fmt.Printf("Tests: %v\n", test)
 	fmt.Printf("Total tests: %v, passed: %v\n", grandtotal, grandpass)
 }
 
@@ -76,7 +78,7 @@ func testFriendlyName(testfile string) string {
 	return test_name[:len(test_name)-len(extension)]
 }
 
-func runTestFile(testfile string) (total, pass int) {
+func runTestFile(interpreter string, testfile string) (total, pass int) {
 
 	var test Test
 	test.FileName = testfile
@@ -85,7 +87,7 @@ func runTestFile(testfile string) (total, pass int) {
 	test.parseTestSource()
 	total = test.Expectations
 
-	output, error, code := runTest(test.FileName)
+	output, error, code := runTest(interpreter, test.FileName)
 
 	if !test.validateCode(code) {
 		fmt.Printf("test: %v\n", test.Name)
@@ -216,28 +218,33 @@ func parseOutput(stream bytes.Buffer) (lines []string) {
 	return lines
 }
 
-func runTest(name string) ([]string, []string, int) {
-	stdout, stderr, exit := runtestexecutable(name)
-	results := parseOutput(stdout)
-	errors := parseOutput(stderr)
-	return results, errors, exit
+func runTest(interpreter, name string) (output []string, errors []string, exitcode int) {
+	stdout, stderr, exit, ok := runtestexecutable(interpreter, name)
+	if ok {
+		output = parseOutput(stdout)
+		errors = parseOutput(stderr)
+		exitcode = exit
+	}
+	return output, errors, exitcode
 }
 
-func runtestexecutable(name string) (cstdout, cstderr bytes.Buffer, exitcode int) {
-	interpreter := exec.Command("/Users/jhm/Developer/proto-lang/bin/clox", name)
-	interpreter.Stdout = &cstdout
-	interpreter.Stderr = &cstderr
+func runtestexecutable(interpreter, name string) (cstdout, cstderr bytes.Buffer, exitcode int, ok bool) {
+	runner := exec.Command(interpreter, name)
+	runner.Stdout = &cstdout
+	runner.Stderr = &cstderr
 
-	err := interpreter.Run()
+	err := runner.Run()
+	ok = err == nil
+
 	if err != nil {
 		switch e := err.(type) {
-		case *exec.Error:
-			fmt.Println("failed executing:", err)
 		case *exec.ExitError:
+			ok = true
 			exitcode = e.ExitCode()
 		default:
-			panic(err)
+			fmt.Println("failed executing:", err)
 		}
 	}
-	return cstdout, cstderr, exitcode
+
+	return cstdout, cstderr, exitcode, ok
 }

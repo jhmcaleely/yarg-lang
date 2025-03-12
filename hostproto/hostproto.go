@@ -114,7 +114,9 @@ func main() {
 	lsDirFS := lsDirCmd.String("fs", "test.uf2", "filesystem to mount")
 	lsDirEntry := lsDirCmd.String("dir", "/", "directory to ls")
 
-	testrunCmd := flag.NewFlagSet("runtests", flag.ExitOnError)
+	testRunCmd := flag.NewFlagSet("runtests", flag.ExitOnError)
+	testRunInterpreter := testRunCmd.String("interpreter", "/Users/jhm/Developer/proto-lang/bin/clox", "default interpreter")
+	testRunTests := testRunCmd.String("tests", "/Users/jhm/Developer/proto-lang/proto/test", "default tests")
 
 	if len(os.Args) < 2 {
 		fmt.Println("expected command")
@@ -142,12 +144,8 @@ func main() {
 		lsDirCmd.Parse(os.Args[2:])
 		cmdLs(*fs, *lsDirFS, *lsDirEntry)
 	case "runtests":
-		testrunCmd.Parse(os.Args[2:])
-		if len(os.Args) < 3 {
-			fmt.Println("expected a test location")
-			os.Exit(64)
-		}
-		cmdRunTests(os.Args[2])
+		testRunCmd.Parse(os.Args[2:])
+		cmdRunTests(*testRunInterpreter, *testRunTests)
 	default:
 		fmt.Println("unknown command")
 		os.Exit(64)
