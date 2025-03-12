@@ -79,8 +79,14 @@ func runTestFile(testfile string) (total, pass int) {
 
 	output, error, _ := runTest(test.FileName)
 
+	if len(test.ExpectedError) == 0 && len(test.ExpectedOutput) == 0 && test.Expectations == 1 {
+		if len(output) == 0 && len(error) == 0 {
+			pass += 1
+		}
+	}
+
 	if reflect.DeepEqual(test.ExpectedOutput[0:len(output)], output) {
-		pass = len(output)
+		pass += len(output)
 	}
 
 	if len(test.ExpectedError) > 0 &&
@@ -109,6 +115,10 @@ func (test *Test) parseTestSource() {
 	for scanner.Scan() {
 		lineNo++
 		test.parseLine(lineNo, scanner.Text())
+	}
+
+	if len(test.ExpectedOutput) == 0 && len(test.ExpectedError) == 0 {
+		test.Expectations++
 	}
 }
 
