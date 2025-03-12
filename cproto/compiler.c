@@ -325,7 +325,7 @@ static int resolveUpvalue(Compiler* compiler, Token* name) {
 
 static void addLocal(Token name) {
     if (current->localCount == UINT8_COUNT) {
-        error("Too many local variables in function");
+        error("Too many local variables in function.");
         return;
     }
 
@@ -382,7 +382,7 @@ static uint8_t argumentList() {
         do {
             expression();
             if (argCount == 255) {
-                error("Can't have more than 255 arguments");
+                error("Can't have more than 255 arguments.");
             }
             argCount++;
         } while (match(TOKEN_COMMA));
