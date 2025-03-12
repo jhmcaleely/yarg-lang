@@ -137,6 +137,13 @@ func (test *Test) parseLine(lineNo int, line string) {
 		test.Expectations++
 	}
 
+	r = regexp.MustCompile(`// \[line (\d+)\] (Error.*)`)
+	match = r.FindStringSubmatch(line)
+	if match != nil {
+		test.ExpectedError = append(test.ExpectedError, fmt.Sprintf("[line %v] %v", match[1], match[2]))
+		test.Expectations++
+	}
+
 }
 
 func parseOutput(stream bytes.Buffer) (lines []string) {
