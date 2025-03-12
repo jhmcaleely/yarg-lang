@@ -87,19 +87,19 @@ func runTestFile(interpreter string, testfile string) (total, pass int) {
 	test.parseTestSource()
 	total = test.Expectations
 
-	output, error, code, ok := runInterpreter(interpreter, test.FileName)
+	output, errors, code, ok := runInterpreter(interpreter, test.FileName)
 	if ok {
 
 		if test.validateCode(code) {
 
 			if code == RUNTIME_ERROR {
-				test.validateRuntimeError(error, &pass)
+				test.validateRuntimeError(errors, &pass)
 			} else if code == COMPILE_ERROR {
-				test.validateCompileError(error, &pass)
+				test.validateCompileError(errors, &pass)
 			}
 
 			if len(test.ExpectedError) == 0 && len(test.ExpectedOutput) == 0 && test.Expectations == 1 {
-				if len(output) == 0 && len(error) == 0 {
+				if len(output) == 0 && len(errors) == 0 {
 					pass += 1
 				}
 			}
@@ -114,6 +114,14 @@ func runTestFile(interpreter string, testfile string) (total, pass int) {
 		fmt.Printf("test: %v\n", test.Name)
 		fmt.Printf("tests supplied: %v\n", total)
 		fmt.Printf("tests passed: %v\n", pass)
+		fmt.Printf("--- (%v)\n", code)
+		for l := range output {
+			fmt.Println(output[l])
+		}
+		for l := range errors {
+			fmt.Println(errors[l])
+		}
+		fmt.Println("---")
 	}
 
 	return total, pass
