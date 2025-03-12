@@ -1,2 +1,2 @@
-// [line 3] Error: Unexpected character.
+// [line 2] Error: Unexpected character.
 foo(a | b);
