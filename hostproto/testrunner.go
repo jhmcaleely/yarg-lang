@@ -88,6 +88,10 @@ func runTestFile(testfile string) (total, pass int) {
 	output, error, code := runTest(test.FileName)
 
 	if !test.validateCode(code) {
+		fmt.Printf("test: %v\n", test.Name)
+		fmt.Printf("tests supplied: %v\n", total)
+		fmt.Printf("tests passed: %v\n", pass)
+
 		return total, pass
 	}
 
@@ -230,21 +234,10 @@ func runtestexecutable(name string) (cstdout, cstderr bytes.Buffer, exitcode int
 		case *exec.Error:
 			fmt.Println("failed executing:", err)
 		case *exec.ExitError:
-			if e.ExitCode() == 70 {
-				return cstdout, cstderr, e.ExitCode()
-			} else if e.ExitCode() == 65 {
-				return cstdout, cstderr, e.ExitCode()
-			} else {
-				fmt.Print(cstdout.String())
-				fmt.Print(cstderr.String())
-				fmt.Println("command exit rc =", e.ExitCode())
-				return bytes.Buffer{}, bytes.Buffer{}, e.ExitCode()
-			}
+			exitcode = e.ExitCode()
 		default:
 			panic(err)
 		}
-	} else {
-		return cstdout, bytes.Buffer{}, 0
 	}
-	return bytes.Buffer{}, bytes.Buffer{}, 0
+	return cstdout, cstderr, exitcode
 }
