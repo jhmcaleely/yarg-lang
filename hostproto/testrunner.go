@@ -88,36 +88,26 @@ func runTestFile(interpreter string, testfile string) (total, pass int) {
 	total = test.Expectations
 
 	output, error, code, ok := runInterpreter(interpreter, test.FileName)
-	if !ok {
-		fmt.Printf("test: %v\n", test.Name)
-		fmt.Printf("tests supplied: %v\n", total)
-		fmt.Printf("tests passed: %v\n", pass)
+	if ok {
 
-		return total, pass
-	}
+		if test.validateCode(code) {
 
-	if !test.validateCode(code) {
-		fmt.Printf("test: %v\n", test.Name)
-		fmt.Printf("tests supplied: %v\n", total)
-		fmt.Printf("tests passed: %v\n", pass)
+			if code == RUNTIME_ERROR {
+				test.validateRuntimeError(error, &pass)
+			} else if code == COMPILE_ERROR {
+				test.validateCompileError(error, &pass)
+			}
 
-		return total, pass
-	}
+			if len(test.ExpectedError) == 0 && len(test.ExpectedOutput) == 0 && test.Expectations == 1 {
+				if len(output) == 0 && len(error) == 0 {
+					pass += 1
+				}
+			}
 
-	if code == RUNTIME_ERROR {
-		test.validateRuntimeError(error, &pass)
-	} else if code == COMPILE_ERROR {
-		test.validateCompileError(error, &pass)
-	}
-
-	if len(test.ExpectedError) == 0 && len(test.ExpectedOutput) == 0 && test.Expectations == 1 {
-		if len(output) == 0 && len(error) == 0 {
-			pass += 1
+			if reflect.DeepEqual(test.ExpectedOutput[0:len(output)], output) {
+				pass += len(output)
+			}
 		}
-	}
-
-	if reflect.DeepEqual(test.ExpectedOutput[0:len(output)], output) {
-		pass += len(output)
 	}
 
 	if total == 0 || pass != total {
