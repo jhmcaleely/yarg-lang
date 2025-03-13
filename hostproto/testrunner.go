@@ -120,9 +120,9 @@ func runTestFile(interpreter string, testfile string) (total, pass int) {
 			}
 
 			test.accountEmptyTestExpectations(output, errors, &pass)
-
-			test.accountOutputExpectations(output, &pass)
 		}
+
+		test.accountOutputExpectations(output, &pass)
 	}
 
 	if pass != total {
