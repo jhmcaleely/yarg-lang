@@ -569,6 +569,7 @@ InterpretResult run(ObjRoutine* routine) {
                 Value superclass = peek(routine, 1);
                 if (!IS_CLASS(superclass)) {
                     runtimeError(routine, "Superclass must be a class.");
+                    return INTERPRET_RUNTIME_ERROR;
                 }
 
                 ObjClass* subclass = AS_CLASS(peek(routine, 0));
