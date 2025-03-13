@@ -29,19 +29,39 @@ type Test struct {
 	ExpectedError            []string
 }
 
+func testsAvailable(test string) (isDir, ok bool) {
+	info, err := os.Stat(test)
+	if err == nil {
+		return info.IsDir(), true
+	}
+	return isDir, false
+}
+
+func interpreterAvailable(interpreter string) (ok bool) {
+	_, err := os.Stat(interpreter)
+	ok = err == nil
+	return ok
+}
+
 func cmdRunTests(interpreter string, test string) {
 
 	test = filepath.Clean(test)
+	interpreter = filepath.Clean(interpreter)
 
-	info, err := os.Stat(test)
-	if err != nil {
+	isDir, ok := testsAvailable(test)
+	if !ok {
 		fmt.Printf("Could not stat %v, nothing to test\n", test)
+		return
+	}
+	ok = interpreterAvailable(interpreter)
+	if !ok {
+		fmt.Printf("Could not stat %v, no interpreter to run\n", interpreter)
 		return
 	}
 
 	var grandtotal, grandpass int
 
-	if info.IsDir() {
+	if isDir {
 		fileSystem := os.DirFS(test)
 
 		fs.WalkDir(fileSystem, ".", func(path string, d fs.DirEntry, err error) error {
@@ -203,6 +223,14 @@ func (test *Test) parseLine(lineNo int, line string) {
 		test.Expectations++
 	}
 
+	r = regexp.MustCompile(`// \[line (\d+)\] (Error.*)`)
+	match = r.FindStringSubmatch(line)
+	if match != nil {
+		test.ExpectedExitCode = COMPILE_ERROR
+		test.ExpectedError = append(test.ExpectedError, fmt.Sprintf("[line %v] %v", match[1], match[2]))
+		test.Expectations++
+	}
+
 	r = regexp.MustCompile(`// expect runtime error: (.+)`)
 	match = r.FindStringSubmatch(line)
 	if match != nil {
@@ -212,15 +240,6 @@ func (test *Test) parseLine(lineNo int, line string) {
 		test.ExpectedRuntimeErrorLine = lineNo
 		test.Expectations++
 	}
-
-	r = regexp.MustCompile(`// \[line (\d+)\] (Error.*)`)
-	match = r.FindStringSubmatch(line)
-	if match != nil {
-		test.ExpectedExitCode = COMPILE_ERROR
-		test.ExpectedError = append(test.ExpectedError, fmt.Sprintf("[line %v] %v", match[1], match[2]))
-		test.Expectations++
-	}
-
 }
 
 func streamToLines(stream bytes.Buffer) (lines []string) {
