@@ -88,7 +88,7 @@ static void errorAt(Token* token, const char* message) {
     fprintf(stderr, "[line %d] Error", token->line);
 
     if (token->type == TOKEN_EOF) {
-        fprintf(stderr, " at end.");
+        fprintf(stderr, " at end");
     } else if (token->type == TOKEN_ERROR) {
         // Nothing.
     } else {
@@ -325,7 +325,7 @@ static int resolveUpvalue(Compiler* compiler, Token* name) {
 
 static void addLocal(Token name) {
     if (current->localCount == UINT8_COUNT) {
-        error("Too many local variables in function");
+        error("Too many local variables in function.");
         return;
     }
 
@@ -382,7 +382,7 @@ static uint8_t argumentList() {
         do {
             expression();
             if (argCount == 255) {
-                error("Can't have more than 255 arguments");
+                error("Can't have more than 255 arguments.");
             }
             argCount++;
         } while (match(TOKEN_COMMA));
@@ -410,7 +410,7 @@ static void binary(bool canAssign) {
         case TOKEN_GREATER:       emitByte(OP_GREATER); break;
         case TOKEN_GREATER_EQUAL: emitBytes(OP_LESS, OP_NOT); break;
         case TOKEN_LESS:          emitByte(OP_LESS); break;
-        case TOKEN_LESS_EQUAL:    emitBytes(OP_GREATER, OP_NOT);
+        case TOKEN_LESS_EQUAL:    emitBytes(OP_GREATER, OP_NOT); break;
         case TOKEN_PLUS:          emitByte(OP_ADD); break;
         case TOKEN_MINUS:         emitByte(OP_SUBTRACT); break;
         case TOKEN_STAR:          emitByte(OP_MULTIPLY); break;
@@ -590,7 +590,7 @@ ParseRule rules[] = {
     [TOKEN_IDENTIFIER]    = {variable, NULL,   PREC_NONE},
     [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
     [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
-    [TOKEN_AND]           = {NULL,     and_,   PREC_NONE},
+    [TOKEN_AND]           = {NULL,     and_,   PREC_AND},
     [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
     [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
     [TOKEN_FALSE]         = {literal,  NULL,   PREC_NONE},

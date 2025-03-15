@@ -115,7 +115,7 @@ static bool callValue(ObjRoutine* routine, Value callee, int argCount) {
                 if (tableGet(&klass->methods, vm.initString, &initializer)) {
                     return callfn(routine, AS_CLOSURE(initializer), argCount);
                 } else if (argCount != 0) {
-                    runtimeError(routine, "Expected 0 arguments but got %d.");
+                    runtimeError(routine, "Expected 0 arguments but got %d.", argCount);
                     return false;
                 }
                 return true;
@@ -569,6 +569,7 @@ InterpretResult run(ObjRoutine* routine) {
                 Value superclass = peek(routine, 1);
                 if (!IS_CLASS(superclass)) {
                     runtimeError(routine, "Superclass must be a class.");
+                    return INTERPRET_RUNTIME_ERROR;
                 }
 
                 ObjClass* subclass = AS_CLASS(peek(routine, 0));
