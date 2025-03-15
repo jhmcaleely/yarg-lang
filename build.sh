@@ -13,7 +13,11 @@ pushd cproto
 cmake --preset pico .
 cmake --build build/pico
 
+cmake --preset host
+cmake --build build/host
 popd
+
+cp cproto/build/host/clox bin/
 
 mkdir build
 cp cproto/build/pico/clox.uf2 build/proto-lang.uf2
