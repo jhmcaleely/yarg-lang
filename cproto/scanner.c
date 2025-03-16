@@ -24,8 +24,57 @@ static bool isAlpha(char c) {
             c == '_';
 }
 
+static bool isBinDigit(char c) {
+    return c >= '0' && c <= '1';
+}
+
 static bool isDigit(char c) {
     return c >= '0' && c <= '9';
+}
+
+static bool isHexDigit(char c) {
+    if (c >= 'a' && c <= 'f') {
+        return true;
+    } 
+    else if (c >= 'A' && c <= 'F') {
+        return true;
+    }
+    else {
+        return isDigit(c);
+    }
+}
+
+static bool isRadixDigit(char c, int radix) {
+    switch (radix) {
+        case 16: return isHexDigit(c);
+        case 10: return isDigit(c);
+        case 2: return isBinDigit(c);
+        default: return false;
+    }
+}
+
+static bool isRadix(char c) {
+    switch (c) {
+        case 'x': return true;
+        case 'X': return true;
+        case 'b': return true;
+        case 'B': return true;
+        case 'd': return true;
+        case 'D': return true;
+        default: return false;
+    }
+}
+
+static int radixType(char c) {
+    switch (c) {
+        case 'x': return 16;
+        case 'X': return 16;
+        case 'b': return 2;
+        case 'B': return 2;
+        case 'd': return 10;
+        case 'D': return 10;
+        default: return 10;
+    }
 }
 
 static bool isAtEnd() {
@@ -204,14 +253,20 @@ static Token identifier() {
 }
 
 static Token number() {
-    while (isDigit(peek())) advance();
+    int radix = 10;
+    if (isRadix(peek())) {
+        radix = radixType(peek());
+        advance();
+    }
+
+    while (isRadixDigit(peek(), radix)) advance();
 
     // Look for a fractional part.
-    if (peek() == '.' && isDigit(peekNext())) {
+    if (radix == 10 && peek() == '.' && isDigit(peekNext())) {
         // Consume the ".".
         advance();
         
-        while (isDigit(peek())) advance();
+        while (isRadixDigit(peek(), radix)) advance();
     }
 
     return makeToken(TOKEN_NUMBER);
