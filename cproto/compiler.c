@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "common.h"
 #include "compiler.h"
@@ -466,8 +467,72 @@ static void grouping(bool canAssign) {
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 }
 
+static double strtoNum(const char* literal, int length, int radix) {
+    int val = 0;
+    for (int i = length - 1 ; i >= 0; i--) {
+        int positionVal = 0;
+        switch (literal[i]) {
+            case '0': positionVal = 0; break;
+            case '1': positionVal = 1; break;
+            case '2': positionVal = 2; break;
+            case '3': positionVal = 3; break;
+            case '4': positionVal = 4; break;
+            case '5': positionVal = 5; break;
+            case '6': positionVal = 6; break;
+            case '7': positionVal = 7; break;
+            case '8': positionVal = 8; break;
+            case '9': positionVal = 9; break;
+            case 'A': positionVal = 10; break;
+            case 'B': positionVal = 11; break;
+            case 'C': positionVal = 12; break;
+            case 'D': positionVal = 13; break;
+            case 'E': positionVal = 14; break;
+            case 'F': positionVal = 15; break;
+            case 'a': positionVal = 10; break;
+            case 'b': positionVal = 11; break;
+            case 'c': positionVal = 12; break;
+            case 'd': positionVal = 13; break;
+            case 'e': positionVal = 14; break;
+            case 'f': positionVal = 15; break;
+        }
+        int power = length - 1 - i;
+        val += positionVal * pow(radix, power);
+    }
+    return val;
+}
+
 static void number(bool canAssign) {
-    double value = strtod(parser.previous.start, NULL);
+    int radix = 0;
+    const char* number_start = parser.previous.start;
+    int number_len = parser.previous.length;
+    if (parser.previous.length > 1) {
+        switch (parser.previous.start[1]) {
+            case 'x': radix = 16; break;
+            case 'X': radix = 16; break;
+            case 'b': radix = 2; break;
+            case 'B': radix = 2; break;
+            case 'd': radix = 10; break;
+            case 'D': radix = 10; break;
+        }
+        if (radix != 0) {
+            number_start = &parser.previous.start[2];
+            number_len -= 2;
+        }
+    }
+    if (radix == 0) {
+        radix = 10;
+    }
+    
+    double value = 0;
+
+    if (radix == 10) {
+        // for now, use C's stdlib to reuse double formatting.
+        value = strtod(number_start, NULL);
+    }
+    else {
+        value = strtoNum(number_start, number_len, radix);
+    }
+
     emitConstant(NUMBER_VAL(value));
 }
 
