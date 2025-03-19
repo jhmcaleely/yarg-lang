@@ -257,6 +257,10 @@ static Token number() {
     if (isRadix(peek())) {
         radix = radixType(peek());
         advance();
+
+        if (!isRadixDigit(peek(), radix)) {
+            return errorToken("Expected digit after radix specifier.");
+        }
     }
 
     while (isRadixDigit(peek(), radix)) advance();
