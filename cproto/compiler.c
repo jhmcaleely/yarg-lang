@@ -470,9 +470,9 @@ static void grouping(bool canAssign) {
 }
 
 static double strtoNum(const char* literal, int length, int radix) {
-    int val = 0;
+    unsigned int val = 0;
     for (int i = length - 1 ; i >= 0; i--) {
-        int positionVal = 0;
+        unsigned int positionVal = 0;
         switch (literal[i]) {
             case '0': positionVal = 0; break;
             case '1': positionVal = 1; break;
@@ -497,7 +497,7 @@ static double strtoNum(const char* literal, int length, int radix) {
             case 'e': positionVal = 14; break;
             case 'f': positionVal = 15; break;
         }
-        int power = length - 1 - i;
+        unsigned int power = length - 1 - i;
         val += positionVal * pow(radix, power);
     }
     return val;
