@@ -2,22 +2,18 @@ var pico_led = 25;
 
 fun gpio_set_direction(pin, dir) {
     if (dir) {
-        // 0xd0000024
-        rpoke(3489660964, 33554432);
+        rpoke(0xd0000024, 0x1 << pin);
     }
     else {
-        // 0xd0000028
-        rpoke(3489660968, 33554432);
+        rpoke(0xd0000028, 0x1 << pin);
     }
 }
 
 fun gpio_put(pin, value) {
     if (value) {
-        // 0xd0000014
-        rpoke(3489660948, 33554432);
+        rpoke(0xd0000014, 0x1 << pin);
     }
     else {
-        // 0xd0000018
-        rpoke(3489660952, 33554432);
+        rpoke(0xd0000018, 0x1 << pin);
     }
 }

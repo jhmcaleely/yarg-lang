@@ -23,3 +23,7 @@ mkdir build
 cp cproto/build/pico/clox.uf2 build/proto-lang.uf2
 
 ./bin/hostproto format -fs build/proto-lang.uf2
+
+pushd proto/specimen
+../../bin/hostproto addfile -fs ../../build/proto-lang.uf2 -add machine.lox
+../../bin/hostproto addfile -fs ../../build/proto-lang.uf2 -add gpio.lox
