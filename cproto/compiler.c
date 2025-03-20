@@ -27,7 +27,7 @@ typedef enum {
     PREC_EQUALITY,   // == !=
     PREC_COMPARISON, // < > <= >=
     PREC_TERM,       // + -
-    PREC_FACTOR,     // * /
+    PREC_FACTOR,     // * / << >>
     PREC_UNARY,      // ! -
     PREC_CALL,       // . ()
     PREC_PRIMARY
@@ -410,8 +410,10 @@ static void binary(bool canAssign) {
         case TOKEN_EQUAL_EQUAL:   emitByte(OP_EQUAL); break;
         case TOKEN_GREATER:       emitByte(OP_GREATER); break;
         case TOKEN_GREATER_EQUAL: emitBytes(OP_LESS, OP_NOT); break;
+        case TOKEN_RIGHT_SHIFT:   emitByte(OP_RIGHT_SHIFT); break;
         case TOKEN_LESS:          emitByte(OP_LESS); break;
         case TOKEN_LESS_EQUAL:    emitBytes(OP_GREATER, OP_NOT); break;
+        case TOKEN_LEFT_SHIFT:    emitByte(OP_LEFT_SHIFT); break;
         case TOKEN_PLUS:          emitByte(OP_ADD); break;
         case TOKEN_MINUS:         emitByte(OP_SUBTRACT); break;
         case TOKEN_STAR:          emitByte(OP_MULTIPLY); break;
@@ -650,8 +652,10 @@ ParseRule rules[] = {
     [TOKEN_EQUAL_EQUAL]   = {NULL,     binary, PREC_EQUALITY},
     [TOKEN_GREATER]       = {NULL,     binary, PREC_COMPARISON},
     [TOKEN_GREATER_EQUAL] = {NULL,     binary, PREC_COMPARISON},
+    [TOKEN_RIGHT_SHIFT]   = {NULL,     binary, PREC_FACTOR},
     [TOKEN_LESS]          = {NULL,     binary, PREC_COMPARISON},
     [TOKEN_LESS_EQUAL]    = {NULL,     binary, PREC_COMPARISON},
+    [TOKEN_LEFT_SHIFT]    = {NULL,     binary, PREC_FACTOR},
     [TOKEN_IDENTIFIER]    = {variable, NULL,   PREC_NONE},
     [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
     [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},

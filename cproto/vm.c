@@ -267,6 +267,19 @@ InterpretResult run(ObjRoutine* routine) {
         double a = AS_NUMBER(pop(routine)); \
         push(routine, valueType(a op b)); \
     } while (false)
+#define BINARY_UINT_OP(routine, valueType, op) \
+    do { \
+        if (!IS_NUMBER(peek(routine, 0)) || !IS_NUMBER(peek(routine, 1))) { \
+            runtimeError(routine, "Operands must be numbers."); \
+            return INTERPRET_RUNTIME_ERROR; \
+        } \
+        double bb = AS_NUMBER(pop(routine)); \
+        double aa = AS_NUMBER(pop(routine)); \
+        unsigned int a = (unsigned int) aa; \
+        unsigned int b = (unsigned int) bb; \
+        unsigned int c = a op b; \
+        push(routine, valueType(c)); \
+    } while (false)
 
     for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
@@ -446,6 +459,8 @@ InterpretResult run(ObjRoutine* routine) {
             }
             case OP_GREATER:  BINARY_OP(routine, BOOL_VAL, >); break;
             case OP_LESS:     BINARY_OP(routine, BOOL_VAL, <); break;
+            case OP_LEFT_SHIFT: BINARY_UINT_OP(routine, NUMBER_VAL, <<); break;
+            case OP_RIGHT_SHIFT: BINARY_UINT_OP(routine, NUMBER_VAL, >>); break;
             case OP_ADD: {
                 if (IS_STRING(peek(routine, 0)) && IS_STRING(peek(routine, 1))) {
                     concatenate(routine);

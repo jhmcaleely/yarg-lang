@@ -144,7 +144,7 @@ static void printFunction(ObjFunction* function) {
 }
 
 static void printRoutine(ObjRoutine* routine) {
-    printf("<R%s 0x%8.x>"
+    printf("<R%s %p>"
           , routine->type == ROUTINE_ISR ? "i" : "n"
           , routine);
 }
@@ -181,7 +181,7 @@ void printObject(Value value) {
             printf("<native fn>");
             break;
         case OBJ_BLOB:
-            printf("<blob 0x%.8x>", AS_BLOB(value)->blob);
+            printf("<blob %p>", AS_BLOB(value)->blob);
             break;
         case OBJ_ROUTINE:
             printRoutine(AS_ROUTINE(value));
