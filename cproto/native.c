@@ -60,7 +60,8 @@ bool gpioInitNative(ObjRoutine* routine, int argCount, Value* args, Value* resul
 
 #ifdef CLOX_PICO_TARGET
 static int64_t nativeOneShotCallback(alarm_id_t id, void* user_data) {
-    ObjRoutine* routine = AS_ROUTINE((uintptr_t)user_data);
+
+    ObjRoutine* routine = (ObjRoutine*)user_data;
 
     run(routine);
 
@@ -72,7 +73,8 @@ static int64_t nativeOneShotCallback(alarm_id_t id, void* user_data) {
 }
 
 static bool nativeRecurringCallback(struct repeating_timer* t) {
-    ObjRoutine* routine = AS_ROUTINE((uintptr_t)t->user_data);
+
+    ObjRoutine* routine = (ObjRoutine*)t->user_data;;
 
     run(routine);
 
