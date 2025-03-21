@@ -469,7 +469,7 @@ static void grouping(bool canAssign) {
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 }
 
-static double strtoNum(const char* literal, int length, int radix) {
+static unsigned int strtoNum(const char* literal, int length, int radix) {
     unsigned int val = 0;
     for (int i = length - 1 ; i >= 0; i--) {
         unsigned int positionVal = 0;
@@ -505,16 +505,17 @@ static double strtoNum(const char* literal, int length, int radix) {
 
 static void number(bool canAssign) {
     int radix = 0;
+    bool sign_bit = true;
     const char* number_start = parser.previous.start;
     int number_len = parser.previous.length;
     if (parser.previous.length > 1) {
         switch (parser.previous.start[1]) {
-            case 'x': radix = 16; break;
-            case 'X': radix = 16; break;
-            case 'b': radix = 2; break;
-            case 'B': radix = 2; break;
-            case 'd': radix = 10; break;
-            case 'D': radix = 10; break;
+            case 'x': radix = 16; sign_bit = false; break;
+            case 'X': radix = 16; sign_bit = false; break;
+            case 'b': radix = 2; sign_bit = false; break;
+            case 'B': radix = 2; sign_bit = false; break;
+            case 'd': radix = 10; sign_bit = false; break;
+            case 'D': radix = 10; sign_bit = false; break;
         }
         if (radix != 0) {
             number_start = &parser.previous.start[2];
@@ -524,18 +525,21 @@ static void number(bool canAssign) {
     if (radix == 0) {
         radix = 10;
     }
-    
-    double value = 0;
 
     if (radix == 10) {
-        // for now, use C's stdlib to reuse double formatting.
-        value = strtod(number_start, NULL);
+        if (strchr(number_start, '.')) {
+            // for now, use C's stdlib to reuse double formatting.
+            double value = strtod(number_start, NULL);
+            emitConstant(NUMBER_VAL(value));
+        } else {
+            int value = atoi(number_start);
+            emitConstant(INTEGER_VAL(value));
+        }
     }
     else {
-        value = strtoNum(number_start, number_len, radix);
+        unsigned int value = strtoNum(number_start, number_len, radix);
+        emitConstant(UINTEGER_VAL(value));
     }
-
-    emitConstant(NUMBER_VAL(value));
 }
 
 static void or_(bool canAssign) {

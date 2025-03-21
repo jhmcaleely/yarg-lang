@@ -232,25 +232,25 @@ struct Register {
 
 bool rpeekBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
     
-    double nominal_address = AS_NUMBER(args[0]);
+    unsigned int nominal_address = AS_UINTEGER(args[0]);
     uintptr_t memptr = (uint32_t) nominal_address;
     struct Register* reg = (struct Register*) memptr;
 
-    double res = reg->value;
+    unsigned int res = reg->value;
 
-    *result = NUMBER_VAL(res);
+    *result = UINTEGER_VAL(res);
     return true;
 }
 
 bool rpokeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
 
-    double nominal_address = AS_NUMBER(args[0]);
+    unsigned int nominal_address = AS_UINTEGER(args[0]);
     uintptr_t memptr = (uint32_t) nominal_address;
     struct Register* reg = (struct Register*) memptr;
 
-    double val = AS_NUMBER(args[1]);
+    unsigned int val = AS_UINTEGER(args[1]);
 
-    reg->value = (uint32_t) val;
+    reg->value = val;
 
     return true;
 }

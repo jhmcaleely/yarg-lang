@@ -18,7 +18,7 @@ bool clockNative(ObjRoutine* routine, int argCount, Value* args, Value* result) 
         return false;
     }
 
-    *result = NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
+    *result = UINTEGER_VAL(clock() / CLOCKS_PER_SEC);
     return true;
 }
 

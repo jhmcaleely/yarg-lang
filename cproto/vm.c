@@ -259,24 +259,31 @@ InterpretResult run(ObjRoutine* routine) {
 #define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(routine, valueType, op) \
     do { \
-        if (!IS_NUMBER(peek(routine, 0)) || !IS_NUMBER(peek(routine, 1))) { \
-            runtimeError(routine, "Operands must be numbers."); \
+        if (IS_NUMBER(peek(routine, 0)) && IS_NUMBER(peek(routine, 1))) { \
+            double b = AS_NUMBER(pop(routine)); \
+            double a = AS_NUMBER(pop(routine)); \
+            push(routine, valueType(a op b)); \
+        } else if (IS_INTEGER(peek(routine, 0)) && IS_INTEGER(peek(routine, 1))) { \
+            int b = AS_INTEGER(pop(routine)); \
+            int a = AS_INTEGER(pop(routine)); \
+            push(routine, valueType(a op b)); \
+        } else if (IS_UINTEGER(peek(routine, 0)) && IS_UINTEGER(peek(routine, 1))) { \
+            unsigned int b = AS_UINTEGER(pop(routine)); \
+            unsigned int a = AS_UINTEGER(pop(routine)); \
+            push(routine, valueType(a op b)); \
+        } else { \
+            runtimeError(routine, "Operands must be numbers, integers or unsigned integers."); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
-        double b = AS_NUMBER(pop(routine)); \
-        double a = AS_NUMBER(pop(routine)); \
-        push(routine, valueType(a op b)); \
     } while (false)
 #define BINARY_UINT_OP(routine, valueType, op) \
     do { \
-        if (!IS_NUMBER(peek(routine, 0)) || !IS_NUMBER(peek(routine, 1))) { \
-            runtimeError(routine, "Operands must be numbers."); \
+        if (!IS_UINTEGER(peek(routine, 0)) || !IS_UINTEGER(peek(routine, 1))) { \
+            runtimeError(routine, "Operands must be unsigned integers."); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
-        double bb = AS_NUMBER(pop(routine)); \
-        double aa = AS_NUMBER(pop(routine)); \
-        unsigned int a = (unsigned int) aa; \
-        unsigned int b = (unsigned int) bb; \
+        unsigned int b = AS_UINTEGER(pop(routine)); \
+        unsigned int a = AS_UINTEGER(pop(routine)); \
         unsigned int c = a op b; \
         push(routine, valueType(c)); \
     } while (false)
@@ -459,11 +466,19 @@ InterpretResult run(ObjRoutine* routine) {
             }
             case OP_GREATER:  BINARY_OP(routine, BOOL_VAL, >); break;
             case OP_LESS:     BINARY_OP(routine, BOOL_VAL, <); break;
-            case OP_LEFT_SHIFT: BINARY_UINT_OP(routine, NUMBER_VAL, <<); break;
-            case OP_RIGHT_SHIFT: BINARY_UINT_OP(routine, NUMBER_VAL, >>); break;
+            case OP_LEFT_SHIFT: BINARY_UINT_OP(routine, UINTEGER_VAL, <<); break;
+            case OP_RIGHT_SHIFT: BINARY_UINT_OP(routine, UINTEGER_VAL, >>); break;
             case OP_ADD: {
                 if (IS_STRING(peek(routine, 0)) && IS_STRING(peek(routine, 1))) {
                     concatenate(routine);
+                } else if (IS_INTEGER(peek(routine, 0)) && IS_INTEGER(peek(routine, 1))) {
+                    int b = AS_INTEGER(pop(routine));
+                    int a = AS_INTEGER(pop(routine));
+                    push(routine, INTEGER_VAL(a + b));
+                } else if (IS_UINTEGER(peek(routine, 0)) && IS_UINTEGER(peek(routine, 1))) {
+                    unsigned int b = AS_UINTEGER(pop(routine));
+                    unsigned int a = AS_UINTEGER(pop(routine));
+                    push(routine, INTEGER_VAL(a + b));
                 } else if (IS_NUMBER(peek(routine, 0)) && IS_NUMBER(peek(routine, 1))) {
                     double b = AS_NUMBER(pop(routine));
                     double a = AS_NUMBER(pop(routine));
@@ -474,19 +489,23 @@ InterpretResult run(ObjRoutine* routine) {
                 }
                 break;
             }
-            case OP_SUBTRACT: BINARY_OP(routine, NUMBER_VAL, -); break;
-            case OP_MULTIPLY: BINARY_OP(routine, NUMBER_VAL, *); break;
-            case OP_DIVIDE:   BINARY_OP(routine, NUMBER_VAL, /); break;
+            case OP_SUBTRACT: BINARY_OP(routine, INTEGER_VAL, -); break;
+            case OP_MULTIPLY: BINARY_OP(routine, INTEGER_VAL, *); break;
+            case OP_DIVIDE:   BINARY_OP(routine, INTEGER_VAL, /); break;
             case OP_NOT:
                 push(routine, BOOL_VAL(isFalsey(pop(routine))));
                 break;
-            case OP_NEGATE:
-                if (!IS_NUMBER(peek(routine, 0))) {
-                    runtimeError(routine, "Operand must be a number.");
+            case OP_NEGATE: {
+                if (IS_NUMBER(peek(routine, 0))) {
+                    push(routine, NUMBER_VAL(-AS_NUMBER(pop(routine))));
+                } else if (IS_INTEGER(peek(routine, 0))) {
+                    push(routine, INTEGER_VAL(-AS_INTEGER(pop(routine))));
+                } else {
+                    runtimeError(routine, "Operand must be a number or integer.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                push(routine, NUMBER_VAL(-AS_NUMBER(pop(routine))));
                 break;
+            }
             case OP_PRINT: {
                 printValue(pop(routine));
                 printf("\n");
