@@ -264,9 +264,9 @@ InterpretResult run(ObjRoutine* routine) {
             return INTERPRET_RUNTIME_ERROR; \
         } \
         switch (peek(routine, 0).type) { \
-            case VAL_NUMBER: { \
-                double b = AS_NUMBER(pop(routine)); \
-                double a = AS_NUMBER(pop(routine)); \
+            case VAL_DOUBLE: { \
+                double b = AS_DOUBLE(pop(routine)); \
+                double a = AS_DOUBLE(pop(routine)); \
                 push(routine, valueType(a op b)); \
                 break; \
             } \
@@ -490,10 +490,10 @@ InterpretResult run(ObjRoutine* routine) {
                     unsigned int b = AS_UINTEGER(pop(routine));
                     unsigned int a = AS_UINTEGER(pop(routine));
                     push(routine, INTEGER_VAL(a + b));
-                } else if (IS_NUMBER(peek(routine, 0)) && IS_NUMBER(peek(routine, 1))) {
-                    double b = AS_NUMBER(pop(routine));
-                    double a = AS_NUMBER(pop(routine));
-                    push(routine, NUMBER_VAL(a + b));
+                } else if (IS_DOUBLE(peek(routine, 0)) && IS_DOUBLE(peek(routine, 1))) {
+                    double b = AS_DOUBLE(pop(routine));
+                    double a = AS_DOUBLE(pop(routine));
+                    push(routine, DOUBLE_VAL(a + b));
                 } else {
                     runtimeError(routine, "Operands must be two numbers or two strings.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -505,8 +505,8 @@ InterpretResult run(ObjRoutine* routine) {
                     BINARY_OP(routine, INTEGER_VAL, -);
                 } else if (IS_UINTEGER(peek(routine, 0)) && IS_UINTEGER(peek(routine, 1))) {
                     BINARY_OP(routine, UINTEGER_VAL, -);
-                } else if (IS_NUMBER(peek(routine, 0)) && IS_NUMBER(peek(routine, 1))) {
-                    BINARY_OP(routine, NUMBER_VAL, -);
+                } else if (IS_DOUBLE(peek(routine, 0)) && IS_DOUBLE(peek(routine, 1))) {
+                    BINARY_OP(routine, DOUBLE_VAL, -);
                 } else {
                     runtimeError(routine, "Operands must be of same type.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -518,8 +518,8 @@ InterpretResult run(ObjRoutine* routine) {
                     BINARY_OP(routine, INTEGER_VAL, *);
                 } else if (IS_UINTEGER(peek(routine, 0)) && IS_UINTEGER(peek(routine, 1))) {
                     BINARY_OP(routine, UINTEGER_VAL, *);
-                } else if (IS_NUMBER(peek(routine, 0)) && IS_NUMBER(peek(routine, 1))) {
-                    BINARY_OP(routine, NUMBER_VAL, *);
+                } else if (IS_DOUBLE(peek(routine, 0)) && IS_DOUBLE(peek(routine, 1))) {
+                    BINARY_OP(routine, DOUBLE_VAL, *);
                 } else {
                     runtimeError(routine, "Operands must be of same type.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -531,8 +531,8 @@ InterpretResult run(ObjRoutine* routine) {
                     BINARY_OP(routine, INTEGER_VAL, /);
                 } else if (IS_UINTEGER(peek(routine, 0)) && IS_UINTEGER(peek(routine, 1))) {
                     BINARY_OP(routine, UINTEGER_VAL, /);
-                } else if (IS_NUMBER(peek(routine, 0)) && IS_NUMBER(peek(routine, 1))) {
-                    BINARY_OP(routine, NUMBER_VAL, /);
+                } else if (IS_DOUBLE(peek(routine, 0)) && IS_DOUBLE(peek(routine, 1))) {
+                    BINARY_OP(routine, DOUBLE_VAL, /);
                 } else {
                     runtimeError(routine, "Operands must be of same type.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -543,8 +543,8 @@ InterpretResult run(ObjRoutine* routine) {
                 push(routine, BOOL_VAL(isFalsey(pop(routine))));
                 break;
             case OP_NEGATE: {
-                if (IS_NUMBER(peek(routine, 0))) {
-                    push(routine, NUMBER_VAL(-AS_NUMBER(pop(routine))));
+                if (IS_DOUBLE(peek(routine, 0))) {
+                    push(routine, DOUBLE_VAL(-AS_DOUBLE(pop(routine))));
                 } else if (IS_INTEGER(peek(routine, 0))) {
                     push(routine, INTEGER_VAL(-AS_INTEGER(pop(routine))));
                 } else {

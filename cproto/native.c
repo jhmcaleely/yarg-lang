@@ -28,12 +28,12 @@ bool sleepNative(ObjRoutine* routine, int argCount, Value* args, Value* result) 
         runtimeError(routine, "Expected 1 arguments but got %d.", argCount);
         return false;
     }
-    if (!IS_NUMBER(args[0])) {
+    if (!IS_DOUBLE(args[0])) {
         runtimeError(routine, "Argument must be a number");
         return false;
     }
 
-    sleep_ms(AS_NUMBER(args[0]));
+    sleep_ms(AS_DOUBLE(args[0]));
 
     *result = NIL_VAL;
     return true;
@@ -46,12 +46,12 @@ bool gpioInitNative(ObjRoutine* routine, int argCount, Value* args, Value* resul
         runtimeError(routine, "Expected 1 arguments but got %d.", argCount);
         return false;
     }
-    if (!IS_NUMBER(args[0])) {
+    if (!IS_DOUBLE(args[0])) {
         runtimeError(routine, "Argument must be a number");
         return false;
     }
 
-    gpio_init(AS_NUMBER(args[0]));
+    gpio_init(AS_DOUBLE(args[0]));
 
     *result = NIL_VAL;
     return true;
@@ -104,7 +104,7 @@ bool alarmAddInMSNative(ObjRoutine* routine, int argCount, Value* args, Value* r
         return false;
     }
 
-    if (!IS_NUMBER(args[0])) {
+    if (!IS_DOUBLE(args[0])) {
         runtimeError(routine, "First argument must be a number.");
         return false;
     }
@@ -120,7 +120,7 @@ bool alarmAddInMSNative(ObjRoutine* routine, int argCount, Value* args, Value* r
     prepareRoutineStack(isrRoutine);
 
     isrRoutine->state = EXEC_RUNNING;
-    add_alarm_in_ms(AS_NUMBER(args[0]), nativeOneShotCallback, isrRoutine, false);
+    add_alarm_in_ms(AS_DOUBLE(args[0]), nativeOneShotCallback, isrRoutine, false);
 
     *result = NIL_VAL;
     return true;
@@ -145,7 +145,7 @@ bool alarmAddRepeatingMSNative(ObjRoutine* routine, int argCount, Value* args, V
         return false;
     }
 
-    if (!IS_NUMBER(args[0])) {
+    if (!IS_DOUBLE(args[0])) {
         runtimeError(routine, "First argument must be a number.");
         return false;
     }
@@ -163,7 +163,7 @@ bool alarmAddRepeatingMSNative(ObjRoutine* routine, int argCount, Value* args, V
     prepareRoutineStack(isrRoutine);
 
     isrRoutine->state = EXEC_RUNNING;
-    add_repeating_timer_ms(AS_NUMBER(args[0]), nativeRecurringCallback, isrRoutine, (repeating_timer_t*)handle->blob);
+    add_repeating_timer_ms(AS_DOUBLE(args[0]), nativeRecurringCallback, isrRoutine, (repeating_timer_t*)handle->blob);
 
     *result = OBJ_VAL(handle);
     return true;

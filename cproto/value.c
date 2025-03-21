@@ -33,7 +33,7 @@ void printValue(Value value) {
         printf(AS_BOOL(value) ? "true" : "false");
     } else if (IS_NIL(value)) {
         printf("nil");
-    } else if (IS_NUMBER(value)) {
+    } else if (IS_DOUBLE(value)) {
         printf("%g", AS_NUMBER(value));
     } else if (IS_OBJ(value)) {
         printObject(value);
@@ -44,7 +44,7 @@ void printValue(Value value) {
             printf(AS_BOOL(value) ? "true" : "false");
             break;
         case VAL_NIL: printf("nil"); break;
-        case VAL_NUMBER: printf("%g", AS_NUMBER(value)); break;
+        case VAL_DOUBLE: printf("%g", AS_DOUBLE(value)); break;
         case VAL_UINTEGER: printf("%u", AS_UINTEGER(value)); break;
         case VAL_INTEGER: printf("%d", AS_INTEGER(value)); break;
         case VAL_OBJ: printObject(value); break;
@@ -54,7 +54,7 @@ void printValue(Value value) {
 
 bool valuesEqual(Value a, Value b) {
 #ifdef NAN_BOXING
-    if (IS_NUMBER(a) && IS_NUMBER(b)) {
+    if (IS_DOUBLE(a) && IS_DOUBLE(b)) {
         return AS_NUMBER(a) == AS_NUMBER(b);
     }
     return a == b;
@@ -63,7 +63,7 @@ bool valuesEqual(Value a, Value b) {
     switch (a.type) {
         case VAL_BOOL:     return AS_BOOL(a) == AS_BOOL(b);
         case VAL_NIL:      return true;
-        case VAL_NUMBER:   return AS_NUMBER(a) == AS_NUMBER(b);
+        case VAL_DOUBLE:   return AS_DOUBLE(a) == AS_DOUBLE(b);
         case VAL_UINTEGER: return AS_UINTEGER(a) == AS_UINTEGER(b);
         case VAL_INTEGER:  return AS_INTEGER(a) == AS_INTEGER(b);
         case VAL_OBJ:      return AS_OBJ(a) == AS_OBJ(b);

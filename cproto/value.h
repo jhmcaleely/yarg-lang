@@ -56,7 +56,7 @@ static inline Value numToValue(double num) {
 typedef enum {
     VAL_BOOL,
     VAL_NIL,
-    VAL_NUMBER,
+    VAL_DOUBLE,
     VAL_UINTEGER,
     VAL_INTEGER,
     VAL_OBJ,
@@ -66,7 +66,7 @@ typedef struct {
     ValueType type;
     union {
         bool boolean;
-        double number;
+        double dbl;
         unsigned int uinteger;
         int integer;
         Obj* obj;
@@ -75,7 +75,7 @@ typedef struct {
 
 #define IS_BOOL(value)     ((value).type == VAL_BOOL)
 #define IS_NIL(value)      ((value).type == VAL_NIL)
-#define IS_NUMBER(value)   ((value).type == VAL_NUMBER)
+#define IS_DOUBLE(value)   ((value).type == VAL_DOUBLE)
 #define IS_UINTEGER(value) ((value).type == VAL_UINTEGER)
 #define IS_INTEGER(value)  ((value).type == VAL_INTEGER)
 #define IS_OBJ(value)      ((value).type == VAL_OBJ)
@@ -84,11 +84,11 @@ typedef struct {
 #define AS_BOOL(value)     ((value).as.boolean)
 #define AS_UINTEGER(value) ((value).as.uinteger)
 #define AS_INTEGER(value)  ((value).as.integer)
-#define AS_NUMBER(value)   ((value).as.number)
+#define AS_DOUBLE(value)   ((value).as.dbl)
 
 #define BOOL_VAL(value)     ((Value){VAL_BOOL, {.boolean = value }})
-#define NIL_VAL             ((Value){VAL_NIL, {.number = 0 }})
-#define NUMBER_VAL(value)   ((Value){VAL_NUMBER, {.number = value }})
+#define NIL_VAL             ((Value){VAL_NIL, {.integer = 0 }})
+#define DOUBLE_VAL(value)   ((Value){VAL_DOUBLE, {.dbl = value }})
 #define UINTEGER_VAL(value) ((Value){VAL_UINTEGER, {.uinteger = value }})
 #define INTEGER_VAL(value)  ((Value){VAL_INTEGER, {.integer = value }})
 #define OBJ_VAL(object)     ((Value){VAL_OBJ, {.obj = (Obj*)object}})

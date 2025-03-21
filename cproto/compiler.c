@@ -530,7 +530,7 @@ static void number(bool canAssign) {
         if (strchr(number_start, '.')) {
             // for now, use C's stdlib to reuse double formatting.
             double value = strtod(number_start, NULL);
-            emitConstant(NUMBER_VAL(value));
+            emitConstant(DOUBLE_VAL(value));
         } else {
             int value = atoi(number_start);
             emitConstant(INTEGER_VAL(value));
