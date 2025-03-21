@@ -1,2 +1,2 @@
-print 1 << 2; // expect: 4
-print 4 >> 2; // expect: 1
+print 0d1 << 0d2; // expect: 4
+print 0d4 >> 0d2; // expect: 1

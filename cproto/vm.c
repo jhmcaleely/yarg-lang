@@ -489,9 +489,45 @@ InterpretResult run(ObjRoutine* routine) {
                 }
                 break;
             }
-            case OP_SUBTRACT: BINARY_OP(routine, INTEGER_VAL, -); break;
-            case OP_MULTIPLY: BINARY_OP(routine, INTEGER_VAL, *); break;
-            case OP_DIVIDE:   BINARY_OP(routine, INTEGER_VAL, /); break;
+            case OP_SUBTRACT: {
+                if (IS_INTEGER(peek(routine, 0)) && IS_INTEGER(peek(routine, 1))) {
+                    BINARY_OP(routine, INTEGER_VAL, -);
+                } else if (IS_UINTEGER(peek(routine, 0)) && IS_UINTEGER(peek(routine, 1))) {
+                    BINARY_OP(routine, UINTEGER_VAL, -);
+                } else if (IS_NUMBER(peek(routine, 0)) && IS_NUMBER(peek(routine, 1))) {
+                    BINARY_OP(routine, NUMBER_VAL, -);
+                } else {
+                    runtimeError(routine, "Operands must be of same type.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
+            case OP_MULTIPLY: {
+                if (IS_INTEGER(peek(routine, 0)) && IS_INTEGER(peek(routine, 1))) {
+                    BINARY_OP(routine, INTEGER_VAL, *);
+                } else if (IS_UINTEGER(peek(routine, 0)) && IS_UINTEGER(peek(routine, 1))) {
+                    BINARY_OP(routine, UINTEGER_VAL, *);
+                } else if (IS_NUMBER(peek(routine, 0)) && IS_NUMBER(peek(routine, 1))) {
+                    BINARY_OP(routine, NUMBER_VAL, *);
+                } else {
+                    runtimeError(routine, "Operands must be of same type.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
+            case OP_DIVIDE: {
+                if (IS_INTEGER(peek(routine, 0)) && IS_INTEGER(peek(routine, 1))) {
+                    BINARY_OP(routine, INTEGER_VAL, /);
+                } else if (IS_UINTEGER(peek(routine, 0)) && IS_UINTEGER(peek(routine, 1))) {
+                    BINARY_OP(routine, UINTEGER_VAL, /);
+                } else if (IS_NUMBER(peek(routine, 0)) && IS_NUMBER(peek(routine, 1))) {
+                    BINARY_OP(routine, NUMBER_VAL, /);
+                } else {
+                    runtimeError(routine, "Operands must be of same type.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
             case OP_NOT:
                 push(routine, BOOL_VAL(isFalsey(pop(routine))));
                 break;
