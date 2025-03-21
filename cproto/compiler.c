@@ -527,7 +527,7 @@ static void number(bool canAssign) {
     }
 
     if (radix == 10 && sign_bit) {
-        if (strchr(number_start, '.')) {
+        if (memchr(number_start, '.', number_len)) {
             // for now, use C's stdlib to reuse double formatting.
             double value = strtod(number_start, NULL);
             emitConstant(DOUBLE_VAL(value));

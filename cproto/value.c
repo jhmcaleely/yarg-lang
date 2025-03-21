@@ -44,7 +44,7 @@ void printValue(Value value) {
             printf(AS_BOOL(value) ? "true" : "false");
             break;
         case VAL_NIL: printf("nil"); break;
-        case VAL_DOUBLE: printf("%g", AS_DOUBLE(value)); break;
+        case VAL_DOUBLE: printf("%#g", AS_DOUBLE(value)); break;
         case VAL_UINTEGER: printf("%u", AS_UINTEGER(value)); break;
         case VAL_INTEGER: printf("%d", AS_INTEGER(value)); break;
         case VAL_OBJ: printObject(value); break;
