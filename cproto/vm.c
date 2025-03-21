@@ -259,21 +259,32 @@ InterpretResult run(ObjRoutine* routine) {
 #define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(routine, valueType, op) \
     do { \
-        if (IS_NUMBER(peek(routine, 0)) && IS_NUMBER(peek(routine, 1))) { \
-            double b = AS_NUMBER(pop(routine)); \
-            double a = AS_NUMBER(pop(routine)); \
-            push(routine, valueType(a op b)); \
-        } else if (IS_INTEGER(peek(routine, 0)) && IS_INTEGER(peek(routine, 1))) { \
-            int b = AS_INTEGER(pop(routine)); \
-            int a = AS_INTEGER(pop(routine)); \
-            push(routine, valueType(a op b)); \
-        } else if (IS_UINTEGER(peek(routine, 0)) && IS_UINTEGER(peek(routine, 1))) { \
-            unsigned int b = AS_UINTEGER(pop(routine)); \
-            unsigned int a = AS_UINTEGER(pop(routine)); \
-            push(routine, valueType(a op b)); \
-        } else { \
-            runtimeError(routine, "Operands must be numbers, integers or unsigned integers."); \
+        if (peek(routine, 0).type != peek(routine, 1).type) { \
+            runtimeError(routine, "Operands must be of same type."); \
             return INTERPRET_RUNTIME_ERROR; \
+        } \
+        switch (peek(routine, 0).type) { \
+            case VAL_NUMBER: { \
+                double b = AS_NUMBER(pop(routine)); \
+                double a = AS_NUMBER(pop(routine)); \
+                push(routine, valueType(a op b)); \
+                break; \
+            } \
+            case VAL_INTEGER: { \
+                int b = AS_INTEGER(pop(routine)); \
+                int a = AS_INTEGER(pop(routine)); \
+                push(routine, valueType(a op b)); \
+                break; \
+            } \
+            case VAL_UINTEGER: { \
+                unsigned int b = AS_UINTEGER(pop(routine)); \
+                unsigned int a = AS_UINTEGER(pop(routine)); \
+                push(routine, valueType(a op b)); \
+                break; \
+            } \
+            default: \
+                runtimeError(routine, "Operands must be numbers, integers or unsigned integers."); \
+                return INTERPRET_RUNTIME_ERROR; \
         } \
     } while (false)
 #define BINARY_UINT_OP(routine, valueType, op) \

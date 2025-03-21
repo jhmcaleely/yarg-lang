@@ -1,1 +1,1 @@
-1 <= "1"; // expect runtime error: Operands must be numbers, integers or unsigned integers.
+1 <= "1"; // expect runtime error: Operands must be of same type.
