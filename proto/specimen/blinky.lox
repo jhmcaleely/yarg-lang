@@ -9,6 +9,6 @@ var state = false;
 while (n > 0) {
     state = !state;
     gpio_put(pico_led, state);
-    sleep_ms(500);
+    sleep_ms(0d500);
     n = n - 1;
 }
