@@ -11,12 +11,34 @@ typedef struct ObjRoutine ObjRoutine;
 
 #ifdef NAN_BOXING
 
-#define SIGN_BIT ((uint64_t)0x8000000000000000)
-#define QNAN     ((uint64_t)0x7ffc000000000000)
-#define UINT_TAG ((uint64_t)0x0001000000000000)
-#define INT_TAG  ((uint64_t)0x0002000000000000)
-#define OBJ_MASK ((uint64_t)0x0000FFFFFFFFFFFF)
-#define INT_MASK ((uint64_t)0x00000000FFFFFFFF)
+/*
+ * See Crafting Interpreters, NaN Boxing for the origins of this code.
+ * https://craftinginterpreters.com/optimization.html#nan-boxing
+ * 
+ * For Proto, we have two distinct worlds. The device/microcontroller builds 
+ * that are 32 bit, and our host which is a 64 bit machine.
+ * 
+ * This appears most in pointers, where the original implementation claims 'at
+ * most' 48 bits are typically used in modern 64 bit chipsets.
+ * 
+ * For simplicity, Proto only supports 32 bit integers (signed or unsigned)
+ * and these will appear in the lower 32 bits of our 64bit Value type.
+ * 
+ * Our 'Quiet NaN' mask is designed to include an Intel flag that is presumably 
+ * used by 64bit Intel compilers & runtimes. So we have the sign bit + the 
+ * lower 50 bits to use for type information and payloads. We use 50 to signal 
+ * a 32 bit integer payload, and 49 to signal the presence of a 32 bit unsigned 
+ * integer.
+ * 
+ * Our sign bit signals the presence of a 48 bit pointer.
+ */
+
+#define SIGN_BIT      ((uint64_t)0x8000000000000000)
+#define QNAN          ((uint64_t)0x7ffc000000000000)
+#define UINTEGER_TAG  ((uint64_t)0x0000000100000000)
+#define INTEGER_TAG   ((uint64_t)0x0000000200000000)
+#define PTR64_48_MASK ((uint64_t)0x0000FFFFFFFFFFFF)
+#define L32_MASK      ((uint64_t)0x00000000FFFFFFFF)
 
 
 #define TAG_NIL   1 // 01.
@@ -29,32 +51,32 @@ typedef uint64_t Value;
 #define IS_NIL(value)       ((value) == NIL_VAL)
 #define IS_DOUBLE(value)    (((value) & QNAN) != QNAN)
 #define IS_UINTEGER(value) \
-    (((value) & (QNAN | UINT_TAG)) == (QNAN | UINT_TAG))
+    (((value) & (QNAN | UINTEGER_TAG)) == (QNAN | UINTEGER_TAG))
 #define IS_INTEGER(value) \
-    (((value) & (QNAN | INT_TAG)) == (QNAN | INT_TAG))
+    (((value) & (QNAN | INTEGER_TAG)) == (QNAN | INTEGER_TAG))
 #define IS_OBJ(value) \
     (((value) & (QNAN | SIGN_BIT)) == (QNAN | SIGN_BIT))
 
 #define AS_BOOL(value)      ((value) == TRUE_VAL)
 #define AS_DOUBLE(value)    valueToDbl(value)
 #define AS_UINTEGER(value) \
-     ((uint32_t)((uint64_t)(value) & (INT_MASK)))
+     ((uint32_t)((uint64_t)(value) & (L32_MASK)))
 #define AS_INTEGER(value) \
-     ((uint32_t)((uint64_t)(value) & (INT_MASK)))
+     ((uint32_t)((uint64_t)(value) & (L32_MASK)))
 #define AS_OBJ(value) \
-     ((Obj*)(uintptr_t)((value) & (OBJ_MASK)))
+     ((Obj*)(uintptr_t)((value) & (PTR64_48_MASK)))
 
 #define BOOL_VAL(b)     ((b) ? TRUE_VAL : FALSE_VAL)
 #define FALSE_VAL       ((Value)(uint64_t)(QNAN | TAG_FALSE))
 #define TRUE_VAL        ((Value)(uint64_t)(QNAN | TAG_TRUE))
 #define NIL_VAL         ((Value)(uint64_t)(QNAN | TAG_NIL))
-#define DOUBLE_VAL(num) dblToValue(num)
+#define DOUBLE_VAL(dbl) dblToValue(dbl)
 #define UINTEGER_VAL(uinteger) \
-    (Value)( QNAN | UINT_TAG | (INT_MASK & (uint64_t)(uinteger)))
+    (Value)(QNAN | UINTEGER_TAG | (L32_MASK & (uint64_t)(uinteger)))
 #define INTEGER_VAL(integer) \
-    (Value)( QNAN | INT_TAG | (INT_MASK & (uint64_t)(integer)))
+    (Value)(QNAN | INTEGER_TAG | (L32_MASK & (uint64_t)(integer)))
 #define OBJ_VAL(obj) \
-    (Value)(SIGN_BIT | QNAN | (OBJ_MASK & (uint64_t)(uintptr_t)(obj)))
+    (Value)(SIGN_BIT | QNAN | (PTR64_48_MASK & (uint64_t)(uintptr_t)(obj)))
 
 static inline double valueToDbl(Value value) {
     double num;
@@ -62,9 +84,9 @@ static inline double valueToDbl(Value value) {
     return num;
 }
 
-static inline Value dblToValue(double num) {
+static inline Value dblToValue(double dbl) {
     Value value;
-    memcpy(&value, &num, sizeof(double));
+    memcpy(&value, &dbl, sizeof(double));
     return value;
 }
 
