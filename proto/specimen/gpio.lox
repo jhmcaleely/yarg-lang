@@ -1,4 +1,4 @@
-var pico_led = 25; 
+var pico_led = 0d25; 
 
 fun gpio_set_direction(pin, dir) {
     if (dir) {

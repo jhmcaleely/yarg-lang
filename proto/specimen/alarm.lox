@@ -12,12 +12,12 @@ fun led(n) {
 
 var isr_led = make_routine(led, true);
 
-alarm_add_in_ms(500, isr_led, pico_led);
+alarm_add_in_ms(0d500, isr_led, pico_led);
 
-sleep_ms(1000);
+sleep_ms(0d1000);
 
 var timer = alarm_add_repeating_ms(-500, isr_led, pico_led);
 
-sleep_ms(3000); 
+sleep_ms(0d3000); 
 
 alarm_cancel_repeating(timer);

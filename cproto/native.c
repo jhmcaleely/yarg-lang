@@ -163,7 +163,7 @@ bool alarmAddRepeatingMSNative(ObjRoutine* routine, int argCount, Value* args, V
     prepareRoutineStack(isrRoutine);
 
     isrRoutine->state = EXEC_RUNNING;
-    add_repeating_timer_ms(AS_UINTEGER(args[0]), nativeRecurringCallback, isrRoutine, (repeating_timer_t*)handle->blob);
+    add_repeating_timer_ms(AS_INTEGER(args[0]), nativeRecurringCallback, isrRoutine, (repeating_timer_t*)handle->blob);
 
     *result = OBJ_VAL(handle);
     return true;
