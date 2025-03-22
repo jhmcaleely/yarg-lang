@@ -41,24 +41,6 @@ bool sleepNative(ObjRoutine* routine, int argCount, Value* args, Value* result) 
 #endif
 
 #ifdef CLOX_PICO_TARGET
-bool gpioInitNative(ObjRoutine* routine, int argCount, Value* args, Value* result) {
-    if (argCount != 1) {
-        runtimeError(routine, "Expected 1 arguments but got %d.", argCount);
-        return false;
-    }
-    if (!IS_UINTEGER(args[0])) {
-        runtimeError(routine, "Argument must be an unsigned integer");
-        return false;
-    }
-
-    gpio_init(AS_UINTEGER(args[0]));
-
-    *result = NIL_VAL;
-    return true;
-}
-#endif
-
-#ifdef CLOX_PICO_TARGET
 static int64_t nativeOneShotCallback(alarm_id_t id, void* user_data) {
 
     ObjRoutine* routine = (ObjRoutine*)user_data;

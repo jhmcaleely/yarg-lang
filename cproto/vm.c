@@ -66,8 +66,6 @@ void initVM() {
 #ifdef CLOX_PICO_TARGET
     defineNative("sleep_ms", sleepNative);
 
-    defineNative("gpio_init", gpioInitNative);
-
     defineNative("alarm_add_in_ms", alarmAddInMSNative);
     defineNative("alarm_add_repeating_ms", alarmAddRepeatingMSNative);
     defineNative("alarm_cancel_repeating", alarmCancelRepeatingMSNative);
@@ -466,8 +464,11 @@ InterpretResult run(ObjRoutine* routine) {
             }
             case OP_GREATER:  BINARY_OP(routine, BOOL_VAL, >); break;
             case OP_LESS:     BINARY_OP(routine, BOOL_VAL, <); break;
-            case OP_LEFT_SHIFT: BINARY_UINT_OP(routine, UINTEGER_VAL, <<); break;
+            case OP_LEFT_SHIFT:  BINARY_UINT_OP(routine, UINTEGER_VAL, <<); break;
             case OP_RIGHT_SHIFT: BINARY_UINT_OP(routine, UINTEGER_VAL, >>); break;
+            case OP_BITOR:       BINARY_UINT_OP(routine, UINTEGER_VAL, |); break;
+            case OP_BITAND:      BINARY_UINT_OP(routine, UINTEGER_VAL, &); break;
+            case OP_BITXOR:      BINARY_UINT_OP(routine, UINTEGER_VAL, ^); break;
             case OP_ADD: {
                 if (IS_STRING(peek(routine, 0)) && IS_STRING(peek(routine, 1))) {
                     concatenate(routine);
@@ -478,7 +479,7 @@ InterpretResult run(ObjRoutine* routine) {
                 } else if (IS_UINTEGER(peek(routine, 0)) && IS_UINTEGER(peek(routine, 1))) {
                     uint32_t b = AS_UINTEGER(pop(routine));
                     uint32_t a = AS_UINTEGER(pop(routine));
-                    push(routine, INTEGER_VAL(a + b));
+                    push(routine, UINTEGER_VAL(a + b));
                 } else if (IS_DOUBLE(peek(routine, 0)) && IS_DOUBLE(peek(routine, 1))) {
                     double b = AS_DOUBLE(pop(routine));
                     double a = AS_DOUBLE(pop(routine));

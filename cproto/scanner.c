@@ -311,6 +311,9 @@ Token scanToken() {
         case '+': return makeToken(TOKEN_PLUS);
         case '/': return makeToken(TOKEN_SLASH);
         case '*': return makeToken(TOKEN_STAR);
+        case '|': return makeToken(TOKEN_BAR);
+        case '&': return makeToken(TOKEN_AMP);
+        case '^': return makeToken(TOKEN_CARET);
         case '!':
             return makeToken(match('=') ? TOKEN_BANG_EQUAL : TOKEN_BANG);
         case '=':
