@@ -13,6 +13,11 @@ typedef struct ObjRoutine ObjRoutine;
 
 #define SIGN_BIT ((uint64_t)0x8000000000000000)
 #define QNAN     ((uint64_t)0x7ffc000000000000)
+#define UINT_TAG ((uint64_t)0x0001000000000000)
+#define INT_TAG  ((uint64_t)0x0002000000000000)
+#define OBJ_MASK ((uint64_t)0x0000FFFFFFFFFFFF)
+#define INT_MASK ((uint64_t)0x00000000FFFFFFFF)
+
 
 #define TAG_NIL   1 // 01.
 #define TAG_FALSE 2 // 10.
@@ -22,30 +27,42 @@ typedef uint64_t Value;
 
 #define IS_BOOL(value)      (((value) | 1) == TRUE_VAL)
 #define IS_NIL(value)       ((value) == NIL_VAL)
-#define IS_NUMBER(value)    (((value) & QNAN) != QNAN)
+#define IS_DOUBLE(value)    (((value) & QNAN) != QNAN)
+#define IS_UINTEGER(value) \
+    (((value) & (QNAN | UINT_TAG)) == (QNAN | UINT_TAG))
+#define IS_INTEGER(value) \
+    (((value) & (QNAN | INT_TAG)) == (QNAN | INT_TAG))
 #define IS_OBJ(value) \
     (((value) & (QNAN | SIGN_BIT)) == (QNAN | SIGN_BIT))
 
 #define AS_BOOL(value)      ((value) == TRUE_VAL)
-#define AS_NUMBER(value)    valueToNum(value)
+#define AS_DOUBLE(value)    valueToDbl(value)
+#define AS_UINTEGER(value) \
+     ((uint32_t)((uint64_t)(value) & (INT_MASK)))
+#define AS_INTEGER(value) \
+     ((uint32_t)((uint64_t)(value) & (INT_MASK)))
 #define AS_OBJ(value) \
-     ((Obj*)(uintptr_t)((value) & ~(SIGN_BIT | QNAN)))
+     ((Obj*)(uintptr_t)((value) & (OBJ_MASK)))
 
 #define BOOL_VAL(b)     ((b) ? TRUE_VAL : FALSE_VAL)
 #define FALSE_VAL       ((Value)(uint64_t)(QNAN | TAG_FALSE))
 #define TRUE_VAL        ((Value)(uint64_t)(QNAN | TAG_TRUE))
 #define NIL_VAL         ((Value)(uint64_t)(QNAN | TAG_NIL))
-#define NUMBER_VAL(num) numToValue(num)
+#define DOUBLE_VAL(num) dblToValue(num)
+#define UINTEGER_VAL(uinteger) \
+    (Value)( QNAN | UINT_TAG | (INT_MASK & (uint64_t)(uinteger)))
+#define INTEGER_VAL(integer) \
+    (Value)( QNAN | INT_TAG | (INT_MASK & (uint64_t)(integer)))
 #define OBJ_VAL(obj) \
-    (Value)(SIGN_BIT | QNAN | (uint64_t)(uintptr_t)(obj))
+    (Value)(SIGN_BIT | QNAN | (OBJ_MASK & (uint64_t)(uintptr_t)(obj)))
 
-static inline double valueToNum(Value value) {
+static inline double valueToDbl(Value value) {
     double num;
     memcpy(&num, &value, sizeof(Value));
     return num;
 }
 
-static inline Value numToValue(double num) {
+static inline Value dblToValue(double num) {
     Value value;
     memcpy(&value, &num, sizeof(double));
     return value;
@@ -67,8 +84,8 @@ typedef struct {
     union {
         bool boolean;
         double dbl;
-        unsigned int uinteger;
-        int integer;
+        uint32_t uinteger;
+        int32_t integer;
         Obj* obj;
     } as;
 } Value;

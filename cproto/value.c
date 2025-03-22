@@ -34,7 +34,11 @@ void printValue(Value value) {
     } else if (IS_NIL(value)) {
         printf("nil");
     } else if (IS_DOUBLE(value)) {
-        printf("%g", AS_NUMBER(value));
+        printf("%#g", AS_DOUBLE(value));
+    } else if (IS_UINTEGER(value)) {
+        printf("%u", AS_UINTEGER(value));
+    } else if (IS_INTEGER(value)) {
+        printf("%d", AS_INTEGER(value));
     } else if (IS_OBJ(value)) {
         printObject(value);
     }
@@ -55,7 +59,7 @@ void printValue(Value value) {
 bool valuesEqual(Value a, Value b) {
 #ifdef NAN_BOXING
     if (IS_DOUBLE(a) && IS_DOUBLE(b)) {
-        return AS_NUMBER(a) == AS_NUMBER(b);
+        return AS_DOUBLE(a) == AS_DOUBLE(b);
     }
     return a == b;
 #else

@@ -66,7 +66,7 @@ target_sources(clox
       files_stdlib.c)
 endif()
 
-#add_compile_definitions(NAN_BOXING)
+add_compile_definitions(NAN_BOXING)
 #add_compile_definitions(DEBUG_PRINT_CODE)
 #add_compile_definitions(DEBUG_TRACE_EXECUTION)
 add_compile_definitions(DEBUG_STRESS_GC)

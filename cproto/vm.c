@@ -259,32 +259,21 @@ InterpretResult run(ObjRoutine* routine) {
 #define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(routine, valueType, op) \
     do { \
-        if (peek(routine, 0).type != peek(routine, 1).type) { \
-            runtimeError(routine, "Operands must be of same type."); \
+        if (IS_UINTEGER(peek(routine, 0)) && IS_UINTEGER(peek(routine, 1))) { \
+            uint32_t b = AS_UINTEGER(pop(routine)); \
+            uint32_t a = AS_UINTEGER(pop(routine)); \
+            push(routine, valueType(a op b)); \
+        } else if (IS_INTEGER(peek(routine, 0)) && IS_INTEGER(peek(routine, 1))) { \
+            int32_t b = AS_INTEGER(pop(routine)); \
+            int32_t a = AS_INTEGER(pop(routine)); \
+            push(routine, valueType(a op b)); \
+        } else if (IS_DOUBLE(peek(routine, 0)) && IS_DOUBLE(peek(routine, 1))) { \
+            double b = AS_DOUBLE(pop(routine)); \
+            double a = AS_DOUBLE(pop(routine)); \
+            push(routine, valueType(a op b)); \
+        } else { \
+            runtimeError(routine, "Operands must both be numbers, integers or unsigned integers."); \
             return INTERPRET_RUNTIME_ERROR; \
-        } \
-        switch (peek(routine, 0).type) { \
-            case VAL_DOUBLE: { \
-                double b = AS_DOUBLE(pop(routine)); \
-                double a = AS_DOUBLE(pop(routine)); \
-                push(routine, valueType(a op b)); \
-                break; \
-            } \
-            case VAL_INTEGER: { \
-                int b = AS_INTEGER(pop(routine)); \
-                int a = AS_INTEGER(pop(routine)); \
-                push(routine, valueType(a op b)); \
-                break; \
-            } \
-            case VAL_UINTEGER: { \
-                unsigned int b = AS_UINTEGER(pop(routine)); \
-                unsigned int a = AS_UINTEGER(pop(routine)); \
-                push(routine, valueType(a op b)); \
-                break; \
-            } \
-            default: \
-                runtimeError(routine, "Operands must be numbers, integers or unsigned integers."); \
-                return INTERPRET_RUNTIME_ERROR; \
         } \
     } while (false)
 #define BINARY_UINT_OP(routine, valueType, op) \
@@ -293,9 +282,9 @@ InterpretResult run(ObjRoutine* routine) {
             runtimeError(routine, "Operands must be unsigned integers."); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
-        unsigned int b = AS_UINTEGER(pop(routine)); \
-        unsigned int a = AS_UINTEGER(pop(routine)); \
-        unsigned int c = a op b; \
+        uint32_t b = AS_UINTEGER(pop(routine)); \
+        uint32_t a = AS_UINTEGER(pop(routine)); \
+        uint32_t c = a op b; \
         push(routine, valueType(c)); \
     } while (false)
 
@@ -483,12 +472,12 @@ InterpretResult run(ObjRoutine* routine) {
                 if (IS_STRING(peek(routine, 0)) && IS_STRING(peek(routine, 1))) {
                     concatenate(routine);
                 } else if (IS_INTEGER(peek(routine, 0)) && IS_INTEGER(peek(routine, 1))) {
-                    int b = AS_INTEGER(pop(routine));
-                    int a = AS_INTEGER(pop(routine));
+                    int32_t b = AS_INTEGER(pop(routine));
+                    int32_t a = AS_INTEGER(pop(routine));
                     push(routine, INTEGER_VAL(a + b));
                 } else if (IS_UINTEGER(peek(routine, 0)) && IS_UINTEGER(peek(routine, 1))) {
-                    unsigned int b = AS_UINTEGER(pop(routine));
-                    unsigned int a = AS_UINTEGER(pop(routine));
+                    uint32_t b = AS_UINTEGER(pop(routine));
+                    uint32_t a = AS_UINTEGER(pop(routine));
                     push(routine, INTEGER_VAL(a + b));
                 } else if (IS_DOUBLE(peek(routine, 0)) && IS_DOUBLE(peek(routine, 1))) {
                     double b = AS_DOUBLE(pop(routine));

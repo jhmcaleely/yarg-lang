@@ -469,10 +469,10 @@ static void grouping(bool canAssign) {
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 }
 
-static unsigned int strtoNum(const char* literal, int length, int radix) {
-    unsigned int val = 0;
+static uint32_t strtoNum(const char* literal, int length, int radix) {
+    uint32_t val = 0;
     for (int i = length - 1 ; i >= 0; i--) {
-        unsigned int positionVal = 0;
+        uint32_t positionVal = 0;
         switch (literal[i]) {
             case '0': positionVal = 0; break;
             case '1': positionVal = 1; break;
@@ -497,7 +497,7 @@ static unsigned int strtoNum(const char* literal, int length, int radix) {
             case 'e': positionVal = 14; break;
             case 'f': positionVal = 15; break;
         }
-        unsigned int power = length - 1 - i;
+        uint32_t power = length - 1 - i;
         val += positionVal * pow(radix, power);
     }
     return val;
@@ -537,7 +537,7 @@ static void number(bool canAssign) {
         }
     }
     else {
-        unsigned int value = strtoNum(number_start, number_len, radix);
+        uint32_t value = strtoNum(number_start, number_len, radix);
         emitConstant(UINTEGER_VAL(value));
     }
 }
