@@ -26,11 +26,14 @@ typedef struct ObjRoutine ObjRoutine;
  * 
  * Our 'Quiet NaN' mask is designed to include an Intel flag that is presumably 
  * used by 64bit Intel compilers & runtimes. So we have the sign bit + the 
- * lower 50 bits to use for type information and payloads. We use 50 to signal 
- * a 32 bit integer payload, and 49 to signal the presence of a 32 bit unsigned 
- * integer.
+ * lower 50 bits to use for type information and payloads.
  * 
- * Our sign bit signals the presence of a 48 bit pointer.
+ * Our sign bit signals the presence of a 48 bit pointer. There are two more bits
+ * currently unused that coudld type 48 bit pointers.
+ * With 0's outside of QNAN we have a payload space for value tags (currently only 
+ * three). The three values are NIL, TRUE and FALSE.
+ * With bit 33 set we signal the presence of an unsigned integer in the lower 32 
+ * bits, and bit 34 signals a signed integer there.
  */
 
 #define SIGN_BIT      ((uint64_t)0x8000000000000000)
