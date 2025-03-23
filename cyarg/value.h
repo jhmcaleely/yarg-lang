@@ -15,13 +15,13 @@ typedef struct ObjRoutine ObjRoutine;
  * See Crafting Interpreters, NaN Boxing for the origins of this code.
  * https://craftinginterpreters.com/optimization.html#nan-boxing
  * 
- * For Proto, we have two distinct worlds. The device/microcontroller builds 
+ * For Yarg, we have two distinct worlds. The device/microcontroller builds 
  * that are 32 bit, and our host which is a 64 bit machine.
  * 
  * This appears most in pointers, where the original implementation claims 'at
  * most' 48 bits are typically used in modern 64 bit chipsets.
  * 
- * For simplicity, Proto only supports 32 bit integers (signed or unsigned)
+ * For simplicity, Yarg only supports 32 bit integers (signed or unsigned)
  * and these will appear in the lower 32 bits of our 64bit Value type.
  * 
  * Our 'Quiet NaN' mask is designed to include an Intel flag that is presumably 
