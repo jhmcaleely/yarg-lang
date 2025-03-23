@@ -28,7 +28,6 @@ bool makeChannelBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* r
 }
 
 bool sendChannelBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result) {
-#ifdef CYARG_PICO_TARGET
     if (argCount != 2) {
         runtimeError(routine, "Expected 2 arguments, got %d.", argCount);
         return false;
@@ -39,22 +38,22 @@ bool sendChannelBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* r
     }
 
     ObjChannel* channel = AS_CHANNEL(args[0]);
+#ifdef CYARG_PICO_TARGET
     while (channel->present) {
         // stall/block until space
         tight_loop_contents();
     }
+#endif
 
     channel->data = args[1];
     channel->present = true;
     channel->overflow = false;
     *result = BOOL_VAL(channel->overflow);
-#endif
 
     return true;
 }
 
 bool receiveChannelBuiltin(ObjRoutine* routine, int argCount, Value* args, Value* result) {
-#ifdef CYARG_PICO_TARGET
     if (argCount != 1) {
         runtimeError(routine, "Expected 1 arguments, got %d.", argCount);
         return false;
@@ -66,11 +65,12 @@ bool receiveChannelBuiltin(ObjRoutine* routine, int argCount, Value* args, Value
 
     if (IS_CHANNEL(args[0])) {
         ObjChannel* channel = AS_CHANNEL(args[0]);
+#ifdef CYARG_PICO_TARGET
         while (!channel->present) {
             // stall/block until space
             tight_loop_contents();
         }
-
+#endif
         *result = channel->data;
         channel->present = false;
         channel->overflow = false;
@@ -79,9 +79,11 @@ bool receiveChannelBuiltin(ObjRoutine* routine, int argCount, Value* args, Value
     else if (IS_ROUTINE(args[0])) {
         ObjRoutine* routine = AS_ROUTINE(args[0]);
 
+#ifdef CYARG_PICO_TARGET
         while (routine->state == EXEC_RUNNING) {
             tight_loop_contents();
         }
+#endif    
         
         if (routine->state == EXEC_CLOSED || routine->state == EXEC_SUSPENDED) {
             *result = *routine->stackTop;
@@ -90,7 +92,6 @@ bool receiveChannelBuiltin(ObjRoutine* routine, int argCount, Value* args, Value
             *result = NIL_VAL;
         }
     }
-#endif    
     return true;
 }
 
