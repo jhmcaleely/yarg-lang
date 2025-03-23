@@ -37,7 +37,7 @@ static void runFile(const char* path) {
     }
 }
 
-#ifdef CLOX_PICO_TARGET
+#ifdef CYARG_PICO_TARGET
 int main() {
     plaform_hal_init();
 

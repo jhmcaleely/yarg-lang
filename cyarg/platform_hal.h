@@ -3,7 +3,7 @@
 
 void plaform_hal_init();
 
-#ifdef CLOX_PICO_TARGET
+#ifdef CYARG_PICO_TARGET
 #include <pico/sync.h>
 
 typedef recursive_mutex_t platform_mutex;

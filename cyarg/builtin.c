@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifdef CLOX_PICO_TARGET
+#ifdef CYARG_PICO_TARGET
 #include <pico/multicore.h>
 #endif
 
@@ -156,7 +156,7 @@ bool resumeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value*
 // cyarg: use ascii 'y' 'a' 'r' 'g'
 #define FLAG_VALUE 0x79617267
 
-#ifdef CLOX_PICO_TARGET
+#ifdef CYARG_PICO_TARGET
 void nativeCore1Entry() {
     multicore_fifo_push_blocking(FLAG_VALUE);
     uint32_t g = multicore_fifo_pop_blocking();
@@ -178,7 +178,7 @@ void nativeCore1Entry() {
 #endif
 
 bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
-#ifdef CLOX_PICO_TARGET
+#ifdef CYARG_PICO_TARGET
     if (argCount < 1 || argCount > 2) {
         runtimeError(routineContext, "Expected one or two arguments to start.");
         return false;

@@ -75,7 +75,7 @@ add_compile_definitions(DEBUG_STRESS_GC)
 if (PICO_BOARD)
 set(PICO_USE_FASTEST_SUPPORTED_CLOCK 1)
 
-add_compile_definitions(CLOX_PICO_TARGET)
+add_compile_definitions(CYARG_PICO_TARGET)
 endif()
 
 

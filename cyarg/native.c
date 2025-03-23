@@ -8,7 +8,7 @@
 #include "routine.h"
 #include "vm.h"
 
-#ifdef CLOX_PICO_TARGET
+#ifdef CYARG_PICO_TARGET
 #include <hardware/gpio.h>
 #endif
 
@@ -22,7 +22,7 @@ bool clockNative(ObjRoutine* routine, int argCount, Value* args, Value* result) 
     return true;
 }
 
-#ifdef CLOX_PICO_TARGET
+#ifdef CYARG_PICO_TARGET
 bool sleepNative(ObjRoutine* routine, int argCount, Value* args, Value* result) {
     if (argCount != 1) {
         runtimeError(routine, "Expected 1 arguments but got %d.", argCount);
@@ -40,7 +40,7 @@ bool sleepNative(ObjRoutine* routine, int argCount, Value* args, Value* result) 
 }
 #endif
 
-#ifdef CLOX_PICO_TARGET
+#ifdef CYARG_PICO_TARGET
 static int64_t nativeOneShotCallback(alarm_id_t id, void* user_data) {
 
     ObjRoutine* routine = (ObjRoutine*)user_data;

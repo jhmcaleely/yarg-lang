@@ -63,7 +63,7 @@ void initVM() {
     vm.initString = copyString("init", 4);
 
     defineNative("clock", clockNative);
-#ifdef CLOX_PICO_TARGET
+#ifdef CYARG_PICO_TARGET
     defineNative("sleep_ms", sleepNative);
 
     defineNative("alarm_add_in_ms", alarmAddInMSNative);
