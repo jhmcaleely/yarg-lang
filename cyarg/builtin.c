@@ -153,8 +153,8 @@ bool resumeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value*
     return true;
 }
 
-// clox: use ascii 'c' 'l' 'o' 'x'
-#define FLAG_VALUE 0x636c6f78
+// cyarg: use ascii 'y' 'a' 'r' 'g'
+#define FLAG_VALUE 0x79617267
 
 #ifdef CLOX_PICO_TARGET
 void nativeCore1Entry() {
