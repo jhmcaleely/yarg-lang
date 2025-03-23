@@ -1,5 +1,5 @@
-#ifndef clox_files_h
-#define clox_files_h
+#ifndef cyarg_files_h
+#define cyarg_files_h
 
 char* readFile(const char* path);
 

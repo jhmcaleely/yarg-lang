@@ -1,5 +1,5 @@
-#ifndef clox_compiler_h
-#define clox_compiler_h
+#ifndef cyarg_compiler_h
+#define cyarg_compiler_h
 
 #include "object.h"
 #include "vm.h"

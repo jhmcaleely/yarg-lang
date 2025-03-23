@@ -1,5 +1,5 @@
-#ifndef clox_object_h
-#define clox_object_h
+#ifndef cyarg_object_h
+#define cyarg_object_h
 
 #include "common.h"
 #include "chunk.h"

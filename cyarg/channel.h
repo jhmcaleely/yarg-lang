@@ -1,5 +1,5 @@
-#ifndef clox_channel_h
-#define clox_channel_h
+#ifndef cyarg_channel_h
+#define cyarg_channel_h
 
 #include "value.h"
 #include "object.h"

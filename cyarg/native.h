@@ -1,5 +1,5 @@
-#ifndef clox_native_h
-#define clox_native_h
+#ifndef cyarg_native_h
+#define cyarg_native_h
 
 #include "value.h"
 

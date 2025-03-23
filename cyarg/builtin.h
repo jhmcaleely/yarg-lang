@@ -1,5 +1,5 @@
-#ifndef clox_builtin_h
-#define clox_builtin_h
+#ifndef cyarg_builtin_h
+#define cyarg_builtin_h
 
 #include "value.h"
 

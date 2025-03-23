@@ -1,5 +1,5 @@
-#ifndef clox_table_h
-#define clox_table_h
+#ifndef cyarg_table_h
+#define cyarg_table_h
 
 #include "common.h"
 #include "value.h"
