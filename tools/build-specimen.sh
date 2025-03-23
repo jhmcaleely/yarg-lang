@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pushd proto/specimen
+pushd yarg/specimen
 rm ../../build/specimen.uf2
 ../../bin/hostproto format -fs ../../build/specimen.uf2
 ../../bin/hostproto addfile -fs ../../build/specimen.uf2 -add alarm.lox
