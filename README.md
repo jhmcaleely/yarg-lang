@@ -11,7 +11,8 @@ Not (yet) intended for use. Additional documentation on the [wiki][wiki]
 | `cproto/` | device build targetting pico |
 | `hostproto/` | host tooling to make device images for proto |
 | `tools/` | Miscellaneous tools |
-| `proto/specimen/` | Samples of proto |
+| `yarg/specimen/` | Samples of Yarg |
+| `yarg/test/` | A Test Suite |
 
 ## Name
 
