@@ -4,7 +4,7 @@ Yarg is an experimental dynamic language for microcontrollers.
 
 Not (yet) intended for use. Additional documentation on the [wiki][wiki]
 
-[wiki]: https://github.com/jhmcaleely/proto-lang/wiki
+[wiki]: https://github.com/jhmcaleely/yarg-lang/wiki
 
 | dir | Description |
 | :--- | :--- |
