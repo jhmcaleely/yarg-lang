@@ -10,7 +10,7 @@
 #include "vm.h"
 #include "files.h"
 
-const char* defaultScript = "main.lox";
+const char* defaultScript = "main.ya";
 
 static void repl() {
     char line[1024];

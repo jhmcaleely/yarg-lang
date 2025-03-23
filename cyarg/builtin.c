@@ -48,7 +48,7 @@ static char* libraryNameFor(const char* importname) {
     char* filename = malloc(namelen + 5);
     if (filename) {
         strcpy(filename, importname);
-        strcat(filename, ".lox");
+        strcat(filename, ".ya");
     }
     return filename;
 }
