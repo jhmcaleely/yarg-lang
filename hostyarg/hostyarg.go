@@ -115,7 +115,7 @@ func main() {
 	lsDirEntry := lsDirCmd.String("dir", "/", "directory to ls")
 
 	testRunCmd := flag.NewFlagSet("runtests", flag.ExitOnError)
-	testRunInterpreter := testRunCmd.String("interpreter", "clox", "default interpreter")
+	testRunInterpreter := testRunCmd.String("interpreter", "cyarg", "default interpreter")
 	testRunTests := testRunCmd.String("tests", "", "default tests")
 
 	if len(os.Args) < 2 {
