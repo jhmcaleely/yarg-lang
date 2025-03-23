@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./bin/hostproto runtests -tests "proto/test" -interpreter "bin/clox"
+./bin/hostyarg runtests -tests "yarg/test" -interpreter "bin/cyarg"
