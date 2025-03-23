@@ -1,0 +1,3 @@
+print 0b01010101 & 0b10101010; // expect: 0
+print 0b11 & 0b11; // expect: 3
+print 0d4 & 0d4; // expect: 4

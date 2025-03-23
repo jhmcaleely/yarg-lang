@@ -1,7 +1,7 @@
 import("gpio");
 
 gpio_init(pico_led);
-gpio_set_direction(pico_led, true);
+gpio_set_direction(pico_led, GPIO_OUT);
 
 var n = 5;
 var state = false;
