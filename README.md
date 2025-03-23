@@ -8,7 +8,7 @@ Not (yet) intended for use. Additional documentation on the [wiki][wiki]
 
 | dir | Description |
 | :--- | :--- |
-| `cproto/` | device build targetting pico |
+| `cyarg/` | yarg implementation in C |
 | `hostproto/` | host tooling to make device images for proto |
 | `tools/` | Miscellaneous tools |
 | `yarg/specimen/` | Samples of Yarg |
