@@ -20,10 +20,10 @@ popd
 cp cyarg/build/host/cyarg bin/
 
 mkdir build
-cp cyarg/build/pico/cyarg.uf2 build/proto-lang.uf2
+cp cyarg/build/pico/cyarg.uf2 build/yarg-lang.uf2
 
-./bin/hostyarg format -fs build/proto-lang.uf2
+./bin/hostyarg format -fs build/yarg-lang.uf2
 
 pushd yarg/specimen
-../../bin/hostyarg addfile -fs ../../build/proto-lang.uf2 -add machine.lox
-../../bin/hostyarg addfile -fs ../../build/proto-lang.uf2 -add gpio.lox
+../../bin/hostyarg addfile -fs ../../build/yarg-lang.uf2 -add machine.lox
+../../bin/hostyarg addfile -fs ../../build/yarg-lang.uf2 -add gpio.lox
