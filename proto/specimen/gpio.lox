@@ -10,21 +10,58 @@ var PADS_BANK0_GPIO0_IE_BITS = 0x00000040;
 var PADS_BANK0_GPIO0_OD_BITS = 0x00000080;
 var PADS_BANK0_GPIO0_ISO_BITS = 0x00000100;
 
+var sio_hw = 0xd0000000;
+var gpio_out_offset = 0x00000010;
+var gpio_oe_offset = 0x00000020;
+
+var REG_ALIAS_RW_BITS  = 0x0 << 0d12;
+var REG_ALIAS_XOR_BITS = 0x1 << 0d12;
+var REG_ALIAS_SET_BITS = 0x2 << 0d12;
+var REG_ALIAS_CLR_BITS = 0x3 << 0d12;
+
+class alias_reg {
+    init(addr) {
+        this.base = addr;
+    }
+    read() { return rpeek(this.base); }
+    write(val) { rpoke(this.base + REG_ALIAS_RW_BITS, val); }
+    write_masked(val, mask) { this.xor((this.read() ^ val) & mask); }
+    set(mask) { rpoke(this.base + REG_ALIAS_SET_BITS, mask); }
+    clr(mask) { rpoke(this.base + REG_ALIAS_CLR_BITS, mask); }
+    xor(mask) { rpoke(this.base + REG_ALIAS_XOR_BITS, mask); }
+}
+
+class alias_reg2 {
+    init(addr) {
+        this.base = addr;
+    }
+    read() { return rpeek(this.base); }
+    write(val) { rpoke(this.base, val); }
+    write_masked(val, mask) { this.xor((this.read() ^ val) & mask); }
+    set(mask) { rpoke(this.base + 0x4, mask); }
+    clr(mask) { rpoke(this.base + 0x8, mask); }
+    xor(mask) { rpoke(this.base + 0x12, mask); }
+}
+
 fun gpio_set_direction(pin, dir) {
+    var ctrl = alias_reg2(sio_hw + gpio_oe_offset);
+
     if (dir) {
-        rpoke(0xd0000024, 0x1 << pin);
+        ctrl.set(0x1 << pin);
     }
     else {
-        rpoke(0xd0000028, 0x1 << pin);
+        ctrl.clr(0x1 << pin);
     }
 }
 
 fun gpio_put(pin, value) {
+    var ctrl = alias_reg2(sio_hw + gpio_out_offset);
+
     if (value) {
-        rpoke(0xd0000014, 0x1 << pin);
+        ctrl.set(0x1 << pin);
     }
     else {
-        rpoke(0xd0000018, 0x1 << pin);
+        ctrl.clr(0x1 << pin);
     }
 }
 
@@ -34,46 +71,26 @@ fun gpio_init(pin) {
     gpio_set_function(pin, GPIO_FUNC_SIO);
 }
 
-var REG_ALIAS_RW_BITS  = 0x0 << 0d12;
-var REG_ALIAS_XOR_BITS = 0x1 << 0d12;
-var REG_ALIAS_SET_BITS = 0x2 << 0d12;
-var REG_ALIAS_CLR_BITS = 0x3 << 0d12;
-
-fun hw_clear_bits(addr, bits_to_clear) {
-    rpoke(addr + REG_ALIAS_CLR_BITS, bits_to_clear);
-}
-
-fun hw_xor_bits(addr, bits_to_xor) {
-    rpoke(addr + REG_ALIAS_XOR_BITS, bits_to_xor);
-}
-
-fun hw_write_masked(addr, values, write_mask) {
-    hw_xor_bits(addr, (rpeek(addr) ^ values) & write_mask);
-}
-
 var PADS_BANK0_BASE = 0x4001c000;
 var IO_BANK0_BASE   = 0x40014000;
 
 fun gpio_set_function(pin, function) {
 
-    var pads_bank_0_pin = PADS_BANK0_BASE;
-    pads_bank_0_pin = pads_bank_0_pin + 0d4;
-    pads_bank_0_pin = pads_bank_0_pin + 0d4 * pin;
+    var pads_bank_0_pin_offset = 0d4 + 0d4 * pin;
+    var pinctrl = alias_reg(PADS_BANK0_BASE + pads_bank_0_pin_offset);
 
     // Set input enable on, output disable off
-    hw_write_masked(pads_bank_0_pin,
-                   PADS_BANK0_GPIO0_IE_BITS,
-                   PADS_BANK0_GPIO0_IE_BITS | PADS_BANK0_GPIO0_OD_BITS
-    );
+    pinctrl.write_masked(PADS_BANK0_GPIO0_IE_BITS, PADS_BANK0_GPIO0_IE_BITS | PADS_BANK0_GPIO0_OD_BITS);
+
     // Zero all fields apart from fsel; we want this IO to do what the peripheral tells it.
     // This doesn't affect e.g. pullup/pulldown, as these are in pad controls.
-    var io_bank0_hw_pin = IO_BANK0_BASE;
     var ctrl_offset = (0d8 * pin) + 0d4;
-    rpoke(io_bank0_hw_pin + ctrl_offset, function);
+    var hw_ctrl = alias_reg(IO_BANK0_BASE + ctrl_offset);
+    hw_ctrl.write(function);
 
     if (!RP2040) {
         // Remove pad isolation now that the correct peripheral is in control of the pad
-        hw_clear_bits(pads_bank_0_pin, PADS_BANK0_GPIO0_ISO_BITS);
+        pinctrl.clr(PADS_BANK0_GPIO0_ISO_BITS);
     }
 }
 
