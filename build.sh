@@ -17,10 +17,10 @@ cmake --preset host
 cmake --build build/host
 popd
 
-cp cyarg/build/host/clox bin/
+cp cyarg/build/host/cyarg bin/
 
 mkdir build
-cp cyarg/build/pico/clox.uf2 build/proto-lang.uf2
+cp cyarg/build/pico/cyarg.uf2 build/proto-lang.uf2
 
 ./bin/hostproto format -fs build/proto-lang.uf2
 

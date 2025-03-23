@@ -28,7 +28,7 @@ set(PICO_USE_FASTEST_SUPPORTED_CLOCK 1)
 endif()
 
 # The PICO SDK will also need CXX & ASM toolchains to assemble the firmware image
-project(clox VERSION 0.1.0 LANGUAGES C CXX ASM)
+project(cyarg VERSION 0.1.0 LANGUAGES C CXX ASM)
 
 
 if (PICO_BOARD)
@@ -36,7 +36,7 @@ if (PICO_BOARD)
 pico_sdk_init()
 endif()
 
-add_executable(clox 
+add_executable(cyarg 
     chunk.c
     main.c
     memory.c
@@ -54,14 +54,14 @@ add_executable(clox
     platform_hal.c)
 
 if (PICO_BOARD)
-target_sources(clox
+target_sources(cyarg
     PRIVATE
       files_littlefs.c
       pico_lfs_hal.c
         ../hostproto/littlefs/lfs.c
         ../hostproto/littlefs/lfs_util.c)
 else()
-target_sources(clox
+target_sources(cyarg
     PRIVATE
       files_stdlib.c)
 endif()
@@ -83,23 +83,23 @@ if (PICO_BOARD)
 # Setup the firmware image and details of the executable it will host
 
 
-pico_set_program_name(clox "clox")
-pico_set_program_version(clox "0.1")
+pico_set_program_name(cyarg "cyarg")
+pico_set_program_version(cyarg "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(clox 1)
-pico_enable_stdio_usb(clox 1)
+pico_enable_stdio_uart(cyarg 1)
+pico_enable_stdio_usb(cyarg 1)
 
 # Add the standard library to the build
-target_link_libraries(clox
+target_link_libraries(cyarg
         pico_stdlib
         pico_multicore
         pico_sync)
 
 # Add the standard include files to the build
-target_include_directories(clox PRIVATE
+target_include_directories(cyarg PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
 )
 
-pico_add_extra_outputs(clox)
+pico_add_extra_outputs(cyarg)
 endif()
