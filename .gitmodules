@@ -1,3 +1,3 @@
 [submodule "hostproto/littlefs"]
-	path = hostproto/littlefs
+	path = hostyarg/littlefs
 	url = https://github.com/littlefs-project/littlefs

@@ -3,11 +3,11 @@
 mkdir bin
 cp tools/pico-reset bin/
 
-pushd hostproto
+pushd hostyarg
 go build .
 popd
 
-cp hostproto/hostproto bin/
+cp hostyarg/hostyarg bin/
 
 pushd cyarg
 cmake --preset pico .
@@ -22,8 +22,8 @@ cp cyarg/build/host/cyarg bin/
 mkdir build
 cp cyarg/build/pico/cyarg.uf2 build/proto-lang.uf2
 
-./bin/hostproto format -fs build/proto-lang.uf2
+./bin/hostyarg format -fs build/proto-lang.uf2
 
 pushd yarg/specimen
-../../bin/hostproto addfile -fs ../../build/proto-lang.uf2 -add machine.lox
-../../bin/hostproto addfile -fs ../../build/proto-lang.uf2 -add gpio.lox
+../../bin/hostyarg addfile -fs ../../build/proto-lang.uf2 -add machine.lox
+../../bin/hostyarg addfile -fs ../../build/proto-lang.uf2 -add gpio.lox

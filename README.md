@@ -9,7 +9,7 @@ Not (yet) intended for use. Additional documentation on the [wiki][wiki]
 | dir | Description |
 | :--- | :--- |
 | `cyarg/` | yarg implementation in C |
-| `hostproto/` | host tooling to make device images for proto |
+| `hostyarg/` | host tooling for yarg maintenance |
 | `tools/` | Miscellaneous tools |
 | `yarg/specimen/` | Samples of Yarg |
 | `yarg/test/` | A Test Suite |

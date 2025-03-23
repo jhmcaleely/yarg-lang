@@ -1,4 +1,4 @@
-hostproto/hostproto
+hostyarg/hostyarg
 *.uf2
 .vscode
 build

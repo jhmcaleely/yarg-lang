@@ -58,8 +58,8 @@ target_sources(cyarg
     PRIVATE
       files_littlefs.c
       pico_lfs_hal.c
-        ../hostproto/littlefs/lfs.c
-        ../hostproto/littlefs/lfs_util.c)
+        ../hostyarg/littlefs/lfs.c
+        ../hostyarg/littlefs/lfs_util.c)
 else()
 target_sources(cyarg
     PRIVATE
