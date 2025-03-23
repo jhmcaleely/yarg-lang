@@ -15,10 +15,12 @@ type Map sio_hw @ 0xd0000000 {
     // Input value for GPIO pins
     // 0x3fffffff [29:0]  GPIO_IN      (0x00000000) Input value for GPIO0
     io_ro_32 gpio_in
+        in:[0:29]
  
     // Input value for QSPI pins
     // 0x0000003f [5:0]   GPIO_HI_IN   (0x00) Input value on QSPI IO in order 0
     io_ro_32 gpio_hi_in
+        in:[0:5]
 
     // padding
  
@@ -64,6 +66,10 @@ type Map sio_hw @ 0xd0000000 {
     // 0x00000002 [1]     RDY          (1) Value is 1 if this core's TX FIFO is not full (i
     // 0x00000001 [0]     VLD          (0) Value is 1 if this core's RX FIFO is not empty (i
     io_rw_32 fifo_st;
+        ROE:3
+        WOF:2
+        RDY:1
+        VLD:0
  
     // Write access to this core's TX FIFO
     // 0xffffffff [31:0]  FIFO_WR      (0x00000000) 
@@ -76,6 +82,7 @@ type Map sio_hw @ 0xd0000000 {
     // Spinlock state
     // 0xffffffff [31:0]  SPINLOCK_ST  (0x00000000) 
     io_ro_32 spinlock_st;
+       state:1[32]
  
     // Divider unsigned dividend
     // 0xffffffff [31:0]  DIV_UDIVIDEND (0x00000000) 
