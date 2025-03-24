@@ -15,6 +15,7 @@
 #include "debug.h"
 #include "files.h"
 #include "compiler.h"
+#include "channel.h"
 
 InterpretResult interpretImport(const char* source) {
 
@@ -253,4 +254,42 @@ bool rpokeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* 
     reg->value = val;
 
     return true;
+}
+
+bool makeArrayBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
+
+    if (argCount != 1) {
+        runtimeError(routineContext, "Expected 1 argument, but got %d.", argCount);
+        return false;
+    }
+
+    if (!IS_UINTEGER(args[0])) {
+        runtimeError(routineContext, "Argument must be unsigned integer");
+        return false;
+    }
+
+    uint32_t capcity = AS_UINTEGER(args[0]);
+
+    ObjValArray* array = newValArray(capcity);
+
+    *result = OBJ_VAL(array);
+    return true;
+}
+
+Value getBuiltin(uint8_t builtin) {
+    switch (builtin) {
+        case BUILTIN_RPEEK: return OBJ_VAL(newNative(rpeekBuiltin));
+        case BUILTIN_RPOKE: return OBJ_VAL(newNative(rpokeBuiltin));
+        case BUILTIN_IMPORT: return OBJ_VAL(newNative(importBuiltin));
+        case BUILTIN_MAKE_ARRAY: return OBJ_VAL(newNative(makeArrayBuiltin));
+        case BUILTIN_MAKE_ROUTINE: return OBJ_VAL(newNative(makeRoutineBuiltin));
+        case BUILTIN_RESUME: return OBJ_VAL(newNative(resumeBuiltin));
+        case BUILTIN_START: return OBJ_VAL(newNative(startBuiltin));
+        case BUILTIN_MAKE_CHANNEL: return OBJ_VAL(newNative(makeChannelBuiltin));
+        case BUILTIN_SEND: return OBJ_VAL(newNative(sendChannelBuiltin));
+        case BUILTIN_RECEIVE: return OBJ_VAL(newNative(receiveChannelBuiltin));
+        case BUILTIN_SHARE: return OBJ_VAL(newNative(shareChannelBuiltin));
+        case BUILTIN_PEEK: return OBJ_VAL(newNative(peekChannelBuiltin));
+        default: return NIL_VAL;
+    }
 }

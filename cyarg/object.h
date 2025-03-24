@@ -18,6 +18,7 @@
 #define IS_ROUTINE(value)      isObjType(value, OBJ_ROUTINE)
 #define IS_CHANNEL(value)      isObjType(value, OBJ_CHANNEL)
 #define IS_STRING(value)       isObjType(value, OBJ_STRING)
+#define IS_VALARRAY(value)     isObjType(value, OBJ_VALARRAY)
 
 #define AS_BOUND_METHOD(value) ((ObjBoundMethod*)AS_OBJ(value))
 #define AS_CLASS(value)        ((ObjClass*)AS_OBJ(value))
@@ -31,6 +32,7 @@
 #define AS_CHANNEL(value)      ((ObjChannel*)AS_OBJ(value))
 #define AS_STRING(value)       ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value)      (((ObjString*)AS_OBJ(value))->chars)
+#define AS_VALARRAY(value)     ((ObjValArray*)AS_OBJ(value))
 
 typedef enum {
     OBJ_BOUND_METHOD,
@@ -43,7 +45,8 @@ typedef enum {
     OBJ_ROUTINE,
     OBJ_CHANNEL,
     OBJ_STRING,
-    OBJ_UPVALUE
+    OBJ_UPVALUE,
+    OBJ_VALARRAY
 } ObjType;
 
 struct Obj {
@@ -118,7 +121,10 @@ typedef struct {
     Value data;
 } ObjChannel;
 
-typedef struct ObjRoutine ObjRoutine;
+typedef struct ObjValArray {
+    Obj obj;
+    ValueArray array;
+} ObjValArray;
 
 #define ALLOCATE_OBJ(type, objectType) \
     (type*)allocateObject(sizeof(type), objectType)
@@ -133,6 +139,7 @@ ObjFunction* newFunction();
 ObjInstance* newInstance(ObjClass* klass);
 ObjNative* newNative(NativeFn function);
 ObjBlob* newBlob(size_t size);
+ObjValArray* newValArray(size_t capacity);
 ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);
 ObjUpvalue* newUpvalue(Value* slot);

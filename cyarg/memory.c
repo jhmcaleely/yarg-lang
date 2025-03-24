@@ -135,6 +135,7 @@ static void blackenObject(Obj* object) {
         case OBJ_BLOB:
         case OBJ_CHANNEL:
         case OBJ_STRING:
+        case OBJ_VALARRAY:
             break;
     }
 }
@@ -196,6 +197,12 @@ static void freeObject(Obj* object) {
         case OBJ_CHANNEL:
             FREE(ObjChannel, object);
             break;
+        case OBJ_VALARRAY: {
+            ObjValArray* array = (ObjValArray*)object;
+            freeValueArray(&array->array);
+            FREE(ObjValArray, object);
+            break;
+        }
     }
 }
 

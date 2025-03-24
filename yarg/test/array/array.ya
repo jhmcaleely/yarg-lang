@@ -1,0 +1,2 @@
+var test = make_array(0d10);
+print test;     // expect: [array 10]
