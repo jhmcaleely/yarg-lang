@@ -131,11 +131,15 @@ static void blackenObject(Obj* object) {
             markRoutine(stack);
             break;
         }
+        case OBJ_VALARRAY: {
+            ObjValArray* array = (ObjValArray*)object;
+            markArray(&array->array);
+            break;
+        }
         case OBJ_NATIVE:
         case OBJ_BLOB:
         case OBJ_CHANNEL:
         case OBJ_STRING:
-        case OBJ_VALARRAY:
             break;
     }
 }
