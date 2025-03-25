@@ -1,2 +1,5 @@
 var test = make_array(0d10);
 print test;     // expect: [array 10]
+print element(test, 0); // expect: nil
+set_element(test, 1, 10);
+print element(test, 1); // expect: 10
