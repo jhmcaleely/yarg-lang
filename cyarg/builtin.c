@@ -282,7 +282,7 @@ bool elementBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value
     int32_t index = AS_INTEGER(args[1]);
 
     if (index >= array->array.count) {
-        runtimeError(routineContext, "Array index %d out of bounds %d", index, array->array.count);
+        runtimeError(routineContext, "Array index %d out of bounds (0:%d)", index, array->array.count - 1);
         return false;
     }
 
@@ -297,7 +297,7 @@ bool setElementBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Va
     int32_t index = AS_INTEGER(args[1]);
 
     if (index >= array->array.count) {
-        runtimeError(routineContext, "Array index %d out of bounds %d", index, array->array.count);
+        runtimeError(routineContext, "Array index %d out of bounds (0:%d)", index, array->array.count - 1);
         return false;
     }
 

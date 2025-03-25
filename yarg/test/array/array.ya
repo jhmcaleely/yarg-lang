@@ -3,3 +3,4 @@ print test;     // expect: [array 10]
 print element(test, 0); // expect: nil
 set_element(test, 1, 10);
 print element(test, 1); // expect: 10
+print element(test, 10); // expect runtime error: Array index 10 out of bounds (0:9)
