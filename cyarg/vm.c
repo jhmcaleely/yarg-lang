@@ -221,6 +221,44 @@ static void defineMethod(ObjRoutine* routine, ObjString* name) {
     pop(routine);
 }
 
+static bool derefElement(ObjRoutine* routine) {
+    if (!IS_INTEGER(peek(routine, 0)) || ! IS_VALARRAY(peek(routine, 1))) {
+        runtimeError(routine, "Expected an array and integer index.");
+        return false;
+    }
+    int32_t index = AS_INTEGER(pop(routine));
+    ObjValArray* array = AS_VALARRAY(pop(routine));
+    if (index >= array->array.count || index < 0) {
+        runtimeError(routine, "Array index %d out of bounds (0:%d)", index, array->array.count - 1);
+        return false;
+    }
+
+    Value result = array->array.values[index];
+    push(routine, result);
+    return true;
+}
+
+static bool setArrayElement(ObjRoutine* routine) {
+    if (!IS_INTEGER(peek(routine, 1)) || !IS_VALARRAY(peek(routine, 2))) {
+        runtimeError(routine, "Expected an array and integer index.");
+        return false;
+    }
+
+    Value new_value = pop(routine);
+    uint32_t index = AS_INTEGER(pop(routine));
+    ObjValArray* array = AS_VALARRAY(pop(routine));
+
+    if (index >= array->array.count || index < 0) {
+        runtimeError(routine, "Array index %d out of bounds (0:%d)", index, array->array.count - 1);
+        return false;
+    }
+
+    array->array.values[index] = new_value;
+
+    push(routine, new_value);
+    return true;
+}
+
 static bool isFalsey(Value value) {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
@@ -311,63 +349,8 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_POP: pop(routine); break;
             case OP_GET_BUILTIN: {
                 uint8_t builtin = READ_BYTE();
-                switch (builtin) {
-                    case BUILTIN_RPEEK: {
-                        Value builtinFn = OBJ_VAL(newNative(rpeekBuiltin));
-                        push(routine, builtinFn);
-                        break;                        
-                    }
-                    case BUILTIN_RPOKE: {
-                        Value builtinFn = OBJ_VAL(newNative(rpokeBuiltin));
-                        push(routine, builtinFn);
-                        break;                        
-                    }
-                    case BUILTIN_IMPORT: {
-                        Value builtinFn = OBJ_VAL(newNative(importBuiltin));
-                        push(routine, builtinFn);
-                        break;                        
-                    }
-                    case BUILTIN_MAKE_ROUTINE: {
-                        Value builtinFn = OBJ_VAL(newNative(makeRoutineBuiltin));
-                        push(routine, builtinFn);
-                        break;
-                    }
-                    case BUILTIN_RESUME: {
-                        Value builtinFn = OBJ_VAL(newNative(resumeBuiltin));
-                        push(routine, builtinFn);
-                        break;
-                    }
-                    case BUILTIN_START: {
-                        Value builtinFn = OBJ_VAL(newNative(startBuiltin));
-                        push(routine, builtinFn);
-                        break;
-                    }
-                    case BUILTIN_MAKE_CHANNEL: {
-                        Value builtinFn = OBJ_VAL(newNative(makeChannelBuiltin));
-                        push(routine, builtinFn);
-                        break;
-                    }
-                    case BUILTIN_SEND: {
-                        Value builtinFn = OBJ_VAL(newNative(sendChannelBuiltin));
-                        push(routine, builtinFn);
-                        break;
-                    }
-                    case BUILTIN_RECEIVE: {
-                        Value builtinFn = OBJ_VAL(newNative(receiveChannelBuiltin));
-                        push(routine, builtinFn);
-                        break;
-                    }
-                    case BUILTIN_SHARE: {
-                        Value builtinFn = OBJ_VAL(newNative(shareChannelBuiltin));
-                        push(routine, builtinFn);
-                        break;
-                    }
-                    case BUILTIN_PEEK: {
-                        Value builtinFn = OBJ_VAL(newNative(peekChannelBuiltin));
-                        push(routine, builtinFn);
-                        break;
-                    }
-                }
+                Value bFn = getBuiltin(builtin);
+                push(routine, bFn);
                 break;
             }
             case OP_SET_LOCAL: {
@@ -651,6 +634,18 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_METHOD:
                 defineMethod(routine, READ_STRING());
                 break;
+            case OP_ELEMENT: {
+                if (!derefElement(routine)) {
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
+            case OP_SET_ELEMENT: {
+                if (!setArrayElement(routine)) {
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
         }
     }
 

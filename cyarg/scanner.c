@@ -183,6 +183,7 @@ static TokenType identifierType() {
             if (   scanner.current - scanner.start > 5
                 && memcmp(scanner.start + 1, "ake_", 4) == 0) {
                 switch (scanner.start[5]) {
+                    case 'a': return checkKeyword(6, 4, "rray", TOKEN_MAKE_ARRAY);
                     case 'c': return checkKeyword(6, 6, "hannel", TOKEN_MAKE_CHANNEL);
                     case 'r': return checkKeyword(6, 6, "outine", TOKEN_MAKE_ROUTINE);
                 }
@@ -224,7 +225,14 @@ static TokenType identifierType() {
         case 's':
             if (scanner.current - scanner.start > 1) {
                 switch (scanner.start[1]) {
-                    case 'e': return checkKeyword(2, 2, "nd", TOKEN_SEND);
+                    case 'e': 
+                        if (scanner.current - scanner.start > 2) {
+                            switch (scanner.start[2]) {
+                                case 't': return checkKeyword(3, 8, "_element", TOKEN_SET_ELEMENT);
+                                case 'n': return checkKeyword(3, 1, "d", TOKEN_SEND);
+                            }
+                        }
+                        break;
                     case 'h': return checkKeyword(2, 3, "are", TOKEN_SHARE);
                     case 't': return checkKeyword(2, 3, "art", TOKEN_START);
                     case 'u': return checkKeyword(2, 3, "per", TOKEN_SUPER);
@@ -304,6 +312,8 @@ Token scanToken() {
         case ')': return makeToken(TOKEN_RIGHT_PAREN);
         case '{': return makeToken(TOKEN_LEFT_BRACE);
         case '}': return makeToken(TOKEN_RIGHT_BRACE);
+        case '[': return makeToken(TOKEN_LEFT_SQUARE_BRACKET);
+        case ']': return makeToken(TOKEN_RIGHT_SQUARE_BRACKET);
         case ';': return makeToken(TOKEN_SEMICOLON);
         case ',': return makeToken(TOKEN_COMMA);
         case '.': return makeToken(TOKEN_DOT);

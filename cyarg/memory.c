@@ -131,6 +131,11 @@ static void blackenObject(Obj* object) {
             markRoutine(stack);
             break;
         }
+        case OBJ_VALARRAY: {
+            ObjValArray* array = (ObjValArray*)object;
+            markArray(&array->array);
+            break;
+        }
         case OBJ_NATIVE:
         case OBJ_BLOB:
         case OBJ_CHANNEL:
@@ -196,6 +201,12 @@ static void freeObject(Obj* object) {
         case OBJ_CHANNEL:
             FREE(ObjChannel, object);
             break;
+        case OBJ_VALARRAY: {
+            ObjValArray* array = (ObjValArray*)object;
+            freeValueArray(&array->array);
+            FREE(ObjValArray, object);
+            break;
+        }
     }
 }
 

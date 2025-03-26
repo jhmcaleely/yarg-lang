@@ -8,6 +8,7 @@
 typedef struct Obj Obj;
 typedef struct ObjString ObjString;
 typedef struct ObjRoutine ObjRoutine;
+typedef struct ObjValArray ObjValArray;
 
 #ifdef NAN_BOXING
 
@@ -29,17 +30,17 @@ typedef struct ObjRoutine ObjRoutine;
  * lower 50 bits to use for type information and payloads.
  * 
  * Our sign bit signals the presence of a 48 bit pointer. There are two more bits
- * currently unused that coudld type 48 bit pointers.
+ * we use to signal type information.
  * With 0's outside of QNAN we have a payload space for value tags (currently only 
  * three). The three values are NIL, TRUE and FALSE.
- * With bit 33 set we signal the presence of an unsigned integer in the lower 32 
- * bits, and bit 34 signals a signed integer there.
+ * With bit 48 set we signal the presence of an unsigned integer in the lower 32 
+ * bits, and bit 49 signals a signed integer there.
  */
 
 #define SIGN_BIT      ((uint64_t)0x8000000000000000)
 #define QNAN          ((uint64_t)0x7ffc000000000000)
-#define UINTEGER_TAG  ((uint64_t)0x0000000100000000)
-#define INTEGER_TAG   ((uint64_t)0x0000000200000000)
+#define UINTEGER_TAG  ((uint64_t)0x0001000000000000)
+#define INTEGER_TAG   ((uint64_t)0x0002000000000000)
 #define PTR64_48_MASK ((uint64_t)0x0000FFFFFFFFFFFF)
 #define L32_MASK      ((uint64_t)0x00000000FFFFFFFF)
 
@@ -145,7 +146,7 @@ typedef struct {
 
 bool valuesEqual(Value a, Value b);
 void initValueArray(ValueArray* array);
-void writeValueArray(ValueArray* array, Value value);
+void appendToValueArray(ValueArray* array, Value value);
 void freeValueArray(ValueArray* array);
 void printValue(Value value);
 

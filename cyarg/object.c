@@ -85,6 +85,19 @@ ObjBlob* newBlob(size_t count) {
     return blob;
 }
 
+ObjValArray* newValArray(size_t capacity) {
+    ObjValArray* array = ALLOCATE_OBJ(ObjValArray, OBJ_VALARRAY);
+    initValueArray(&array->array);
+    tempRootPush(OBJ_VAL(array));
+
+    for (int i = 0; i < capacity; i++) {
+        appendToValueArray(&array->array, NIL_VAL);
+    }
+
+    tempRootPop();
+    return array;
+}
+
 static ObjString* allocateString(char* chars, int length, uint32_t hash) {
     ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
     string->length = length;
@@ -160,6 +173,10 @@ static void printChannel(ObjChannel* channel) {
     printf(">");
 }
 
+static void printArray(ObjValArray* array) {
+    printf("[array %d]", array->array.count);
+}
+
 void printObject(Value value) {
     switch (OBJ_TYPE(value)) {
         case OBJ_BOUND_METHOD:
@@ -194,6 +211,9 @@ void printObject(Value value) {
             break;
         case OBJ_UPVALUE:
             printf("upvalue");
+            break;
+        case OBJ_VALARRAY:
+            printArray(AS_VALARRAY(value));
             break;
     }
 }

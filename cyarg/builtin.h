@@ -3,11 +3,6 @@
 
 #include "value.h"
 
-bool importBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result);
-bool makeRoutineBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result);
-bool resumeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result);
-bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result);
-bool rpeekBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result);
-bool rpokeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result);
+Value getBuiltin(uint8_t builtin);
 
 #endif

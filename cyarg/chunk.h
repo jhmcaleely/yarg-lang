@@ -48,7 +48,9 @@ typedef enum {
     OP_YIELD,
     OP_CLASS,
     OP_INHERIT,
-    OP_METHOD
+    OP_METHOD,
+    OP_ELEMENT,
+    OP_SET_ELEMENT
 } OpCode;
 
 typedef struct {
@@ -61,6 +63,7 @@ typedef struct {
 
 typedef enum {
     BUILTIN_IMPORT,
+    BUILTIN_MAKE_ARRAY,
     BUILTIN_MAKE_ROUTINE,
     BUILTIN_MAKE_CHANNEL,
     BUILTIN_RESUME,
@@ -70,7 +73,7 @@ typedef enum {
     BUILTIN_PEEK,
     BUILTIN_SHARE,
     BUILTIN_RPEEK,
-    BUILTIN_RPOKE
+    BUILTIN_RPOKE,
 } BuiltinFn;
 
 void initChunk(Chunk* chunk);
