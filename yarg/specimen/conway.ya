@@ -1,0 +1,114 @@
+// Yarg implementation of Conway's Life
+// https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
+//
+// A 2D matrix of cells, which contain a running instance
+// of Conway's Life.
+//
+// The neighbourhood (n) around a cell (c) is consulted to
+// see if the cell should maintain or change state
+//
+// nnn
+// ncn
+// nnn
+
+// characters handing for ascii state reports
+var live = 1;
+var dead = 0;
+
+var columns = 10;
+var rows = 10;
+
+fun randrange(max) {
+    return 1;
+}
+
+fun random_state() {
+
+    if (randrange(2) == 0) {
+        return 0;
+    }
+    else {
+        return 1;
+    }
+}
+
+fun make_row(cols) {
+    var row = make_array(cols);
+    for (var i = 0; i < cols; i = i + 1) {
+        row[i] = random_state();
+    }
+    return row;
+}
+
+fun make_world(cols, lines) {
+    var col = make_array(lines);
+    for (var i = 0; i < cols; i = i + 1) {
+        col[i] = make_row(cols);
+    }
+    return col;
+}
+
+fun row_count(world) {
+    return rows;
+}
+
+fun col_count(world) {
+    return columns;
+}
+
+fun get_cell(world, x, y) {
+    return world[y][x];
+}
+
+fun set_cell(world, x, y, state) {
+    world[y][x] = state;
+}
+
+
+fun next_state(state, neighbourhood) {
+    new_state = dead;
+    alive_neighbours = neighbourhood.count(live);
+    
+    if (state == live and (alive_neighbours == 2 or alive_neighbours == 3)) {
+        new_state = live;
+    }
+    else if (state == dead and alive_neighbours == 3) {
+        new_state = live;
+    }
+
+    return new_state;
+}
+
+fun next_generation(world) {
+    var next_gen;
+    for (var l = 0; l < row_count(world); l = l + 1) {
+        var new_line;
+        for (var c = 0; c < col_count(world); c = c + 1) {
+            neighbourhood = neighbours(world, line, col);
+            state = get_cell(world, col, line);
+            new_line.append(next_state(state, neighbourhood));
+        }
+        next_gen.append(new_line);
+    }
+
+    return next_gen;
+}
+
+
+fun adjacent_line(world, line, col) {
+    return [line[(col + x) % col_count(world)] for x in range(-1, 2)];
+}
+
+fun neighbours(world, line, col) {
+    var n;
+    col_c = col_count(world);
+    row_c = row_count(world);
+    
+    n.extend(adjacent_line(world, world[(line - 1) % row_c], col));
+
+    n.append(get_cell(world, (col-1) % col_c, line));
+    n.append(get_cell(world, (col+1) % col_c, line));
+
+    n.extend(adjacent_line(world, world[(line + 1) % row_c], col));
+    return n;
+}
