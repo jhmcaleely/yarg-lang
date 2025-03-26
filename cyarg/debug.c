@@ -54,6 +54,7 @@ static int builtinInstruction(const char* name, Chunk* chunk, int offset) {
         case BUILTIN_RPEEK: printf("rpeek"); break;
         case BUILTIN_RPOKE: printf("rpoke"); break;
         case BUILTIN_IMPORT: printf("import"); break;
+        case BUILTIN_MAKE_ARRAY: printf("make_array"); break;
         case BUILTIN_MAKE_ROUTINE: printf("make_routine"); break;
         case BUILTIN_MAKE_CHANNEL: printf("make_channel"); break;
         case BUILTIN_RESUME: printf("resume"); break;
@@ -62,6 +63,8 @@ static int builtinInstruction(const char* name, Chunk* chunk, int offset) {
         case BUILTIN_RECEIVE: printf("receive"); break;
         case BUILTIN_SHARE: printf("share"); break;
         case BUILTIN_PEEK: printf("peek"); break;
+        case BUILTIN_ELEMENT: printf("element"); break;
+        case BUILTIN_SET_ELEMENT: printf("set_element"); break;
         default: printf("<unknown %4d>", slot); break;
     }
     printf("\n");
@@ -172,6 +175,8 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return simpleInstruction("OP_INHERIT", offset);
         case OP_METHOD:
             return constantInstruction("OP_METHOD", chunk, offset);
+        case OP_ELEMENT:
+            return simpleInstruction("OP_ELEMENT", offset);
         default:
             printf("Unknown opcode %d\n", instruction);
             return offset + 1;

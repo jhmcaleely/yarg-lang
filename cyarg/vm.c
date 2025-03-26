@@ -596,6 +596,14 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_METHOD:
                 defineMethod(routine, READ_STRING());
                 break;
+            case OP_ELEMENT: {
+                Value index = pop(routine);
+                ObjValArray* array = AS_VALARRAY(pop(routine));
+                Value result = array->array.values[AS_INTEGER(index)];
+                push(routine, result);
+                break;
+            }
+
         }
     }
 
