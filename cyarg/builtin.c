@@ -276,25 +276,6 @@ bool makeArrayBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Val
     return true;
 }
 
-bool setElementBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
-
-    ObjValArray* array = AS_VALARRAY(args[0]);
-    int32_t index = AS_INTEGER(args[1]);
-
-    if (index >= array->array.count) {
-        runtimeError(routineContext, "Array index %d out of bounds (0:%d)", index, array->array.count - 1);
-        return false;
-    }
-
-    Value val = args[2];
-
-    array->array.values[index] = val;
-
-    *result = val;
-
-    return true;
-}
-
 Value getBuiltin(uint8_t builtin) {
     switch (builtin) {
         case BUILTIN_RPEEK: return OBJ_VAL(newNative(rpeekBuiltin));
@@ -309,7 +290,6 @@ Value getBuiltin(uint8_t builtin) {
         case BUILTIN_RECEIVE: return OBJ_VAL(newNative(receiveChannelBuiltin));
         case BUILTIN_SHARE: return OBJ_VAL(newNative(shareChannelBuiltin));
         case BUILTIN_PEEK: return OBJ_VAL(newNative(peekChannelBuiltin));
-        case BUILTIN_SET_ELEMENT: return OBJ_VAL(newNative(setElementBuiltin));
         default: return NIL_VAL;
     }
 }

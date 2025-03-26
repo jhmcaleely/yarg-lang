@@ -63,7 +63,6 @@ static int builtinInstruction(const char* name, Chunk* chunk, int offset) {
         case BUILTIN_RECEIVE: printf("receive"); break;
         case BUILTIN_SHARE: printf("share"); break;
         case BUILTIN_PEEK: printf("peek"); break;
-        case BUILTIN_SET_ELEMENT: printf("set_element"); break;
         default: printf("<unknown %4d>", slot); break;
     }
     printf("\n");

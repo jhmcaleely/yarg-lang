@@ -238,6 +238,27 @@ static bool derefElement(ObjRoutine* routine) {
     return true;
 }
 
+static bool setArrayElement(ObjRoutine* routine) {
+    if (!IS_INTEGER(peek(routine, 1)) || !IS_VALARRAY(peek(routine, 2))) {
+        runtimeError(routine, "Expected an array and integer index.");
+        return false;
+    }
+
+    Value new_value = pop(routine);
+    uint32_t index = AS_INTEGER(pop(routine));
+    ObjValArray* array = AS_VALARRAY(pop(routine));
+
+    if (index >= array->array.count || index < 0) {
+        runtimeError(routine, "Array index %d out of bounds (0:%d)", index, array->array.count - 1);
+        return false;
+    }
+
+    array->array.values[index] = new_value;
+
+    push(routine, new_value);
+    return true;
+}
+
 static bool isFalsey(Value value) {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
@@ -619,7 +640,12 @@ InterpretResult run(ObjRoutine* routine) {
                 }
                 break;
             }
-
+            case OP_SET_ELEMENT: {
+                if (!setArrayElement(routine)) {
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
         }
     }
 

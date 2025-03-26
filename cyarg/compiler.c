@@ -432,7 +432,12 @@ static void deref(bool canAssign) {
     parsePrecedence(PREC_DEREF);
     consume(TOKEN_RIGHT_SQUARE_BRACKET, "Expect ] after expression.");
 
-    emitByte(OP_ELEMENT);
+    if (canAssign && match(TOKEN_EQUAL)) {
+        expression();
+        emitByte(OP_SET_ELEMENT);
+    } else {
+        emitByte(OP_ELEMENT);
+    }
 }
 
 static void call(bool canAssign) {
@@ -473,7 +478,6 @@ static void literal(bool canAssign) {
         case TOKEN_FALSE: emitByte(OP_FALSE); break;
         case TOKEN_NIL: emitByte(OP_NIL); break;
         case TOKEN_TRUE: emitByte(OP_TRUE); break;
-        case TOKEN_SET_ELEMENT: emitBytes(OP_GET_BUILTIN, BUILTIN_SET_ELEMENT); break;
         default: return; // Unreachable.
     }
 }
