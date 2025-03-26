@@ -276,21 +276,6 @@ bool makeArrayBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Val
     return true;
 }
 
-bool elementBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
-
-    ObjValArray* array = AS_VALARRAY(args[0]);
-    int32_t index = AS_INTEGER(args[1]);
-
-    if (index >= array->array.count) {
-        runtimeError(routineContext, "Array index %d out of bounds (0:%d)", index, array->array.count - 1);
-        return false;
-    }
-
-    *result = array->array.values[index];
-
-    return true;
-}
-
 bool setElementBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
 
     ObjValArray* array = AS_VALARRAY(args[0]);
