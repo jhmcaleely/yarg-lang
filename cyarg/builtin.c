@@ -324,7 +324,6 @@ Value getBuiltin(uint8_t builtin) {
         case BUILTIN_RECEIVE: return OBJ_VAL(newNative(receiveChannelBuiltin));
         case BUILTIN_SHARE: return OBJ_VAL(newNative(shareChannelBuiltin));
         case BUILTIN_PEEK: return OBJ_VAL(newNative(peekChannelBuiltin));
-        case BUILTIN_ELEMENT: return OBJ_VAL(newNative(elementBuiltin));
         case BUILTIN_SET_ELEMENT: return OBJ_VAL(newNative(setElementBuiltin));
         default: return NIL_VAL;
     }

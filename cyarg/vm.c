@@ -221,6 +221,23 @@ static void defineMethod(ObjRoutine* routine, ObjString* name) {
     pop(routine);
 }
 
+static bool derefElement(ObjRoutine* routine) {
+    if (!IS_INTEGER(peek(routine, 0)) || ! IS_VALARRAY(peek(routine, 1))) {
+        runtimeError(routine, "Expected an array and integer index.");
+        return false;
+    }
+    int32_t index = AS_INTEGER(pop(routine));
+    ObjValArray* array = AS_VALARRAY(pop(routine));
+    if (index >= array->array.count || index < 0) {
+        runtimeError(routine, "Array index %d out of bounds (0:%d)", index, array->array.count - 1);
+        return false;
+    }
+
+    Value result = array->array.values[index];
+    push(routine, result);
+    return true;
+}
+
 static bool isFalsey(Value value) {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
@@ -597,10 +614,9 @@ InterpretResult run(ObjRoutine* routine) {
                 defineMethod(routine, READ_STRING());
                 break;
             case OP_ELEMENT: {
-                Value index = pop(routine);
-                ObjValArray* array = AS_VALARRAY(pop(routine));
-                Value result = array->array.values[AS_INTEGER(index)];
-                push(routine, result);
+                if (!derefElement(routine)) {
+                    return INTERPRET_RUNTIME_ERROR;
+                }
                 break;
             }
 

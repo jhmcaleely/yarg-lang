@@ -73,7 +73,6 @@ typedef enum {
     BUILTIN_SHARE,
     BUILTIN_RPEEK,
     BUILTIN_RPOKE,
-    BUILTIN_ELEMENT,
     BUILTIN_SET_ELEMENT
 } BuiltinFn;
 
