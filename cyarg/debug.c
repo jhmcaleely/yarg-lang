@@ -121,6 +121,14 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return simpleInstruction("OP_ADD", offset);
         case OP_SUBTRACT:
             return simpleInstruction("OP_SUBTRACT", offset);
+        case OP_BITOR:
+            return simpleInstruction("OP_BITOR", offset);
+        case OP_BITAND:
+            return simpleInstruction("OP_BITAND", offset);
+        case OP_BITXOR:
+            return simpleInstruction("OP_BITXOR", offset);
+        case OP_MODULO:
+            return simpleInstruction("OP_MODULO", offset);
         case OP_MULTIPLY:
             return simpleInstruction("OP_MULTIPLY", offset);
         case OP_DIVIDE:

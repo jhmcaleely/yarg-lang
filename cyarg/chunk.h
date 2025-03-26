@@ -31,6 +31,7 @@ typedef enum {
     OP_BITOR,
     OP_BITAND,
     OP_BITXOR,
+    OP_MODULO,
     OP_MULTIPLY,
     OP_DIVIDE,
     OP_NOT,

@@ -312,6 +312,21 @@ InterpretResult run(ObjRoutine* routine) {
             return INTERPRET_RUNTIME_ERROR; \
         } \
     } while (false)
+#define BINARY_INTGRAL_OP(routine, valueType, op) \
+    do { \
+        if (IS_UINTEGER(peek(routine, 0)) && IS_UINTEGER(peek(routine, 1))) { \
+            uint32_t b = AS_UINTEGER(pop(routine)); \
+            uint32_t a = AS_UINTEGER(pop(routine)); \
+            push(routine, valueType(a op b)); \
+        } else if (IS_INTEGER(peek(routine, 0)) && IS_INTEGER(peek(routine, 1))) { \
+            int32_t b = AS_INTEGER(pop(routine)); \
+            int32_t a = AS_INTEGER(pop(routine)); \
+            push(routine, valueType(a op b)); \
+        } else { \
+            runtimeError(routine, "Operands must both be integers or unsigned integers."); \
+            return INTERPRET_RUNTIME_ERROR; \
+        } \
+    } while (false)
 #define BINARY_UINT_OP(routine, valueType, op) \
     do { \
         if (!IS_UINTEGER(peek(routine, 0)) || !IS_UINTEGER(peek(routine, 1))) { \
@@ -469,6 +484,17 @@ InterpretResult run(ObjRoutine* routine) {
                     push(routine, DOUBLE_VAL(a + b));
                 } else {
                     runtimeError(routine, "Operands must be two numbers or two strings.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
+            case OP_MODULO: {
+                if (IS_INTEGER(peek(routine, 0)) && IS_INTEGER(peek(routine, 1))) {
+                    BINARY_INTGRAL_OP(routine, INTEGER_VAL, %);
+                } else if (IS_UINTEGER(peek(routine, 0)) && IS_UINTEGER(peek(routine, 1))) {
+                    BINARY_INTGRAL_OP(routine, UINTEGER_VAL, %);
+                } else {
+                    runtimeError(routine, "Operands must integers or unsigned integers of same type.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
