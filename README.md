@@ -16,4 +16,4 @@ Not (yet) intended for use. Additional documentation on the [wiki][wiki]
 
 ## Name
 
-Cornish Yarg is a cheese I enjoy.
+[Cornish Yarg](https://en.wikipedia.org/wiki/Cornish_Yarg) is a cheese I enjoy.
