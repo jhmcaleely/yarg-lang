@@ -126,7 +126,13 @@ fun next_generation(world) {
 
 
 fun adjacent_line(world, line, col) {
-    return [line[(col + x) % col_count(world)] for x in range(-1, 2)];
+    var adjline = make_array(3);
+    var index = 0;
+    for (var x = -1; x < 2; x = x + 1) {
+        adjline[index] = line[(col + x) % col_count(world)];
+        index = index + 1;
+    }
+    return adjline;
 }
 
 fun neighbours(world, line, col) {
