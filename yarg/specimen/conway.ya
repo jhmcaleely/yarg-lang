@@ -15,10 +15,10 @@
 var live = 1;
 var dead = 0;
 
-var columns = 10;
-var rows = 10;
+var columns = 0;
+var rows = 0;
 
-var seed = 0d1;
+var seed = 0d4;
 
 fun rand() {
 
@@ -58,17 +58,28 @@ fun random_state() {
 fun make_row(cols) {
     var row = make_array(cols);
     for (var i = 0; i < cols; i = i + 1) {
-        row[i] = random_state();
+        row[i] = nil;
     }
     return row;
 }
 
 fun make_world(cols, lines) {
+    columns = cols;
+    rows = lines;
+
     var col = make_array(lines);
     for (var i = 0; i < cols; i = i + 1) {
         col[i] = make_row(cols);
     }
     return col;
+}
+
+fun randomState(world) {
+    for (var c = 0; c < col_count(world); c = c + 1) {
+        for (var r = 0; r < row_count(world); r = r + 1) {
+            world[c][r] = random_state();
+        }
+    }
 }
 
 fun row_count(world) {
@@ -87,9 +98,9 @@ fun set_cell(world, x, y, state) {
     world[y][x] = state;
 }
 
-fun count(array, val) {
-    result = 0;
-    for (var i = 0; i < len(array); i = i + 1) {
+fun count(array, val, array_len) {
+    var result = 0;
+    for (var i = 0; i < array_len; i = i + 1) {
         if (array[i] == val) {
             result = result + 1;
         }
@@ -98,8 +109,8 @@ fun count(array, val) {
 }
 
 fun next_state(state, neighbourhood) {
-    new_state = dead;
-    alive_neighbours = count(neighbourhood, live);
+    var new_state = dead;
+    var alive_neighbours = count(neighbourhood, live, 8);
     
     if (state == live and (alive_neighbours == 2 or alive_neighbours == 3)) {
         new_state = live;
@@ -112,12 +123,12 @@ fun next_state(state, neighbourhood) {
 }
 
 fun next_generation(world) {
-    var next_gen = make_array(colsumns * lines);
+    var next_gen = make_world(columns, rows);
     for (var l = 0; l < row_count(world); l = l + 1) {
         for (var c = 0; c < col_count(world); c = c + 1) {
-            neighbourhood = neighbours(world, line, col);
-            state = get_cell(world, col, line);
-            next_gen[c + (l * row_count(world))] = state;
+            var neighbourhood = neighbours(world, l, c);
+            var state = get_cell(world, l, c);
+            next_gen[c][l] = next_state(state, neighbourhood);
         }
     }
 
@@ -136,18 +147,49 @@ fun adjacent_line(world, line, col) {
 }
 
 fun neighbours(world, line, col) {
-    var n;
-    col_c = col_count(world);
-    row_c = row_count(world);
+    var n = make_array(8);
+    var col_c = col_count(world);
+    var row_c = row_count(world);
+
+    var adjacentLine = adjacent_line(world, world[(line - 1) % row_c], col);
     
-    n.extend(adjacent_line(world, world[(line - 1) % row_c], col));
+    for (var x = 0; x < 3; x = x + 1) {
+        n[x] = adjacentLine[x];
+    }
 
-    n.append(get_cell(world, (col-1) % col_c, line));
-    n.append(get_cell(world, (col+1) % col_c, line));
+    n[3] = get_cell(world, (col-1) % col_c, line);
+    n[4] = get_cell(world, (col+1) % col_c, line);
 
-    n.extend(adjacent_line(world, world[(line + 1) % row_c], col));
+    adjacentLine = adjacent_line(world, world[(line + 1) % row_c], col);
+
+    var index = 0;
+    for (var x = 5; x < 8; x = x + 1) {
+        n[x] = adjacentLine[index];
+        index = index + 1;
+    }
+
     return n;
 }
 
+fun printWorld(world) {
+    print "--";
+    for (var c = 0; c < col_count(world); c = c + 1) {
+        for (var r = 0; r < row_count(world); r = r + 1) {
+            print world[c][r];
+        }
+        print "-";
+    }
+    print "--";
+}
+
+
 var conwayWorld = make_world(5, 5);
-print conwayWorld;
+printWorld(conwayWorld);
+randomState(conwayWorld);
+printWorld(conwayWorld);
+
+var nextWorld = next_generation(conwayWorld);
+//printWorld(nextWorld);
+
+conwayWorld = nextWorld;
+printWorld(conwayWorld);
