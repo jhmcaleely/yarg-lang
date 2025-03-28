@@ -490,7 +490,13 @@ InterpretResult run(ObjRoutine* routine) {
             }
             case OP_MODULO: {
                 if (IS_INTEGER(peek(routine, 0)) && IS_INTEGER(peek(routine, 1))) {
-                    BINARY_INTGRAL_OP(routine, INTEGER_VAL, %);
+                    int32_t b = AS_INTEGER(pop(routine));
+                    int32_t a = AS_INTEGER(pop(routine));
+                    int32_t r = a % b;
+                    if (r < 0) {
+                        r += b;
+                    }
+                    push(routine, INTEGER_VAL(r));
                 } else if (IS_UINTEGER(peek(routine, 0)) && IS_UINTEGER(peek(routine, 1))) {
                     BINARY_INTGRAL_OP(routine, UINTEGER_VAL, %);
                 } else {
