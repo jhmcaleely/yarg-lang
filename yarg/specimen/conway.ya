@@ -18,7 +18,7 @@ var dead = 0;
 var columns = 10;
 var rows = 10;
 
-var randseed = 0d1;
+var seed = 0d1;
 
 fun rand() {
 
@@ -31,8 +31,8 @@ fun rand() {
     next = next + 0d12345;
     result = (next / 0d65536) % 0d2048;
 
-    next = next * 1103515245;
-    next = next + 12345;
+    next = next * 0d1103515245;
+    next = next + 0d12345;
     result = result << 0d10;
     result = result ^ ((next / 0d65536) % 0d1024);
 
@@ -41,7 +41,7 @@ fun rand() {
     result = result << 0d10;
     result = result ^ ((next / 0d65536) % 0d1024);
 
-    randseed = next;
+    seed = next;
     return next;
 }
 
@@ -148,3 +148,6 @@ fun neighbours(world, line, col) {
     n.extend(adjacent_line(world, world[(line + 1) % row_c], col));
     return n;
 }
+
+var conwayWorld = make_world(5, 5);
+print conwayWorld;
