@@ -18,13 +18,36 @@ var dead = 0;
 var columns = 10;
 var rows = 10;
 
-fun randrange(max) {
-    return 1;
+var randseed = 0d1;
+
+fun rand() {
+
+    // https://github.com/kraj/uClibc/blob/master/libc/stdlib/rand_r.c#L25
+
+    var next = seed;
+    var result;
+
+    next = next * 0d1103515245;
+    next = next + 0d12345;
+    result = (next / 0d65536) % 0d2048;
+
+    next = next * 1103515245;
+    next = next + 12345;
+    result = result << 0d10;
+    result = result ^ ((next / 0d65536) % 0d1024);
+
+    next = next * 0d1103515245;
+    next = next + 0d12345;
+    result = result << 0d10;
+    result = result ^ ((next / 0d65536) % 0d1024);
+
+    randseed = next;
+    return next;
 }
 
 fun random_state() {
 
-    if (randrange(2) == 0) {
+    if (rand() > 0d4294967295 / 0d2) {
         return 0;
     }
     else {
@@ -64,10 +87,19 @@ fun set_cell(world, x, y, state) {
     world[y][x] = state;
 }
 
+fun count(array, val) {
+    result = 0;
+    for (var i = 0; i < len(array); i = i + 1) {
+        if (array[i] == val) {
+            result = result + 1;
+        }
+    }
+    return result;
+}
 
 fun next_state(state, neighbourhood) {
     new_state = dead;
-    alive_neighbours = neighbourhood.count(live);
+    alive_neighbours = count(neighbourhood, live);
     
     if (state == live and (alive_neighbours == 2 or alive_neighbours == 3)) {
         new_state = live;
@@ -80,15 +112,13 @@ fun next_state(state, neighbourhood) {
 }
 
 fun next_generation(world) {
-    var next_gen;
+    var next_gen = make_array(colsumns * lines);
     for (var l = 0; l < row_count(world); l = l + 1) {
-        var new_line;
         for (var c = 0; c < col_count(world); c = c + 1) {
             neighbourhood = neighbours(world, line, col);
             state = get_cell(world, col, line);
-            new_line.append(next_state(state, neighbourhood));
+            next_gen[c + (l * row_count(world))] = state;
         }
-        next_gen.append(new_line);
     }
 
     return next_gen;
