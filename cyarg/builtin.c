@@ -263,14 +263,26 @@ bool makeArrayBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Val
         return false;
     }
 
-    if (!IS_UINTEGER(args[0])) {
-        runtimeError(routineContext, "Argument must be unsigned integer");
+    if (!IS_UINTEGER(args[0]) && !IS_INTEGER(args[0])) {
+        runtimeError(routineContext, "Argument must be integer or unsigned integer.");
+        return false;
+    }
+    uint32_t capacity = 0;
+    if (IS_UINTEGER(args[0])) {
+        capacity = AS_UINTEGER(args[0]);
+    } else if (IS_INTEGER(args[0]) && AS_INTEGER(args[0]) >= 0) {
+        capacity = AS_INTEGER(args[0]);
+    } else {
+        runtimeError(routineContext, "Argument must be positive.");
         return false;
     }
 
-    uint32_t capcity = AS_UINTEGER(args[0]);
+    if (capacity == 0) {
+        runtimeError(routineContext, "Argument must be non-zero.");
+        return false;
+    }
 
-    ObjValArray* array = newValArray(capcity);
+    ObjValArray* array = newValArray(capacity);
 
     *result = OBJ_VAL(array);
     return true;
