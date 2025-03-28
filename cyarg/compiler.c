@@ -430,7 +430,7 @@ static void binary(bool canAssign) {
 
 static void deref(bool canAssign) {
 
-    parsePrecedence(PREC_DEREF);
+    parsePrecedence(PREC_ASSIGNMENT);   // prevents assignment within []
     consume(TOKEN_RIGHT_SQUARE_BRACKET, "Expect ] after expression.");
 
     if (canAssign && match(TOKEN_EQUAL)) {
