@@ -55,62 +55,26 @@ fun random_state() {
     }
 }
 
-fun make_row(cols) {
-    var row = make_array(cols);
-    for (var i = 0; i < cols; i = i + 1) {
-        row[i] = nil;
+fun make_world(size) {
+
+    var world = make_array(lines);
+    for (var c = 0; c < len(world); c = c + 1) {
+        world[c] = random_state();
     }
-    return row;
+    return world;
 }
 
-fun make_world(cols, lines) {
-    columns = cols;
-    rows = lines;
-
-    var col = make_array(lines);
-    for (var i = 0; i < cols; i = i + 1) {
-        col[i] = make_row(cols);
-    }
-    return col;
-}
-
-fun randomState(world) {
-    for (var c = 0; c < col_count(world); c = c + 1) {
-        for (var r = 0; r < row_count(world); r = r + 1) {
-            world[c][r] = random_state();
-        }
-    }
-}
-
-fun row_count(world) {
-    return rows;
-}
-
-fun col_count(world) {
-    return columns;
-}
-
-fun get_cell(world, x, y) {
-    return world[y][x];
-}
-
-fun set_cell(world, x, y, state) {
-    world[y][x] = state;
-}
-
-fun count(array, val, array_len) {
+fun neighbour_weight(world, cell, neighbour_of) {
     var result = 0;
-    for (var i = 0; i < array_len; i = i + 1) {
-        if (array[i] == val) {
-            result = result + 1;
-        }
+    for (var i = 0; i < 8; i = i + 1) {
+        var world_offset = neighbour_of(cell, i);
+        result = result + world[world_offset]
     }
     return result;
 }
 
-fun next_state(state, neighbourhood) {
+fun next_state(state, alive_neighbours) {
     var new_state = dead;
-    var alive_neighbours = count(neighbourhood, live, 8);
     
     if (state == live and (alive_neighbours == 2 or alive_neighbours == 3)) {
         new_state = live;
@@ -122,74 +86,12 @@ fun next_state(state, neighbourhood) {
     return new_state;
 }
 
-fun next_generation(world) {
-    var next_gen = make_world(columns, rows);
-    for (var l = 0; l < row_count(world); l = l + 1) {
-        for (var c = 0; c < col_count(world); c = c + 1) {
-            var neighbourhood = neighbours(world, l, c);
-            var state = get_cell(world, l, c);
-            next_gen[c][l] = next_state(state, neighbourhood);
-        }
+fun next_generation(world, neighbour_of) {
+    var next_gen = make_array(len(world));
+    for (var cell = 0; cell < len(world); cell = cell + 1) {
+        nw = neighbour_weight(world, cell, neighbour_of);
+        next_gen[cell] = next_state(world[cell], nw);
     }
 
     return next_gen;
 }
-
-
-fun adjacent_line(world, line, col) {
-    var adjline = make_array(3);
-    var index = 0;
-    for (var x = -1; x < 2; x = x + 1) {
-        adjline[index] = line[(col + x) % col_count(world)];
-        index = index + 1;
-    }
-    return adjline;
-}
-
-fun neighbours(world, line, col) {
-    var n = make_array(8);
-    var col_c = col_count(world);
-    var row_c = row_count(world);
-
-    var adjacentLine = adjacent_line(world, world[(line - 1) % row_c], col);
-    
-    for (var x = 0; x < 3; x = x + 1) {
-        n[x] = adjacentLine[x];
-    }
-
-    n[3] = get_cell(world, (col-1) % col_c, line);
-    n[4] = get_cell(world, (col+1) % col_c, line);
-
-    adjacentLine = adjacent_line(world, world[(line + 1) % row_c], col);
-
-    var index = 0;
-    for (var x = 5; x < 8; x = x + 1) {
-        n[x] = adjacentLine[index];
-        index = index + 1;
-    }
-
-    return n;
-}
-
-fun printWorld(world) {
-    print "--";
-    for (var c = 0; c < col_count(world); c = c + 1) {
-        for (var r = 0; r < row_count(world); r = r + 1) {
-            print world[c][r];
-        }
-        print "-";
-    }
-    print "--";
-}
-
-
-var conwayWorld = make_world(5, 5);
-printWorld(conwayWorld);
-randomState(conwayWorld);
-printWorld(conwayWorld);
-
-var nextWorld = next_generation(conwayWorld);
-//printWorld(nextWorld);
-
-conwayWorld = nextWorld;
-printWorld(conwayWorld);
