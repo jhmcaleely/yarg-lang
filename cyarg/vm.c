@@ -255,7 +255,7 @@ static bool setArrayElement(ObjRoutine* routine) {
 
     array->array.values[index] = new_value;
 
-    push(routine, new_value);
+    push(routine, OBJ_VAL(array));
     return true;
 }
 
