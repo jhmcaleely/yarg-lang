@@ -179,6 +179,7 @@ static TokenType identifierType() {
                 }
             }
             break;
+        case 'l': return checkKeyword(1, 2, "en", TOKEN_LEN);
     case 'm': 
             if (   scanner.current - scanner.start > 5
                 && memcmp(scanner.start + 1, "ake_", 4) == 0) {

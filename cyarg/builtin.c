@@ -288,6 +288,26 @@ bool makeArrayBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Val
     return true;
 }
 
+bool lenBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
+    if (argCount != 1) {
+        runtimeError(routineContext, "Expected 1 argument, but got %d.", argCount);
+        return false;
+    }
+
+    if (IS_STRING(args[0])) {
+        ObjString* string = AS_STRING(args[0]);
+        *result = UINTEGER_VAL(string->length);
+        return true;
+    } else if (IS_VALARRAY(args[0])) {
+        ObjValArray* array = AS_VALARRAY(args[0]);
+        *result = UINTEGER_VAL(array->array.count);
+        return true;
+    } else {
+        runtimeError(routineContext, "Expected a string or array.");
+        return false;
+    }
+}
+
 Value getBuiltin(uint8_t builtin) {
     switch (builtin) {
         case BUILTIN_RPEEK: return OBJ_VAL(newNative(rpeekBuiltin));
@@ -302,6 +322,7 @@ Value getBuiltin(uint8_t builtin) {
         case BUILTIN_RECEIVE: return OBJ_VAL(newNative(receiveChannelBuiltin));
         case BUILTIN_SHARE: return OBJ_VAL(newNative(shareChannelBuiltin));
         case BUILTIN_PEEK: return OBJ_VAL(newNative(peekChannelBuiltin));
+        case BUILTIN_LEN: return OBJ_VAL(newNative(lenBuiltin));
         default: return NIL_VAL;
     }
 }

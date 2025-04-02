@@ -476,6 +476,7 @@ static void literal(bool canAssign) {
         case TOKEN_SHARE: emitBytes(OP_GET_BUILTIN, BUILTIN_SHARE); break;
         case TOKEN_START: emitBytes(OP_GET_BUILTIN, BUILTIN_START); break;
         case TOKEN_PEEK: emitBytes(OP_GET_BUILTIN, BUILTIN_PEEK); break;
+        case TOKEN_LEN: emitBytes(OP_GET_BUILTIN, BUILTIN_LEN); break;
         case TOKEN_FALSE: emitByte(OP_FALSE); break;
         case TOKEN_NIL: emitByte(OP_NIL); break;
         case TOKEN_TRUE: emitByte(OP_TRUE); break;
@@ -696,6 +697,7 @@ ParseRule rules[] = {
     [TOKEN_FUN]                  = {NULL,     NULL,   PREC_NONE},
     [TOKEN_IF]                   = {NULL,     NULL,   PREC_NONE},
     [TOKEN_IMPORT]               = {literal,  NULL,   PREC_NONE},
+    [TOKEN_LEN]                  = {literal,  NULL,   PREC_NONE},
     [TOKEN_MAKE_ARRAY]           = {literal,  NULL,   PREC_NONE},
     [TOKEN_MAKE_CHANNEL]         = {literal,  NULL,   PREC_NONE},
     [TOKEN_MAKE_ROUTINE]         = {literal,  NULL,   PREC_NONE},

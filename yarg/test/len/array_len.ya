@@ -1,0 +1,5 @@
+var x = make_array(3);
+print len(x);   // expect: 3
+
+x = make_array(1);
+print len(x);   // expect: 1

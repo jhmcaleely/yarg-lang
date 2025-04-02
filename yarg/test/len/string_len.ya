@@ -1,0 +1,5 @@
+var x = "hello";
+print len(x);    // expect: 5
+
+x = "";
+print len(x);    // expect: 0
