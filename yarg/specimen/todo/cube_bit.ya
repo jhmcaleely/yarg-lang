@@ -1,7 +1,7 @@
 // The CUBE:BIT LED Cube is a string of 'neopixels' (serial multi-colour
 // LEDs) that are arranged off of pin 0 of the Pico:ed connector.
 
-var max_brightness = 0d127
+var max_brightness = 0d127;
 
 var cube_display_pixels = make_array(56);
 var i = 0;

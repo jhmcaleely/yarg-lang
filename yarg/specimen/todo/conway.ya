@@ -68,7 +68,7 @@ fun neighbour_weight(world, cell, neighbour_of) {
     var result = 0;
     for (var i = 0; i < 8; i = i + 1) {
         var world_offset = neighbour_of(cell, i);
-        result = result + world[world_offset]
+        result = result + world[world_offset];
     }
     return result;
 }
