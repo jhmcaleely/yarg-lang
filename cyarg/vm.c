@@ -358,6 +358,12 @@ InterpretResult run(ObjRoutine* routine) {
                 push(routine, constant);
                 break;
             }
+            case OP_IMMEDIATE: {
+                uint8_t byte = READ_BYTE();
+                Value constant = INTEGER_VAL((int8_t)byte);
+                push(routine, constant);
+                break;
+            }
             case OP_NIL: push(routine, NIL_VAL); break;
             case OP_TRUE: push(routine, BOOL_VAL(true)); break;
             case OP_FALSE: push(routine, BOOL_VAL(false)); break;

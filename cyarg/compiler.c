@@ -176,6 +176,14 @@ static void emitReturn() {
 }
 
 static uint8_t makeConstant(Value value) {
+
+    if (IS_INTEGER(value)) {
+        int32_t i = AS_INTEGER(value);
+        if (i <= INT8_MAX && i >= INT8_MIN) {
+            return 0; // will never be used.
+        }
+    }
+
     int constant = addConstant(currentChunk(), value);
     if (constant > UINT8_MAX) {
         error("Too many constants in one chunk.");
@@ -186,7 +194,13 @@ static uint8_t makeConstant(Value value) {
 }
 
 static void emitConstant(Value value) {
-    emitBytes(OP_CONSTANT, makeConstant(value));
+
+    int32_t i = AS_INTEGER(value);
+    if (IS_INTEGER(value) && i <= INT8_MAX && i >= INT8_MIN) {
+        emitBytes(OP_IMMEDIATE, (uint8_t)(AS_INTEGER(value)));
+    } else {
+        emitBytes(OP_CONSTANT, makeConstant(value));
+    }
 }
 
 static void patchJump(int offset) {

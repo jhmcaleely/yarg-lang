@@ -67,7 +67,7 @@ target_sources(cyarg
 endif()
 
 add_compile_definitions(NAN_BOXING)
-#add_compile_definitions(DEBUG_PRINT_CODE)
+add_compile_definitions(DEBUG_PRINT_CODE)
 #add_compile_definitions(DEBUG_TRACE_EXECUTION)
 add_compile_definitions(DEBUG_STRESS_GC)
 #add_compile_definitions(DEBUG_LOG_GC)
