@@ -63,6 +63,7 @@ static int builtinInstruction(const char* name, Chunk* chunk, int offset) {
         case BUILTIN_RECEIVE: printf("receive"); break;
         case BUILTIN_SHARE: printf("share"); break;
         case BUILTIN_PEEK: printf("peek"); break;
+        case BUILTIN_LEN: printf("len"); break;
         default: printf("<unknown %4d>", slot); break;
     }
     printf("\n");
@@ -183,6 +184,10 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return constantInstruction("OP_METHOD", chunk, offset);
         case OP_ELEMENT:
             return simpleInstruction("OP_ELEMENT", offset);
+        case OP_SET_ELEMENT:
+            return simpleInstruction("OP_SET_ELEMENT", offset);
+        case OP_IMMEDIATE:
+            return byteInstruction("OP_IMMEDIATE", chunk, offset);
         default:
             printf("Unknown opcode %d\n", instruction);
             return offset + 1;

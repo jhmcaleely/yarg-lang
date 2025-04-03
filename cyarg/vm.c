@@ -255,7 +255,7 @@ static bool setArrayElement(ObjRoutine* routine) {
 
     array->array.values[index] = new_value;
 
-    push(routine, new_value);
+    push(routine, OBJ_VAL(array));
     return true;
 }
 
@@ -355,6 +355,12 @@ InterpretResult run(ObjRoutine* routine) {
         switch (instruction = READ_BYTE()) {
             case OP_CONSTANT: {
                 Value constant = READ_CONSTANT();
+                push(routine, constant);
+                break;
+            }
+            case OP_IMMEDIATE: {
+                uint8_t byte = READ_BYTE();
+                Value constant = INTEGER_VAL((int8_t)byte);
                 push(routine, constant);
                 break;
             }
