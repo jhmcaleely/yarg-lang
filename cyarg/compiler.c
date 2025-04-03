@@ -532,7 +532,7 @@ static void arrayinit(bool canAssign) {
     consume(TOKEN_RIGHT_SQUARE_BRACKET, "Expect ']' initialising array.");
 
     uint8_t constant = currentChunk()->code[offset - 1];
-    currentChunk()->constants.values[constant] = INTEGER_VAL(items);
+    currentChunk()->code[offset - 1] = (uint8_t) items;
 }
 
 static uint32_t strtoNum(const char* literal, int length, int radix) {
