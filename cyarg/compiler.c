@@ -8,10 +8,6 @@
 #include "memory.h"
 #include "scanner.h"
 
-#ifdef DEBUG_PRINT_CODE
-#include "debug.h"
-#endif
-
 typedef struct {
     Token current;
     Token previous;
@@ -248,15 +244,8 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
 
 static ObjFunction* endCompiler() {
     emitReturn();
+
     ObjFunction* function = current->function;
-
-#ifdef DEBUG_PRINT_CODE
-    if (!parser.hadError) {
-        disassembleChunk(currentChunk(), function->name != NULL 
-                                         ? function->name->chars : "<script>");
-    }
-#endif
-
     current = current->enclosing;
     return function;
 }
