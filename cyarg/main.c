@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "vm.h"
 #include "files.h"
+#include "compiler.h"
 
 const char* defaultScript = "main.ya";
 
@@ -37,6 +38,26 @@ static void runFile(const char* path) {
     }
 }
 
+static void disassembleFile(const char* path) {
+    char* source = readFile(path);
+    if (!source) {
+        return;
+    }
+
+    ObjFunction* result = compile(source);
+    if (!result) {
+        return;
+    }
+
+    disassembleChunk(&result->chunk, path);
+    for (int i = 0; i < result->chunk.constants.count; i++) {
+        if (IS_FUNCTION(result->chunk.constants.values[i])) {
+            ObjFunction* fun = AS_FUNCTION(result->chunk.constants.values[i]);
+            disassembleChunk(&fun->chunk, fun->name->chars);
+        }
+    }
+}
+
 #ifdef CYARG_PICO_TARGET
 int main() {
     plaform_hal_init();
@@ -58,7 +79,10 @@ int main(int argc, const char* argv[]) {
         repl();
     } else if (argc == 2) {
         runFile(argv[1]);
-    } else {
+    } else if (argc == 3 && strcmp(argv[1], "disassemble") == 0) {
+        disassembleFile(argv[2]);
+    }
+    else {
         fprintf(stderr, "Usage: cyarg [path]\n");
         exit(64);
     }
