@@ -232,17 +232,15 @@ bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* 
     return true;
 }
 
-struct Register {
-    volatile uint32_t value;
-};
+typedef volatile uint32_t Register;
 
 bool rpeekBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
     
     uint32_t nominal_address = AS_UINTEGER(args[0]);
     uintptr_t memptr = (uint32_t) nominal_address;
-    struct Register* reg = (struct Register*) memptr;
+    Register* reg = (Register*) memptr;
 
-    uint32_t res = reg->value;
+    uint32_t res = *reg;
 
     *result = UINTEGER_VAL(res);
     return true;
@@ -252,12 +250,11 @@ bool rpokeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* 
 
     uint32_t nominal_address = AS_UINTEGER(args[0]);
     uintptr_t memptr = (uint32_t) nominal_address;
-    struct Register* reg = (struct Register*) memptr;
+    Register* reg = (Register*) memptr;
 
     uint32_t val = AS_UINTEGER(args[1]);
 
-    reg->value = val;
-
+    *reg = val;
     return true;
 }
 
