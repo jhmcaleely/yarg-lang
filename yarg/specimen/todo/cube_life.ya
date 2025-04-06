@@ -5,47 +5,34 @@ import("conway");
 import("cube_bit");
 
 // The Life array for the CUBE:BIT Led Cube.
-var surface_world = conway.make_world(56);
+var surface_world = make_world(56);
 
-fun display_on_surface(world) {
+// RGB array of two pixels. 0 for dead, 1 for live
+var display_pixels = [ [0d0, 0d255, 0d0], [0d255, 0d0, 0d0] ];
 
-    var live = make_array(3);
-    live[0] = 255;
-    live[1] = 0;
-    live[2] = 0;
+fun display_on_surface(world, leds) {
 
-    var dead = make_array(3);
-    dead[0] = 0;
-    dead[1] = 255;
-    dead[2] = 0;
-
-    for (var k = 0; k < len(world); k = k + 1) {
-        if (world[k] == 1) {
-            set_pixel(surface_leds[k], live);
-        }
-        else {
-            set_pixel(surface_leds[k], dead);
-
-        }
+    for (var k = 0d0; k < len(world); k = k + 0d1) {
+        set_pixel(surface_leds[k], display_pixels[world[k]]);
     }
     
-    write_pixels();
+    write_pixels(leds);
 }
 
 fun surface_neighbour_of(cell, neighbour) {
     var led = surface_neighbourhoods[cell][neighbour];
-    for (var i = 0; i < SURFACE_LED_COUNT; i = i + 1) {
+    for (var i = 0d0; i < len(surface_neighbourhoods); i = i + 0d1) {
         if (surface_leds[i] == led) {
             return i;
         }
     }
 }
 
+var leds = ws2812_init();
 
 while (true) {
-    display_on_surface(surface_world);
+
+    display_on_surface(surface_world, leds);
     surface_world = next_generation(surface_world, surface_neighbour_of);
-    
-    sleep_ms(950);
 }
     

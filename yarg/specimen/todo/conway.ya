@@ -57,8 +57,8 @@ fun random_state() {
 
 fun make_world(size) {
 
-    var world = make_array(lines);
-    for (var c = 0; c < len(world); c = c + 1) {
+    var world = make_array(size);
+    for (var c = 0d0; c < len(world); c = c + 0d1) {
         world[c] = random_state();
     }
     return world;
@@ -88,8 +88,8 @@ fun next_state(state, alive_neighbours) {
 
 fun next_generation(world, neighbour_of) {
     var next_gen = make_array(len(world));
-    for (var cell = 0; cell < len(world); cell = cell + 1) {
-        nw = neighbour_weight(world, cell, neighbour_of);
+    for (var cell = 0d0; cell < len(world); cell = cell + 0d1) {
+        var nw = neighbour_weight(world, cell, neighbour_of);
         next_gen[cell] = next_state(world[cell], nw);
     }
 
