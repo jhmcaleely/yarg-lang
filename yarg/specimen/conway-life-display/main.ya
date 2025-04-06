@@ -1,0 +1,38 @@
+// Conway's Life displayed on a 4tronix CUBE:BIT LED cube driven
+// by a Raspberry Pi Pico.
+
+import("conway");
+import("cube_bit");
+
+// The Life array for the CUBE:BIT Led Cube.
+var surface_world = make_world(56);
+
+// RGB array of two pixels. 0 for dead, 1 for live
+var display_pixels = [ [0d0, 0d255, 0d0], [0d255, 0d0, 0d0] ];
+
+fun display_on_surface(world, leds) {
+
+    for (var k = 0d0; k < len(world); k = k + 0d1) {
+        set_pixel(surface_leds[k], display_pixels[world[k]]);
+    }
+    
+    write_pixels(leds);
+}
+
+fun surface_neighbour_of(cell, neighbour) {
+    var led = surface_neighbourhoods[cell][neighbour];
+    for (var i = 0d0; i < len(surface_neighbourhoods); i = i + 0d1) {
+        if (surface_leds[i] == led) {
+            return i;
+        }
+    }
+}
+
+var leds = ws2812_init();
+
+while (true) {
+
+    display_on_surface(surface_world, leds);
+    surface_world = next_generation(surface_world, surface_neighbour_of);
+}
+    

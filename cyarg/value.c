@@ -75,3 +75,21 @@ bool valuesEqual(Value a, Value b) {
     }
 #endif
 }
+
+bool is_positive_integer(Value a) {
+    if (IS_UINTEGER(a)) {
+        return true;
+    }
+    int32_t aa = AS_INTEGER(a);
+    if (IS_INTEGER(a) && aa >= 0) {
+        return true;
+    }
+    return false;
+}
+
+uint32_t as_positive_integer(Value a) {
+    if (IS_INTEGER(a)) {
+        return AS_INTEGER(a);
+    }
+    return AS_UINTEGER(a);;
+}

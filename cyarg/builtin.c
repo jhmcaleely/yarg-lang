@@ -83,9 +83,14 @@ bool importBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value*
             runtimeError(routineContext, "Interpret error");
             return false;
         }
+        return true;
+    }
+    else {
+        runtimeError(routineContext, "source not found");
+        return false;
+
     }
 
-    return true;
 }
 
 bool makeRoutineBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {

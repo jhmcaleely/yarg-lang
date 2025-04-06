@@ -13,6 +13,7 @@
 #include "builtin.h"
 #include "routine.h"
 #include "channel.h"
+#include "ws2812_native.h"
 
 VM vm;
 
@@ -70,6 +71,9 @@ void initVM() {
     defineNative("alarm_add_repeating_ms", alarmAddRepeatingMSNative);
     defineNative("alarm_cancel_repeating", alarmCancelRepeatingMSNative);
 #endif
+    defineNative("ws2812_init", ws2812initNative);
+    defineNative("ws2812_write_pixel", ws2812writepixelNative);
+
 }
 
 void freeVM() {
@@ -222,11 +226,11 @@ static void defineMethod(ObjRoutine* routine, ObjString* name) {
 }
 
 static bool derefElement(ObjRoutine* routine) {
-    if (!IS_INTEGER(peek(routine, 0)) || ! IS_VALARRAY(peek(routine, 1))) {
-        runtimeError(routine, "Expected an array and integer index.");
+    if (!IS_VALARRAY(peek(routine, 2)) && is_positive_integer(peek(routine, 1))) {
+        runtimeError(routine, "Expected an array and a positive or unsigned integer.");
         return false;
     }
-    int32_t index = AS_INTEGER(pop(routine));
+    uint32_t index = as_positive_integer(pop(routine));
     ObjValArray* array = AS_VALARRAY(pop(routine));
     if (index >= array->array.count || index < 0) {
         runtimeError(routine, "Array index %d out of bounds (0:%d)", index, array->array.count - 1);
@@ -239,13 +243,13 @@ static bool derefElement(ObjRoutine* routine) {
 }
 
 static bool setArrayElement(ObjRoutine* routine) {
-    if (!IS_INTEGER(peek(routine, 1)) || !IS_VALARRAY(peek(routine, 2))) {
-        runtimeError(routine, "Expected an array and integer index.");
+    if (!IS_VALARRAY(peek(routine, 2)) && is_positive_integer(peek(routine, 1))) {
+        runtimeError(routine, "Expected an array and a positive or unsigned integer.");
         return false;
     }
 
     Value new_value = pop(routine);
-    uint32_t index = AS_INTEGER(pop(routine));
+    uint32_t index = as_positive_integer(pop(routine));
     ObjValArray* array = AS_VALARRAY(pop(routine));
 
     if (index >= array->array.count || index < 0) {
