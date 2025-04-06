@@ -150,4 +150,7 @@ void appendToValueArray(ValueArray* array, Value value);
 void freeValueArray(ValueArray* array);
 void printValue(Value value);
 
+bool is_positive_integer(Value a);
+uint32_t as_positive_integer(Value a);
+
 #endif

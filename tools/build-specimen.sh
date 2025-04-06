@@ -17,5 +17,7 @@ fi
 ../../bin/hostyarg addfile -fs ../../build/specimen.uf2 -add multicore-flash.ya
 ../../bin/hostyarg addfile -fs ../../build/specimen.uf2 -add scone.ya
 ../../bin/hostyarg addfile -fs ../../build/specimen.uf2 -add timed-flash.ya
+../../bin/hostyarg addfile -fs ../../build/specimen.uf2 -add ws2812.ya
+
 popd > /dev/null
 

@@ -51,7 +51,8 @@ add_executable(cyarg
     native.c
     builtin.c
     channel.c
-    platform_hal.c)
+    platform_hal.c
+    ws2812_native.c)
 
 if (PICO_BOARD)
 target_sources(cyarg
@@ -91,6 +92,7 @@ pico_enable_stdio_usb(cyarg 1)
 
 # Add the standard library to the build
 target_link_libraries(cyarg
+        hardware_pio
         pico_stdlib
         pico_multicore
         pico_sync)
