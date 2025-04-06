@@ -237,8 +237,7 @@ typedef volatile uint32_t Register;
 bool rpeekBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
     
     uint32_t nominal_address = AS_UINTEGER(args[0]);
-    uintptr_t memptr = (uint32_t) nominal_address;
-    Register* reg = (Register*) memptr;
+    Register* reg = (Register*) (uintptr_t)nominal_address;
 
     uint32_t res = *reg;
 
@@ -249,8 +248,7 @@ bool rpeekBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* 
 bool rpokeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
 
     uint32_t nominal_address = AS_UINTEGER(args[0]);
-    uintptr_t memptr = (uint32_t) nominal_address;
-    Register* reg = (Register*) memptr;
+    Register* reg = (Register*) (uintptr_t)nominal_address;
 
     uint32_t val = AS_UINTEGER(args[1]);
 
