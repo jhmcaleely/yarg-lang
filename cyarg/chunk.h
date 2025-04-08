@@ -52,7 +52,8 @@ typedef enum {
     OP_METHOD,
     OP_ELEMENT,
     OP_SET_ELEMENT,
-    OP_IMMEDIATE
+    OP_IMMEDIATE,
+    OP_TYPE_LITERAL
 } OpCode;
 
 typedef struct {

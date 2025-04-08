@@ -101,11 +101,12 @@ ObjValArray* newValArray(size_t capacity) {
 
 ObjUniformArray* newUniformArray(ObjYargType* element_type, size_t capacity) {
     ObjUniformArray* array = ALLOCATE_OBJ(ObjUniformArray, OBJ_UNIFORMARRAY);
-    tempRootPush(OBJ_VAL(array));
     array->array = NULL;
     array->element_size = 0;
     array->element_type = element_type;
     array->count = 0;
+
+    tempRootPush(OBJ_VAL(array));
 
     if (is_obj_type(element_type)) {
         array->element_size = sizeof(Obj*);

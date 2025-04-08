@@ -276,10 +276,10 @@ bool makeArrayBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Val
         return false;
     }
     uint32_t capacity = 0;
-    if (IS_UINTEGER(args[0])) {
-        capacity = AS_UINTEGER(args[0]);
-    } else if (IS_INTEGER(args[0]) && AS_INTEGER(args[0]) >= 0) {
-        capacity = AS_INTEGER(args[0]);
+    if (IS_UINTEGER(args[index_arg])) {
+        capacity = AS_UINTEGER(args[index_arg]);
+    } else if (IS_INTEGER(args[index_arg]) && AS_INTEGER(args[index_arg]) >= 0) {
+        capacity = AS_INTEGER(args[index_arg]);
     } else {
         runtimeError(routineContext, "Argument must be positive.");
         return false;

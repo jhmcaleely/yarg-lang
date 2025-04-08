@@ -152,7 +152,9 @@ static void blackenObject(Obj* object) {
         }
         case OBJ_YARGTYPE: {
             ObjYargType* type = (ObjYargType*)object;
-            blackenObject((Obj*)type->instanceKlass);
+            if (type->yt == TypeInstance) {
+                blackenObject((Obj*)type->instanceKlass);
+            }
             break;
         }
         case OBJ_NATIVE:

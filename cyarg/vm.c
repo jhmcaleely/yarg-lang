@@ -14,6 +14,7 @@
 #include "routine.h"
 #include "channel.h"
 #include "ws2812_native.h"
+#include "yargtype.h"
 
 VM vm;
 
@@ -686,6 +687,12 @@ InterpretResult run(ObjRoutine* routine) {
                 if (!setArrayElement(routine)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
+                break;
+            }
+            case OP_TYPE_LITERAL: {
+                Value dummy = UINTEGER_VAL(0);
+                ObjYargType* type = newYargType(dummy);
+                push(routine, OBJ_VAL(type));
                 break;
             }
         }
