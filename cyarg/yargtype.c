@@ -54,3 +54,25 @@ YargType yt_typeof(Value a) {
     fatalVMError("Unexpected object type");
     return TypeNilVal;
 }
+
+bool is_obj_type(ObjYargType* type) {
+    switch (type->yt) {
+        case TypeAny:
+        case TypeBool:
+        case TypeNilVal:
+        case TypeDouble:
+        case TypeMachineUint32:
+        case TypeInteger:
+            return false;
+        case TypeString:
+        case TypeClass:
+        case TypeInstance:
+        case TypeFunction:
+        case TypeNativeBlob:
+        case TypeRoutine:
+        case TypeChannel:
+        case TypeArray:
+        case TypeYargType:
+            return true;
+    }
+}

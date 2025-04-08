@@ -136,8 +136,9 @@ typedef struct ObjValArray {
 
 typedef struct ObjUniformArray {
     Obj obj;
-    ObjYargType* elementtype;
+    ObjYargType* element_type;
     size_t count;
+    size_t element_size;
     void* array;
 } ObjUniformArray;
 
