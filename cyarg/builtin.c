@@ -16,6 +16,7 @@
 #include "files.h"
 #include "compiler.h"
 #include "channel.h"
+#include "yargtype.h"
 
 InterpretResult interpretImport(const char* source) {
 
@@ -258,13 +259,20 @@ bool rpokeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* 
 
 bool makeArrayBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* result) {
 
-    if (argCount != 1) {
-        runtimeError(routineContext, "Expected 1 argument, but got %d.", argCount);
+    if (argCount < 1 || argCount > 2) {
+        runtimeError(routineContext, "Expected 1 or two arguments, but got %d.", argCount);
         return false;
     }
 
-    if (!IS_UINTEGER(args[0]) && !IS_INTEGER(args[0])) {
-        runtimeError(routineContext, "Argument must be integer or unsigned integer.");
+    int index_arg = 0;
+    bool is_uniform = false;
+    if (IS_YARGTYPE(args[0]) && argCount == 2) {
+        index_arg = 1;
+        is_uniform = true;
+    }
+
+    if (!IS_UINTEGER(args[index_arg]) && !IS_INTEGER(args[index_arg])) {
+        runtimeError(routineContext, "Size argument must be integer or unsigned integer.");
         return false;
     }
     uint32_t capacity = 0;
@@ -282,9 +290,15 @@ bool makeArrayBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Val
         return false;
     }
 
-    ObjValArray* array = newValArray(capacity);
+    ObjYargType* type = AS_YARGTYPE(args[0]);
+    if (is_uniform && type->yt != TypeAny) {
+        ObjUniformArray* array = newUniformArray(type, capacity);
+        *result = OBJ_VAL(array);
+    } else {
+        ObjValArray* array = newValArray(capacity);
+        *result = OBJ_VAL(array);
+    }
 
-    *result = OBJ_VAL(array);
     return true;
 }
 
