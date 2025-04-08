@@ -30,5 +30,6 @@ typedef struct ObjYargType {
 ObjYargType* newYargType(Value a);
 
 YargType yt_typeof(Value a);
+bool is_obj_type(ObjYargType* type);
 
 #endif

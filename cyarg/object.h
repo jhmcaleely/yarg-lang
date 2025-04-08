@@ -21,6 +21,7 @@ typedef struct ObjYargType ObjYargType;
 #define IS_CHANNEL(value)      isObjType(value, OBJ_CHANNEL)
 #define IS_STRING(value)       isObjType(value, OBJ_STRING)
 #define IS_VALARRAY(value)     isObjType(value, OBJ_VALARRAY)
+#define IS_UNIFORMARRAY(value) isObjType(value, OBJ_UNIFORMARRAY)
 #define IS_YARGTYPE(value)     isObjType(value, OBJ_YARGTYPE)
 
 #define AS_BOUND_METHOD(value) ((ObjBoundMethod*)AS_OBJ(value))
@@ -36,6 +37,7 @@ typedef struct ObjYargType ObjYargType;
 #define AS_STRING(value)       ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value)      (((ObjString*)AS_OBJ(value))->chars)
 #define AS_VALARRAY(value)     ((ObjValArray*)AS_OBJ(value))
+#define AS_UNIFORMARRAY(value) ((ObjUniformArray*)AS_OBJ(value))
 #define AS_YARGTYPE(value)     ((ObjYargType*)AS_OBJ(value))
 
 typedef enum {
@@ -51,6 +53,7 @@ typedef enum {
     OBJ_STRING,
     OBJ_UPVALUE,
     OBJ_VALARRAY,
+    OBJ_UNIFORMARRAY,
     OBJ_YARGTYPE
 } ObjType;
 
@@ -131,6 +134,13 @@ typedef struct ObjValArray {
     ValueArray array;
 } ObjValArray;
 
+typedef struct ObjUniformArray {
+    Obj obj;
+    ObjYargType* elementtype;
+    size_t count;
+    void* array;
+} ObjUniformArray;
+
 #define ALLOCATE_OBJ(type, objectType) \
     (type*)allocateObject(sizeof(type), objectType)
 
@@ -145,6 +155,7 @@ ObjInstance* newInstance(ObjClass* klass);
 ObjNative* newNative(NativeFn function);
 ObjBlob* newBlob(size_t size);
 ObjValArray* newValArray(size_t capacity);
+ObjUniformArray* newUniformArray(ObjYargType* element_type, size_t capacity);
 ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);
 ObjUpvalue* newUpvalue(Value* slot);

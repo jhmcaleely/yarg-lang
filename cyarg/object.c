@@ -6,6 +6,7 @@
 #include "table.h"
 #include "value.h"
 #include "vm.h"
+#include "yargtype.h"
 
 #define ALLOCATE_OBJ(type, objectType) \
     (type*)allocateObject(sizeof(type), objectType)
@@ -92,6 +93,33 @@ ObjValArray* newValArray(size_t capacity) {
 
     for (int i = 0; i < capacity; i++) {
         appendToValueArray(&array->array, NIL_VAL);
+    }
+
+    tempRootPop();
+    return array;
+}
+
+ObjUniformArray* newUniformArray(ObjYargType* element_type, size_t capacity) {
+    ObjUniformArray* array = ALLOCATE_OBJ(ObjUniformArray, OBJ_UNIFORMARRAY);
+    tempRootPush(OBJ_VAL(array));
+    array->array = NULL;
+    array->elementtype = element_type;
+    array->count = capacity;
+
+    if (is_obj_type(element_type)) {
+        array->array = reallocate(array->array, 0, capacity * sizeof(Obj*));
+
+        for (int i = 0; i < capacity; i++) {
+            Obj** elements = (Obj**) array->array;
+            elements[i] = NULL;
+        }
+    } else if (element_type->yt == TypeMachineUint32) {
+        array->array = reallocate(array->array, 0, capacity * sizeof(uint32_t));
+
+        for (int i = 0; i < capacity; i++) {
+            uint32_t* elements = (uint32_t*) array->array;
+            elements[i] = 0;
+        }
     }
 
     tempRootPop();
