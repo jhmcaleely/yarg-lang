@@ -4,6 +4,7 @@
 #include "compiler.h"
 #include "memory.h"
 #include "vm.h"
+#include "yargtype.h"
 
 #ifdef DEBUG_LOG_GC
 #include <stdio.h>
@@ -134,6 +135,24 @@ static void blackenObject(Obj* object) {
         case OBJ_VALARRAY: {
             ObjValArray* array = (ObjValArray*)object;
             markArray(&array->array);
+            break;
+        }
+        case OBJ_UNIFORMARRAY: {
+            ObjUniformArray* array = (ObjUniformArray*)object;
+            if (is_obj_type(array->elementtype)) {
+                for (int i = 0; i < array->count; i++) {
+                    Obj** elements = (Obj**) array->array;
+                    if (elements[i]) {
+                        blackenObject(elements[i]);
+                    }
+                }
+            }
+            blackenObject((Obj*)array->elementtype);
+            break;
+        }
+        case OBJ_YARGTYPE: {
+            ObjYargType* type = (ObjYargType*)object;
+            blackenObject((Obj*)type->instanceKlass);
             break;
         }
         case OBJ_NATIVE:
