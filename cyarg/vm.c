@@ -227,22 +227,22 @@ static void defineMethod(ObjRoutine* routine, ObjString* name) {
 }
 
 static bool derefElement(ObjRoutine* routine) {
-    if (!isArray(peek(routine, 2)) && is_positive_integer(peek(routine, 1))) {
+    if (!isArray(peek(routine, 1)) || !is_positive_integer(peek(routine, 0))) {
         runtimeError(routine, "Expected an array and a positive or unsigned integer.");
         return false;
     }
     uint32_t index = as_positive_integer(pop(routine));
+    Value result = NIL_VAL;
 
-    if (IS_VALARRAY(peek(routine, 2))) {
+    if (IS_VALARRAY(peek(routine, 0))) {
         ObjValArray* array = AS_VALARRAY(pop(routine));
         if (index >= array->array.count || index < 0) {
             runtimeError(routine, "Array index %d out of bounds (0:%d)", index, array->array.count - 1);
             return false;
         }
 
-        Value result = array->array.values[index];
-        push(routine, result);
-    } else if (IS_UNIFORMARRAY(peek(routine, 2))) {
+        result = array->array.values[index];
+    } else if (IS_UNIFORMARRAY(peek(routine, 0))) {
         ObjUniformArray* array = AS_UNIFORMARRAY(pop(routine));
         if (index >= array->count || index < 0) {
             runtimeError(routine, "Array index %d out of bounds (0:%d)", index, array->count - 1);
@@ -250,29 +250,48 @@ static bool derefElement(ObjRoutine* routine) {
         }
         uint32_t* entries = (uint32_t*) array->array;
 
-        Value result = AS_UINTEGER(entries[index]);
-        push(routine, result);
+        result = UINTEGER_VAL(entries[index]);
     }
+
+    push(routine, result);
+    return true;
 }
 
 static bool setArrayElement(ObjRoutine* routine) {
-    if (!IS_VALARRAY(peek(routine, 2)) && is_positive_integer(peek(routine, 1))) {
+    if (!isArray(peek(routine, 2)) || !is_positive_integer(peek(routine, 1))) {
         runtimeError(routine, "Expected an array and a positive or unsigned integer.");
         return false;
     }
 
     Value new_value = pop(routine);
     uint32_t index = as_positive_integer(pop(routine));
-    ObjValArray* array = AS_VALARRAY(pop(routine));
+    Value boxed_array = pop(routine);
 
-    if (index >= array->array.count || index < 0) {
-        runtimeError(routine, "Array index %d out of bounds (0:%d)", index, array->array.count - 1);
-        return false;
+    if (IS_VALARRAY(boxed_array)) {
+        ObjValArray* array = AS_VALARRAY(boxed_array);
+
+        if (index >= array->array.count || index < 0) {
+            runtimeError(routine, "Array index %d out of bounds (0:%d)", index, array->array.count - 1);
+            return false;
+        }
+
+        array->array.values[index] = new_value;
+    } else if (IS_UNIFORMARRAY(boxed_array)) {
+        ObjUniformArray* array = AS_UNIFORMARRAY(boxed_array);
+        if (index >= array->count || index < 0) {
+            runtimeError(routine, "Array index %d out of bounds (0:%d)", index, array->count - 1);
+            return false;
+        }
+        if (!IS_UINTEGER(new_value)) {
+            runtimeError(routine, "Expected a MachineUint32.");
+            return false;
+        }
+        uint32_t* entries = (uint32_t*) array->array;
+        
+        entries[index] = AS_UINTEGER(new_value);
     }
 
-    array->array.values[index] = new_value;
-
-    push(routine, OBJ_VAL(array));
+    push(routine, OBJ_VAL(boxed_array));
     return true;
 }
 
@@ -358,13 +377,7 @@ InterpretResult run(ObjRoutine* routine) {
 
     for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
-        printf("          ");
-        for (Value* slot = routine->stack; slot < routine->stackTop; slot++) {
-            printf("[ ");
-            printValue(*slot);
-            printf(" ]");
-        }
-        printf("\n");
+        printValueStack(routine, "          ");
         disassembleInstruction(&frame->closure->function->chunk, 
                                (int)(frame->ip - frame->closure->function->chunk.code));
 #endif
