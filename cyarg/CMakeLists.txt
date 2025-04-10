@@ -51,6 +51,7 @@ add_executable(cyarg
     native.c
     builtin.c
     channel.c
+    yargtype.c
     platform_hal.c
     ws2812_native.c)
 

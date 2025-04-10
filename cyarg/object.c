@@ -6,6 +6,7 @@
 #include "table.h"
 #include "value.h"
 #include "vm.h"
+#include "yargtype.h"
 
 #define ALLOCATE_OBJ(type, objectType) \
     (type*)allocateObject(sizeof(type), objectType)
@@ -98,6 +99,39 @@ ObjValArray* newValArray(size_t capacity) {
     return array;
 }
 
+ObjUniformArray* newUniformArray(ObjYargType* element_type, size_t capacity) {
+    ObjUniformArray* array = ALLOCATE_OBJ(ObjUniformArray, OBJ_UNIFORMARRAY);
+    array->array = NULL;
+    array->element_size = 0;
+    array->element_type = element_type;
+    array->count = 0;
+
+    tempRootPush(OBJ_VAL(array));
+
+    if (is_obj_type(element_type)) {
+        array->element_size = sizeof(Obj*);
+        array->count = capacity;
+        array->array = reallocate(array->array, 0, capacity * array->element_size);
+
+        for (int i = 0; i < capacity; i++) {
+            Obj** elements = (Obj**) array->array;
+            elements[i] = NULL;
+        }
+    } else if (element_type->yt == TypeMachineUint32) {
+        array->element_size = sizeof(uint32_t);
+        array->count = capacity;
+        array->array = reallocate(array->array, 0, capacity * array->element_size);
+
+        for (int i = 0; i < capacity; i++) {
+            uint32_t* elements = (uint32_t*) array->array;
+            elements[i] = 0;
+        }
+    }
+
+    tempRootPop();
+    return array;
+}
+
 static ObjString* allocateString(char* chars, int length, uint32_t hash) {
     ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
     string->length = length;
@@ -173,8 +207,33 @@ static void printChannel(ObjChannel* channel) {
     printf(">");
 }
 
-static void printArray(ObjValArray* array) {
-    printf("[array %d]", array->array.count);
+static void printArray(Value a) {
+    if (IS_VALARRAY(a)) {
+        printf("[array %d]", AS_VALARRAY(a)->array.count);
+    } else if (IS_UNIFORMARRAY(a)) {
+        printf("[array %.zd]", AS_UNIFORMARRAY(a)->count);
+    }
+}
+
+static void printType(ObjYargType* type) {
+    switch (type->yt) {
+        case TypeAny: printf("Type:Any"); break;
+        case TypeBool: printf("Type:Bool"); break;
+        case TypeNilVal: printf("Type:NilVal"); break;
+        case TypeDouble: printf("Type:Double"); break;
+        case TypeMachineUint32: printf("Type:TypeMachineUint32"); break;
+        case TypeInteger: printf("Type:Integer"); break;
+        case TypeString: printf("Type:String"); break;
+        case TypeClass: printf("Type:Class"); break;
+        case TypeInstance: printf("Type:%s", type->instanceKlass->name->chars); break;
+        case TypeFunction: printf("Type:Function"); break;
+        case TypeNativeBlob: printf("Type:NativeBlob"); break;
+        case TypeRoutine: printf("Type:Routine"); break;
+        case TypeChannel: printf("Type:Channel"); break;
+        case TypeArray: printf("Type:Array"); break;
+        case TypeYargType: printf("Type:Type"); break;
+        default: printf("Type:Unknown"); break;
+    }
 }
 
 void printObject(Value value) {
@@ -213,7 +272,13 @@ void printObject(Value value) {
             printf("upvalue");
             break;
         case OBJ_VALARRAY:
-            printArray(AS_VALARRAY(value));
+            printArray(value);
+            break;
+        case OBJ_UNIFORMARRAY:
+            printArray(value);
+            break;
+        case OBJ_YARGTYPE:
+            printType(AS_YARGTYPE(value));
             break;
     }
 }

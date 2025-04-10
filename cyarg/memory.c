@@ -4,6 +4,7 @@
 #include "compiler.h"
 #include "memory.h"
 #include "vm.h"
+#include "yargtype.h"
 
 #ifdef DEBUG_LOG_GC
 #include <stdio.h>
@@ -136,6 +137,26 @@ static void blackenObject(Obj* object) {
             markArray(&array->array);
             break;
         }
+        case OBJ_UNIFORMARRAY: {
+            ObjUniformArray* array = (ObjUniformArray*)object;
+            if (is_obj_type(array->element_type)) {
+                for (int i = 0; i < array->count; i++) {
+                    Obj** elements = (Obj**) array->array;
+                    if (elements[i]) {
+                        markObject(elements[i]);
+                    }
+                }
+            }
+            markObject((Obj*)array->element_type);
+            break;
+        }
+        case OBJ_YARGTYPE: {
+            ObjYargType* type = (ObjYargType*)object;
+            if (type->yt == TypeInstance) {
+                markObject((Obj*)type->instanceKlass);
+            }
+            break;
+        }
         case OBJ_NATIVE:
         case OBJ_BLOB:
         case OBJ_CHANNEL:
@@ -205,6 +226,17 @@ static void freeObject(Obj* object) {
             ObjValArray* array = (ObjValArray*)object;
             freeValueArray(&array->array);
             FREE(ObjValArray, object);
+            break;
+        }
+        case OBJ_UNIFORMARRAY: {
+            ObjUniformArray* array = (ObjUniformArray*)object;
+            reallocate(array->array, array->count * array->element_size, 0);
+            array->array = NULL;    
+            FREE(ObjUniformArray, object);
+            break;
+        }
+        case OBJ_YARGTYPE: {
+            FREE(ObjYargType, object);
             break;
         }
     }

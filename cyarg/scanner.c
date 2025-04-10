@@ -180,13 +180,21 @@ static TokenType identifierType() {
             }
             break;
         case 'l': return checkKeyword(1, 2, "en", TOKEN_LEN);
-    case 'm': 
-            if (   scanner.current - scanner.start > 5
-                && memcmp(scanner.start + 1, "ake_", 4) == 0) {
-                switch (scanner.start[5]) {
-                    case 'a': return checkKeyword(6, 4, "rray", TOKEN_MAKE_ARRAY);
-                    case 'c': return checkKeyword(6, 6, "hannel", TOKEN_MAKE_CHANNEL);
-                    case 'r': return checkKeyword(6, 6, "outine", TOKEN_MAKE_ROUTINE);
+    case 'm':
+            if (scanner.current - scanner.start > 1) {
+                switch (scanner.start[1]) {
+                    case 'a': {
+                        if (   scanner.current - scanner.start > 5
+                            && memcmp(scanner.start + 2, "ke_", 3) == 0) {
+                            switch (scanner.start[5]) {
+                                case 'a': return checkKeyword(6, 4, "rray", TOKEN_MAKE_ARRAY);
+                                case 'c': return checkKeyword(6, 6, "hannel", TOKEN_MAKE_CHANNEL);
+                                case 'r': return checkKeyword(6, 6, "outine", TOKEN_MAKE_ROUTINE);
+                            }
+                        }
+                        break;
+                    }
+                    case 'u': return checkKeyword(2, 5, "int32", TOKEN_MACHINE_UINT32);
                 }
             }
             break;
