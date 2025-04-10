@@ -166,4 +166,8 @@ static inline bool isObjType(Value value, ObjType type) {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;
 }
 
+static inline bool isArray(Value value) {
+    return IS_VALARRAY(value) || IS_UNIFORMARRAY(value);
+}
+
 #endif

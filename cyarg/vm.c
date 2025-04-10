@@ -227,20 +227,32 @@ static void defineMethod(ObjRoutine* routine, ObjString* name) {
 }
 
 static bool derefElement(ObjRoutine* routine) {
-    if (!IS_VALARRAY(peek(routine, 2)) && is_positive_integer(peek(routine, 1))) {
+    if (!isArray(peek(routine, 2)) && is_positive_integer(peek(routine, 1))) {
         runtimeError(routine, "Expected an array and a positive or unsigned integer.");
         return false;
     }
     uint32_t index = as_positive_integer(pop(routine));
-    ObjValArray* array = AS_VALARRAY(pop(routine));
-    if (index >= array->array.count || index < 0) {
-        runtimeError(routine, "Array index %d out of bounds (0:%d)", index, array->array.count - 1);
-        return false;
-    }
 
-    Value result = array->array.values[index];
-    push(routine, result);
-    return true;
+    if (IS_VALARRAY(peek(routine, 2))) {
+        ObjValArray* array = AS_VALARRAY(pop(routine));
+        if (index >= array->array.count || index < 0) {
+            runtimeError(routine, "Array index %d out of bounds (0:%d)", index, array->array.count - 1);
+            return false;
+        }
+
+        Value result = array->array.values[index];
+        push(routine, result);
+    } else if (IS_UNIFORMARRAY(peek(routine, 2))) {
+        ObjUniformArray* array = AS_UNIFORMARRAY(pop(routine));
+        if (index >= array->count || index < 0) {
+            runtimeError(routine, "Array index %d out of bounds (0:%d)", index, array->count - 1);
+            return false;
+        }
+        uint32_t* entries = (uint32_t*) array->array;
+
+        Value result = AS_UINTEGER(entries[index]);
+        push(routine, result);
+    }
 }
 
 static bool setArrayElement(ObjRoutine* routine) {
