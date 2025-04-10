@@ -143,17 +143,17 @@ static void blackenObject(Obj* object) {
                 for (int i = 0; i < array->count; i++) {
                     Obj** elements = (Obj**) array->array;
                     if (elements[i]) {
-                        blackenObject(elements[i]);
+                        markObject(elements[i]);
                     }
                 }
             }
-            blackenObject((Obj*)array->element_type);
+            markObject((Obj*)array->element_type);
             break;
         }
         case OBJ_YARGTYPE: {
             ObjYargType* type = (ObjYargType*)object;
             if (type->yt == TypeInstance) {
-                blackenObject((Obj*)type->instanceKlass);
+                markObject((Obj*)type->instanceKlass);
             }
             break;
         }
@@ -230,7 +230,8 @@ static void freeObject(Obj* object) {
         }
         case OBJ_UNIFORMARRAY: {
             ObjUniformArray* array = (ObjUniformArray*)object;
-            reallocate(array->array, array->count * array->element_size, 0);    
+            reallocate(array->array, array->count * array->element_size, 0);
+            array->array = NULL;    
             FREE(ObjUniformArray, object);
             break;
         }
