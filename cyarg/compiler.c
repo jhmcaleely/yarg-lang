@@ -717,6 +717,7 @@ ParseRule rules[] = {
     [TOKEN_AMP]                  = {NULL,      binary, PREC_TERM},
     [TOKEN_PERCENT]              = {NULL,      binary, PREC_TERM},
     [TOKEN_CARET]                = {NULL,      binary, PREC_TERM},
+    [TOKEN_AT]                   = {NULL,      NULL,   PREC_NONE},
     [TOKEN_BANG]                 = {unary,     NULL,   PREC_NONE},
     [TOKEN_BANG_EQUAL]           = {NULL,      binary, PREC_EQUALITY},
     [TOKEN_EQUAL]                = {NULL,      NULL,   PREC_NONE},
@@ -748,6 +749,7 @@ ParseRule rules[] = {
     [TOKEN_PEEK]                 = {literal,   NULL,   PREC_NONE},
     [TOKEN_PRINT]                = {NULL,      NULL,   PREC_NONE},
     [TOKEN_RECEIVE]              = {literal,   NULL,   PREC_NONE},
+    [TOKEN_REG]                  = {NULL,      NULL,   PREC_NONE},
     [TOKEN_RESUME]               = {literal,   NULL,   PREC_NONE},
     [TOKEN_RETURN]               = {NULL,      NULL,   PREC_NONE},
     [TOKEN_RPEEK]                = {literal,   NULL,   PREC_NONE},
@@ -915,6 +917,21 @@ static void varDeclaration() {
     defineVariable(global);
 }
 
+static void regDeclaration() {
+    consume(TOKEN_MACHINE_UINT32, "Expect Type after reg.");
+    consume(TOKEN_AT, "Expect @ after register type.");
+    expression();
+    consume(TOKEN_IDENTIFIER, "Expect name after type@address.");
+    
+    if (match(TOKEN_EQUAL)) {
+        expression();
+    } else {
+        emitByte(OP_NIL);
+    }
+    
+    consume(TOKEN_SEMICOLON, "Expect ';' after register declaration");
+}
+
 static void expressionStatement() {
     expression();
     consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
@@ -1070,6 +1087,8 @@ static void declaration() {
         funDeclaration();
     } else if (match(TOKEN_VAR)) {
         varDeclaration();
+    } else if (match(TOKEN_REG)) {
+        regDeclaration();
     } else {
         statement();
     }
