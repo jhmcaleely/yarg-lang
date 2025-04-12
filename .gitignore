@@ -3,3 +3,4 @@ hostyarg/hostyarg
 .vscode
 build
 bin
+*.code-workspace
