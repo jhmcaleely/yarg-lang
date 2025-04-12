@@ -11,7 +11,7 @@ Not (yet) intended for use. Additional documentation on the [wiki][wiki]
 | `cyarg/` | yarg implementation in C |
 | `hostyarg/` | host tooling for yarg maintenance |
 | `tools/` | Miscellaneous tools |
-| `vscode-yarg` | A VS Code Language Extension for Yarg |
+| `vscode-yarg/` | A VS Code Language Extension for Yarg |
 | `yarg/specimen/` | Samples of Yarg |
 | `yarg/test/` | A Test Suite |
 
