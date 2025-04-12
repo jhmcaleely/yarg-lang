@@ -1,0 +1,31 @@
+{
+    "name": "yarg-lang",
+    "version": "0.0.1",
+    "displayName": "Yarg Language",
+    "description": "Yarg Language Support for VS Code",
+    "publisher": "jhmcaleely",
+    "repository": "https://github.com/jhmcaleely/yarg-lang/vscode-yarg",
+    "engines": {
+      "vscode": "^1.51.0"
+    },
+    "categories": ["Programming Languages"],
+    "contributes": {
+        "languages": [
+        {
+            "id": "Yarg",
+            "extensions": [".ya"]
+        }
+        ],
+        "grammars": [
+        {
+            "language": "Yarg",
+            "scopeName": "source.ya",
+            "path": "./syntaxes/yarg.tmGrammar.json"
+        }
+        ]
+    },
+    "devDependencies": {
+      "@types/vscode": "^1.51.0"
+    }
+  }
+  

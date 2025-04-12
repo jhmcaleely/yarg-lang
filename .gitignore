@@ -4,3 +4,4 @@ hostyarg/hostyarg
 build
 bin
 *.code-workspace
+*.vsix

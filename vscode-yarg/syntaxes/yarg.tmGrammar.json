@@ -1,0 +1,25 @@
+{
+    "scopeName": "source.ya",
+    "patterns": [
+        { "include": "#comments" }, 
+        { "include": "#keywords"}, 
+        { "include": "#strings" }
+    ],
+    "repository": {
+      "comments": {
+        "patterns": [
+            { "name": "comment.line.yarg", "match": "\\/\\/.*" }] 
+      },
+      "strings": {
+        "name": "string.yarg",
+        "begin": "\"",
+        "end": "\"",
+        "patterns": []
+      },
+      "keywords": {
+            "name": "keyword.yarg",
+            "match": "\\b(and|class|else|false|for|fun|if|import|len|muint32|make_array|make_channel|make_routine|nil|or|peek|print|receive|resume|return|rpeek|rpoke|send|set_element|share|start|super|this|true|var|while|yield)\\b"
+        }
+    }
+}
+  
