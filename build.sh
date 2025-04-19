@@ -27,3 +27,9 @@ cp cyarg/build/pico/cyarg.uf2 build/yarg-lang.uf2
 pushd yarg/specimen
 ../../bin/hostyarg addfile -fs ../../build/yarg-lang.uf2 -add machine.ya
 ../../bin/hostyarg addfile -fs ../../build/yarg-lang.uf2 -add gpio.ya
+popd
+
+pushd vscode-yarg
+vsce package
+mv yarg-lang-0.0.1.vsix ../build/
+popd
