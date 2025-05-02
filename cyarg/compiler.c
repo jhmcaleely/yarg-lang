@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "compiler.h"
+#include "compiler_common.h"
 #include "memory.h"
 #include "scanner.h"
 
@@ -48,13 +49,6 @@ typedef struct {
     uint8_t index;
     bool isLocal;
 } Upvalue;
-
-typedef enum {
-    TYPE_FUNCTION,
-    TYPE_INITIALIZER,
-    TYPE_METHOD,
-    TYPE_SCRIPT
-} FunctionType;
 
 typedef struct Compiler {
     struct Compiler* enclosing;
