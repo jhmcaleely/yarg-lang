@@ -1,5 +1,1 @@
-// scratch file for syntax experiments
-var test = make_array(muint32, 2);
-print test[0];
-test[0] = 0d3;
-print test[0];
+10;
