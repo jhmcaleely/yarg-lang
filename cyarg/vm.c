@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "compiler.h"
+#include "ast_compiler.h"
 #include "debug.h"
 #include "object.h"
 #include "memory.h"
@@ -731,7 +732,7 @@ InterpretResult run(ObjRoutine* routine) {
 }
 
 InterpretResult interpret(const char* source) {
-    ObjFunction* function = compile(source);
+    ObjFunction* function = astCompile(source);
     if (function == NULL) return INTERPRET_COMPILE_ERROR;
 
     tempRootPush(OBJ_VAL(function));
