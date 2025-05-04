@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "ast_compiler.h"
+#include "parser.h"
 #include "compiler_common.h"
 #include "memory.h"
 #include "scanner.h"
@@ -25,7 +26,15 @@ ObjFunction* astCompile(const char* source) {
     AstCompiler compiler;
     initCompiler(&compiler, TYPE_SCRIPT);
 
-    return NULL;
+    parser.hadError = false;
+    parser.panicMode = false;
+
+    advance();
+    while (!match(TOKEN_EOF)) {
+        declaration();
+    }
+
+    return parser.hadError ? NULL : NULL;
 }
 
 void markAstCompilerRoots() {
