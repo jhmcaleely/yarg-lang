@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "parser.h"
+#include "ast.h"
 
 Parser parser;
 
@@ -76,7 +77,23 @@ void synchronize() {
     }
 }
 
-void statement() {
+void consume(TokenType type, const char* message) {
+    if (parser.current.type == type) {
+        advance();
+        return;
+    }
+
+    errorAtCurrent(message);
+}
+
+static ObjExpressionStatement* expressionStatement() {
+    ObjExpression* expr = NULL; //expression();
+    consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
+    ObjExpressionStatement* expressionStatement = newExpressionStatement(expr);
+    return expressionStatement;
+}
+
+ObjExpressionStatement* statement() {
     if (match(TOKEN_PRINT)) {
 //        printStatement();
     } else if (match(TOKEN_FOR)) {
@@ -94,11 +111,13 @@ void statement() {
 //        block();
 //        endScope();
     } else {
-//        expressionStatement();
+        return expressionStatement();
     }
 }
 
-void declaration() {
+ObjExpressionStatement* declaration() {
+    ObjExpressionStatement* stmt = NULL;
+
     if (match(TOKEN_CLASS)) {
 //        classDeclaration();
     } else if (match(TOKEN_FUN)) {
@@ -106,8 +125,27 @@ void declaration() {
     } else if (match(TOKEN_VAR)) {
 //        varDeclaration();
     } else {
-        statement();
+        stmt = statement();
     }
 
     if (parser.panicMode) synchronize();
+    return stmt;
+}
+
+
+ObjExpressionStatement* parse() {
+    ObjExpressionStatement* statements = NULL;
+    ObjExpressionStatement** cursor = &statements;
+
+    parser.hadError = false;
+    parser.panicMode = false;
+
+    advance();
+    while (!match(TOKEN_EOF)) {
+        *cursor = declaration();
+        if (*cursor) {
+            cursor = &(*cursor)->next;
+        }
+    }
+    return statements;
 }

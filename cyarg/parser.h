@@ -13,12 +13,17 @@ typedef struct {
 
 extern Parser parser;
 
+typedef struct ObjExpressionStatement ObjExpressionStatement;
+
+ObjExpressionStatement* parse();
 
 bool check(TokenType type);
 bool match(TokenType type);
 void advance();
-void declaration();
-void statement();
+void consume(TokenType type, const char* message);
+
+ObjExpressionStatement* declaration();
+ObjExpressionStatement* statement();
 
 void synchronize();
 void errorAt(Token* token, const char* message);

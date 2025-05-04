@@ -54,7 +54,9 @@ typedef enum {
     OBJ_UPVALUE,
     OBJ_VALARRAY,
     OBJ_UNIFORMARRAY,
-    OBJ_YARGTYPE
+    OBJ_YARGTYPE,
+    OBJ_EXPRESSION,
+    OBJ_EXPRESSIONSTMT
 } ObjType;
 
 struct Obj {

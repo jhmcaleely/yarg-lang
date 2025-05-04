@@ -69,15 +69,6 @@ static Chunk* currentChunk() {
 }
 
 
-static void consume(TokenType type, const char* message) {
-    if (parser.current.type == type) {
-        advance();
-        return;
-    }
-
-    errorAtCurrent(message);
-}
-
 static void emitByte(uint8_t byte) {
     writeChunk(currentChunk(), byte, parser.previous.line);
 }
