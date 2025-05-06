@@ -158,12 +158,6 @@ static void blackenObject(Obj* object) {
             }
             break;
         }
-        case OBJ_EXPRESSION: {
-            ObjExpression* exp = (ObjExpression*)object;
-            markObject((Obj*)exp->nextItem);
-            markObject((Obj*)exp->expr);
-            break;
-        }
         case OBJ_EXPRESSIONSTMT: {
             ObjExpressionStatement* stmt = (ObjExpressionStatement*)object;
             markObject((Obj*)stmt->stmt.nextStmt);
@@ -175,11 +169,23 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)stmt->stmt.nextStmt);
             markObject((Obj*)stmt->expression);
             break;
-        }        case OBJ_NATIVE:
+        }        
+        case OBJ_NUMBER: {
+            ObjNumber* expr = (ObjNumber*)object;
+            markObject((Obj*)expr->expr.nextExpr);
+            break;
+        }       
+        case OBJ_BINARYEXPR: {
+            ObjBinaryExpr* expr = (ObjBinaryExpr*)object;
+            markObject((Obj*)expr->expr.nextExpr);
+            markObject((Obj*)expr->rhs);
+            break;
+
+        }        
+        case OBJ_NATIVE:
         case OBJ_BLOB:
         case OBJ_CHANNEL:
         case OBJ_STRING:
-        case OBJ_NUMBER:
             break;
     }
 }
@@ -258,10 +264,10 @@ static void freeObject(Obj* object) {
             FREE(ObjYargType, object);
             break;
         }
-        case OBJ_EXPRESSION: FREE(ObjExpression, object); break;
         case OBJ_EXPRESSIONSTMT: FREE(ObjExpressionStatement, object); break;
         case OBJ_PRINTSTMT: FREE(ObjPrintStatement, object); break;
         case OBJ_NUMBER: FREE(ObjNumber, object); break;
+        case OBJ_BINARYEXPR: FREE(ObjBinaryExpr, object); break;
     }
 }
 

@@ -9,6 +9,8 @@
 #include "object.h"
 #include "scanner.h"
 
+static void generateExpr(ObjExpr* expr);
+
 typedef struct AstCompiler {
     struct AstCompiler* enclosing;
     ObjFunction* function;
@@ -84,26 +86,58 @@ static void generateNumber(ObjNumber* num) {
         case NUMBER_DOUBLE: emitConstant(DOUBLE_VAL(num->val.dbl)); break;
         case NUMBER_INTEGER: emitConstant(INTEGER_VAL(num->val.integer)); break;
         case NUMBER_UINTEGER32: emitConstant(UINTEGER_VAL(num->val.uinteger32)); break;
+        default:
+            return; //  unreachable
     }
 }
 
-static void generateExprElt(Obj* expr) {
+static void generatBinaryExpr(ObjBinaryExpr* bin) {
+    generateExpr(bin->rhs);
+
+    switch (bin->operation) {
+        case EXPR_OP_EQUAL: emitByte(OP_EQUAL); break;
+        case EXPR_OP_GREATER: emitByte(OP_GREATER); break;
+        case EXPR_OP_RIGHT_SHIFT: emitByte(OP_RIGHT_SHIFT); break;
+        case EXPR_OP_LESS: emitByte(OP_LESS); break;
+        case EXPR_OP_LEFT_SHIFT: emitByte(OP_LEFT_SHIFT); break;
+        case EXPR_OP_ADD: emitByte(OP_ADD); break;
+        case EXPR_OP_SUBTRACT: emitByte(OP_SUBTRACT); break;
+        case EXPR_OP_MULTIPLY: emitByte(OP_MULTIPLY); break;
+        case EXPR_OP_DIVIDE: emitByte(OP_DIVIDE); break;
+        case EXPR_OP_BITOR: emitByte(OP_BITOR); break;
+        case EXPR_OP_BITAND: emitByte(OP_BITAND); break;
+        case EXPR_OP_BITXOR: emitByte(OP_BITXOR); break;
+        case EXPR_OP_MODULO: emitByte(OP_MODULO); break;
+        case EXPR_OP_NOT_EQUAL: emitBytes(OP_EQUAL, OP_NOT); break;
+        case EXPR_OP_GREATER_EQUAL: emitBytes(OP_LESS, OP_NOT); break;
+        case EXPR_OP_LESS_EQUAL: emitBytes(OP_GREATER, OP_NOT); break;
+    }
+}
+
+static void generateExprElt(ObjExpr* expr) {
     
-    switch (expr->type) {
+    switch (expr->Obj.type) {
         case OBJ_NUMBER: {
             ObjNumber* num = (ObjNumber*)expr;
             generateNumber(num);
             break;
         }
+        case OBJ_BINARYEXPR: {
+            ObjBinaryExpr* bin = (ObjBinaryExpr*)expr;
+            generatBinaryExpr(bin);
+            break;
+        }
+        default:
+            return; // unexpected
     }
 }
 
 
-static void generateExpr(ObjExpression* expr) {
+static void generateExpr(ObjExpr* expr) {
 
     while (expr != NULL) {
-        generateExprElt(expr->expr);
-        expr = expr->nextItem;
+        generateExprElt(expr);
+        expr = expr->nextExpr;
     }
 }
 
@@ -118,6 +152,8 @@ static void generateStmt(ObjStmt* stmt) {
             generateExpr(((ObjPrintStatement*)stmt)->expression);
             emitByte(OP_PRINT);
             break;
+        default:
+            return; // Unexpected
     }
 }
 

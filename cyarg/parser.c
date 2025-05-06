@@ -7,13 +7,17 @@
 #include "ast.h"
 #include "memory.h"
 
-typedef Obj* (*AstParseFn)(bool canAssign);
+typedef ObjExpr* (*AstParseFn)(bool canAssign);
 
 typedef struct {
     AstParseFn prefix;
     AstParseFn infix;
     Precedence precedence;
 } AstParseRule;
+
+static AstParseRule* getRule(TokenType type);
+static ObjExpr* parsePrecedence(Precedence precedence);
+
 
 Parser parser;
 
@@ -131,22 +135,55 @@ static uint32_t strtoNum(const char* literal, int length, int radix) {
     return val;
 }
 
-static Obj* grouping(bool canAssign) { return NULL; }
-static Obj* call(bool canAssign) { return NULL;}
-static Obj* arrayinit(bool canAssign) { return NULL; }
-static Obj* deref(bool canAssign) {return NULL; }
-static Obj* dot(bool canAssign) { return NULL; }
-static Obj* unary(bool canAssign) { return NULL; }
-static Obj* binary(bool canAssign) { return NULL; }
-static Obj* variable(bool canAssign) {return NULL; }
-static Obj* string(bool canAssign) { return NULL; }
-static Obj* and_(bool canAssign) { return NULL; }
-static Obj* or_(bool canAssign) { return NULL; }
-static Obj* super_(bool canAssign) { return NULL; }
-static Obj* this_(bool canAssign) { return NULL; }
-static Obj* literal(bool canAssign) { return NULL; }
+static ObjExpr* grouping(bool canAssign) { return NULL; }
+static ObjExpr* call(bool canAssign) { return NULL;}
+static ObjExpr* arrayinit(bool canAssign) { return NULL; }
+static ObjExpr* deref(bool canAssign) {return NULL; }
+static ObjExpr* dot(bool canAssign) { return NULL; }
+static ObjExpr* unary(bool canAssign) { return NULL; }
+static ObjExpr* variable(bool canAssign) {return NULL; }
+static ObjExpr* string(bool canAssign) { return NULL; }
+static ObjExpr* and_(bool canAssign) { return NULL; }
+static ObjExpr* or_(bool canAssign) { return NULL; }
+static ObjExpr* super_(bool canAssign) { return NULL; }
+static ObjExpr* this_(bool canAssign) { return NULL; }
+static ObjExpr* literal(bool canAssign) { return NULL; }
 
-static Obj* number(bool canAssign) {
+
+static ObjExpr* binary(bool canAssign) {
+    TokenType operatorType = parser.previous.type;
+    AstParseRule* rule = getRule(operatorType);
+    ObjExpr* rhs = parsePrecedence((Precedence)(rule->precedence + 1));
+    tempRootPush(OBJ_VAL(rhs));
+
+    ExprOp op;
+    switch (operatorType) {
+        case TOKEN_EQUAL_EQUAL:   op = EXPR_OP_EQUAL; break;
+        case TOKEN_GREATER:       op = EXPR_OP_GREATER; break;
+        case TOKEN_RIGHT_SHIFT:   op = EXPR_OP_RIGHT_SHIFT; break;
+        case TOKEN_LESS:          op = EXPR_OP_LESS; break;
+        case TOKEN_LEFT_SHIFT:    op = EXPR_OP_LEFT_SHIFT; break;
+        case TOKEN_PLUS:          op = EXPR_OP_ADD; break;
+        case TOKEN_MINUS:         op = EXPR_OP_SUBTRACT; break;
+        case TOKEN_STAR:          op = EXPR_OP_MULTIPLY; break;
+        case TOKEN_SLASH:         op = EXPR_OP_DIVIDE; break;
+        case TOKEN_BAR:           op = EXPR_OP_BITOR; break;
+        case TOKEN_AMP:           op = EXPR_OP_BITAND; break;
+        case TOKEN_CARET:         op = EXPR_OP_BITXOR; break;
+        case TOKEN_PERCENT:       op = EXPR_OP_MODULO; break;
+        case TOKEN_BANG_EQUAL:    op = EXPR_OP_NOT_EQUAL; break;
+        case TOKEN_GREATER_EQUAL: op = EXPR_OP_GREATER_EQUAL; break;
+        case TOKEN_LESS_EQUAL:    op = EXPR_OP_LESS_EQUAL; break;
+        default:
+            return NULL; // Unreachable.
+    }
+
+    ObjBinaryExpr* expr = newBinaryExpr(rhs, op);
+    tempRootPop();
+    return (ObjExpr*) expr;
+}
+
+static ObjExpr* number(bool canAssign) {
     int radix = 0;
     bool sign_bit = true;
     const char* number_start = parser.previous.start;
@@ -185,7 +222,7 @@ static Obj* number(bool canAssign) {
         uint32_t value = strtoNum(number_start, number_len, radix);
         val = newNumberUInteger32(value);
     }
-    return (Obj*) val;
+    return (ObjExpr*) val;
 }
 
 
@@ -261,7 +298,7 @@ static AstParseRule* getRule(TokenType type) {
     return &rules[type];
 }
 
-static ObjExpression* parsePrecedence(Precedence precedence) {
+static ObjExpr* parsePrecedence(Precedence precedence) {
     advance();
     AstParseFn prefixRule = getRule(parser.previous.type)->prefix;
     if (prefixRule == NULL) {
@@ -271,19 +308,15 @@ static ObjExpression* parsePrecedence(Precedence precedence) {
 
     bool canAssign = precedence <= PREC_ASSIGNMENT;
 
-    Obj* expr = prefixRule(canAssign);
+    ObjExpr* expr = prefixRule(canAssign);
     tempRootPush(OBJ_VAL(expr));
 
-    ObjExpression* item = newExpression(expr);
-    tempRootPush(OBJ_VAL(item));
-
-    ObjExpression** cursor = &item->nextItem;
+    ObjExpr** cursor = &expr->nextExpr;
     while (precedence <= getRule(parser.current.type)->precedence) {
         advance();
         AstParseFn infixRule = getRule(parser.previous.type)->infix;
-        Obj* expr = infixRule(canAssign);
-        *cursor = newExpression(expr);
-        cursor = &(*cursor)->nextItem;
+        *cursor = infixRule(canAssign);
+        cursor = &(*cursor)->nextExpr;
     }
 
     if (canAssign && match(TOKEN_EQUAL)) {
@@ -291,16 +324,15 @@ static ObjExpression* parsePrecedence(Precedence precedence) {
     }
 
     tempRootPop();
-    tempRootPop();
-    return item;
+    return expr;
 }
 
-static ObjExpression* expression() {
+static ObjExpr* expression() {
     return parsePrecedence(PREC_ASSIGNMENT);
 }
 
 static ObjPrintStatement* printStatement() {
-    ObjExpression* expr = expression();
+    ObjExpr* expr = expression();
     tempRootPush(OBJ_VAL(expr));
     consume(TOKEN_SEMICOLON, "Expect ';' after value.");
     ObjPrintStatement* print = newPrintStatement(expr);
@@ -309,7 +341,7 @@ static ObjPrintStatement* printStatement() {
 }
 
 static ObjExpressionStatement* expressionStatement() {
-    ObjExpression* expr = expression();
+    ObjExpr* expr = expression();
     tempRootPush(OBJ_VAL(expr));
     consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
     ObjExpressionStatement* expressionStatement = newExpressionStatement(expr);
