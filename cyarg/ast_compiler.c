@@ -12,7 +12,7 @@
 typedef struct AstCompiler {
     struct AstCompiler* enclosing;
     ObjFunction* function;
-    ObjExpressionStatement* ast;
+    ObjStmt* ast;
     FunctionType type;
 } AstCompiler;
 
@@ -108,17 +108,25 @@ static void generateExpr(ObjExpression* expr) {
 }
 
 
-static void generateStmt(ObjExpressionStatement* stmt) {
-    generateExpr(stmt->expression);
-    emitByte(OP_POP);
+static void generateStmt(ObjStmt* stmt) {
+    switch (stmt->obj.type) {
+        case OBJ_EXPRESSIONSTMT:
+            generateExpr(((ObjExpressionStatement*)stmt)->expression);
+            emitByte(OP_POP);
+            break;
+        case OBJ_PRINTSTMT:
+            generateExpr(((ObjPrintStatement*)stmt)->expression);
+            emitByte(OP_PRINT);
+            break;
+    }
 }
 
 
 static void generate() {
-    ObjExpressionStatement* stmt = current->ast;
+    ObjStmt* stmt = current->ast;
     while (stmt != NULL) {
         generateStmt(stmt);
-        stmt = stmt->next;
+        stmt = stmt->nextStmt;
     }
 }
 

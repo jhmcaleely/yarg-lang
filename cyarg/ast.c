@@ -4,7 +4,15 @@
 
 ObjExpressionStatement* newExpressionStatement(ObjExpression* expr) {
     ObjExpressionStatement* stmt = ALLOCATE_OBJ(ObjExpressionStatement, OBJ_EXPRESSIONSTMT);
-    stmt->next = NULL;
+    stmt->stmt.nextStmt = NULL;
+    stmt->expression = expr;
+
+    return stmt;
+}
+
+ObjPrintStatement* newPrintStatement(ObjExpression* expr) {
+    ObjPrintStatement* stmt = ALLOCATE_OBJ(ObjPrintStatement, OBJ_PRINTSTMT);
+    stmt->stmt.nextStmt = NULL;
     stmt->expression = expr;
 
     return stmt;

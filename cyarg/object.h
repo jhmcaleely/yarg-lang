@@ -57,7 +57,8 @@ typedef enum {
     OBJ_YARGTYPE,
     OBJ_EXPRESSION,
     OBJ_EXPRESSIONSTMT,
-    OBJ_NUMBER
+    OBJ_NUMBER,
+    OBJ_PRINTSTMT
 } ObjType;
 
 struct Obj {

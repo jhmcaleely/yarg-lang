@@ -299,6 +299,15 @@ static ObjExpression* expression() {
     return parsePrecedence(PREC_ASSIGNMENT);
 }
 
+static ObjPrintStatement* printStatement() {
+    ObjExpression* expr = expression();
+    tempRootPush(OBJ_VAL(expr));
+    consume(TOKEN_SEMICOLON, "Expect ';' after value.");
+    ObjPrintStatement* print = newPrintStatement(expr);
+    tempRootPop();
+    return print;
+}
+
 static ObjExpressionStatement* expressionStatement() {
     ObjExpression* expr = expression();
     tempRootPush(OBJ_VAL(expr));
@@ -308,9 +317,9 @@ static ObjExpressionStatement* expressionStatement() {
     return expressionStatement;
 }
 
-ObjExpressionStatement* statement() {
-//    if (match(TOKEN_PRINT)) {
-//        printStatement();
+ObjStmt* statement() {
+    if (match(TOKEN_PRINT)) {
+        return (ObjStmt*) printStatement();
 //    } else if (match(TOKEN_FOR)) {
 //        forStatement();
 //    } else if (match(TOKEN_IF)) {
@@ -325,13 +334,13 @@ ObjExpressionStatement* statement() {
 //        beginScope();
 //        block();
 //        endScope();
-//    } else {
-        return expressionStatement();
-//    }
+    } else {
+        return (ObjStmt*) expressionStatement();
+    }
 }
 
-ObjExpressionStatement* declaration() {
-    ObjExpressionStatement* stmt = NULL;
+ObjStmt* declaration() {
+    ObjStmt* stmt = NULL;
 
     if (match(TOKEN_CLASS)) {
 //        classDeclaration();
@@ -348,9 +357,9 @@ ObjExpressionStatement* declaration() {
 }
 
 
-ObjExpressionStatement* parse() {
-    ObjExpressionStatement* statements = NULL;
-    ObjExpressionStatement** cursor = &statements;
+ObjStmt* parse() {
+    ObjStmt* statements = NULL;
+    ObjStmt** cursor = &statements;
 
     parser.hadError = false;
     parser.panicMode = false;
@@ -359,7 +368,7 @@ ObjExpressionStatement* parse() {
     while (!match(TOKEN_EOF)) {
         *cursor = declaration();
         if (*cursor) {
-            cursor = &(*cursor)->next;
+            cursor = &(*cursor)->nextStmt;
         }
     }
     return statements;

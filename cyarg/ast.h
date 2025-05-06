@@ -3,6 +3,13 @@
 
 #include "object.h"
 
+typedef struct ObjStmt ObjStmt;
+
+typedef struct ObjStmt {
+    Obj obj;
+    ObjStmt* nextStmt;
+} ObjStmt;
+
 typedef struct ObjExpression ObjExpression;
 
 typedef struct ObjExpression {
@@ -14,10 +21,14 @@ typedef struct ObjExpression {
 typedef struct ObjExpressionStatement ObjExpressionStatement;
 
 typedef struct ObjExpressionStatement {
-    Obj obj;
-    ObjExpressionStatement* next;
+    ObjStmt stmt;
     ObjExpression* expression;
 } ObjExpressionStatement;
+
+typedef struct ObjPrintStatement {
+    ObjStmt stmt;
+    ObjExpression* expression;
+} ObjPrintStatement;
 
 
 typedef enum {
@@ -42,6 +53,6 @@ ObjNumber* newNumberInteger(int value);
 ObjNumber* newNumberUInteger32(uint32_t value);
 ObjExpression* newExpression(Obj* element);
 ObjExpressionStatement* newExpressionStatement(ObjExpression* expr);
-
+ObjPrintStatement* newPrintStatement(ObjExpression* expr);
 
 #endif
