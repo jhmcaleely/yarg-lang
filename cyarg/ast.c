@@ -28,6 +28,13 @@ ObjBinaryExpr* newBinaryExpr(ObjExpr* rhs, ExprOp op) {
     return bin;
 }
 
+ObjGroupingExpr* newGroupingExpr(ObjExpr* expression) {
+    ObjGroupingExpr* grp = ALLOCATE_OBJ(ObjGroupingExpr, OBJ_EXPR_GROUPING);
+    grp->expr.nextExpr = NULL;
+    grp->expression = expression;
+    return grp;
+}
+
 
 ObjNumber* newNumberDouble(double value) {
     ObjNumber* num = ALLOCATE_OBJ(ObjNumber, OBJ_NUMBER);

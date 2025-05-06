@@ -58,7 +58,8 @@ typedef enum {
     OBJ_EXPRESSIONSTMT,
     OBJ_NUMBER,
     OBJ_PRINTSTMT,
-    OBJ_BINARYEXPR
+    OBJ_BINARYEXPR,
+    OBJ_EXPR_GROUPING
 } ObjType;
 
 struct Obj {

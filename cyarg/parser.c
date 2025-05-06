@@ -18,6 +18,8 @@ typedef struct {
 static AstParseRule* getRule(TokenType type);
 static ObjExpr* parsePrecedence(Precedence precedence);
 
+static ObjExpr* expression();
+
 
 Parser parser;
 
@@ -135,7 +137,6 @@ static uint32_t strtoNum(const char* literal, int length, int radix) {
     return val;
 }
 
-static ObjExpr* grouping(bool canAssign) { return NULL; }
 static ObjExpr* call(bool canAssign) { return NULL;}
 static ObjExpr* arrayinit(bool canAssign) { return NULL; }
 static ObjExpr* deref(bool canAssign) {return NULL; }
@@ -149,6 +150,15 @@ static ObjExpr* super_(bool canAssign) { return NULL; }
 static ObjExpr* this_(bool canAssign) { return NULL; }
 static ObjExpr* literal(bool canAssign) { return NULL; }
 
+
+static ObjExpr* grouping(bool canAssign) {
+    ObjExpr* expr = expression();
+    tempRootPush(OBJ_VAL(expr));
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
+    ObjGroupingExpr* grp = newGroupingExpr(expr);
+    tempRootPop();
+    return (ObjExpr*)grp; 
+}
 
 static ObjExpr* binary(bool canAssign) {
     TokenType operatorType = parser.previous.type;

@@ -42,6 +42,11 @@ typedef struct {
     ObjExpr* rhs;
 } ObjBinaryExpr;
 
+typedef struct {
+    ObjExpr expr;
+    ObjExpr* expression;
+} ObjGroupingExpr;
+
 typedef struct ObjExpressionStatement ObjExpressionStatement;
 
 typedef struct ObjExpressionStatement {
@@ -53,7 +58,6 @@ typedef struct ObjPrintStatement {
     ObjStmt stmt;
     ObjExpr* expression;
 } ObjPrintStatement;
-
 
 typedef enum {
     NUMBER_DOUBLE,
@@ -76,6 +80,8 @@ ObjNumber* newNumberDouble(double value);
 ObjNumber* newNumberInteger(int value);
 ObjNumber* newNumberUInteger32(uint32_t value);
 ObjBinaryExpr* newBinaryExpr(ObjExpr* rhs, ExprOp op);
+ObjGroupingExpr* newGroupingExpr(ObjExpr* expression);
+
 ObjExpressionStatement* newExpressionStatement(ObjExpr* expr);
 ObjPrintStatement* newPrintStatement(ObjExpr* expr);
 

@@ -181,6 +181,12 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)expr->rhs);
             break;
 
+        }
+        case OBJ_EXPR_GROUPING: {
+            ObjGroupingExpr* expr = (ObjGroupingExpr*)object;
+            markObject((Obj*)expr->expr.nextExpr);
+            markObject((Obj*)expr->expression);
+            break;
         }        
         case OBJ_NATIVE:
         case OBJ_BLOB:
@@ -268,6 +274,7 @@ static void freeObject(Obj* object) {
         case OBJ_PRINTSTMT: FREE(ObjPrintStatement, object); break;
         case OBJ_NUMBER: FREE(ObjNumber, object); break;
         case OBJ_BINARYEXPR: FREE(ObjBinaryExpr, object); break;
+        case OBJ_EXPR_GROUPING: FREE(ObjGroupingExpr, object); break;
     }
 }
 

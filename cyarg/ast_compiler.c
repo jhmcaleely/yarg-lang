@@ -91,7 +91,7 @@ static void generateNumber(ObjNumber* num) {
     }
 }
 
-static void generatBinaryExpr(ObjBinaryExpr* bin) {
+static void generateBinaryExpr(ObjBinaryExpr* bin) {
     generateExpr(bin->rhs);
 
     switch (bin->operation) {
@@ -114,6 +114,10 @@ static void generatBinaryExpr(ObjBinaryExpr* bin) {
     }
 }
 
+static void generateGroupingExpr(ObjGroupingExpr* grp) {
+    generateExpr(grp->expression);
+}
+
 static void generateExprElt(ObjExpr* expr) {
     
     switch (expr->Obj.type) {
@@ -124,7 +128,12 @@ static void generateExprElt(ObjExpr* expr) {
         }
         case OBJ_BINARYEXPR: {
             ObjBinaryExpr* bin = (ObjBinaryExpr*)expr;
-            generatBinaryExpr(bin);
+            generateBinaryExpr(bin);
+            break;
+        }
+        case OBJ_EXPR_GROUPING: {
+            ObjGroupingExpr* grp = (ObjGroupingExpr*)expr;
+            generateGroupingExpr(grp);
             break;
         }
         default:
