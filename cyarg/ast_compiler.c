@@ -15,7 +15,7 @@ typedef struct AstCompiler {
     FunctionType type;
 } AstCompiler;
 
-static AstCompiler* current = NULL;
+static struct AstCompiler* current;
 
 static void initCompiler(AstCompiler* compiler, FunctionType type) {
     compiler->enclosing = current;
@@ -31,13 +31,44 @@ static void initCompiler(AstCompiler* compiler, FunctionType type) {
     }
 }
 
-static void generate() {
-    return;
+
+static Chunk* currentChunk() {
+    return &current->function->chunk;
 }
+
+
+static void emitByte(uint8_t byte) {
+    writeChunk(currentChunk(), byte, parser.previous.line);
+}
+
+static void emitBytes(uint8_t byte1, uint8_t byte2) {
+    emitByte(byte1);
+    emitByte(byte2);
+}
+
+static void generateExpr(ObjExpression*) {
+    
+}
+
+
+static void generateStmt(ObjExpressionStatement* stmt) {
+    generateExpr(stmt->expression);
+    emitByte(OP_POP);
+}
+
+
+static void generate() {
+    ObjExpressionStatement* stmt = current->ast;
+    while (stmt != NULL) {
+        generateStmt(stmt);
+        stmt = stmt->next;
+    }
+}
+
 
 ObjFunction* astCompile(const char* source) {
     initScanner(source);
-    AstCompiler compiler;
+    struct AstCompiler compiler;
     initCompiler(&compiler, TYPE_SCRIPT);
 
     current->ast = parse();
