@@ -123,7 +123,7 @@ static void generateGroupingExpr(ObjGroupingExpr* grp) {
 static void generateExprElt(ObjExpr* expr) {
     
     switch (expr->Obj.type) {
-        case OBJ_NUMBER: {
+        case OBJ_EXPR_NUMBER: {
             ObjNumber* num = (ObjNumber*)expr;
             generateNumber(num);
             break;
@@ -155,11 +155,11 @@ static void generateExpr(ObjExpr* expr) {
 
 static void generateStmt(ObjStmt* stmt) {
     switch (stmt->obj.type) {
-        case OBJ_EXPRESSIONSTMT:
+        case OBJ_STMT_EXPRESSION:
             generateExpr(((ObjExpressionStatement*)stmt)->expression);
             emitByte(OP_POP);
             break;
-        case OBJ_PRINTSTMT:
+        case OBJ_STMT_PRINT:
             generateExpr(((ObjPrintStatement*)stmt)->expression);
             emitByte(OP_PRINT);
             break;

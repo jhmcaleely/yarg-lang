@@ -280,5 +280,10 @@ void printObject(Value value) {
         case OBJ_YARGTYPE:
             printType(AS_YARGTYPE(value));
             break;
+        case OBJ_STMT_EXPRESSION: printf("exprstmt"); break;
+        case OBJ_STMT_PRINT: printf("printstmt"); break;
+        case OBJ_EXPR_GROUPING: printf("groupingexpr"); break;
+        case OBJ_EXPR_NUMBER: printf("NumberExpr"); break;
+        case OBJ_EXPR_OPERATION: printf("OperationExpr"); break;
     }
 }
