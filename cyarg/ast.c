@@ -19,13 +19,13 @@ ObjPrintStatement* newPrintStatement(ObjExpr* expr) {
 }
 
 
-ObjBinaryExpr* newBinaryExpr(ObjExpr* rhs, ExprOp op) {
-    ObjBinaryExpr* bin = ALLOCATE_OBJ(ObjBinaryExpr, OBJ_BINARYEXPR);
-    bin->expr.nextExpr = NULL;
-    bin->rhs = rhs;
-    bin->operation = op;
+ObjOperationExpr* newOperationExpr(ObjExpr* rhs, ExprOp op) {
+    ObjOperationExpr* operation = ALLOCATE_OBJ(ObjOperationExpr, OBJ_EXPR_OPERATION);
+    operation->expr.nextExpr = NULL;
+    operation->rhs = rhs;
+    operation->operation = op;
 
-    return bin;
+    return operation;
 }
 
 ObjGroupingExpr* newGroupingExpr(ObjExpr* expression) {

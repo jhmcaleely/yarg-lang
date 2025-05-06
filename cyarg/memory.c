@@ -175,8 +175,8 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)expr->expr.nextExpr);
             break;
         }       
-        case OBJ_BINARYEXPR: {
-            ObjBinaryExpr* expr = (ObjBinaryExpr*)object;
+        case OBJ_EXPR_OPERATION: {
+            ObjOperationExpr* expr = (ObjOperationExpr*)object;
             markObject((Obj*)expr->expr.nextExpr);
             markObject((Obj*)expr->rhs);
             break;
@@ -273,7 +273,7 @@ static void freeObject(Obj* object) {
         case OBJ_EXPRESSIONSTMT: FREE(ObjExpressionStatement, object); break;
         case OBJ_PRINTSTMT: FREE(ObjPrintStatement, object); break;
         case OBJ_NUMBER: FREE(ObjNumber, object); break;
-        case OBJ_BINARYEXPR: FREE(ObjBinaryExpr, object); break;
+        case OBJ_EXPR_OPERATION: FREE(ObjOperationExpr, object); break;
         case OBJ_EXPR_GROUPING: FREE(ObjGroupingExpr, object); break;
     }
 }

@@ -33,14 +33,16 @@ typedef enum {
     EXPR_OP_MODULO,
     EXPR_OP_NOT_EQUAL,
     EXPR_OP_GREATER_EQUAL,
-    EXPR_OP_LESS_EQUAL
+    EXPR_OP_LESS_EQUAL,
+    EXPR_OP_NOT,
+    EXPR_OP_NEGATE
 } ExprOp;
 
 typedef struct {
     ObjExpr expr;
     ExprOp operation;
     ObjExpr* rhs;
-} ObjBinaryExpr;
+} ObjOperationExpr;
 
 typedef struct {
     ObjExpr expr;
@@ -79,7 +81,7 @@ typedef struct ObjNumber {
 ObjNumber* newNumberDouble(double value);
 ObjNumber* newNumberInteger(int value);
 ObjNumber* newNumberUInteger32(uint32_t value);
-ObjBinaryExpr* newBinaryExpr(ObjExpr* rhs, ExprOp op);
+ObjOperationExpr* newOperationExpr(ObjExpr* rhs, ExprOp op);
 ObjGroupingExpr* newGroupingExpr(ObjExpr* expression);
 
 ObjExpressionStatement* newExpressionStatement(ObjExpr* expr);

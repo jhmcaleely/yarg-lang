@@ -91,7 +91,7 @@ static void generateNumber(ObjNumber* num) {
     }
 }
 
-static void generateBinaryExpr(ObjBinaryExpr* bin) {
+static void generateOperationExpr(ObjOperationExpr* bin) {
     generateExpr(bin->rhs);
 
     switch (bin->operation) {
@@ -111,6 +111,8 @@ static void generateBinaryExpr(ObjBinaryExpr* bin) {
         case EXPR_OP_NOT_EQUAL: emitBytes(OP_EQUAL, OP_NOT); break;
         case EXPR_OP_GREATER_EQUAL: emitBytes(OP_LESS, OP_NOT); break;
         case EXPR_OP_LESS_EQUAL: emitBytes(OP_GREATER, OP_NOT); break;
+        case EXPR_OP_NOT: emitByte(OP_NOT); break;
+        case EXPR_OP_NEGATE: emitByte(OP_NEGATE); break;
     }
 }
 
@@ -126,9 +128,9 @@ static void generateExprElt(ObjExpr* expr) {
             generateNumber(num);
             break;
         }
-        case OBJ_BINARYEXPR: {
-            ObjBinaryExpr* bin = (ObjBinaryExpr*)expr;
-            generateBinaryExpr(bin);
+        case OBJ_EXPR_OPERATION: {
+            ObjOperationExpr* op = (ObjOperationExpr*)expr;
+            generateOperationExpr(op);
             break;
         }
         case OBJ_EXPR_GROUPING: {

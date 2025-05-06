@@ -141,7 +141,6 @@ static ObjExpr* call(bool canAssign) { return NULL;}
 static ObjExpr* arrayinit(bool canAssign) { return NULL; }
 static ObjExpr* deref(bool canAssign) {return NULL; }
 static ObjExpr* dot(bool canAssign) { return NULL; }
-static ObjExpr* unary(bool canAssign) { return NULL; }
 static ObjExpr* variable(bool canAssign) {return NULL; }
 static ObjExpr* string(bool canAssign) { return NULL; }
 static ObjExpr* and_(bool canAssign) { return NULL; }
@@ -150,6 +149,24 @@ static ObjExpr* super_(bool canAssign) { return NULL; }
 static ObjExpr* this_(bool canAssign) { return NULL; }
 static ObjExpr* literal(bool canAssign) { return NULL; }
 
+
+static ObjExpr* unary(bool canAssign) {
+    TokenType operatorType = parser.previous.type;
+
+    ObjExpr* rhs = parsePrecedence(PREC_UNARY);
+    tempRootPush(OBJ_VAL(rhs));
+
+    ExprOp op;
+    switch (operatorType) {
+        case TOKEN_BANG: op = EXPR_OP_NOT; break;
+        case TOKEN_MINUS: op = EXPR_OP_NEGATE; break;
+        default: break; // Unreachable.
+    }
+
+    ObjOperationExpr* expr = newOperationExpr(rhs, op);
+    tempRootPop();
+    return (ObjExpr*) expr; 
+}
 
 static ObjExpr* grouping(bool canAssign) {
     ObjExpr* expr = expression();
@@ -188,7 +205,7 @@ static ObjExpr* binary(bool canAssign) {
             return NULL; // Unreachable.
     }
 
-    ObjBinaryExpr* expr = newBinaryExpr(rhs, op);
+    ObjOperationExpr* expr = newOperationExpr(rhs, op);
     tempRootPop();
     return (ObjExpr*) expr;
 }
