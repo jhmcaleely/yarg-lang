@@ -6,6 +6,7 @@
 #include "ast.h"
 #include "compiler_common.h"
 #include "memory.h"
+#include "object.h"
 #include "scanner.h"
 
 typedef struct AstCompiler {
@@ -15,7 +16,7 @@ typedef struct AstCompiler {
     FunctionType type;
 } AstCompiler;
 
-static struct AstCompiler* current;
+static struct AstCompiler* current = NULL;
 
 static void initCompiler(AstCompiler* compiler, FunctionType type) {
     compiler->enclosing = current;
@@ -46,8 +47,64 @@ static void emitBytes(uint8_t byte1, uint8_t byte2) {
     emitByte(byte2);
 }
 
-static void generateExpr(ObjExpression*) {
+static uint8_t makeConstant(Value value) {
+
+    int constant = addConstant(currentChunk(), value);
+    if (constant > UINT8_MAX) {
+        error("Too many constants in one chunk.");
+        return 0;
+    }
+
+    return (uint8_t)constant;
+}
+
+static int emitConstant(Value value) {
+
+    int32_t i = AS_INTEGER(value);
+    if (IS_INTEGER(value) && i <= INT8_MAX && i >= INT8_MIN) {
+        emitBytes(OP_IMMEDIATE, (uint8_t)i);
+    } else {
+        emitBytes(OP_CONSTANT, makeConstant(value));
+    }
+    return 2;
+}
+
+static void emitReturn() {
+    if (current->type == TYPE_INITIALIZER) {
+        emitBytes(OP_GET_LOCAL, 0);
+    } else {
+        emitByte(OP_NIL);
+    }
+
+    emitByte(OP_RETURN);
+}
+
+static void generateNumber(ObjNumber* num) {
+    switch(num->type) {
+        case NUMBER_DOUBLE: emitConstant(DOUBLE_VAL(num->val.dbl)); break;
+        case NUMBER_INTEGER: emitConstant(INTEGER_VAL(num->val.integer)); break;
+        case NUMBER_UINTEGER32: emitConstant(UINTEGER_VAL(num->val.uinteger32)); break;
+    }
+}
+
+static void generateExprElt(Obj* expr) {
     
+    switch (expr->type) {
+        case OBJ_NUMBER: {
+            ObjNumber* num = (ObjNumber*)expr;
+            generateNumber(num);
+            break;
+        }
+    }
+}
+
+
+static void generateExpr(ObjExpression* expr) {
+
+    while (expr != NULL) {
+        generateExprElt(expr->expr);
+        expr = expr->nextItem;
+    }
 }
 
 
@@ -66,6 +123,18 @@ static void generate() {
 }
 
 
+
+static ObjFunction* endCompiler() {
+    emitReturn();
+
+    current->ast = NULL;
+    ObjFunction* function = current->function;
+    current = current->enclosing;
+
+    return function;
+}
+
+
 ObjFunction* astCompile(const char* source) {
     initScanner(source);
     struct AstCompiler compiler;
@@ -75,7 +144,8 @@ ObjFunction* astCompile(const char* source) {
 
     generate();
 
-    return parser.hadError ? NULL : current->function;
+    ObjFunction* function = endCompiler();
+    return parser.hadError ? NULL : function;
 }
 
 void markAstCompilerRoots() {

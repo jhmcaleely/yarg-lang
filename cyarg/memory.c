@@ -1,10 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "compiler.h"
+#include "ast_compiler.h"
 #include "memory.h"
 #include "vm.h"
 #include "yargtype.h"
+#include "ast.h"
 
 #ifdef DEBUG_LOG_GC
 #include <stdio.h>
@@ -157,10 +158,23 @@ static void blackenObject(Obj* object) {
             }
             break;
         }
+        case OBJ_EXPRESSION: {
+            ObjExpression* exp = (ObjExpression*)object;
+            markObject((Obj*)exp->nextItem);
+            markObject((Obj*)exp->expr);
+            break;
+        }
+        case OBJ_EXPRESSIONSTMT: {
+            ObjExpressionStatement* exp = (ObjExpressionStatement*)object;
+            markObject((Obj*)exp->expression);
+            markObject((Obj*)exp->next);
+            break;
+        }
         case OBJ_NATIVE:
         case OBJ_BLOB:
         case OBJ_CHANNEL:
         case OBJ_STRING:
+        case OBJ_NUMBER:
             break;
     }
 }
@@ -239,6 +253,9 @@ static void freeObject(Obj* object) {
             FREE(ObjYargType, object);
             break;
         }
+        case OBJ_EXPRESSION: FREE(ObjExpression, object); break;
+        case OBJ_EXPRESSIONSTMT: FREE(ObjExpressionStatement, object); break;
+        case OBJ_NUMBER: FREE(ObjNumber, object); break;
     }
 }
 
@@ -254,7 +271,7 @@ static void markRoots() {
     }
 
     markTable(&vm.globals);
-    markCompilerRoots();
+    markAstCompilerRoots();
     markObject((Obj*)vm.initString);
 }
 

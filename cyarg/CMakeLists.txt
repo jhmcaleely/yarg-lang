@@ -46,7 +46,6 @@ add_executable(cyarg
     vm.c
     ast.c
     parser.c
-    compiler.c
     ast_compiler.c
     scanner.c
     object.c

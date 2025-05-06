@@ -9,7 +9,7 @@
 #include "debug.h"
 #include "vm.h"
 #include "files.h"
-#include "compiler.h"
+#include "ast_compiler.h"
 
 const char* defaultScript = "main.ya";
 
@@ -44,7 +44,7 @@ static void disassembleFile(const char* path) {
         return;
     }
 
-    ObjFunction* result = compile(source);
+    ObjFunction* result = astCompile(source);
     if (!result) {
         return;
     }

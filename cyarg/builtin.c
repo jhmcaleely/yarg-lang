@@ -14,13 +14,13 @@
 #include "vm.h"
 #include "debug.h"
 #include "files.h"
-#include "compiler.h"
+#include "ast_compiler.h"
 #include "channel.h"
 #include "yargtype.h"
 
 InterpretResult interpretImport(const char* source) {
 
-    ObjFunction* function = compile(source);
+    ObjFunction* function = astCompile(source);
     if (function == NULL) return INTERPRET_COMPILE_ERROR;
     tempRootPush(OBJ_VAL(function));
 

@@ -10,21 +10,6 @@
 #include "memory.h"
 #include "scanner.h"
 
-typedef enum {
-    PREC_NONE,
-    PREC_ASSIGNMENT, // =
-    PREC_OR,         // or
-    PREC_AND,        // and
-    PREC_EQUALITY,   // == !=
-    PREC_COMPARISON, // < > <= >=
-    PREC_TERM,       // + - | ^ & %
-    PREC_FACTOR,     // * / << >>
-    PREC_UNARY,      // ! -
-    PREC_CALL,       // . ()
-    PREC_DEREF,      // []
-    PREC_PRIMARY
-} Precedence;
-
 typedef void (*ParseFn)(bool canAssign);
 
 typedef struct {
@@ -631,7 +616,7 @@ static void unary(bool canAssign) {
     }
 }
 
-ParseRule rules[] = {
+static ParseRule rules[] = {
     [TOKEN_LEFT_PAREN]           = {grouping,  call,   PREC_CALL},
     [TOKEN_RIGHT_PAREN]          = {NULL,      NULL,   PREC_NONE},
     [TOKEN_LEFT_BRACE]           = {NULL,      NULL,   PREC_NONE},
