@@ -195,7 +195,7 @@ ObjFunction* astCompile(const char* source) {
     struct AstCompiler compiler;
     initCompiler(&compiler, TYPE_SCRIPT);
 
-    current->ast = parse();
+    parse(&current->ast);
 
     generate();
 

@@ -416,9 +416,8 @@ ObjStmt* declaration() {
 }
 
 
-ObjStmt* parse() {
-    ObjStmt* statements = NULL;
-    ObjStmt** cursor = &statements;
+void parse(ObjStmt** ast_root) {
+    ObjStmt** cursor = ast_root;
 
     parser.hadError = false;
     parser.panicMode = false;
@@ -430,5 +429,4 @@ ObjStmt* parse() {
             cursor = &(*cursor)->nextStmt;
         }
     }
-    return statements;
 }

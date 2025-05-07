@@ -15,7 +15,7 @@ extern Parser parser;
 
 typedef struct ObjStmt ObjStmt;
 
-ObjStmt* parse();
+void parse(ObjStmt** ast_root);
 
 bool check(TokenType type);
 bool match(TokenType type);
