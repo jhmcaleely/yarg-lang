@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "common.h"
 #include "ast_compiler.h"
@@ -34,6 +35,11 @@ static void initCompiler(AstCompiler* compiler, FunctionType type) {
     }
 }
 
+
+
+static void error(const char* message) {
+    fprintf(stderr, "%s\n", message);
+}
 
 static Chunk* currentChunk() {
     return &current->function->chunk;

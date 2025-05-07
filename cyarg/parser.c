@@ -17,9 +17,7 @@ typedef struct {
 
 static AstParseRule* getRule(TokenType type);
 static ObjExpr* parsePrecedence(Precedence precedence);
-
 static ObjExpr* expression();
-
 
 Parser parser;
 
@@ -52,13 +50,7 @@ bool check(TokenType type) {
     return parser.current.type == type;
 }
 
-bool match(TokenType type) {
-    if (!check(type)) return false;
-    advance();
-    return true;
-}
-
-void advance() {
+static void advance() {
     parser.previous = parser.current;
 
     for (;;) {
@@ -69,7 +61,13 @@ void advance() {
     }
 }
 
-void synchronize() {
+static bool match(TokenType type) {
+    if (!check(type)) return false;
+    advance();
+    return true;
+}
+
+static void synchronize() {
     parser.panicMode = false;
 
     while (parser.current.type != TOKEN_EOF) {
