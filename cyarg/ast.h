@@ -13,7 +13,7 @@ typedef struct ObjStmt {
 typedef struct ObjExpr ObjExpr;
 
 typedef struct ObjExpr {
-    Obj Obj;
+    Obj obj;
     ObjExpr* nextExpr;
 } ObjExpr;
 
@@ -61,6 +61,12 @@ typedef struct ObjPrintStatement {
     ObjExpr* expression;
 } ObjPrintStatement;
 
+typedef struct {
+    ObjStmt stmt;
+    ObjString* name;
+    ObjExpr* initialiser;
+} ObjStmtVarDeclaration;
+
 typedef enum {
     NUMBER_DOUBLE,
     NUMBER_INTEGER,
@@ -86,5 +92,9 @@ ObjGroupingExpr* newGroupingExpr(ObjExpr* expression);
 
 ObjExpressionStatement* newExpressionStatement(ObjExpr* expr);
 ObjPrintStatement* newPrintStatement(ObjExpr* expr);
+ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr* expr);
+
+void printStmts(ObjStmt* stmts);
+void printExpr(ObjExpr* expr);
 
 #endif

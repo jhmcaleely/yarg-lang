@@ -374,6 +374,21 @@ static ObjExpressionStatement* expressionStatement() {
     return expressionStatement;
 }
 
+static ObjStmt* varDeclaration() {
+    consume(TOKEN_IDENTIFIER, "Expect variable name.");
+    ObjStmtVarDeclaration* decl = newStmtVarDeclaration((char*)parser.previous.start, parser.previous.length, NULL);
+    tempRootPush(OBJ_VAL(decl));
+
+    if (match(TOKEN_EQUAL)) {
+        decl->initialiser = expression();
+    }
+    consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration");
+
+    tempRootPop();
+
+    return (ObjStmt*) decl;
+}
+
 ObjStmt* statement() {
     if (match(TOKEN_PRINT)) {
         return (ObjStmt*) printStatement();
@@ -404,7 +419,7 @@ ObjStmt* declaration() {
     } else if (match(TOKEN_FUN)) {
 //        funDeclaration();
     } else if (match(TOKEN_VAR)) {
-//        varDeclaration();
+        stmt = varDeclaration();
     } else {
         stmt = statement();
     }

@@ -12,26 +12,48 @@
 
 static void generateExpr(ObjExpr* expr);
 
+typedef struct {
+    ObjString* name;
+    int depth;
+    bool isCaptured;
+} Local;
+
 typedef struct AstCompiler {
     struct AstCompiler* enclosing;
     ObjFunction* function;
     ObjStmt* ast;
     FunctionType type;
+
+    Local locals[UINT8_COUNT];
+    int localCount;
+    int scopeDepth;
 } AstCompiler;
 
 static struct AstCompiler* current = NULL;
 
 static void initCompiler(AstCompiler* compiler, FunctionType type) {
+
     compiler->enclosing = current;
     compiler->ast = NULL;
     compiler->function = NULL;
     compiler->type = type;
+
+    compiler->localCount = 0;
+    compiler->scopeDepth = 0;
 
     compiler->function = newFunction();
     current = compiler;
     if (type != TYPE_SCRIPT) {
         current->function->name = copyString(parser.previous.start,
                                              parser.previous.length);
+    }
+
+    Local* local = &current->locals[current->localCount++];
+    local->name = NULL;
+    local->depth = 0;
+    local->isCaptured = false;
+    if (type != TYPE_FUNCTION) {
+        local->name = copyString("this", 4);
     }
 }
 
@@ -53,6 +75,23 @@ static void emitByte(uint8_t byte) {
 static void emitBytes(uint8_t byte1, uint8_t byte2) {
     emitByte(byte1);
     emitByte(byte2);
+}
+
+static bool identifiersEqual(ObjString* a, ObjString* b) {
+    if (a->length != b->length) return false;
+    return memcmp(a->chars, b->chars, a->length) == 0;
+}
+
+static void addLocal(ObjString* name) {
+    if (current->localCount == UINT8_COUNT) {
+        error("Too many local variables in function.");
+        return;
+    }
+
+    Local* local = &current->locals[current->localCount++];
+    local->name = name;
+    local->depth = -1;
+    local->isCaptured = false;
 }
 
 static uint8_t makeConstant(Value value) {
@@ -85,6 +124,36 @@ static void emitReturn() {
     }
 
     emitByte(OP_RETURN);
+}
+
+static uint8_t identifierConstant(ObjString* name) {
+    return makeConstant(OBJ_VAL(name));
+}
+
+
+static void declareVariable(ObjString* name) {
+    if (current->scopeDepth == 0) return;
+
+    for (int i = current->localCount - 1; i >= 0; i--) {
+        Local* local = &current->locals[i];
+        if (local->depth != -1 && local->depth < current->scopeDepth) {
+            break;
+        }
+
+        if (identifiersEqual(name, local->name)) {
+            error("Already a variable with this name in this scope.");
+        }
+    }
+
+    addLocal(name);
+}
+
+static uint8_t parseVariable(ObjString* name) {
+
+    declareVariable(name);
+    if (current->scopeDepth > 0) return 0;
+
+    return identifierConstant(name);
 }
 
 static void generateNumber(ObjNumber* num) {
@@ -128,7 +197,7 @@ static void generateGroupingExpr(ObjGroupingExpr* grp) {
 
 static void generateExprElt(ObjExpr* expr) {
     
-    switch (expr->Obj.type) {
+    switch (expr->obj.type) {
         case OBJ_EXPR_NUMBER: {
             ObjNumber* num = (ObjNumber*)expr;
             generateNumber(num);
@@ -158,6 +227,32 @@ static void generateExpr(ObjExpr* expr) {
     }
 }
 
+static void markInitialized() {
+    if (current->scopeDepth == 0) return;
+    current->locals[current->localCount - 1].depth = current->scopeDepth;
+}
+
+static void defineVariable(uint8_t global) {
+    if (current->scopeDepth > 0) {
+        markInitialized();
+        return;
+    }
+
+    emitBytes(OP_DEFINE_GLOBAL, global);
+}
+
+static void generateVarDeclaration(ObjStmtVarDeclaration* decl) {
+    uint8_t global = parseVariable(decl->name);
+
+    if (decl->initialiser) {
+        generateExpr(decl->initialiser);
+    } else {
+        emitByte(OP_NIL);
+    }
+
+    defineVariable(global);
+}
+
 
 static void generateStmt(ObjStmt* stmt) {
     switch (stmt->obj.type) {
@@ -168,6 +263,9 @@ static void generateStmt(ObjStmt* stmt) {
         case OBJ_STMT_PRINT:
             generateExpr(((ObjPrintStatement*)stmt)->expression);
             emitByte(OP_PRINT);
+            break;
+        case OBJ_STMT_VARDECLARATION:
+            generateVarDeclaration((ObjStmtVarDeclaration*)stmt);
             break;
         default:
             return; // Unexpected
@@ -202,6 +300,7 @@ ObjFunction* astCompile(const char* source) {
     initCompiler(&compiler, TYPE_SCRIPT);
 
     parse(&current->ast);
+    printStmts(current->ast);
 
     generate();
 
@@ -214,6 +313,11 @@ void markAstCompilerRoots() {
     while (compiler != NULL) {
         markObject((Obj*)compiler->function);
         markObject((Obj*)compiler->ast);
+
+        for (int i = 0; i < compiler->localCount; i++) {
+            markObject((Obj*)compiler->locals[i].name);
+        }
+
         compiler = compiler->enclosing;
     }
 }

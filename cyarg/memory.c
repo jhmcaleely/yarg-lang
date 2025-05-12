@@ -169,7 +169,14 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)stmt->stmt.nextStmt);
             markObject((Obj*)stmt->expression);
             break;
-        }        
+        }
+        case OBJ_STMT_VARDECLARATION: {
+            ObjStmtVarDeclaration* stmt = (ObjStmtVarDeclaration*)object;
+            markObject((Obj*)stmt->stmt.nextStmt);
+            markObject((Obj*)stmt->name);
+            markObject((Obj*)stmt->initialiser);
+            break;
+        }
         case OBJ_EXPR_NUMBER: {
             ObjNumber* expr = (ObjNumber*)object;
             markObject((Obj*)expr->expr.nextExpr);
@@ -187,7 +194,7 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)expr->expr.nextExpr);
             markObject((Obj*)expr->expression);
             break;
-        }        
+        }
         case OBJ_NATIVE:
         case OBJ_BLOB:
         case OBJ_CHANNEL:
@@ -272,6 +279,7 @@ static void freeObject(Obj* object) {
         }
         case OBJ_STMT_EXPRESSION: FREE(ObjExpressionStatement, object); break;
         case OBJ_STMT_PRINT: FREE(ObjPrintStatement, object); break;
+        case OBJ_STMT_VARDECLARATION: FREE(ObjStmtVarDeclaration, object); break;
         case OBJ_EXPR_NUMBER: FREE(ObjNumber, object); break;
         case OBJ_EXPR_OPERATION: FREE(ObjOperationExpr, object); break;
         case OBJ_EXPR_GROUPING: FREE(ObjGroupingExpr, object); break;
