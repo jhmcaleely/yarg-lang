@@ -30,8 +30,8 @@ ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr
     return stmt;
 }
 
-ObjOperationExpr* newOperationExpr(ObjExpr* rhs, ExprOp op) {
-    ObjOperationExpr* operation = ALLOCATE_OBJ(ObjOperationExpr, OBJ_EXPR_OPERATION);
+ObjExprOperation* newOperationExpr(ObjExpr* rhs, ExprOp op) {
+    ObjExprOperation* operation = ALLOCATE_OBJ(ObjExprOperation, OBJ_EXPR_OPERATION);
     operation->expr.nextExpr = NULL;
     operation->rhs = rhs;
     operation->operation = op;
@@ -81,7 +81,7 @@ ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength, Obj
     return var;
 }
 
-static void printExprOperation(ObjOperationExpr* opexpr) {
+static void printExprOperation(ObjExprOperation* opexpr) {
     switch (opexpr->operation) {
         case EXPR_OP_EQUAL: printf("="); break;
         case EXPR_OP_GREATER: printf(">"); break;
@@ -112,7 +112,7 @@ void printExpr(ObjExpr* expr) {
     while (cursor) {
         switch (cursor->obj.type) {
             case OBJ_EXPR_OPERATION:
-                printExprOperation((ObjOperationExpr*)cursor);
+                printExprOperation((ObjExprOperation*)cursor);
                 break;
             case OBJ_EXPR_GROUPING: {
                 ObjGroupingExpr* expr = (ObjGroupingExpr*)cursor;

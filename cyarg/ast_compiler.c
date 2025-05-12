@@ -188,7 +188,7 @@ static void generateNumber(ObjNumber* num) {
     }
 }
 
-static void generateOperationExpr(ObjOperationExpr* bin) {
+static void generateExprOperation(ObjExprOperation* bin) {
     generateExpr(bin->rhs);
 
     switch (bin->operation) {
@@ -249,8 +249,8 @@ static void generateExprElt(ObjExpr* expr) {
             break;
         }
         case OBJ_EXPR_OPERATION: {
-            ObjOperationExpr* op = (ObjOperationExpr*)expr;
-            generateOperationExpr(op);
+            ObjExprOperation* op = (ObjExprOperation*)expr;
+            generateExprOperation(op);
             break;
         }
         case OBJ_EXPR_GROUPING: {

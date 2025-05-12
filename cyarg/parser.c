@@ -178,7 +178,7 @@ static ObjExpr* unary(bool canAssign) {
         default: break; // Unreachable.
     }
 
-    ObjOperationExpr* expr = newOperationExpr(rhs, op);
+    ObjExprOperation* expr = newOperationExpr(rhs, op);
     tempRootPop();
     return (ObjExpr*) expr; 
 }
@@ -220,7 +220,7 @@ static ObjExpr* binary(bool canAssign) {
             return NULL; // Unreachable.
     }
 
-    ObjOperationExpr* expr = newOperationExpr(rhs, op);
+    ObjExprOperation* expr = newOperationExpr(rhs, op);
     tempRootPop();
     return (ObjExpr*) expr;
 }

@@ -42,7 +42,7 @@ typedef struct {
     ObjExpr expr;
     ExprOp operation;
     ObjExpr* rhs;
-} ObjOperationExpr;
+} ObjExprOperation;
 
 typedef struct {
     ObjExpr expr;
@@ -93,7 +93,7 @@ typedef struct ObjNumber {
 ObjNumber* newNumberDouble(double value);
 ObjNumber* newNumberInteger(int value);
 ObjNumber* newNumberUInteger32(uint32_t value);
-ObjOperationExpr* newOperationExpr(ObjExpr* rhs, ExprOp op);
+ObjExprOperation* newOperationExpr(ObjExpr* rhs, ExprOp op);
 ObjGroupingExpr* newGroupingExpr(ObjExpr* expression);
 ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength, ObjExpr* expr);
 
