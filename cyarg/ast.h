@@ -87,15 +87,15 @@ typedef struct {
     } val;
 } ObjExprNumber;
 
-ObjExprNumber* newNumberDouble(double value);
-ObjExprNumber* newNumberInteger(int value);
-ObjExprNumber* newNumberUInteger32(uint32_t value);
-ObjExprOperation* newOperationExpr(ObjExpr* rhs, ExprOp op);
-ObjExprGrouping* newGroupingExpr(ObjExpr* expression);
+ObjExprNumber* newExprNumberDouble(double value);
+ObjExprNumber* newExprNumberInteger(int value);
+ObjExprNumber* newExprNumberUInteger32(uint32_t value);
+ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op);
+ObjExprGrouping* newExprGrouping(ObjExpr* expression);
 ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength, ObjExpr* expr);
 
-ObjStmtExpression* newExpressionStatement(ObjExpr* expr);
-ObjStmtPrint* newPrintStatement(ObjExpr* expr);
+ObjStmtExpression* newStmtExpression(ObjExpr* expr);
+ObjStmtPrint* newStmtPrint(ObjExpr* expr);
 ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr* expr);
 
 void printStmts(ObjStmt* stmts);

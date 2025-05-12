@@ -4,7 +4,7 @@
 #include "ast.h"
 #include "memory.h"
 
-ObjStmtExpression* newExpressionStatement(ObjExpr* expr) {
+ObjStmtExpression* newStmtExpression(ObjExpr* expr) {
     ObjStmtExpression* stmt = ALLOCATE_OBJ(ObjStmtExpression, OBJ_STMT_EXPRESSION);
     stmt->stmt.nextStmt = NULL;
     stmt->expression = expr;
@@ -12,7 +12,7 @@ ObjStmtExpression* newExpressionStatement(ObjExpr* expr) {
     return stmt;
 }
 
-ObjStmtPrint* newPrintStatement(ObjExpr* expr) {
+ObjStmtPrint* newStmtPrint(ObjExpr* expr) {
     ObjStmtPrint* stmt = ALLOCATE_OBJ(ObjStmtPrint, OBJ_STMT_PRINT);
     stmt->stmt.nextStmt = NULL;
     stmt->expression = expr;
@@ -30,7 +30,7 @@ ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr
     return stmt;
 }
 
-ObjExprOperation* newOperationExpr(ObjExpr* rhs, ExprOp op) {
+ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op) {
     ObjExprOperation* operation = ALLOCATE_OBJ(ObjExprOperation, OBJ_EXPR_OPERATION);
     operation->expr.nextExpr = NULL;
     operation->rhs = rhs;
@@ -39,7 +39,7 @@ ObjExprOperation* newOperationExpr(ObjExpr* rhs, ExprOp op) {
     return operation;
 }
 
-ObjExprGrouping* newGroupingExpr(ObjExpr* expression) {
+ObjExprGrouping* newExprGrouping(ObjExpr* expression) {
     ObjExprGrouping* grp = ALLOCATE_OBJ(ObjExprGrouping, OBJ_EXPR_GROUPING);
     grp->expr.nextExpr = NULL;
     grp->expression = expression;
@@ -47,7 +47,7 @@ ObjExprGrouping* newGroupingExpr(ObjExpr* expression) {
 }
 
 
-ObjExprNumber* newNumberDouble(double value) {
+ObjExprNumber* newExprNumberDouble(double value) {
     ObjExprNumber* num = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
     num->expr.nextExpr = NULL;
     num->type = NUMBER_DOUBLE;
@@ -55,7 +55,7 @@ ObjExprNumber* newNumberDouble(double value) {
     return num;
 }
 
-ObjExprNumber* newNumberInteger(int value) {
+ObjExprNumber* newExprNumberInteger(int value) {
     ObjExprNumber* num = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
     num->expr.nextExpr = NULL;
     num->type = NUMBER_INTEGER;
@@ -63,7 +63,7 @@ ObjExprNumber* newNumberInteger(int value) {
     return num;
 }
 
-ObjExprNumber* newNumberUInteger32(uint32_t value) {
+ObjExprNumber* newExprNumberUInteger32(uint32_t value) {
     ObjExprNumber* num = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
     num->expr.nextExpr = NULL;
     num->type = NUMBER_UINTEGER32;

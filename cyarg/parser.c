@@ -178,7 +178,7 @@ static ObjExpr* unary(bool canAssign) {
         default: break; // Unreachable.
     }
 
-    ObjExprOperation* expr = newOperationExpr(rhs, op);
+    ObjExprOperation* expr = newExprOperation(rhs, op);
     tempRootPop();
     return (ObjExpr*) expr; 
 }
@@ -187,7 +187,7 @@ static ObjExpr* grouping(bool canAssign) {
     ObjExpr* expr = expression();
     tempRootPush(OBJ_VAL(expr));
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
-    ObjExprGrouping* grp = newGroupingExpr(expr);
+    ObjExprGrouping* grp = newExprGrouping(expr);
     tempRootPop();
     return (ObjExpr*)grp; 
 }
@@ -220,7 +220,7 @@ static ObjExpr* binary(bool canAssign) {
             return NULL; // Unreachable.
     }
 
-    ObjExprOperation* expr = newOperationExpr(rhs, op);
+    ObjExprOperation* expr = newExprOperation(rhs, op);
     tempRootPop();
     return (ObjExpr*) expr;
 }
@@ -254,15 +254,15 @@ static ObjExpr* number(bool canAssign) {
         if (memchr(number_start, '.', number_len)) {
             // for now, use C's stdlib to reuse double formatting.
             double value = strtod(number_start, NULL);
-            val = newNumberDouble(value);
+            val = newExprNumberDouble(value);
         } else {
             int value = atoi(number_start);
-            val = newNumberInteger(value);
+            val = newExprNumberInteger(value);
         }
     }
     else {
         uint32_t value = strtoNum(number_start, number_len, radix);
-        val = newNumberUInteger32(value);
+        val = newExprNumberUInteger32(value);
     }
     return (ObjExpr*) val;
 }
@@ -377,7 +377,7 @@ static ObjStmtPrint* printStatement() {
     ObjExpr* expr = expression();
     tempRootPush(OBJ_VAL(expr));
     consume(TOKEN_SEMICOLON, "Expect ';' after value.");
-    ObjStmtPrint* print = newPrintStatement(expr);
+    ObjStmtPrint* print = newStmtPrint(expr);
     tempRootPop();
     return print;
 }
@@ -386,7 +386,7 @@ static ObjStmtExpression* expressionStatement() {
     ObjExpr* expr = expression();
     tempRootPush(OBJ_VAL(expr));
     consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
-    ObjStmtExpression* expressionStatement = newExpressionStatement(expr);
+    ObjStmtExpression* expressionStatement = newStmtExpression(expr);
     tempRootPop();
     return expressionStatement;
 }
