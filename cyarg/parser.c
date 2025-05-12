@@ -373,11 +373,11 @@ static ObjExpr* expression() {
     return parsePrecedence(PREC_ASSIGNMENT);
 }
 
-static ObjPrintStatement* printStatement() {
+static ObjStmtPrint* printStatement() {
     ObjExpr* expr = expression();
     tempRootPush(OBJ_VAL(expr));
     consume(TOKEN_SEMICOLON, "Expect ';' after value.");
-    ObjPrintStatement* print = newPrintStatement(expr);
+    ObjStmtPrint* print = newPrintStatement(expr);
     tempRootPop();
     return print;
 }

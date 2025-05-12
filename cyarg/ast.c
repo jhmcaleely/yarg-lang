@@ -12,8 +12,8 @@ ObjExpressionStatement* newExpressionStatement(ObjExpr* expr) {
     return stmt;
 }
 
-ObjPrintStatement* newPrintStatement(ObjExpr* expr) {
-    ObjPrintStatement* stmt = ALLOCATE_OBJ(ObjPrintStatement, OBJ_STMT_PRINT);
+ObjStmtPrint* newPrintStatement(ObjExpr* expr) {
+    ObjStmtPrint* stmt = ALLOCATE_OBJ(ObjStmtPrint, OBJ_STMT_PRINT);
     stmt->stmt.nextStmt = NULL;
     stmt->expression = expr;
 
@@ -163,7 +163,7 @@ void printStmts(ObjStmt* stmts) {
                 break;
             case OBJ_STMT_PRINT:
                 printf("print ");
-                printExpr(((ObjPrintStatement*)cursor)->expression);
+                printExpr(((ObjStmtPrint*)cursor)->expression);
                 printf(";\n");
                 break;
             case OBJ_STMT_VARDECLARATION: {

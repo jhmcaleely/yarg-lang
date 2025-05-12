@@ -63,7 +63,7 @@ typedef struct  {
 typedef struct {
     ObjStmt stmt;
     ObjExpr* expression;
-} ObjPrintStatement;
+} ObjStmtPrint;
 
 typedef struct {
     ObjStmt stmt;
@@ -96,7 +96,7 @@ ObjExprGrouping* newGroupingExpr(ObjExpr* expression);
 ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength, ObjExpr* expr);
 
 ObjExpressionStatement* newExpressionStatement(ObjExpr* expr);
-ObjPrintStatement* newPrintStatement(ObjExpr* expr);
+ObjStmtPrint* newPrintStatement(ObjExpr* expr);
 ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr* expr);
 
 void printStmts(ObjStmt* stmts);
