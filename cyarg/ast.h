@@ -77,8 +77,7 @@ typedef enum {
     NUMBER_UINTEGER32
 } NumberType;
 
-
-typedef struct ObjNumber {
+typedef struct {
     ObjExpr expr;
     NumberType type;
     union {
@@ -86,11 +85,11 @@ typedef struct ObjNumber {
         int integer;
         uint32_t uinteger32;
     } val;
-} ObjNumber;
+} ObjExprNumber;
 
-ObjNumber* newNumberDouble(double value);
-ObjNumber* newNumberInteger(int value);
-ObjNumber* newNumberUInteger32(uint32_t value);
+ObjExprNumber* newNumberDouble(double value);
+ObjExprNumber* newNumberInteger(int value);
+ObjExprNumber* newNumberUInteger32(uint32_t value);
 ObjExprOperation* newOperationExpr(ObjExpr* rhs, ExprOp op);
 ObjExprGrouping* newGroupingExpr(ObjExpr* expression);
 ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength, ObjExpr* expr);

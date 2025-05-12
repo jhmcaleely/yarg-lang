@@ -178,7 +178,7 @@ static uint8_t parseVariable(ObjString* name) {
     return identifierConstant(name);
 }
 
-static void generateNumber(ObjNumber* num) {
+static void generateNumber(ObjExprNumber* num) {
     switch(num->type) {
         case NUMBER_DOUBLE: emitConstant(DOUBLE_VAL(num->val.dbl)); break;
         case NUMBER_INTEGER: emitConstant(INTEGER_VAL(num->val.integer)); break;
@@ -244,7 +244,7 @@ static void generateExprElt(ObjExpr* expr) {
     
     switch (expr->obj.type) {
         case OBJ_EXPR_NUMBER: {
-            ObjNumber* num = (ObjNumber*)expr;
+            ObjExprNumber* num = (ObjExprNumber*)expr;
             generateNumber(num);
             break;
         }

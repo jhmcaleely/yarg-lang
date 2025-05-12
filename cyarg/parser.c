@@ -248,7 +248,7 @@ static ObjExpr* number(bool canAssign) {
         radix = 10;
     }
 
-    ObjNumber* val = NULL;
+    ObjExprNumber* val = NULL;
 
     if (radix == 10 && sign_bit) {
         if (memchr(number_start, '.', number_len)) {

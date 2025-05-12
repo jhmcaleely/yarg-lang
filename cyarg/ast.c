@@ -47,24 +47,24 @@ ObjExprGrouping* newGroupingExpr(ObjExpr* expression) {
 }
 
 
-ObjNumber* newNumberDouble(double value) {
-    ObjNumber* num = ALLOCATE_OBJ(ObjNumber, OBJ_EXPR_NUMBER);
+ObjExprNumber* newNumberDouble(double value) {
+    ObjExprNumber* num = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
     num->expr.nextExpr = NULL;
     num->type = NUMBER_DOUBLE;
     num->val.dbl = value;
     return num;
 }
 
-ObjNumber* newNumberInteger(int value) {
-    ObjNumber* num = ALLOCATE_OBJ(ObjNumber, OBJ_EXPR_NUMBER);
+ObjExprNumber* newNumberInteger(int value) {
+    ObjExprNumber* num = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
     num->expr.nextExpr = NULL;
     num->type = NUMBER_INTEGER;
     num->val.integer = value;
     return num;
 }
 
-ObjNumber* newNumberUInteger32(uint32_t value) {
-    ObjNumber* num = ALLOCATE_OBJ(ObjNumber, OBJ_EXPR_NUMBER);
+ObjExprNumber* newNumberUInteger32(uint32_t value) {
+    ObjExprNumber* num = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
     num->expr.nextExpr = NULL;
     num->type = NUMBER_UINTEGER32;
     num->val.uinteger32 = value;
@@ -122,7 +122,7 @@ void printExpr(ObjExpr* expr) {
                 break;
             }
             case OBJ_EXPR_NUMBER: {
-                ObjNumber* num = (ObjNumber*)cursor;
+                ObjExprNumber* num = (ObjExprNumber*)cursor;
                 switch (num->type) {
                     case NUMBER_DOUBLE:
                         printf("%f", num->val.dbl);
