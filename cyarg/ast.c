@@ -39,8 +39,8 @@ ObjExprOperation* newOperationExpr(ObjExpr* rhs, ExprOp op) {
     return operation;
 }
 
-ObjGroupingExpr* newGroupingExpr(ObjExpr* expression) {
-    ObjGroupingExpr* grp = ALLOCATE_OBJ(ObjGroupingExpr, OBJ_EXPR_GROUPING);
+ObjExprGrouping* newGroupingExpr(ObjExpr* expression) {
+    ObjExprGrouping* grp = ALLOCATE_OBJ(ObjExprGrouping, OBJ_EXPR_GROUPING);
     grp->expr.nextExpr = NULL;
     grp->expression = expression;
     return grp;
@@ -115,7 +115,7 @@ void printExpr(ObjExpr* expr) {
                 printExprOperation((ObjExprOperation*)cursor);
                 break;
             case OBJ_EXPR_GROUPING: {
-                ObjGroupingExpr* expr = (ObjGroupingExpr*)cursor;
+                ObjExprGrouping* expr = (ObjExprGrouping*)cursor;
                 printf("(");
                 printExpr(expr->expression);
                 printf(")");

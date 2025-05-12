@@ -187,7 +187,7 @@ static ObjExpr* grouping(bool canAssign) {
     ObjExpr* expr = expression();
     tempRootPush(OBJ_VAL(expr));
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
-    ObjGroupingExpr* grp = newGroupingExpr(expr);
+    ObjExprGrouping* grp = newGroupingExpr(expr);
     tempRootPop();
     return (ObjExpr*)grp; 
 }

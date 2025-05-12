@@ -213,7 +213,7 @@ static void generateExprOperation(ObjExprOperation* bin) {
     }
 }
 
-static void generateGroupingExpr(ObjGroupingExpr* grp) {
+static void generateExprGrouping(ObjExprGrouping* grp) {
     generateExpr(grp->expression);
 }
 
@@ -254,8 +254,8 @@ static void generateExprElt(ObjExpr* expr) {
             break;
         }
         case OBJ_EXPR_GROUPING: {
-            ObjGroupingExpr* grp = (ObjGroupingExpr*)expr;
-            generateGroupingExpr(grp);
+            ObjExprGrouping* grp = (ObjExprGrouping*)expr;
+            generateExprGrouping(grp);
             break;
         }
         case OBJ_EXPR_NAMEDVARIABLE: {

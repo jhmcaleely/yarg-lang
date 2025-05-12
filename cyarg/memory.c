@@ -190,7 +190,7 @@ static void blackenObject(Obj* object) {
 
         }
         case OBJ_EXPR_GROUPING: {
-            ObjGroupingExpr* expr = (ObjGroupingExpr*)object;
+            ObjExprGrouping* expr = (ObjExprGrouping*)object;
             markObject((Obj*)expr->expr.nextExpr);
             markObject((Obj*)expr->expression);
             break;
@@ -289,7 +289,7 @@ static void freeObject(Obj* object) {
         case OBJ_STMT_VARDECLARATION: FREE(ObjStmtVarDeclaration, object); break;
         case OBJ_EXPR_NUMBER: FREE(ObjNumber, object); break;
         case OBJ_EXPR_OPERATION: FREE(ObjExprOperation, object); break;
-        case OBJ_EXPR_GROUPING: FREE(ObjGroupingExpr, object); break;
+        case OBJ_EXPR_GROUPING: FREE(ObjExprGrouping, object); break;
         case OBJ_EXPR_NAMEDVARIABLE: FREE(ObjExprNamedVariable, object); break;
     }
 }
