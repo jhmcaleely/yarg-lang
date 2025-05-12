@@ -55,14 +55,12 @@ typedef struct {
     ObjExpr* assignment;
 } ObjExprNamedVariable;
 
-typedef struct ObjExpressionStatement ObjExpressionStatement;
-
-typedef struct ObjExpressionStatement {
+typedef struct  {
     ObjStmt stmt;
     ObjExpr* expression;
 } ObjExpressionStatement;
 
-typedef struct ObjPrintStatement {
+typedef struct {
     ObjStmt stmt;
     ObjExpr* expression;
 } ObjPrintStatement;
