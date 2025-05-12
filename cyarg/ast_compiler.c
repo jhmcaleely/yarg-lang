@@ -306,7 +306,7 @@ static void generateVarDeclaration(ObjStmtVarDeclaration* decl) {
 static void generateStmt(ObjStmt* stmt) {
     switch (stmt->obj.type) {
         case OBJ_STMT_EXPRESSION:
-            generateExpr(((ObjExpressionStatement*)stmt)->expression);
+            generateExpr(((ObjStmtExpression*)stmt)->expression);
             emitByte(OP_POP);
             break;
         case OBJ_STMT_PRINT:

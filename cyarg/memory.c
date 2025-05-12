@@ -159,7 +159,7 @@ static void blackenObject(Obj* object) {
             break;
         }
         case OBJ_STMT_EXPRESSION: {
-            ObjExpressionStatement* stmt = (ObjExpressionStatement*)object;
+            ObjStmtExpression* stmt = (ObjStmtExpression*)object;
             markObject((Obj*)stmt->stmt.nextStmt);
             markObject((Obj*)stmt->expression);
             break;
@@ -284,7 +284,7 @@ static void freeObject(Obj* object) {
             FREE(ObjYargType, object);
             break;
         }
-        case OBJ_STMT_EXPRESSION: FREE(ObjExpressionStatement, object); break;
+        case OBJ_STMT_EXPRESSION: FREE(ObjStmtExpression, object); break;
         case OBJ_STMT_PRINT: FREE(ObjStmtPrint, object); break;
         case OBJ_STMT_VARDECLARATION: FREE(ObjStmtVarDeclaration, object); break;
         case OBJ_EXPR_NUMBER: FREE(ObjNumber, object); break;

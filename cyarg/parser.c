@@ -382,11 +382,11 @@ static ObjStmtPrint* printStatement() {
     return print;
 }
 
-static ObjExpressionStatement* expressionStatement() {
+static ObjStmtExpression* expressionStatement() {
     ObjExpr* expr = expression();
     tempRootPush(OBJ_VAL(expr));
     consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
-    ObjExpressionStatement* expressionStatement = newExpressionStatement(expr);
+    ObjStmtExpression* expressionStatement = newExpressionStatement(expr);
     tempRootPop();
     return expressionStatement;
 }

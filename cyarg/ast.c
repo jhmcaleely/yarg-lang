@@ -4,8 +4,8 @@
 #include "ast.h"
 #include "memory.h"
 
-ObjExpressionStatement* newExpressionStatement(ObjExpr* expr) {
-    ObjExpressionStatement* stmt = ALLOCATE_OBJ(ObjExpressionStatement, OBJ_STMT_EXPRESSION);
+ObjStmtExpression* newExpressionStatement(ObjExpr* expr) {
+    ObjStmtExpression* stmt = ALLOCATE_OBJ(ObjStmtExpression, OBJ_STMT_EXPRESSION);
     stmt->stmt.nextStmt = NULL;
     stmt->expression = expr;
 
@@ -158,7 +158,7 @@ void printStmts(ObjStmt* stmts) {
         switch (cursor->obj.type) {
             case OBJ_STMT_EXPRESSION:
                 printf("(");
-                printExpr(((ObjExpressionStatement*)cursor)->expression);
+                printExpr(((ObjStmtExpression*)cursor)->expression);
                 printf(");\n");
                 break;
             case OBJ_STMT_PRINT:
