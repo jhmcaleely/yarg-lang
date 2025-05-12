@@ -148,6 +148,25 @@ static void emitReturn() {
     emitByte(OP_RETURN);
 }
 
+static int emitJump(uint8_t instruction) {
+    emitByte(instruction);
+    emitByte(0xff);
+    emitByte(0xff);
+    return currentChunk()->count - 2;
+}
+
+static void patchJump(int offset) {
+    // -2 to adjust for the bytecode for the jump offset itself.
+    int jump = currentChunk()->count - offset - 2;
+
+    if (jump > UINT16_MAX) {
+        error("Too much code to jump over.");
+    }
+
+    currentChunk()->code[offset] = (jump >> 8) & 0xff;
+    currentChunk()->code[offset + 1] = jump & 0xff;
+}
+
 static uint8_t identifierConstant(ObjString* name) {
     return makeConstant(OBJ_VAL(name));
 }
@@ -188,28 +207,45 @@ static void generateNumber(ObjExprNumber* num) {
     }
 }
 
+static void generateExprLogicalAnd(ObjExprOperation* bin) {
+    int endJump = emitJump(OP_JUMP_IF_FALSE);
+
+    emitByte(OP_POP);
+    generateExpr(bin->rhs);
+
+    patchJump(endJump);
+}
+
 static void generateExprOperation(ObjExprOperation* bin) {
+
+    switch (bin->operation) {
+        case EXPR_OP_LOGICAL_AND: generateExprLogicalAnd(bin); return;
+        default:
+            break;
+    }
+
     generateExpr(bin->rhs);
 
     switch (bin->operation) {
-        case EXPR_OP_EQUAL: emitByte(OP_EQUAL); break;
-        case EXPR_OP_GREATER: emitByte(OP_GREATER); break;
-        case EXPR_OP_RIGHT_SHIFT: emitByte(OP_RIGHT_SHIFT); break;
-        case EXPR_OP_LESS: emitByte(OP_LESS); break;
-        case EXPR_OP_LEFT_SHIFT: emitByte(OP_LEFT_SHIFT); break;
-        case EXPR_OP_ADD: emitByte(OP_ADD); break;
-        case EXPR_OP_SUBTRACT: emitByte(OP_SUBTRACT); break;
-        case EXPR_OP_MULTIPLY: emitByte(OP_MULTIPLY); break;
-        case EXPR_OP_DIVIDE: emitByte(OP_DIVIDE); break;
-        case EXPR_OP_BITOR: emitByte(OP_BITOR); break;
-        case EXPR_OP_BITAND: emitByte(OP_BITAND); break;
-        case EXPR_OP_BITXOR: emitByte(OP_BITXOR); break;
-        case EXPR_OP_MODULO: emitByte(OP_MODULO); break;
-        case EXPR_OP_NOT_EQUAL: emitBytes(OP_EQUAL, OP_NOT); break;
-        case EXPR_OP_GREATER_EQUAL: emitBytes(OP_LESS, OP_NOT); break;
-        case EXPR_OP_LESS_EQUAL: emitBytes(OP_GREATER, OP_NOT); break;
-        case EXPR_OP_NOT: emitByte(OP_NOT); break;
-        case EXPR_OP_NEGATE: emitByte(OP_NEGATE); break;
+        case EXPR_OP_EQUAL: emitByte(OP_EQUAL); return;
+        case EXPR_OP_GREATER: emitByte(OP_GREATER); return;
+        case EXPR_OP_RIGHT_SHIFT: emitByte(OP_RIGHT_SHIFT); return;
+        case EXPR_OP_LESS: emitByte(OP_LESS); return;
+        case EXPR_OP_LEFT_SHIFT: emitByte(OP_LEFT_SHIFT); return;
+        case EXPR_OP_ADD: emitByte(OP_ADD); return;
+        case EXPR_OP_SUBTRACT: emitByte(OP_SUBTRACT); return;
+        case EXPR_OP_MULTIPLY: emitByte(OP_MULTIPLY); return;
+        case EXPR_OP_DIVIDE: emitByte(OP_DIVIDE); return;
+        case EXPR_OP_BIT_OR: emitByte(OP_BITOR); return;
+        case EXPR_OP_BIT_AND: emitByte(OP_BITAND); return;
+        case EXPR_OP_BIT_XOR: emitByte(OP_BITXOR); return;
+        case EXPR_OP_MODULO: emitByte(OP_MODULO); return;
+        case EXPR_OP_NOT_EQUAL: emitBytes(OP_EQUAL, OP_NOT); return;
+        case EXPR_OP_GREATER_EQUAL: emitBytes(OP_LESS, OP_NOT); return;
+        case EXPR_OP_LESS_EQUAL: emitBytes(OP_GREATER, OP_NOT); return;
+        case EXPR_OP_NOT: emitByte(OP_NOT); return;
+        case EXPR_OP_NEGATE: emitByte(OP_NEGATE); return;
+        default: break;
     }
 }
 
@@ -240,6 +276,14 @@ static void generateExprNamedVariable(ObjExprNamedVariable* var) {
     }
 }
 
+static void generateExprLiteral(ObjExprLiteral* lit) {
+    switch (lit->literal) {
+        case EXPR_LITERAL_FALSE: emitByte(OP_FALSE); break;
+        case EXPR_LITERAL_TRUE: emitByte(OP_TRUE); break;
+        case EXPR_LITERAL_NIL: emitByte(OP_NIL); break;
+    }
+}
+
 static void generateExprElt(ObjExpr* expr) {
     
     switch (expr->obj.type) {
@@ -261,6 +305,12 @@ static void generateExprElt(ObjExpr* expr) {
         case OBJ_EXPR_NAMEDVARIABLE: {
             ObjExprNamedVariable* var = (ObjExprNamedVariable*)expr;
             generateExprNamedVariable(var);
+            break;
+        }
+        case OBJ_EXPR_LITERAL: {
+            ObjExprLiteral* lit = (ObjExprLiteral*)expr;
+            generateExprLiteral(lit);
+            break;
         }
         default:
             return; // unexpected

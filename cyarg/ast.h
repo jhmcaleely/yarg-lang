@@ -27,16 +27,23 @@ typedef enum {
     EXPR_OP_SUBTRACT,
     EXPR_OP_MULTIPLY,
     EXPR_OP_DIVIDE,
-    EXPR_OP_BITOR,
-    EXPR_OP_BITAND,
-    EXPR_OP_BITXOR,
+    EXPR_OP_BIT_OR,
+    EXPR_OP_BIT_AND,
+    EXPR_OP_BIT_XOR,
     EXPR_OP_MODULO,
     EXPR_OP_NOT_EQUAL,
     EXPR_OP_GREATER_EQUAL,
     EXPR_OP_LESS_EQUAL,
     EXPR_OP_NOT,
-    EXPR_OP_NEGATE
+    EXPR_OP_NEGATE,
+    EXPR_OP_LOGICAL_AND
 } ExprOp;
+
+typedef enum {
+    EXPR_LITERAL_TRUE,
+    EXPR_LITERAL_FALSE,
+    EXPR_LITERAL_NIL
+} ExprLiteral;
 
 typedef struct {
     ObjExpr expr;
@@ -54,6 +61,11 @@ typedef struct {
     ObjString* name;
     ObjExpr* assignment;
 } ObjExprNamedVariable;
+
+typedef struct {
+    ObjExpr expr;
+    ExprLiteral literal;
+} ObjExprLiteral;
 
 typedef struct  {
     ObjStmt stmt;
@@ -93,6 +105,7 @@ ObjExprNumber* newExprNumberUInteger32(uint32_t value);
 ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op);
 ObjExprGrouping* newExprGrouping(ObjExpr* expression);
 ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength, ObjExpr* expr);
+ObjExprLiteral* newExprLiteral(ExprLiteral literal);
 
 ObjStmtExpression* newStmtExpression(ObjExpr* expr);
 ObjStmtPrint* newStmtPrint(ObjExpr* expr);

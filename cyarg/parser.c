@@ -154,11 +154,18 @@ static ObjExpr* arrayinit(bool canAssign) { return NULL; }
 static ObjExpr* deref(bool canAssign) {return NULL; }
 static ObjExpr* dot(bool canAssign) { return NULL; }
 static ObjExpr* string(bool canAssign) { return NULL; }
-static ObjExpr* and_(bool canAssign) { return NULL; }
 static ObjExpr* or_(bool canAssign) { return NULL; }
 static ObjExpr* super_(bool canAssign) { return NULL; }
 static ObjExpr* this_(bool canAssign) { return NULL; }
-static ObjExpr* literal(bool canAssign) { return NULL; }
+
+static ObjExpr* literal(bool canAssign) {     
+    switch (parser.previous.type) {
+        case TOKEN_FALSE: return (ObjExpr*) newExprLiteral(EXPR_LITERAL_FALSE);
+        case TOKEN_NIL: return (ObjExpr*) newExprLiteral(EXPR_LITERAL_NIL);
+        case TOKEN_TRUE: return (ObjExpr*) newExprLiteral(EXPR_LITERAL_TRUE);
+        default: return NULL; // Unreachable.
+    } 
+}
 
 static ObjExpr* variable(bool canAssign) {
 
@@ -192,6 +199,15 @@ static ObjExpr* grouping(bool canAssign) {
     return (ObjExpr*)grp; 
 }
 
+static ObjExpr* and_(bool canAssign) { 
+    ObjExpr* rhs = parsePrecedence(PREC_AND);
+    tempRootPush(OBJ_VAL(rhs));
+    ObjExprOperation* expr = newExprOperation(rhs, EXPR_OP_LOGICAL_AND);
+    tempRootPop();
+    return (ObjExpr*) expr;
+}
+
+
 static ObjExpr* binary(bool canAssign) {
     TokenType operatorType = parser.previous.type;
     AstParseRule* rule = getRule(operatorType);
@@ -209,9 +225,9 @@ static ObjExpr* binary(bool canAssign) {
         case TOKEN_MINUS:         op = EXPR_OP_SUBTRACT; break;
         case TOKEN_STAR:          op = EXPR_OP_MULTIPLY; break;
         case TOKEN_SLASH:         op = EXPR_OP_DIVIDE; break;
-        case TOKEN_BAR:           op = EXPR_OP_BITOR; break;
-        case TOKEN_AMP:           op = EXPR_OP_BITAND; break;
-        case TOKEN_CARET:         op = EXPR_OP_BITXOR; break;
+        case TOKEN_BAR:           op = EXPR_OP_BIT_OR; break;
+        case TOKEN_AMP:           op = EXPR_OP_BIT_AND; break;
+        case TOKEN_CARET:         op = EXPR_OP_BIT_XOR; break;
         case TOKEN_PERCENT:       op = EXPR_OP_MODULO; break;
         case TOKEN_BANG_EQUAL:    op = EXPR_OP_NOT_EQUAL; break;
         case TOKEN_GREATER_EQUAL: op = EXPR_OP_GREATER_EQUAL; break;

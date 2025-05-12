@@ -81,9 +81,16 @@ ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength, Obj
     return var;
 }
 
+ObjExprLiteral* newExprLiteral(ExprLiteral literal) {
+    ObjExprLiteral* lit = ALLOCATE_OBJ(ObjExprLiteral, OBJ_EXPR_LITERAL);
+    lit->expr.nextExpr = NULL;
+    lit->literal = literal;
+    return lit;
+}
+
 static void printExprOperation(ObjExprOperation* opexpr) {
     switch (opexpr->operation) {
-        case EXPR_OP_EQUAL: printf("="); break;
+        case EXPR_OP_EQUAL: printf("=="); break;
         case EXPR_OP_GREATER: printf(">"); break;
         case EXPR_OP_RIGHT_SHIFT: printf(">>"); break;
         case EXPR_OP_LESS: printf("<"); break;
@@ -92,15 +99,16 @@ static void printExprOperation(ObjExprOperation* opexpr) {
         case EXPR_OP_SUBTRACT: printf("-"); break;
         case EXPR_OP_MULTIPLY: printf("*"); break;
         case EXPR_OP_DIVIDE: printf("/"); break;
-        case EXPR_OP_BITOR: printf("|"); break;
-        case EXPR_OP_BITAND: printf("&"); break;
-        case EXPR_OP_BITXOR: printf("^"); break;
+        case EXPR_OP_BIT_OR: printf("|"); break;
+        case EXPR_OP_BIT_AND: printf("&"); break;
+        case EXPR_OP_BIT_XOR: printf("^"); break;
         case EXPR_OP_MODULO: printf("%%"); break;
         case EXPR_OP_NOT_EQUAL: printf("!="); break;
         case EXPR_OP_GREATER_EQUAL: printf(">="); break;
         case EXPR_OP_LESS_EQUAL: printf("<="); break;
         case EXPR_OP_NOT: printf("!"); break;
         case EXPR_OP_NEGATE: printf("-"); break;
+        case EXPR_OP_LOGICAL_AND: printf(" and "); break;
     }
     printf("(");
     printExpr(opexpr->rhs);
@@ -142,6 +150,15 @@ void printExpr(ObjExpr* expr) {
                 if (var->assignment) {
                     printf(" = ");
                     printExpr(var->assignment);
+                }
+                break;
+            }
+            case OBJ_EXPR_LITERAL: {
+                ObjExprLiteral* lit = (ObjExprLiteral*)cursor;
+                switch (lit->literal) {
+                    case EXPR_LITERAL_FALSE: printf("false"); break;
+                    case EXPR_LITERAL_TRUE: printf("true"); break;
+                    case EXPR_LITERAL_NIL: printf("nil"); break;
                 }
                 break;
             }
