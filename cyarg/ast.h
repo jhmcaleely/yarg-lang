@@ -99,6 +99,11 @@ typedef struct {
     } val;
 } ObjExprNumber;
 
+typedef struct {
+    ObjExpr expr;
+    ObjString* string;
+} ObjExprString;
+
 ObjExprNumber* newExprNumberDouble(double value);
 ObjExprNumber* newExprNumberInteger(int value);
 ObjExprNumber* newExprNumberUInteger32(uint32_t value);
@@ -106,6 +111,7 @@ ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op);
 ObjExprGrouping* newExprGrouping(ObjExpr* expression);
 ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength, ObjExpr* expr);
 ObjExprLiteral* newExprLiteral(ExprLiteral literal);
+ObjExprString* newExprString(const char* str, int strLength);
 
 ObjStmtExpression* newStmtExpression(ObjExpr* expr);
 ObjStmtPrint* newStmtPrint(ObjExpr* expr);

@@ -153,10 +153,13 @@ static ObjExpr* call(bool canAssign) { return NULL;}
 static ObjExpr* arrayinit(bool canAssign) { return NULL; }
 static ObjExpr* deref(bool canAssign) {return NULL; }
 static ObjExpr* dot(bool canAssign) { return NULL; }
-static ObjExpr* string(bool canAssign) { return NULL; }
 static ObjExpr* or_(bool canAssign) { return NULL; }
 static ObjExpr* super_(bool canAssign) { return NULL; }
 static ObjExpr* this_(bool canAssign) { return NULL; }
+
+static ObjExpr* string(bool canAssign) {
+    return (ObjExpr*) newExprString(parser.previous.start + 1, parser.previous.length - 2);
+}
 
 static ObjExpr* literal(bool canAssign) {     
     switch (parser.previous.type) {

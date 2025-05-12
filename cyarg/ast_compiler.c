@@ -207,6 +207,10 @@ static void generateNumber(ObjExprNumber* num) {
     }
 }
 
+static void generateExprString(ObjExprString* str) {
+    emitConstant(OBJ_VAL(str->string));
+}
+
 static void generateExprLogicalAnd(ObjExprOperation* bin) {
     int endJump = emitJump(OP_JUMP_IF_FALSE);
 
@@ -310,6 +314,11 @@ static void generateExprElt(ObjExpr* expr) {
         case OBJ_EXPR_LITERAL: {
             ObjExprLiteral* lit = (ObjExprLiteral*)expr;
             generateExprLiteral(lit);
+            break;
+        }
+        case OBJ_EXPR_STRING: {
+            ObjExprString* str = (ObjExprString*)expr;
+            generateExprString(str);
             break;
         }
         default:

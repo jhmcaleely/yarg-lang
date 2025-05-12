@@ -43,7 +43,7 @@ void tempRootPush(Value value) {
     *vm.tempRootsTop = value;
     vm.tempRootsTop++;
 
-    if (vm.tempRootsTop - &vm.tempRoots[0] > TEMP_ROOTS_MAX) {
+    if (vm.tempRootsTop - &vm.tempRoots[0] >= TEMP_ROOTS_MAX) {
         fatalVMError("Allocation Stash Max Exeeded.");
     }
 }
@@ -207,6 +207,12 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)lit->expr.nextExpr);
             break;
         }
+        case OBJ_EXPR_STRING: {
+            ObjExprString* str = (ObjExprString*)object;
+            markObject((Obj*)str->expr.nextExpr);
+            markObject((Obj*)str->string);
+            break;
+        }
         case OBJ_NATIVE:
         case OBJ_BLOB:
         case OBJ_CHANNEL:
@@ -297,6 +303,7 @@ static void freeObject(Obj* object) {
         case OBJ_EXPR_GROUPING: FREE(ObjExprGrouping, object); break;
         case OBJ_EXPR_NAMEDVARIABLE: FREE(ObjExprNamedVariable, object); break;
         case OBJ_EXPR_LITERAL: FREE(ObjExprLiteral, object); break;
+        case OBJ_EXPR_STRING: FREE(ObjExprString, object); break;
     }
 }
 

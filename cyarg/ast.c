@@ -88,6 +88,16 @@ ObjExprLiteral* newExprLiteral(ExprLiteral literal) {
     return lit;
 }
 
+ObjExprString* newExprString(const char* str, int strLength) {
+    ObjExprString* string = ALLOCATE_OBJ(ObjExprString, OBJ_EXPR_STRING);
+    string->expr.nextExpr = NULL;
+    string->string = NULL;
+    tempRootPush(OBJ_VAL(string));
+    string->string = copyString(str, strLength);
+    tempRootPop();
+    return string;
+}
+
 static void printExprOperation(ObjExprOperation* opexpr) {
     switch (opexpr->operation) {
         case EXPR_OP_EQUAL: printf("=="); break;
@@ -160,6 +170,13 @@ void printExpr(ObjExpr* expr) {
                     case EXPR_LITERAL_TRUE: printf("true"); break;
                     case EXPR_LITERAL_NIL: printf("nil"); break;
                 }
+                break;
+            }
+            case OBJ_EXPR_STRING: {
+                ObjExprString* str = (ObjExprString*)cursor;
+                printf("\"");
+                printObject(OBJ_VAL(str->string));
+                printf("\"");
                 break;
             }
             default:
