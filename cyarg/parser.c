@@ -135,11 +135,24 @@ static uint32_t strtoNum(const char* literal, int length, int radix) {
     return val;
 }
 
+
+
+static ObjExpr* namedVariable(Token name, bool canAssign) {
+    ObjExprNamedVariable* expr = newExprNamedVariable(name.start, name.length, NULL);
+
+    if (canAssign && match(TOKEN_EQUAL)) {
+        tempRootPush(OBJ_VAL(expr));
+        expr->assignment = expression();
+        tempRootPop();
+    }
+
+    return (ObjExpr*)expr;
+}
+
 static ObjExpr* call(bool canAssign) { return NULL;}
 static ObjExpr* arrayinit(bool canAssign) { return NULL; }
 static ObjExpr* deref(bool canAssign) {return NULL; }
 static ObjExpr* dot(bool canAssign) { return NULL; }
-static ObjExpr* variable(bool canAssign) {return NULL; }
 static ObjExpr* string(bool canAssign) { return NULL; }
 static ObjExpr* and_(bool canAssign) { return NULL; }
 static ObjExpr* or_(bool canAssign) { return NULL; }
@@ -147,6 +160,10 @@ static ObjExpr* super_(bool canAssign) { return NULL; }
 static ObjExpr* this_(bool canAssign) { return NULL; }
 static ObjExpr* literal(bool canAssign) { return NULL; }
 
+static ObjExpr* variable(bool canAssign) {
+
+    return namedVariable(parser.previous, canAssign);
+}
 
 static ObjExpr* unary(bool canAssign) {
     TokenType operatorType = parser.previous.type;

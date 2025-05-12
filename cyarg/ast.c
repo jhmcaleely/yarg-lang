@@ -71,6 +71,16 @@ ObjNumber* newNumberUInteger32(uint32_t value) {
     return num;
 }
 
+ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength, ObjExpr* expr) {
+    ObjExprNamedVariable* var = ALLOCATE_OBJ(ObjExprNamedVariable, OBJ_EXPR_NAMEDVARIABLE);
+    var->expr.nextExpr = NULL;
+    var->assignment = expr;
+    tempRootPush(OBJ_VAL(var));
+    var->name = copyString(name, nameLength);
+    tempRootPop();
+    return var;
+}
+
 static void printExprOperation(ObjOperationExpr* opexpr) {
     switch (opexpr->operation) {
         case EXPR_OP_EQUAL: printf("="); break;
@@ -126,6 +136,15 @@ void printExpr(ObjExpr* expr) {
                 }
                 break;
             }
+            case OBJ_EXPR_NAMEDVARIABLE: {
+                ObjExprNamedVariable* var = (ObjExprNamedVariable*)cursor;
+                printObject(OBJ_VAL(var->name));
+                if (var->assignment) {
+                    printf(" = ");
+                    printExpr(var->assignment);
+                }
+                break;
+            }
             default:
                 printf("<unknown>");
         }
@@ -159,7 +178,7 @@ void printStmts(ObjStmt* stmts) {
                 break;
             }
             default:
-                printf("Unknown stmt\n");
+                printf("Unknown stmt;\n");
                 break;
         }
         cursor = cursor->nextStmt;

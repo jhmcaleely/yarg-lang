@@ -195,6 +195,13 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)expr->expression);
             break;
         }
+        case OBJ_EXPR_NAMEDVARIABLE: {
+            ObjExprNamedVariable* var = (ObjExprNamedVariable*)object;
+            markObject((Obj*)var->expr.nextExpr);
+            markObject((Obj*)var->assignment);
+            markObject((Obj*)var->name);
+            break;
+        }
         case OBJ_NATIVE:
         case OBJ_BLOB:
         case OBJ_CHANNEL:
@@ -283,6 +290,7 @@ static void freeObject(Obj* object) {
         case OBJ_EXPR_NUMBER: FREE(ObjNumber, object); break;
         case OBJ_EXPR_OPERATION: FREE(ObjOperationExpr, object); break;
         case OBJ_EXPR_GROUPING: FREE(ObjGroupingExpr, object); break;
+        case OBJ_EXPR_NAMEDVARIABLE: FREE(ObjExprNamedVariable, object); break;
     }
 }
 

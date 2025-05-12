@@ -49,6 +49,12 @@ typedef struct {
     ObjExpr* expression;
 } ObjGroupingExpr;
 
+typedef struct {
+    ObjExpr expr;
+    ObjString* name;
+    ObjExpr* assignment;
+} ObjExprNamedVariable;
+
 typedef struct ObjExpressionStatement ObjExpressionStatement;
 
 typedef struct ObjExpressionStatement {
@@ -89,6 +95,7 @@ ObjNumber* newNumberInteger(int value);
 ObjNumber* newNumberUInteger32(uint32_t value);
 ObjOperationExpr* newOperationExpr(ObjExpr* rhs, ExprOp op);
 ObjGroupingExpr* newGroupingExpr(ObjExpr* expression);
+ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength, ObjExpr* expr);
 
 ObjExpressionStatement* newExpressionStatement(ObjExpr* expr);
 ObjPrintStatement* newPrintStatement(ObjExpr* expr);

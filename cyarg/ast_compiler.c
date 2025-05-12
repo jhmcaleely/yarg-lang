@@ -82,6 +82,20 @@ static bool identifiersEqual(ObjString* a, ObjString* b) {
     return memcmp(a->chars, b->chars, a->length) == 0;
 }
 
+static int resolveLocal(AstCompiler* compiler, ObjString* name) {
+    for (int i = compiler->localCount - 1; i >= 0; i--) {
+        Local* local = &compiler->locals[i];
+        if (identifiersEqual(name, local->name)) {
+            if (local->depth == -1) {
+                error("Can't read local variable in its own initializer.");
+            }
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 static void addLocal(ObjString* name) {
     if (current->localCount == UINT8_COUNT) {
         error("Too many local variables in function.");
@@ -92,6 +106,14 @@ static void addLocal(ObjString* name) {
     local->name = name;
     local->depth = -1;
     local->isCaptured = false;
+}
+
+
+static int resolveUpvalue(AstCompiler* compiler, ObjString* name) {
+    if (compiler->enclosing == NULL) return -1;
+
+    // TODO!
+    return -1;
 }
 
 static uint8_t makeConstant(Value value) {
@@ -195,6 +217,29 @@ static void generateGroupingExpr(ObjGroupingExpr* grp) {
     generateExpr(grp->expression);
 }
 
+static void generateExprNamedVariable(ObjExprNamedVariable* var) {
+    uint8_t getOp, setOp;
+    int arg = resolveLocal(current, var->name);
+    if (arg != -1) {
+        getOp = OP_GET_LOCAL;
+        setOp = OP_SET_LOCAL;
+    } else if ((arg = resolveUpvalue(current, var->name)) != -1) {
+        getOp = OP_GET_UPVALUE;
+        setOp = OP_SET_UPVALUE;
+    } else {
+        arg = identifierConstant(var->name);
+        getOp = OP_GET_GLOBAL;
+        setOp = OP_SET_GLOBAL;
+    }
+    
+    if (var->assignment) {
+        generateExpr(var->assignment);
+        emitBytes(setOp, (uint8_t)arg);
+    } else {
+        emitBytes(getOp, (uint8_t)arg);
+    }
+}
+
 static void generateExprElt(ObjExpr* expr) {
     
     switch (expr->obj.type) {
@@ -212,6 +257,10 @@ static void generateExprElt(ObjExpr* expr) {
             ObjGroupingExpr* grp = (ObjGroupingExpr*)expr;
             generateGroupingExpr(grp);
             break;
+        }
+        case OBJ_EXPR_NAMEDVARIABLE: {
+            ObjExprNamedVariable* var = (ObjExprNamedVariable*)expr;
+            generateExprNamedVariable(var);
         }
         default:
             return; // unexpected

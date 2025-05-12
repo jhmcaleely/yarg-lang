@@ -1,2 +1,2 @@
 var a = 6;
-print (6 - -4);
+print a - 4;
