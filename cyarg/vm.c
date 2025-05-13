@@ -291,7 +291,7 @@ static bool setArrayElement(ObjRoutine* routine) {
         entries[index] = AS_UINTEGER(new_value);
     }
 
-    push(routine, OBJ_VAL(boxed_array));
+    push(routine, boxed_array);
     return true;
 }
 
