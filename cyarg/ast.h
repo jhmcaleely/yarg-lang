@@ -83,6 +83,11 @@ typedef struct {
     ObjExpr* initialiser;
 } ObjStmtVarDeclaration;
 
+typedef struct {
+    ObjStmt stmt;
+    ObjStmt* statements;
+} ObjStmtBlock;
+
 typedef enum {
     NUMBER_DOUBLE,
     NUMBER_INTEGER,
@@ -116,6 +121,7 @@ ObjExprString* newExprString(const char* str, int strLength);
 ObjStmtExpression* newStmtExpression(ObjExpr* expr);
 ObjStmtPrint* newStmtPrint(ObjExpr* expr);
 ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr* expr);
+ObjStmtBlock* newStmtBlock();
 
 void printStmts(ObjStmt* stmts);
 void printExpr(ObjExpr* expr);

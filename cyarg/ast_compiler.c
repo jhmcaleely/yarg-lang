@@ -361,6 +361,32 @@ static void generateVarDeclaration(ObjStmtVarDeclaration* decl) {
     defineVariable(global);
 }
 
+static void beginScope() {
+    current->scopeDepth++;
+}
+
+static void endScope() {
+    current->scopeDepth--;
+
+    while (current->localCount > 0 &&
+           current->locals[current->localCount - 1].depth > current->scopeDepth) {
+        if (current->locals[current->localCount - 1].isCaptured) {
+            emitByte(OP_CLOSE_UPVALUE);
+        } else {
+            emitByte(OP_POP);
+        }
+        current->localCount--;
+    }
+}
+
+static void generate(ObjStmt* stmt);
+
+static void generateStmtBlock(ObjStmtBlock* block) {
+    beginScope();
+    generate(block->statements);
+    endScope();
+}
+
 
 static void generateStmt(ObjStmt* stmt) {
     switch (stmt->obj.type) {
@@ -375,14 +401,17 @@ static void generateStmt(ObjStmt* stmt) {
         case OBJ_STMT_VARDECLARATION:
             generateVarDeclaration((ObjStmtVarDeclaration*)stmt);
             break;
+        case OBJ_STMT_BLOCK:
+            generateStmtBlock((ObjStmtBlock*)stmt);
+            break;
         default:
             return; // Unexpected
     }
 }
 
 
-static void generate() {
-    ObjStmt* stmt = current->ast;
+static void generate(ObjStmt* stmt) {
+
     while (stmt != NULL) {
         generateStmt(stmt);
         stmt = stmt->nextStmt;
@@ -410,7 +439,7 @@ ObjFunction* astCompile(const char* source) {
     parse(&current->ast);
     printStmts(current->ast);
 
-    generate();
+    generate(current->ast);
 
     ObjFunction* function = endCompiler();
     return parser.hadError ? NULL : function;

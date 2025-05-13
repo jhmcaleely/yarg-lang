@@ -30,6 +30,13 @@ ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr
     return stmt;
 }
 
+ObjStmtBlock* newStmtBlock() {
+    ObjStmtBlock* block = ALLOCATE_OBJ(ObjStmtBlock, OBJ_STMT_BLOCK);
+    block->stmt.nextStmt = NULL;
+    block->statements = NULL;
+    return block;
+}
+
 ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op) {
     ObjExprOperation* operation = ALLOCATE_OBJ(ObjExprOperation, OBJ_EXPR_OPERATION);
     operation->expr.nextExpr = NULL;
@@ -209,6 +216,13 @@ void printStmts(ObjStmt* stmts) {
                     printExpr(decl->initialiser);
                 }
                 printf(";\n");
+                break;
+            }
+            case OBJ_STMT_BLOCK: {
+                ObjStmtBlock* block = (ObjStmtBlock*)cursor;
+                printf("{\n");
+                printStmts(block->statements);
+                printf("}\n");
                 break;
             }
             default:

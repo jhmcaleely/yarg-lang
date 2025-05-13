@@ -425,6 +425,27 @@ static ObjStmt* varDeclaration() {
     return (ObjStmt*) decl;
 }
 
+static ObjStmt* declaration();
+
+static ObjStmt* block() {
+
+    ObjStmtBlock* block = newStmtBlock();
+    tempRootPush(OBJ_VAL(block));
+
+    ObjStmt** cursor = &block->statements;
+
+    while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
+        *cursor = declaration();
+        cursor = &(*cursor)->nextStmt;
+    }
+
+    consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
+
+    tempRootPop();
+
+    return (ObjStmt*) block;
+}
+
 ObjStmt* statement() {
     if (match(TOKEN_PRINT)) {
         return (ObjStmt*) printStatement();
@@ -438,10 +459,8 @@ ObjStmt* statement() {
 //        returnStatement();
 //    } else if (match(TOKEN_WHILE)) {
 //        whileStatement();
-//    } else if (match(TOKEN_LEFT_BRACE)) {
-//        beginScope();
-//        block();
-//        endScope();
+    } else if (match(TOKEN_LEFT_BRACE)) {
+        return block();
     } else {
         return (ObjStmt*) expressionStatement();
     }
