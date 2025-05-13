@@ -37,6 +37,15 @@ ObjStmtBlock* newStmtBlock() {
     return block;
 }
 
+ObjStmtIf* newStmtIf() {
+    ObjStmtIf* ctrl = ALLOCATE_OBJ(ObjStmtIf, OBJ_STMT_IF);
+    ctrl->stmt.nextStmt = NULL;
+    ctrl->test = NULL;
+    ctrl->ifStmt = NULL;
+    ctrl->elseStmt = NULL;
+    return ctrl;
+}
+
 ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op) {
     ObjExprOperation* operation = ALLOCATE_OBJ(ObjExprOperation, OBJ_EXPR_OPERATION);
     operation->expr.nextExpr = NULL;
@@ -193,6 +202,17 @@ void printExpr(ObjExpr* expr) {
     }
 }
 
+void printStmtIf(ObjStmtIf* ctrl) {
+    printf("if (");
+    printExpr(ctrl->test);
+    printf(")\n");
+    printStmts(ctrl->ifStmt);
+    if (ctrl->elseStmt) {
+        printf("else\n");
+        printStmts(ctrl->elseStmt);
+    }
+}
+
 void printStmts(ObjStmt* stmts) {
     ObjStmt* cursor = stmts;
     while (cursor) {
@@ -223,6 +243,11 @@ void printStmts(ObjStmt* stmts) {
                 printf("{\n");
                 printStmts(block->statements);
                 printf("}\n");
+                break;
+            }
+            case OBJ_STMT_IF: {
+                ObjStmtIf* ctrl = (ObjStmtIf*)cursor;
+                printStmtIf(ctrl);
                 break;
             }
             default:

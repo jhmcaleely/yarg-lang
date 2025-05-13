@@ -426,6 +426,7 @@ static ObjStmt* varDeclaration() {
 }
 
 static ObjStmt* declaration();
+static ObjStmt* statement();
 
 static ObjStmt* block() {
 
@@ -446,13 +447,29 @@ static ObjStmt* block() {
     return (ObjStmt*) block;
 }
 
+ObjStmt* ifStatement() {
+    ObjStmtIf* ctrl = newStmtIf();
+    tempRootPush(OBJ_VAL(ctrl));
+
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
+    ctrl->test = expression();
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+    ctrl->ifStmt = statement();
+    if (match(TOKEN_ELSE)) {
+        ctrl->elseStmt = statement();
+    }
+    tempRootPop();
+    return (ObjStmt*)ctrl;
+}
+
 ObjStmt* statement() {
     if (match(TOKEN_PRINT)) {
         return (ObjStmt*) printStatement();
 //    } else if (match(TOKEN_FOR)) {
 //        forStatement();
-//    } else if (match(TOKEN_IF)) {
-//        ifStatement();
+    } else if (match(TOKEN_IF)) {
+        return ifStatement();
 //    } else if (match(TOKEN_YIELD)) {
 //        yieldStatement();
 //    } else if (match(TOKEN_RETURN)) {

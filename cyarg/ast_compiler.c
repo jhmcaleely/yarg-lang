@@ -387,6 +387,22 @@ static void generateStmtBlock(ObjStmtBlock* block) {
     endScope();
 }
 
+static void generateStmtIf(ObjStmtIf* ctrl) {
+    generateExpr(ctrl->test);
+    int thenJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);
+    generate(ctrl->ifStmt);
+
+    int elseJump = emitJump(OP_JUMP);
+
+    patchJump(thenJump);
+    emitByte(OP_POP);
+    if (ctrl->elseStmt) {
+        generate(ctrl->elseStmt);
+    }
+    patchJump(elseJump);
+}
+
 
 static void generateStmt(ObjStmt* stmt) {
     switch (stmt->obj.type) {
@@ -403,6 +419,9 @@ static void generateStmt(ObjStmt* stmt) {
             break;
         case OBJ_STMT_BLOCK:
             generateStmtBlock((ObjStmtBlock*)stmt);
+            break;
+        case OBJ_STMT_IF:
+            generateStmtIf((ObjStmtIf*)stmt);
             break;
         default:
             return; // Unexpected

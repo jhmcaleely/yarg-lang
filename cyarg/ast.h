@@ -88,6 +88,13 @@ typedef struct {
     ObjStmt* statements;
 } ObjStmtBlock;
 
+typedef struct {
+    ObjStmt stmt;
+    ObjExpr* test;
+    ObjStmt* ifStmt;
+    ObjStmt* elseStmt;
+} ObjStmtIf;
+
 typedef enum {
     NUMBER_DOUBLE,
     NUMBER_INTEGER,
@@ -122,6 +129,7 @@ ObjStmtExpression* newStmtExpression(ObjExpr* expr);
 ObjStmtPrint* newStmtPrint(ObjExpr* expr);
 ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr* expr);
 ObjStmtBlock* newStmtBlock();
+ObjStmtIf* newStmtIf();
 
 void printStmts(ObjStmt* stmts);
 void printExpr(ObjExpr* expr);
