@@ -95,6 +95,19 @@ typedef struct {
     ObjStmt* elseStmt;
 } ObjStmtIf;
 
+typedef struct {
+    Obj obj;
+    unsigned int arity;
+    ObjExpr* params[UINT8_MAX];
+    ObjStmtBlock* body;
+} ObjFunctionDeclaration;
+
+typedef struct {
+    ObjStmt stmt;
+    ObjString* name;
+    ObjFunctionDeclaration* function;
+} ObjStmtFunDeclaration;
+
 typedef enum {
     NUMBER_DOUBLE,
     NUMBER_INTEGER,
@@ -130,6 +143,9 @@ ObjStmtPrint* newStmtPrint(ObjExpr* expr);
 ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr* expr);
 ObjStmtBlock* newStmtBlock();
 ObjStmtIf* newStmtIf();
+ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength);
+
+ObjFunctionDeclaration* newObjFunctionDeclaration();
 
 void printStmts(ObjStmt* stmts);
 void printExpr(ObjExpr* expr);

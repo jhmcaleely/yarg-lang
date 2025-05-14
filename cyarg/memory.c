@@ -158,6 +158,14 @@ static void blackenObject(Obj* object) {
             }
             break;
         }
+        case OBJ_FUNDECLARATION: {
+            ObjFunctionDeclaration* fun = (ObjFunctionDeclaration*)object;
+            markObject((Obj*)fun->body);
+            for (int i = 0; i < fun->arity; i++) {
+                markObject((Obj*)fun->params[i]);
+            }
+            break;
+        }
         case OBJ_STMT_EXPRESSION: {
             ObjStmtExpression* stmt = (ObjStmtExpression*)object;
             markObject((Obj*)stmt->stmt.nextStmt);
@@ -189,6 +197,13 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)ctrl->test);
             markObject((Obj*)ctrl->ifStmt);
             markObject((Obj*)ctrl->elseStmt);
+            break;
+        }
+        case OBJ_STMT_FUNDECLARATION: {
+            ObjStmtFunDeclaration* fun = (ObjStmtFunDeclaration*)object;
+            markObject((Obj*)fun->stmt.nextStmt);
+            markObject((Obj*)fun->name);
+            markObject((Obj*)fun->function);
             break;
         }
         case OBJ_EXPR_NUMBER: {
@@ -309,11 +324,13 @@ static void freeObject(Obj* object) {
             FREE(ObjYargType, object);
             break;
         }
+        case OBJ_FUNDECLARATION: FREE(ObjFunctionDeclaration, object); break;
         case OBJ_STMT_EXPRESSION: FREE(ObjStmtExpression, object); break;
         case OBJ_STMT_PRINT: FREE(ObjStmtPrint, object); break;
         case OBJ_STMT_VARDECLARATION: FREE(ObjStmtVarDeclaration, object); break;
         case OBJ_STMT_BLOCK: FREE(ObjStmtBlock, object); break;
         case OBJ_STMT_IF: FREE(ObjStmtIf, object); break;
+        case OBJ_STMT_FUNDECLARATION: FREE(ObjStmtFunDeclaration, object); break;
         case OBJ_EXPR_NUMBER: FREE(ObjExprNumber, object); break;
         case OBJ_EXPR_OPERATION: FREE(ObjExprOperation, object); break;
         case OBJ_EXPR_GROUPING: FREE(ObjExprGrouping, object); break;

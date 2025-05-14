@@ -428,7 +428,7 @@ static ObjStmt* varDeclaration() {
 static ObjStmt* declaration();
 static ObjStmt* statement();
 
-static ObjStmt* block() {
+static ObjStmtBlock* block() {
 
     ObjStmtBlock* block = newStmtBlock();
     tempRootPush(OBJ_VAL(block));
@@ -444,7 +444,7 @@ static ObjStmt* block() {
 
     tempRootPop();
 
-    return (ObjStmt*) block;
+    return block;
 }
 
 ObjStmt* ifStatement() {
@@ -477,10 +477,45 @@ ObjStmt* statement() {
 //    } else if (match(TOKEN_WHILE)) {
 //        whileStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {
-        return block();
+        return (ObjStmt*)block();
     } else {
         return (ObjStmt*) expressionStatement();
     }
+}
+
+static ObjFunctionDeclaration* function(FunctionType type) {
+
+    ObjFunctionDeclaration* fun = newObjFunctionDeclaration();
+    tempRootPush(OBJ_VAL(fun));
+
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
+    if (!check(TOKEN_RIGHT_PAREN)) {
+        do {
+            fun->params[fun->arity] = expression();
+            fun->arity++;
+            if (fun->arity > 255) {
+                errorAtCurrent("Can't have more than 255 parameters.");
+            }
+        } while (match(TOKEN_COMMA));
+    }
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
+    consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
+
+    fun->body = block();
+
+    tempRootPop();
+    return fun;
+}
+
+static ObjStmt* funDeclaration() {
+    consume(TOKEN_IDENTIFIER, "Expect function name.");
+    ObjStmtFunDeclaration* fun = newStmtFunDeclaration(parser.previous.start, parser.previous.length);
+    tempRootPush(OBJ_VAL(fun));
+
+    fun->function = function(TYPE_FUNCTION);
+    
+    tempRootPop();
+    return (ObjStmt*)fun;
 }
 
 ObjStmt* declaration() {
@@ -489,7 +524,7 @@ ObjStmt* declaration() {
     if (match(TOKEN_CLASS)) {
 //        classDeclaration();
     } else if (match(TOKEN_FUN)) {
-//        funDeclaration();
+        stmt = funDeclaration();
     } else if (match(TOKEN_VAR)) {
         stmt = varDeclaration();
     } else {

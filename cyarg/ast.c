@@ -46,6 +46,24 @@ ObjStmtIf* newStmtIf() {
     return ctrl;
 }
 
+ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength) {
+    ObjStmtFunDeclaration* fun = ALLOCATE_OBJ(ObjStmtFunDeclaration, OBJ_STMT_FUNDECLARATION);
+    fun->stmt.nextStmt = NULL;
+    fun->name = NULL;
+    fun->function = NULL;
+    tempRootPush(OBJ_VAL(fun));
+    fun->name = copyString(name, nameLength);
+    tempRootPop();
+    return fun;
+}
+
+ObjFunctionDeclaration* newObjFunctionDeclaration() {
+    ObjFunctionDeclaration* fun = ALLOCATE_OBJ(ObjFunctionDeclaration, OBJ_FUNDECLARATION);
+    fun->arity = 0;
+    fun->body = NULL;
+    return fun;
+}
+
 ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op) {
     ObjExprOperation* operation = ALLOCATE_OBJ(ObjExprOperation, OBJ_EXPR_OPERATION);
     operation->expr.nextExpr = NULL;
@@ -213,6 +231,18 @@ void printStmtIf(ObjStmtIf* ctrl) {
     }
 }
 
+void printFunDeclaration(ObjStmtFunDeclaration* decl) {
+    printf("fun ");
+    printObject(OBJ_VAL(decl->name));
+    printf("(");
+    for (int i = 0; i < decl->function->arity; i++) {
+        printExpr(decl->function->params[i]);
+        printf(", ");
+    }
+    printf(")\n");
+    printStmts((ObjStmt*)decl->function->body);
+}
+
 void printStmts(ObjStmt* stmts) {
     ObjStmt* cursor = stmts;
     while (cursor) {
@@ -248,6 +278,11 @@ void printStmts(ObjStmt* stmts) {
             case OBJ_STMT_IF: {
                 ObjStmtIf* ctrl = (ObjStmtIf*)cursor;
                 printStmtIf(ctrl);
+                break;
+            }
+            case OBJ_STMT_FUNDECLARATION: {
+                ObjStmtFunDeclaration* decl = (ObjStmtFunDeclaration*)cursor;
+                printFunDeclaration(decl);
                 break;
             }
             default:

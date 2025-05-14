@@ -1,3 +1,8 @@
+fun hello(world, is) {
+    print world;
+    print is;
+}
+
 if (false) {
 print "hello";
 } else {
