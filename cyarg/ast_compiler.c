@@ -347,6 +347,18 @@ static void generateExprArrayInit(ObjExprArrayInit* array) {
     }
 }
 
+static void generateExprArrayElement(ObjExprArrayElement* array) {
+
+    generateExpr(array->element);
+
+    if (array->assignment) {
+        generateExpr(array->assignment);
+        emitByte(OP_SET_ELEMENT);
+    } else {
+        emitByte(OP_ELEMENT);
+    }
+}
+
 static void generateExprElt(ObjExpr* expr) {
     
     switch (expr->obj.type) {
@@ -388,6 +400,11 @@ static void generateExprElt(ObjExpr* expr) {
         case OBJ_EXPR_ARRAYINIT: {
             ObjExprArrayInit* array = (ObjExprArrayInit*)expr;
             generateExprArrayInit(array);
+            break;
+        }
+        case OBJ_EXPR_ARRAYELEMENT: {
+            ObjExprArrayElement* array = (ObjExprArrayElement*)expr;
+            generateExprArrayElement(array);
             break;
         }
         default:

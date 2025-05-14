@@ -146,6 +146,12 @@ typedef struct {
     ObjArguments* args;
 } ObjExprArrayInit;
 
+typedef struct {
+    ObjExpr expr;
+    ObjExpr* element;
+    ObjExpr* assignment;
+} ObjExprArrayElement;
+
 ObjExprNumber* newExprNumberDouble(double value);
 ObjExprNumber* newExprNumberInteger(int value);
 ObjExprNumber* newExprNumberUInteger32(uint32_t value);
@@ -157,6 +163,7 @@ ObjExprString* newExprString(const char* str, int strLength);
 ObjArguments* newObjArguments();
 ObjExprCall* newExprCall(ObjArguments* args);
 ObjExprArrayInit* newExprArrayInit(ObjArguments* args);
+ObjExprArrayElement* newExprArrayElement();
 
 void appendObjArgument(ObjArguments* args, ObjExpr* expr);
 

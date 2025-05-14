@@ -182,14 +182,28 @@ static ObjArguments* arrayInitExpressionsList() {
     return args;
 }
 
-static ObjExpr* deref(bool canAssign) {return NULL; }
 static ObjExpr* dot(bool canAssign) { return NULL; }
 static ObjExpr* or_(bool canAssign) { return NULL; }
 static ObjExpr* super_(bool canAssign) { return NULL; }
 static ObjExpr* this_(bool canAssign) { return NULL; }
 
-static ObjExpr* arrayinit(bool canAssign) {
+static ObjExpr* deref(bool canAssign) {
+    
+    ObjExprArrayElement* elmt = newExprArrayElement();
+    tempRootPush(OBJ_VAL(elmt));
 
+    elmt->element = parsePrecedence(PREC_ASSIGNMENT);   // prevents assignment within []
+    consume(TOKEN_RIGHT_SQUARE_BRACKET, "Expect ] after expression.");
+
+    if (canAssign && match(TOKEN_EQUAL)) {
+        elmt->assignment = expression();
+    }
+
+    tempRootPop();
+    return (ObjExpr*)elmt;
+}
+
+static ObjExpr* arrayinit(bool canAssign) {
 
     ObjArguments* args = arrayInitExpressionsList();
     tempRootPush(OBJ_VAL(args));
