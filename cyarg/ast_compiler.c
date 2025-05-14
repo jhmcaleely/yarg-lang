@@ -607,7 +607,9 @@ ObjFunction* astCompile(const char* source) {
     initCompiler(&compiler, TYPE_SCRIPT);
 
     parse(&current->ast);
+#ifdef DEBUG_AST_PARSE
     printStmts(current->ast);
+#endif
 
     generate(current->ast);
 
