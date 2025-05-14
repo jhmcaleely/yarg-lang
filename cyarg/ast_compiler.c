@@ -18,6 +18,11 @@ typedef struct {
     bool isCaptured;
 } Local;
 
+typedef struct {
+    uint8_t index;
+    bool isLocal;
+} Upvalue;
+
 typedef struct AstCompiler {
     struct AstCompiler* enclosing;
     ObjFunction* function;
@@ -26,6 +31,7 @@ typedef struct AstCompiler {
 
     Local locals[UINT8_COUNT];
     int localCount;
+    Upvalue upvalues[UINT8_COUNT];
     int scopeDepth;
 } AstCompiler;
 
@@ -54,10 +60,10 @@ static void initCompiler(AstCompiler* compiler, FunctionType type) {
     local->isCaptured = false;
     if (type != TYPE_FUNCTION) {
         local->name = copyString("this", 4);
+    } else {
+        local->name = copyString("", 0);
     }
 }
-
-
 
 static void error(const char* message) {
     fprintf(stderr, "%s\n", message);
@@ -66,7 +72,6 @@ static void error(const char* message) {
 static Chunk* currentChunk() {
     return &current->function->chunk;
 }
-
 
 static void emitByte(uint8_t byte) {
     writeChunk(currentChunk(), byte, parser.previous.line);
@@ -108,11 +113,40 @@ static void addLocal(ObjString* name) {
     local->isCaptured = false;
 }
 
+static int addUpvalue(AstCompiler* compiler, uint8_t index, bool isLocal) {
+    int upvalueCount = compiler->function->upvalueCount;
+
+    for (int i = 0; i < upvalueCount; i++) {
+        Upvalue* upvalue = &compiler->upvalues[i];
+        if (upvalue->index == index && upvalue->isLocal == isLocal) {
+            return i;
+        }
+    }
+
+    if (upvalueCount == UINT8_COUNT) {
+        error("Too many closure variables in function.");
+        return 0;
+    }
+
+    compiler->upvalues[upvalueCount].isLocal = isLocal;
+    compiler->upvalues[upvalueCount].index = index;
+    return compiler->function->upvalueCount++;
+}
 
 static int resolveUpvalue(AstCompiler* compiler, ObjString* name) {
     if (compiler->enclosing == NULL) return -1;
 
-    // TODO!
+    int local = resolveLocal(compiler->enclosing, name);
+    if (local != -1) {
+        compiler->enclosing->locals[local].isCaptured = true;
+        return addUpvalue(compiler, (uint8_t)local, true);
+    }
+
+    int upvalue = resolveUpvalue(compiler->enclosing, name);
+    if (upvalue != -1) {
+        return addUpvalue(compiler, (uint8_t)upvalue, false);
+    }
+
     return -1;
 }
 
@@ -380,6 +414,7 @@ static void endScope() {
 }
 
 static void generate(ObjStmt* stmt);
+static ObjFunction* endCompiler();
 
 static void generateStmtBlock(ObjStmtBlock* block) {
     beginScope();
@@ -403,6 +438,36 @@ static void generateStmtIf(ObjStmtIf* ctrl) {
     patchJump(elseJump);
 }
 
+static void generateFunction(FunctionType type, ObjFunctionDeclaration* decl) {
+    AstCompiler compiler;
+    initCompiler(&compiler, type);
+    beginScope();
+
+    for (int i = 0; i < decl->arity; i++) {
+        generateExpr(decl->params[i]);
+    }
+
+    generate((ObjStmt*)decl->body);
+
+    ObjFunction* function = endCompiler();
+    emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
+
+    for (int i = 0; i < function->upvalueCount; i++) {
+        emitByte(compiler.upvalues[i].isLocal ? 1 : 0);
+        emitByte(compiler.upvalues[i].index);
+    }
+}
+
+static void generateStmtFunDeclaration(ObjStmtFunDeclaration* decl) {
+
+    uint8_t global = parseVariable(decl->name);
+    markInitialized();
+
+    generateFunction(TYPE_FUNCTION, decl->function);
+
+    defineVariable(global);
+}
+
 
 static void generateStmt(ObjStmt* stmt) {
     switch (stmt->obj.type) {
@@ -422,6 +487,9 @@ static void generateStmt(ObjStmt* stmt) {
             break;
         case OBJ_STMT_IF:
             generateStmtIf((ObjStmtIf*)stmt);
+            break;
+        case OBJ_STMT_FUNDECLARATION:
+            generateStmtFunDeclaration((ObjStmtFunDeclaration*)stmt);
             break;
         default:
             return; // Unexpected
