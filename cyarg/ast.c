@@ -203,6 +203,7 @@ static void printExprOperation(ObjExprOperation* opexpr) {
         case EXPR_OP_NOT: printf("!"); break;
         case EXPR_OP_NEGATE: printf("-"); break;
         case EXPR_OP_LOGICAL_AND: printf(" and "); break;
+        case EXPR_OP_LOGICAL_OR: printf(" or "); break;
     }
     printf("(");
     printExpr(opexpr->rhs);

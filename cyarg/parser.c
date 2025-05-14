@@ -183,7 +183,6 @@ static ObjArguments* arrayInitExpressionsList() {
 }
 
 static ObjExpr* dot(bool canAssign) { return NULL; }
-static ObjExpr* or_(bool canAssign) { return NULL; }
 static ObjExpr* super_(bool canAssign) { return NULL; }
 static ObjExpr* this_(bool canAssign) { return NULL; }
 
@@ -295,6 +294,13 @@ static ObjExpr* and_(bool canAssign) {
     return (ObjExpr*) expr;
 }
 
+static ObjExpr* or_(bool canAssign) {
+    ObjExpr* rhs = parsePrecedence(PREC_OR);
+    tempRootPush(OBJ_VAL(rhs));
+    ObjExprOperation* expr = newExprOperation(rhs, EXPR_OP_LOGICAL_OR);
+    tempRootPop();
+    return (ObjExpr*) expr;
+}
 
 static ObjExpr* binary(bool canAssign) {
     TokenType operatorType = parser.previous.type;

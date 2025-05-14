@@ -36,7 +36,8 @@ typedef enum {
     EXPR_OP_LESS_EQUAL,
     EXPR_OP_NOT,
     EXPR_OP_NEGATE,
-    EXPR_OP_LOGICAL_AND
+    EXPR_OP_LOGICAL_AND,
+    EXPR_OP_LOGICAL_OR
 } ExprOp;
 
 typedef enum {

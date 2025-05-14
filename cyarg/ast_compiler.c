@@ -253,17 +253,21 @@ static void generateExprLogicalAnd(ObjExprOperation* bin) {
     patchJump(endJump);
 }
 
-static void generateExprOperation(ObjExprOperation* bin) {
+static void generateExprLogicalOr(ObjExprOperation* bin) {
+    int elseJump = emitJump(OP_JUMP_IF_FALSE);
+    int endJump = emitJump(OP_JUMP);
 
-    switch (bin->operation) {
-        case EXPR_OP_LOGICAL_AND: generateExprLogicalAnd(bin); return;
-        default:
-            break;
-    }
+    patchJump(elseJump);
+    emitByte(OP_POP);
 
     generateExpr(bin->rhs);
+    patchJump(endJump);
+}
 
-    switch (bin->operation) {
+static void generateArithOperation(ObjExprOperation* op) {    
+    generateExpr(op->rhs);
+
+    switch (op->operation) {
         case EXPR_OP_EQUAL: emitByte(OP_EQUAL); return;
         case EXPR_OP_GREATER: emitByte(OP_GREATER); return;
         case EXPR_OP_RIGHT_SHIFT: emitByte(OP_RIGHT_SHIFT); return;
@@ -282,7 +286,16 @@ static void generateExprOperation(ObjExprOperation* bin) {
         case EXPR_OP_LESS_EQUAL: emitBytes(OP_GREATER, OP_NOT); return;
         case EXPR_OP_NOT: emitByte(OP_NOT); return;
         case EXPR_OP_NEGATE: emitByte(OP_NEGATE); return;
-        default: break;
+        default: return; // unreachable
+    }
+}
+
+static void generateExprOperation(ObjExprOperation* op) {
+
+    switch (op->operation) {
+        case EXPR_OP_LOGICAL_AND: generateExprLogicalAnd(op); return;
+        case EXPR_OP_LOGICAL_OR: generateExprLogicalOr(op); return;
+        default: generateArithOperation(op); return;
     }
 }
 
