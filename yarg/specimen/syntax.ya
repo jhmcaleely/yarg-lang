@@ -3,8 +3,4 @@ fun hello(world, is) {
     print is;
 }
 
-if (false) {
-print "hello";
-} else {
-print "world";
-}
+hello("john", "home");

@@ -132,6 +132,33 @@ ObjExprString* newExprString(const char* str, int strLength) {
     return string;
 }
 
+ObjArguments* newObjArguments() {
+    ObjArguments* args = ALLOCATE_OBJ(ObjArguments, OBJ_ARGUMENTS);
+    args->arguments = NULL;
+    args->count = 0;
+    args->capacity = 0;
+    return args;
+}
+
+void appendObjArgument(ObjArguments* args, ObjExpr* expr) {
+    if (args->capacity < args->count + 1) {
+        args->capacity = GROW_CAPACITY(args->capacity);
+        args->arguments = (Obj**)realloc(args->arguments, sizeof(Obj*) * args->capacity);
+
+        if (args->arguments == NULL) {
+            printf("Out of memory!");
+            exit(1);
+        }
+    }
+    args->arguments[args->count++] = (Obj*) expr;
+}
+
+ObjExprCall* newExprCall(ObjArguments* args) {
+    ObjExprCall* call = ALLOCATE_OBJ(ObjExprCall, OBJ_EXPR_CALL);
+    call->args = args;
+    return call;
+}
+
 static void printExprOperation(ObjExprOperation* opexpr) {
     switch (opexpr->operation) {
         case EXPR_OP_EQUAL: printf("=="); break;
@@ -211,6 +238,16 @@ void printExpr(ObjExpr* expr) {
                 printf("\"");
                 printObject(OBJ_VAL(str->string));
                 printf("\"");
+                break;
+            }
+            case OBJ_EXPR_CALL: {
+                ObjExprCall* call = (ObjExprCall*)cursor;
+                printf("(");
+                for (int i = 0; i < call->args->count; i++) {
+                    printExpr((ObjExpr*)call->args->arguments[i]);
+                    printf(", ");
+                }
+                printf(")");
                 break;
             }
             default:

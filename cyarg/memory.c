@@ -85,6 +85,10 @@ static void markArray(ValueArray* array) {
     }
 }
 
+static void markExpr(Obj* expr) {
+    markObject((Obj*)((ObjExpr*)expr)->nextExpr);
+}
+
 static void blackenObject(Obj* object) {
 #ifdef DEBUG_LOG_GC
     printf("%p blacken ", (void*)object);
@@ -166,6 +170,13 @@ static void blackenObject(Obj* object) {
             }
             break;
         }
+        case OBJ_ARGUMENTS: {
+            ObjArguments* args = (ObjArguments*)object;
+            for (int i = 0; i < args->count; i++) {
+                markObject((Obj*)args->arguments[i]);
+            }
+            break;
+        }
         case OBJ_STMT_EXPRESSION: {
             ObjStmtExpression* stmt = (ObjStmtExpression*)object;
             markObject((Obj*)stmt->stmt.nextStmt);
@@ -240,6 +251,12 @@ static void blackenObject(Obj* object) {
             ObjExprString* str = (ObjExprString*)object;
             markObject((Obj*)str->expr.nextExpr);
             markObject((Obj*)str->string);
+            break;
+        }
+        case OBJ_EXPR_CALL: {
+            markExpr(object);
+            ObjExprCall* call = (ObjExprCall*)object;
+            markObject((Obj*)call->args);
             break;
         }
         case OBJ_NATIVE:
@@ -337,6 +354,13 @@ static void freeObject(Obj* object) {
         case OBJ_EXPR_NAMEDVARIABLE: FREE(ObjExprNamedVariable, object); break;
         case OBJ_EXPR_LITERAL: FREE(ObjExprLiteral, object); break;
         case OBJ_EXPR_STRING: FREE(ObjExprString, object); break;
+        case OBJ_ARGUMENTS: {
+            ObjArguments* args = (ObjArguments*)object;
+            FREE_ARRAY(Obj*, args->arguments, args->capacity);
+            FREE(ObjArguments, object);
+            break;
+        }
+        case OBJ_EXPR_CALL: FREE(ObjExprCall, object); break;
     }
 }
 

@@ -129,6 +129,18 @@ typedef struct {
     ObjString* string;
 } ObjExprString;
 
+typedef struct {
+    Obj obj;
+    int count;
+    int capacity;
+    Obj** arguments;
+} ObjArguments;
+
+typedef struct {
+    ObjExpr expr;
+    ObjArguments* args;
+} ObjExprCall;
+
 ObjExprNumber* newExprNumberDouble(double value);
 ObjExprNumber* newExprNumberInteger(int value);
 ObjExprNumber* newExprNumberUInteger32(uint32_t value);
@@ -137,6 +149,10 @@ ObjExprGrouping* newExprGrouping(ObjExpr* expression);
 ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength, ObjExpr* expr);
 ObjExprLiteral* newExprLiteral(ExprLiteral literal);
 ObjExprString* newExprString(const char* str, int strLength);
+ObjArguments* newObjArguments();
+ObjExprCall* newExprCall(ObjArguments* args);
+
+void appendObjArgument(ObjArguments* args, ObjExpr* expr);
 
 ObjStmtExpression* newStmtExpression(ObjExpr* expr);
 ObjStmtPrint* newStmtPrint(ObjExpr* expr);

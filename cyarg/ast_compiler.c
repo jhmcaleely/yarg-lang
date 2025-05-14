@@ -322,6 +322,17 @@ static void generateExprLiteral(ObjExprLiteral* lit) {
     }
 }
 
+static void generateArgs(ObjArguments* args) {
+    for (int i = 0; i < args->count; i++) {
+        generateExpr((ObjExpr*)args->arguments[i]);
+    }
+}
+
+static void generateExprCall(ObjExprCall* call) {
+    generateArgs(call->args);
+    emitBytes(OP_CALL, call->args->count);
+}
+
 static void generateExprElt(ObjExpr* expr) {
     
     switch (expr->obj.type) {
@@ -353,6 +364,11 @@ static void generateExprElt(ObjExpr* expr) {
         case OBJ_EXPR_STRING: {
             ObjExprString* str = (ObjExprString*)expr;
             generateExprString(str);
+            break;
+        }
+        case OBJ_EXPR_CALL: {
+            ObjExprCall* call = (ObjExprCall*)expr;
+            generateExprCall(call);
             break;
         }
         default:
@@ -444,12 +460,14 @@ static void generateFunction(FunctionType type, ObjFunctionDeclaration* decl) {
     beginScope();
 
     for (int i = 0; i < decl->arity; i++) {
-        generateExpr(decl->params[i]);
+        uint8_t constant = parseVariable(((ObjExprNamedVariable*)decl->params[i])->name);
+        defineVariable(constant);
     }
 
     generate((ObjStmt*)decl->body);
 
     ObjFunction* function = endCompiler();
+    function->arity = decl->arity;
     emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
 
     for (int i = 0; i < function->upvalueCount; i++) {

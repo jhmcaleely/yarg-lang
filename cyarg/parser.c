@@ -149,13 +149,36 @@ static ObjExpr* namedVariable(Token name, bool canAssign) {
     return (ObjExpr*)expr;
 }
 
-static ObjExpr* call(bool canAssign) { return NULL;}
+static ObjArguments* argumentList() {
+    ObjArguments* args = newObjArguments();
+    tempRootPush(OBJ_VAL(args));
+    if (!check(TOKEN_RIGHT_PAREN)) {
+        do {
+            appendObjArgument(args, expression());
+            if (args->count == 255) {
+                error("Can't have more than 255 arguments.");
+            }
+        } while (match(TOKEN_COMMA));
+    }
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' aftger arguments.");
+    tempRootPop();
+    return args;
+}
+
 static ObjExpr* arrayinit(bool canAssign) { return NULL; }
 static ObjExpr* deref(bool canAssign) {return NULL; }
 static ObjExpr* dot(bool canAssign) { return NULL; }
 static ObjExpr* or_(bool canAssign) { return NULL; }
 static ObjExpr* super_(bool canAssign) { return NULL; }
 static ObjExpr* this_(bool canAssign) { return NULL; }
+
+static ObjExpr* call(bool canAssign) {
+    ObjArguments* args = argumentList();
+    tempRootPush(OBJ_VAL(args));
+    ObjExprCall* call = newExprCall(args);
+    tempRootPop();
+    return (ObjExpr*)call;
+}
 
 static ObjExpr* string(bool canAssign) {
     return (ObjExpr*) newExprString(parser.previous.start + 1, parser.previous.length - 2);
