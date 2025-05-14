@@ -57,6 +57,14 @@ ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength) {
     return fun;
 }
 
+ObjStmtWhile* newStmtWhile() {
+    ObjStmtWhile* loop = ALLOCATE_OBJ(ObjStmtWhile, OBJ_STMT_WHILE);
+    loop->stmt.nextStmt = NULL;
+    loop->test = NULL;
+    loop->loop = NULL;
+    return loop;
+}
+
 ObjFunctionDeclaration* newObjFunctionDeclaration() {
     ObjFunctionDeclaration* fun = ALLOCATE_OBJ(ObjFunctionDeclaration, OBJ_FUNDECLARATION);
     fun->arity = 0;
@@ -330,6 +338,13 @@ void printFunDeclaration(ObjStmtFunDeclaration* decl) {
     printStmts((ObjStmt*)decl->function->body);
 }
 
+void printStmtWhile(ObjStmtWhile* loop) {
+    printf("while (");
+    printExpr(loop->test);
+    printf(")\n");
+    printStmts(loop->loop);
+}
+
 void printStmts(ObjStmt* stmts) {
     ObjStmt* cursor = stmts;
     while (cursor) {
@@ -370,6 +385,11 @@ void printStmts(ObjStmt* stmts) {
             case OBJ_STMT_FUNDECLARATION: {
                 ObjStmtFunDeclaration* decl = (ObjStmtFunDeclaration*)cursor;
                 printFunDeclaration(decl);
+                break;
+            }
+            case OBJ_STMT_WHILE: {
+                ObjStmtWhile* loop = (ObjStmtWhile*)cursor;
+                printStmtWhile(loop);
                 break;
             }
             default:

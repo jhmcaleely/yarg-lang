@@ -553,6 +553,20 @@ ObjStmt* ifStatement() {
     return (ObjStmt*)ctrl;
 }
 
+ObjStmtWhile* whileStatement() {
+    ObjStmtWhile* loop = newStmtWhile();
+    tempRootPush(OBJ_VAL(loop));
+
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
+    loop->test = expression();
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+    loop->loop = statement();
+
+    tempRootPop();
+    return loop;
+}
+
 ObjStmt* statement() {
     if (match(TOKEN_PRINT)) {
         return (ObjStmt*) printStatement();
@@ -564,8 +578,8 @@ ObjStmt* statement() {
 //        yieldStatement();
 //    } else if (match(TOKEN_RETURN)) {
 //        returnStatement();
-//    } else if (match(TOKEN_WHILE)) {
-//        whileStatement();
+    } else if (match(TOKEN_WHILE)) {
+        return (ObjStmt*) whileStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {
         return (ObjStmt*)block();
     } else {

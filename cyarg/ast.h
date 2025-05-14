@@ -125,6 +125,12 @@ typedef struct {
     ObjFunctionDeclaration* function;
 } ObjStmtFunDeclaration;
 
+typedef struct {
+    ObjStmt stmt;
+    ObjExpr* test;
+    ObjStmt* loop;
+} ObjStmtWhile;
+
 typedef enum {
     NUMBER_DOUBLE,
     NUMBER_INTEGER,
@@ -197,6 +203,7 @@ ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr
 ObjStmtBlock* newStmtBlock();
 ObjStmtIf* newStmtIf();
 ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength);
+ObjStmtWhile* newStmtWhile();
 
 ObjFunctionDeclaration* newObjFunctionDeclaration();
 

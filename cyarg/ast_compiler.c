@@ -82,6 +82,16 @@ static void emitBytes(uint8_t byte1, uint8_t byte2) {
     emitByte(byte2);
 }
 
+static void emitLoop(int loopStart) {
+    emitByte(OP_LOOP);
+
+    int offset = currentChunk()->count - loopStart + 2;
+    if (offset > UINT16_MAX) error("Loop body too large.");
+
+    emitByte((offset >> 8) & 0xff);
+    emitByte(offset & 0xff);
+}
+
 static bool identifiersEqual(ObjString* a, ObjString* b) {
     if (a->length != b->length) return false;
     return memcmp(a->chars, b->chars, a->length) == 0;
@@ -556,6 +566,19 @@ static void generateStmtFunDeclaration(ObjStmtFunDeclaration* decl) {
     defineVariable(global);
 }
 
+static void generateStmtWhile(ObjStmtWhile* loop) {
+    int loopStart = currentChunk()->count;
+    generateExpr(loop->test);
+
+    int exitJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);
+    generate(loop->loop);
+    emitLoop(loopStart);
+
+    patchJump(exitJump);
+    emitByte(OP_POP);
+}
+
 static void generateStmt(ObjStmt* stmt) {
     switch (stmt->obj.type) {
         case OBJ_STMT_EXPRESSION:
@@ -577,6 +600,9 @@ static void generateStmt(ObjStmt* stmt) {
             break;
         case OBJ_STMT_FUNDECLARATION:
             generateStmtFunDeclaration((ObjStmtFunDeclaration*)stmt);
+            break;
+        case OBJ_STMT_WHILE:
+            generateStmtWhile((ObjStmtWhile*)stmt);
             break;
         default:
             return; // Unexpected
