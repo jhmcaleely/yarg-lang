@@ -45,6 +45,22 @@ typedef enum {
     EXPR_LITERAL_NIL
 } ExprLiteral;
 
+typedef enum {
+    EXPR_BUILTIN_IMPORT,
+    EXPR_BUILTIN_MAKE_ARRAY,
+    EXPR_BUILTIN_MAKE_ROUTINE,
+    EXPR_BUILTIN_MAKE_CHANNEL,
+    EXPR_BUILTIN_RESUME,
+    EXPR_BUILTIN_START,
+    EXPR_BUILTIN_RECEIVE,
+    EXPR_BUILTIN_SEND,
+    EXPR_BUILTIN_PEEK,
+    EXPR_BUILTIN_SHARE,
+    EXPR_BUILTIN_RPEEK,
+    EXPR_BUILTIN_RPOKE,
+    EXPR_BUILTIN_LEN
+} ExprBuiltin;
+
 typedef struct {
     ObjExpr expr;
     ExprOp operation;
@@ -152,6 +168,12 @@ typedef struct {
     ObjExpr* assignment;
 } ObjExprArrayElement;
 
+typedef struct {
+    ObjExpr expr;
+    ExprBuiltin builtin;
+    int arity;
+} ObjExprBuiltin;
+
 ObjExprNumber* newExprNumberDouble(double value);
 ObjExprNumber* newExprNumberInteger(int value);
 ObjExprNumber* newExprNumberUInteger32(uint32_t value);
@@ -164,6 +186,7 @@ ObjArguments* newObjArguments();
 ObjExprCall* newExprCall(ObjArguments* args);
 ObjExprArrayInit* newExprArrayInit(ObjArguments* args);
 ObjExprArrayElement* newExprArrayElement();
+ObjExprBuiltin* newExprBuiltin(ExprBuiltin fn, int arity);
 
 void appendObjArgument(ObjArguments* args, ObjExpr* expr);
 

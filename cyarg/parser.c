@@ -236,6 +236,25 @@ static ObjExpr* literal(bool canAssign) {
     } 
 }
 
+static ObjExpr* builtin(bool canAssign) {     
+    switch (parser.previous.type) {
+        case TOKEN_RPEEK: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_RPEEK, 1);
+        case TOKEN_RPOKE: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_RPOKE, 1);
+        case TOKEN_IMPORT: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_IMPORT, 1);
+        case TOKEN_MAKE_ARRAY: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_MAKE_ARRAY, 1);
+        case TOKEN_MAKE_ROUTINE: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_MAKE_ROUTINE, 1);
+        case TOKEN_MAKE_CHANNEL: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_MAKE_ROUTINE, 1);
+        case TOKEN_RESUME: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_RESUME, 1);
+        case TOKEN_SEND: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_SEND, 1);
+        case TOKEN_RECEIVE: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_RECEIVE, 1);      
+        case TOKEN_SHARE: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_SHARE, 1);
+        case TOKEN_START: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_START, 1);
+        case TOKEN_PEEK: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_PEEK, 1);
+        case TOKEN_LEN: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_LEN, 1);
+        default: return NULL; // Unreachable.
+    } 
+}
+
 static ObjExpr* variable(bool canAssign) {
 
     return namedVariable(parser.previous, canAssign);
@@ -395,7 +414,7 @@ static AstParseRule rules[] = {
     [TOKEN_IMPORT]               = {literal,   NULL,   PREC_NONE},
     [TOKEN_LEN]                  = {literal,   NULL,   PREC_NONE},
     [TOKEN_MACHINE_UINT32]       = {literal,   NULL,   PREC_NONE},
-    [TOKEN_MAKE_ARRAY]           = {literal,   NULL,   PREC_NONE},
+    [TOKEN_MAKE_ARRAY]           = {builtin,   NULL,   PREC_NONE},
     [TOKEN_MAKE_CHANNEL]         = {literal,   NULL,   PREC_NONE},
     [TOKEN_MAKE_ROUTINE]         = {literal,   NULL,   PREC_NONE},
     [TOKEN_NIL]                  = {literal,   NULL,   PREC_NONE},

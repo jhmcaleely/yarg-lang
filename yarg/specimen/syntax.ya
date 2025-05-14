@@ -1,2 +1,2 @@
-var a = [1, 2];
+var a = make_array(0d2);
 print a[1];

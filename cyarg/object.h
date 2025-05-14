@@ -71,7 +71,8 @@ typedef enum {
     OBJ_EXPR_STRING,
     OBJ_EXPR_CALL,
     OBJ_EXPR_ARRAYINIT,
-    OBJ_EXPR_ARRAYELEMENT
+    OBJ_EXPR_ARRAYELEMENT,
+    OBJ_EXPR_BUILTIN
 } ObjType;
 
 struct Obj {

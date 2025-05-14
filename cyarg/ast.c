@@ -174,6 +174,14 @@ ObjExprArrayElement* newExprArrayElement() {
     return array;
 }
 
+ObjExprBuiltin* newExprBuiltin(ExprBuiltin fn, int arity) {
+    ObjExprBuiltin* builtin = ALLOCATE_OBJ(ObjExprBuiltin, OBJ_EXPR_BUILTIN);
+    builtin->expr.nextExpr = NULL;
+    builtin->builtin = fn;
+    builtin->arity = arity;
+    return builtin;
+}
+
 static void printExprOperation(ObjExprOperation* opexpr) {
     switch (opexpr->operation) {
         case EXPR_OP_EQUAL: printf("=="); break;
@@ -284,6 +292,11 @@ void printExpr(ObjExpr* expr) {
                     printf(" = ");
                     printExpr(array->assignment);
                 }
+                break;
+            }
+            case OBJ_EXPR_BUILTIN: {
+                ObjExprBuiltin* fn = (ObjExprBuiltin*)cursor;
+                printf("%d:%d", fn->builtin, fn->arity);
                 break;
             }
             default:

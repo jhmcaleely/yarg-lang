@@ -359,6 +359,24 @@ static void generateExprArrayElement(ObjExprArrayElement* array) {
     }
 }
 
+static void generateExprBuiltin(ObjExprBuiltin* fn) {
+    switch(fn->builtin) {
+        case EXPR_BUILTIN_IMPORT: emitBytes(OP_GET_BUILTIN, BUILTIN_IMPORT); break;
+        case EXPR_BUILTIN_MAKE_ARRAY: emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_ARRAY); break;
+        case EXPR_BUILTIN_MAKE_ROUTINE: emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_ROUTINE); break;
+        case EXPR_BUILTIN_MAKE_CHANNEL: emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_CHANNEL); break;
+        case EXPR_BUILTIN_RESUME: emitBytes(OP_GET_BUILTIN, BUILTIN_RESUME); break;
+        case EXPR_BUILTIN_START: emitBytes(OP_GET_BUILTIN, BUILTIN_START); break;
+        case EXPR_BUILTIN_RECEIVE: emitBytes(OP_GET_BUILTIN, BUILTIN_RECEIVE); break;
+        case EXPR_BUILTIN_SEND: emitBytes(OP_GET_BUILTIN, BUILTIN_SEND); break;
+        case EXPR_BUILTIN_PEEK: emitBytes(OP_GET_BUILTIN, BUILTIN_PEEK); break;
+        case EXPR_BUILTIN_SHARE: emitBytes(OP_GET_BUILTIN, BUILTIN_SHARE); break;
+        case EXPR_BUILTIN_RPEEK: emitBytes(OP_GET_BUILTIN, BUILTIN_RPEEK); break;
+        case EXPR_BUILTIN_RPOKE: emitBytes(OP_GET_BUILTIN, BUILTIN_RPOKE); break;
+        case EXPR_BUILTIN_LEN: emitBytes(OP_GET_BUILTIN, BUILTIN_LEN); break;
+    }    
+}
+
 static void generateExprElt(ObjExpr* expr) {
     
     switch (expr->obj.type) {
@@ -405,6 +423,11 @@ static void generateExprElt(ObjExpr* expr) {
         case OBJ_EXPR_ARRAYELEMENT: {
             ObjExprArrayElement* array = (ObjExprArrayElement*)expr;
             generateExprArrayElement(array);
+            break;
+        }
+        case OBJ_EXPR_BUILTIN: {
+            ObjExprBuiltin* fn = (ObjExprBuiltin*)expr;
+            generateExprBuiltin(fn);
             break;
         }
         default:
