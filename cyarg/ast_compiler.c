@@ -205,7 +205,6 @@ static uint8_t identifierConstant(ObjString* name) {
     return makeConstant(OBJ_VAL(name));
 }
 
-
 static void declareVariable(ObjString* name) {
     if (current->scopeDepth == 0) return;
 
@@ -435,7 +434,6 @@ static void generateExprElt(ObjExpr* expr) {
     }
 }
 
-
 static void generateExpr(ObjExpr* expr) {
 
     while (expr != NULL) {
@@ -545,7 +543,6 @@ static void generateStmtFunDeclaration(ObjStmtFunDeclaration* decl) {
     defineVariable(global);
 }
 
-
 static void generateStmt(ObjStmt* stmt) {
     switch (stmt->obj.type) {
         case OBJ_STMT_EXPRESSION:
@@ -573,7 +570,6 @@ static void generateStmt(ObjStmt* stmt) {
     }
 }
 
-
 static void generate(ObjStmt* stmt) {
 
     while (stmt != NULL) {
@@ -581,8 +577,6 @@ static void generate(ObjStmt* stmt) {
         stmt = stmt->nextStmt;
     }
 }
-
-
 
 static ObjFunction* endCompiler() {
     emitReturn();
@@ -593,7 +587,6 @@ static ObjFunction* endCompiler() {
 
     return function;
 }
-
 
 ObjFunction* astCompile(const char* source) {
     initScanner(source);
