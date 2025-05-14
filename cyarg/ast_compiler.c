@@ -330,7 +330,21 @@ static void generateArgs(ObjArguments* args) {
 
 static void generateExprCall(ObjExprCall* call) {
     generateArgs(call->args);
+
     emitBytes(OP_CALL, call->args->count);
+}
+
+static void generateExprArrayInit(ObjExprArrayInit* array) {
+ 
+    emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_ARRAY);
+    emitConstant(INTEGER_VAL(array->args->count));
+    emitBytes(OP_CALL, 1);
+ 
+    for (int i = 0; i < array->args->count; i++) {
+        emitConstant(INTEGER_VAL(i));
+        generateExpr((ObjExpr*)array->args->arguments[i]);
+        emitByte(OP_SET_ELEMENT);
+    }
 }
 
 static void generateExprElt(ObjExpr* expr) {
@@ -369,6 +383,11 @@ static void generateExprElt(ObjExpr* expr) {
         case OBJ_EXPR_CALL: {
             ObjExprCall* call = (ObjExprCall*)expr;
             generateExprCall(call);
+            break;
+        }
+        case OBJ_EXPR_ARRAYINIT: {
+            ObjExprArrayInit* array = (ObjExprArrayInit*)expr;
+            generateExprArrayInit(array);
             break;
         }
         default:

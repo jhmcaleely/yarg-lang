@@ -259,6 +259,12 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)call->args);
             break;
         }
+        case OBJ_EXPR_ARRAYINIT: {
+            markExpr(object);
+            ObjExprArrayInit* array = (ObjExprArrayInit*)object;
+            markObject((Obj*)array->args);
+            break;
+        }
         case OBJ_NATIVE:
         case OBJ_BLOB:
         case OBJ_CHANNEL:
@@ -361,6 +367,7 @@ static void freeObject(Obj* object) {
             break;
         }
         case OBJ_EXPR_CALL: FREE(ObjExprCall, object); break;
+        case OBJ_EXPR_ARRAYINIT: FREE(ObjExprArrayInit, object); break;
     }
 }
 

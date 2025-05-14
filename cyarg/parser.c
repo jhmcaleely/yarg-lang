@@ -165,12 +165,41 @@ static ObjArguments* argumentList() {
     return args;
 }
 
-static ObjExpr* arrayinit(bool canAssign) { return NULL; }
+static ObjArguments* arrayInitExpressionsList() {
+    ObjArguments* args = newObjArguments();
+    tempRootPush(OBJ_VAL(args));
+
+    if (!check(TOKEN_RIGHT_SQUARE_BRACKET)) {
+        do {
+            appendObjArgument(args, expression());
+            if (args->count == 255) {
+                error("Can't have more than 255 array initialisers.");
+            }
+
+        } while (match(TOKEN_COMMA));
+    }
+    tempRootPop();
+    return args;
+}
+
 static ObjExpr* deref(bool canAssign) {return NULL; }
 static ObjExpr* dot(bool canAssign) { return NULL; }
 static ObjExpr* or_(bool canAssign) { return NULL; }
 static ObjExpr* super_(bool canAssign) { return NULL; }
 static ObjExpr* this_(bool canAssign) { return NULL; }
+
+static ObjExpr* arrayinit(bool canAssign) {
+
+
+    ObjArguments* args = arrayInitExpressionsList();
+    tempRootPush(OBJ_VAL(args));
+    consume(TOKEN_RIGHT_SQUARE_BRACKET, "Expect ']' initialising array.");
+    
+    ObjExprArrayInit* array = newExprArrayInit(args);
+
+    tempRootPop();
+    return (ObjExpr*)array;
+}
 
 static ObjExpr* call(bool canAssign) {
     ObjArguments* args = argumentList();

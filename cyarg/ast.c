@@ -159,6 +159,13 @@ ObjExprCall* newExprCall(ObjArguments* args) {
     return call;
 }
 
+ObjExprArrayInit* newExprArrayInit(ObjArguments* args) {
+    ObjExprArrayInit* array = ALLOCATE_OBJ(ObjExprArrayInit, OBJ_EXPR_ARRAYINIT);
+    array->expr.nextExpr = NULL;
+    array->args = args;
+    return array;
+}
+
 static void printExprOperation(ObjExprOperation* opexpr) {
     switch (opexpr->operation) {
         case EXPR_OP_EQUAL: printf("=="); break;
@@ -248,6 +255,16 @@ void printExpr(ObjExpr* expr) {
                     printf(", ");
                 }
                 printf(")");
+                break;
+            }
+            case OBJ_EXPR_ARRAYINIT: {
+                ObjExprArrayInit* array = (ObjExprArrayInit*)cursor;
+                printf("[");
+                for (int i = 0; i < array->args->count; i++) {
+                    printExpr((ObjExpr*)array->args->arguments[i]);
+                    printf(", ");
+                }
+                printf("]");
                 break;
             }
             default:

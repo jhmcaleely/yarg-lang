@@ -1,6 +1,1 @@
-fun hello(world, is) {
-    print world;
-    print is;
-}
-
-hello("john", "home");
+var a = [1, 2];

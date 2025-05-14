@@ -69,7 +69,8 @@ typedef enum {
     OBJ_EXPR_NAMEDVARIABLE,
     OBJ_EXPR_LITERAL,
     OBJ_EXPR_STRING,
-    OBJ_EXPR_CALL
+    OBJ_EXPR_CALL,
+    OBJ_EXPR_ARRAYINIT
 } ObjType;
 
 struct Obj {
