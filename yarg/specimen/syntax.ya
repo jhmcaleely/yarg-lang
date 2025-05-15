@@ -1,3 +1,5 @@
-while (true) {
-   print 1;
+fun test(arg) {
+    return arg;
 }
+
+print test(10);

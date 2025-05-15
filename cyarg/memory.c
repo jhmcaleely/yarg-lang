@@ -224,6 +224,14 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)loop->loop);
             break;
         }
+        case OBJ_STMT_YIELD:
+            // fall through
+        case OBJ_STMT_RETURN: {
+            ObjStmtReturnOrYield* stmt = (ObjStmtReturnOrYield*)object;
+            markObject((Obj*)stmt->stmt.nextStmt);
+            markObject((Obj*)stmt->value);
+            break;
+        }
         case OBJ_EXPR_NUMBER: {
             ObjExprNumber* expr = (ObjExprNumber*)object;
             markObject((Obj*)expr->expr.nextExpr);
@@ -373,6 +381,8 @@ static void freeObject(Obj* object) {
         case OBJ_STMT_IF: FREE(ObjStmtIf, object); break;
         case OBJ_STMT_FUNDECLARATION: FREE(ObjStmtFunDeclaration, object); break;
         case OBJ_STMT_WHILE: FREE(ObjStmtWhile, object); break;
+        case OBJ_STMT_YIELD: FREE(ObjStmtReturnOrYield, object); break;
+        case OBJ_STMT_RETURN: FREE(ObjStmtReturnOrYield, object); break;
         case OBJ_EXPR_NUMBER: FREE(ObjExprNumber, object); break;
         case OBJ_EXPR_OPERATION: FREE(ObjExprOperation, object); break;
         case OBJ_EXPR_GROUPING: FREE(ObjExprGrouping, object); break;

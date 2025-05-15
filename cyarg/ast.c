@@ -65,6 +65,13 @@ ObjStmtWhile* newStmtWhile() {
     return loop;
 }
 
+ObjStmtReturnOrYield* newStmtReturnOrYield(bool ret) {
+    ObjStmtReturnOrYield* stmt = ALLOCATE_OBJ(ObjStmtReturnOrYield, ret ? OBJ_STMT_RETURN : OBJ_STMT_YIELD);
+    stmt->stmt.nextStmt = NULL;
+    stmt->value = NULL;
+    return stmt;
+}
+
 ObjFunctionDeclaration* newObjFunctionDeclaration() {
     ObjFunctionDeclaration* fun = ALLOCATE_OBJ(ObjFunctionDeclaration, OBJ_FUNDECLARATION);
     fun->arity = 0;

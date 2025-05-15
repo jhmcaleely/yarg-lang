@@ -579,6 +579,40 @@ static void generateStmtWhile(ObjStmtWhile* loop) {
     emitByte(OP_POP);
 }
 
+static void generateStmtYield(ObjStmtReturnOrYield* stmt) {
+    if (current->type == TYPE_SCRIPT) {
+        error("Can't yield from top-level code.");
+    }
+
+    if (!stmt->value) {
+        emitBytes(OP_NIL, OP_YIELD);
+    } else {
+        if (current->type == TYPE_INITIALIZER) {
+            error("Can't yield a value from an initializer.");
+        }
+
+        generateExpr(stmt->value);
+        emitByte(OP_YIELD);
+    }
+}
+
+static void generateStmtReturn(ObjStmtReturnOrYield* stmt) {
+    if (current->type == TYPE_SCRIPT) {
+        error("Can't return from top-level code.");
+    }
+    
+    if (!stmt->value) {
+        emitReturn();
+    } else {
+        if (current->type == TYPE_INITIALIZER) {
+            error("Can't return a value from an initializer.");
+        }
+
+        generateExpr(stmt->value);
+        emitByte(OP_RETURN);
+    }
+}
+
 static void generateStmt(ObjStmt* stmt) {
     switch (stmt->obj.type) {
         case OBJ_STMT_EXPRESSION:
@@ -603,6 +637,12 @@ static void generateStmt(ObjStmt* stmt) {
             break;
         case OBJ_STMT_WHILE:
             generateStmtWhile((ObjStmtWhile*)stmt);
+            break;
+        case OBJ_STMT_YIELD:
+            generateStmtYield((ObjStmtReturnOrYield*)stmt);
+            break;
+        case OBJ_STMT_RETURN:
+            generateStmtReturn((ObjStmtReturnOrYield*)stmt);
             break;
         default:
             return; // Unexpected

@@ -567,6 +567,26 @@ ObjStmtWhile* whileStatement() {
     return loop;
 }
 
+static ObjStmtReturnOrYield* returnOrYieldStatement(bool ret) {
+    ObjStmtReturnOrYield* stmt = newStmtReturnOrYield(ret);
+    tempRootPush(OBJ_VAL(stmt));
+    
+    if (match(TOKEN_SEMICOLON)) {
+        tempRootPop();
+        return stmt;
+    } else {
+        stmt->value = expression();
+        if (ret) {
+            consume(TOKEN_SEMICOLON, "Expect ';' after return value.");
+        } else {
+            consume(TOKEN_SEMICOLON, "Expect ';' after yield value.");
+        }
+        
+        tempRootPop();
+        return stmt;
+    }
+}
+
 ObjStmt* statement() {
     if (match(TOKEN_PRINT)) {
         return (ObjStmt*) printStatement();
@@ -574,10 +594,8 @@ ObjStmt* statement() {
 //        forStatement();
     } else if (match(TOKEN_IF)) {
         return ifStatement();
-//    } else if (match(TOKEN_YIELD)) {
-//        yieldStatement();
-//    } else if (match(TOKEN_RETURN)) {
-//        returnStatement();
+    } else if (match(TOKEN_YIELD) || match(TOKEN_RETURN)) {
+        return (ObjStmt*) returnOrYieldStatement(parser.previous.type == TOKEN_RETURN);
     } else if (match(TOKEN_WHILE)) {
         return (ObjStmt*) whileStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {
