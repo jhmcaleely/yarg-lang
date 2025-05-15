@@ -613,6 +613,46 @@ static void generateStmtReturn(ObjStmtReturnOrYield* stmt) {
     }
 }
 
+static void generateStmtFor(ObjStmtFor* loop) {
+    beginScope();
+    if (loop->initializer) {
+        generate(loop->initializer);
+    }
+
+    int loopStart = currentChunk()->count;
+    int exitJump = -1;
+    if (loop->condition) {
+        generateExpr(loop->condition);
+
+        // Jump out of the loop if the condition is false.
+        exitJump = emitJump(OP_JUMP_IF_FALSE);
+        emitByte(OP_POP); // Condition.
+    }
+
+    if (loop->loopExpression) {
+
+        int bodyJump = emitJump(OP_JUMP);
+        int incrementStart = currentChunk()->count;
+        generateExpr(loop->loopExpression);
+        emitByte(OP_POP);
+
+        emitLoop(loopStart);
+        loopStart = incrementStart;
+        patchJump(bodyJump);
+    }
+
+    generate(loop->body);
+    
+    emitLoop(loopStart);
+
+    if (exitJump != -1) {
+        patchJump(exitJump);
+        emitByte(OP_POP);
+    }
+
+    endScope();    
+}
+
 static void generateStmt(ObjStmt* stmt) {
     switch (stmt->obj.type) {
         case OBJ_STMT_EXPRESSION:
@@ -643,6 +683,9 @@ static void generateStmt(ObjStmt* stmt) {
             break;
         case OBJ_STMT_RETURN:
             generateStmtReturn((ObjStmtReturnOrYield*)stmt);
+            break;
+        case OBJ_STMT_FOR:
+            generateStmtFor((ObjStmtFor*)stmt);
             break;
         default:
             return; // Unexpected

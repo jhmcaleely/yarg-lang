@@ -72,6 +72,16 @@ ObjStmtReturnOrYield* newStmtReturnOrYield(bool ret) {
     return stmt;
 }
 
+ObjStmtFor* newStmtFor() {
+    ObjStmtFor* loop = ALLOCATE_OBJ(ObjStmtFor, OBJ_STMT_FOR);
+    loop->stmt.nextStmt = NULL;
+    loop->condition = NULL;
+    loop->initializer = NULL;
+    loop->loopExpression = NULL;
+    loop->body = NULL;
+    return loop;
+}
+
 ObjFunctionDeclaration* newObjFunctionDeclaration() {
     ObjFunctionDeclaration* fun = ALLOCATE_OBJ(ObjFunctionDeclaration, OBJ_FUNDECLARATION);
     fun->arity = 0;
@@ -352,6 +362,16 @@ void printStmtWhile(ObjStmtWhile* loop) {
     printStmts(loop->loop);
 }
 
+void printStmtFor(ObjStmtFor* loop) {
+    printf("for (");
+    printStmts(loop->initializer);
+    printExpr(loop->condition);
+    printf("; ");
+    printExpr(loop->loopExpression);
+    printf(")\n");
+    printStmts(loop->body);
+}
+
 void printStmts(ObjStmt* stmts) {
     ObjStmt* cursor = stmts;
     while (cursor) {
@@ -397,6 +417,11 @@ void printStmts(ObjStmt* stmts) {
             case OBJ_STMT_WHILE: {
                 ObjStmtWhile* loop = (ObjStmtWhile*)cursor;
                 printStmtWhile(loop);
+                break;
+            }
+            case OBJ_STMT_FOR: {
+                ObjStmtFor* loop = (ObjStmtFor*)cursor;
+                printStmtFor(loop);
                 break;
             }
             default:

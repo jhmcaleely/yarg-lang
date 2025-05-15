@@ -136,6 +136,14 @@ typedef struct {
     ObjExpr* value;
 } ObjStmtReturnOrYield;
 
+typedef struct {
+    ObjStmt stmt;
+    ObjStmt* initializer;
+    ObjExpr* condition;
+    ObjExpr* loopExpression;
+    ObjStmt* body;
+} ObjStmtFor;
+
 typedef enum {
     NUMBER_DOUBLE,
     NUMBER_INTEGER,
@@ -210,6 +218,7 @@ ObjStmtIf* newStmtIf();
 ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength);
 ObjStmtWhile* newStmtWhile();
 ObjStmtReturnOrYield* newStmtReturnOrYield(bool ret);
+ObjStmtFor* newStmtFor();
 
 ObjFunctionDeclaration* newObjFunctionDeclaration();
 

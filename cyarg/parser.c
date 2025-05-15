@@ -587,11 +587,41 @@ static ObjStmtReturnOrYield* returnOrYieldStatement(bool ret) {
     }
 }
 
+static ObjStmtFor* forStatement() {
+
+    ObjStmtFor* loop = newStmtFor();
+    tempRootPush(OBJ_VAL(loop));
+
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
+    if (match(TOKEN_SEMICOLON)) {
+        // No initializer.
+    } else if (match(TOKEN_VAR)) {
+        loop->initializer = varDeclaration();
+    } else {
+        loop->initializer = (ObjStmt*) expressionStatement();
+    }
+
+    if (!match(TOKEN_SEMICOLON)) {
+        loop->condition = expression();
+        consume(TOKEN_SEMICOLON, "Expect ';' after loop condition.");
+    }
+
+    if (!match(TOKEN_RIGHT_PAREN)) {
+        loop->loopExpression = expression();
+        consume(TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
+    }
+
+    loop->body = statement();
+
+    tempRootPop();
+    return loop;
+}
+
 ObjStmt* statement() {
     if (match(TOKEN_PRINT)) {
         return (ObjStmt*) printStatement();
-//    } else if (match(TOKEN_FOR)) {
-//        forStatement();
+    } else if (match(TOKEN_FOR)) {
+        return (ObjStmt*) forStatement();
     } else if (match(TOKEN_IF)) {
         return ifStatement();
     } else if (match(TOKEN_YIELD) || match(TOKEN_RETURN)) {
