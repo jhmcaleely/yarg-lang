@@ -4,7 +4,7 @@
 #include "common.h"
 #include "object.h"
 
-#define TEMP_ROOTS_MAX 8
+#define TEMP_ROOTS_MAX 16
 
 #define ALLOCATE(type, count) \
     (type*)reallocate(NULL, 0, sizeof(type) * (count))
