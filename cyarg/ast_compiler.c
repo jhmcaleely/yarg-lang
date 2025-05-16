@@ -35,7 +35,13 @@ typedef struct AstCompiler {
     int scopeDepth;
 } AstCompiler;
 
+typedef struct ClassCompiler {
+    struct ClassCompiler* enclosing;
+    bool hasSuperclass;
+} ClassCompiler;
+
 static struct AstCompiler* current = NULL;
+static ClassCompiler* currentClass = NULL;
 
 static void initCompiler(AstCompiler* compiler, FunctionType type) {
 
@@ -313,6 +319,21 @@ static void generateExprGrouping(ObjExprGrouping* grp) {
     generateExpr(grp->expression);
 }
 
+static void generateGetNamedVariable(ObjString* name) {
+    uint8_t getOp;
+    int arg = resolveLocal(current, name);
+    if (arg != -1) {
+        getOp = OP_GET_LOCAL;
+    } else if ((arg = resolveUpvalue(current, name)) != -1) {
+        getOp = OP_GET_UPVALUE;
+    } else {
+        arg = identifierConstant(name);
+        getOp = OP_GET_GLOBAL;
+    }
+    
+    emitBytes(getOp, (uint8_t)arg);
+}
+
 static void generateExprNamedVariable(ObjExprNamedVariable* var) {
     uint8_t getOp, setOp;
     int arg = resolveLocal(current, var->name);
@@ -399,6 +420,21 @@ static void generateExprBuiltin(ObjExprBuiltin* fn) {
     }    
 }
 
+static void generateExprDot(ObjExprDot* dot) {
+    uint8_t name = identifierConstant(dot->name);
+
+    if (dot->assignment) {
+        generateExpr(dot->assignment);
+        emitBytes(OP_SET_PROPERTY, name);
+    } else if (dot->callArgs) {
+        generateArgs(dot->callArgs);
+        emitBytes(OP_INVOKE, name);
+        emitByte(dot->callArgs->count);
+    } else {
+        emitBytes(OP_GET_PROPERTY, name);
+    }
+}
+
 static void generateExprElt(ObjExpr* expr) {
     
     switch (expr->obj.type) {
@@ -450,6 +486,11 @@ static void generateExprElt(ObjExpr* expr) {
         case OBJ_EXPR_BUILTIN: {
             ObjExprBuiltin* fn = (ObjExprBuiltin*)expr;
             generateExprBuiltin(fn);
+            break;
+        }
+        case OBJ_EXPR_DOT: {
+            ObjExprDot* dot = (ObjExprDot*)expr;
+            generateExprDot(dot);
             break;
         }
         default:
@@ -653,6 +694,62 @@ static void generateStmtFor(ObjStmtFor* loop) {
     endScope();    
 }
 
+static void generateStmtMethodDeclaration(ObjStmtFunDeclaration* method) {
+    uint8_t constant = identifierConstant(method->name);
+
+    FunctionType type = TYPE_METHOD;
+    ObjString* init = copyString("init", 4);
+    tempRootPush(OBJ_VAL(init));
+    if (identifiersEqual(method->name, init)) {
+        type = TYPE_INITIALIZER;
+    }
+    
+    generateFunction(type, method->function);
+
+    emitBytes(OP_METHOD, constant);
+    tempRootPop(); // initi
+}
+
+static void generateStmtClassDeclaration(ObjStmtClassDeclaration* decl) {
+    uint8_t nameConstant = identifierConstant(decl->name);
+    declareVariable(decl->name);
+
+    emitBytes(OP_CLASS, nameConstant);
+    defineVariable(nameConstant);
+
+    ClassCompiler classCompiler;
+    classCompiler.hasSuperclass = false;
+    classCompiler.enclosing = currentClass;
+    currentClass = &classCompiler;
+
+    if (decl->superclass) {
+
+        beginScope();
+        ObjString* super = copyString("super", 5);
+        tempRootPush(OBJ_VAL(super));
+        addLocal(super);
+        defineVariable(0);
+
+        generateGetNamedVariable(decl->name);
+        emitByte(OP_INHERIT);
+        classCompiler.hasSuperclass = true;
+        tempRootPop(); //super
+    }
+
+    // Make the class name conveniently available on the stack for method definition.
+    generateGetNamedVariable(decl->name);
+    for (int i = 0; i < decl->methodCount; i++) {
+        generateStmtMethodDeclaration((ObjStmtFunDeclaration*)decl->methods[i]);
+    }
+    emitByte(OP_POP);
+
+    if (classCompiler.hasSuperclass) {
+        endScope();
+    }
+
+    currentClass = currentClass->enclosing;    
+}
+
 static void generateStmt(ObjStmt* stmt) {
     switch (stmt->obj.type) {
         case OBJ_STMT_EXPRESSION:
@@ -686,6 +783,9 @@ static void generateStmt(ObjStmt* stmt) {
             break;
         case OBJ_STMT_FOR:
             generateStmtFor((ObjStmtFor*)stmt);
+            break;
+        case OBJ_STMT_CLASSDECLARATION:
+            generateStmtClassDeclaration((ObjStmtClassDeclaration*)stmt);
             break;
         default:
             return; // Unexpected

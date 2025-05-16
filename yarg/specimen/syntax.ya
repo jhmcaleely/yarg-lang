@@ -1,3 +1,7 @@
-for (var a = 0; a < 2; a = a + 1) {
-print a;
+class Foo {
+  method1(a) { return a; }
 }
+
+print Foo; // expect: Foo
+var a = Foo();
+print a.method1(1);

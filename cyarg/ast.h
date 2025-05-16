@@ -144,6 +144,15 @@ typedef struct {
     ObjStmt* body;
 } ObjStmtFor;
 
+typedef struct {
+    ObjStmt stmt;
+    ObjString* name;
+    ObjExpr* superclass;
+    Obj** methods;
+    int methodCapacity;
+    int methodCount;
+} ObjStmtClassDeclaration;
+
 typedef enum {
     NUMBER_DOUBLE,
     NUMBER_INTEGER,
@@ -194,6 +203,13 @@ typedef struct {
     int arity;
 } ObjExprBuiltin;
 
+typedef struct {
+    ObjExpr expr;
+    ObjString* name;
+    ObjExpr* assignment;
+    ObjArguments* callArgs;
+} ObjExprDot;
+
 ObjExprNumber* newExprNumberDouble(double value);
 ObjExprNumber* newExprNumberInteger(int value);
 ObjExprNumber* newExprNumberUInteger32(uint32_t value);
@@ -207,8 +223,10 @@ ObjExprCall* newExprCall(ObjArguments* args);
 ObjExprArrayInit* newExprArrayInit(ObjArguments* args);
 ObjExprArrayElement* newExprArrayElement();
 ObjExprBuiltin* newExprBuiltin(ExprBuiltin fn, int arity);
+ObjExprDot* newExprDot(const char* name, int nameLength);
 
 void appendObjArgument(ObjArguments* args, ObjExpr* expr);
+void appendMethod(ObjStmtClassDeclaration* class_, ObjStmtFunDeclaration* method);
 
 ObjStmtExpression* newStmtExpression(ObjExpr* expr);
 ObjStmtPrint* newStmtPrint(ObjExpr* expr);
@@ -219,6 +237,7 @@ ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength);
 ObjStmtWhile* newStmtWhile();
 ObjStmtReturnOrYield* newStmtReturnOrYield(bool ret);
 ObjStmtFor* newStmtFor();
+ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength);
 
 ObjFunctionDeclaration* newObjFunctionDeclaration();
 

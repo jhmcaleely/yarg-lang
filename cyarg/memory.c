@@ -241,6 +241,16 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)loop->body);
             break;
         }
+        case OBJ_STMT_CLASSDECLARATION: {
+            ObjStmtClassDeclaration* decl = (ObjStmtClassDeclaration*)object;
+            markObject((Obj*)decl->stmt.nextStmt);
+            markObject((Obj*)decl->name);
+            markObject((Obj*)decl->superclass);
+            for (int i = 0; i < decl->methodCount; i++) {
+                markObject(decl->methods[i]);
+            }
+            break;
+        }
         case OBJ_EXPR_NUMBER: {
             ObjExprNumber* expr = (ObjExprNumber*)object;
             markObject((Obj*)expr->expr.nextExpr);
@@ -298,6 +308,14 @@ static void blackenObject(Obj* object) {
         }
         case OBJ_EXPR_BUILTIN: {
             markExpr(object);
+            break;
+        }
+        case OBJ_EXPR_DOT: {
+            markExpr(object);
+            ObjExprDot* expr = (ObjExprDot*)object;
+            markObject((Obj*)expr->name);
+            markObject((Obj*)expr->assignment);
+            markObject((Obj*)expr->callArgs);
             break;
         }
         case OBJ_NATIVE:
@@ -393,6 +411,12 @@ static void freeObject(Obj* object) {
         case OBJ_STMT_YIELD: FREE(ObjStmtReturnOrYield, object); break;
         case OBJ_STMT_RETURN: FREE(ObjStmtReturnOrYield, object); break;
         case OBJ_STMT_FOR: FREE(ObjStmtFor, object); break;
+        case OBJ_STMT_CLASSDECLARATION: {
+            ObjStmtClassDeclaration* decl = (ObjStmtClassDeclaration*)object;
+            FREE_ARRAY(Obj*, decl->methods, decl->methodCapacity);
+            FREE(ObjStmtClassDeclaration, object);
+            break;
+        }
         case OBJ_EXPR_NUMBER: FREE(ObjExprNumber, object); break;
         case OBJ_EXPR_OPERATION: FREE(ObjExprOperation, object); break;
         case OBJ_EXPR_GROUPING: FREE(ObjExprGrouping, object); break;
@@ -409,6 +433,7 @@ static void freeObject(Obj* object) {
         case OBJ_EXPR_ARRAYINIT: FREE(ObjExprArrayInit, object); break;
         case OBJ_EXPR_ARRAYELEMENT: FREE(ObjExprArrayElement, object); break;
         case OBJ_EXPR_BUILTIN: FREE(ObjExprBuiltin, object); break;
+        case OBJ_EXPR_DOT: FREE(ObjExprDot, object); break;
     }
 }
 

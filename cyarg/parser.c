@@ -182,9 +182,24 @@ static ObjArguments* arrayInitExpressionsList() {
     return args;
 }
 
-static ObjExpr* dot(bool canAssign) { return NULL; }
 static ObjExpr* super_(bool canAssign) { return NULL; }
 static ObjExpr* this_(bool canAssign) { return NULL; }
+
+static ObjExpr* dot(bool canAssign) { 
+
+    consume(TOKEN_IDENTIFIER, "Expect property name after '.'.");
+    ObjExprDot* expr = newExprDot(parser.previous.start, parser.previous.length);
+    tempRootPush((OBJ_VAL(expr)));
+    
+    if (canAssign && match(TOKEN_EQUAL)) {
+        expr->assignment = expression();
+    } else if (match(TOKEN_LEFT_PAREN)) {
+        expr->callArgs = argumentList();
+    }
+    tempRootPop();
+    return (ObjExpr*) expr;
+}
+
 
 static ObjExpr* deref(bool canAssign) {
     
@@ -670,11 +685,60 @@ static ObjStmt* funDeclaration() {
     return (ObjStmt*)fun;
 }
 
+static ObjStmtFunDeclaration* method() {
+    consume(TOKEN_IDENTIFIER, "Expect method name.");
+    ObjStmtFunDeclaration* method = newStmtFunDeclaration(parser.previous.start, parser.previous.length);
+    tempRootPush(OBJ_VAL(method));
+
+    FunctionType type = TYPE_METHOD;
+    if (parser.previous.length == 4 &&
+        memcmp(parser.previous.start, "init", 4) == 0) {
+        type = TYPE_INITIALIZER;
+    }
+    
+    method->function = function(type);
+
+    tempRootPop();
+    return method;
+}
+
+static bool tokenIdentifiersEqual(Token* a, Token* b) {
+    if (a->length != b->length) return false;
+    return memcmp(a->start, b->start, a->length) == 0;
+}
+
+static ObjStmtClassDeclaration* classDeclaration() {
+    consume(TOKEN_IDENTIFIER, "Expect class name.");
+    Token className = parser.previous;
+
+    ObjStmtClassDeclaration* decl = newStmtClassDeclaration(className.start, className.length);
+    tempRootPush(OBJ_VAL(decl));
+
+    if (match(TOKEN_LESS)) {
+        consume(TOKEN_IDENTIFIER, "Expect superclass name.");
+        decl->superclass = variable(false);
+
+        if (tokenIdentifiersEqual(&className, &parser.previous)) {
+            error("A class can't inherit from itself.");
+        }
+
+    }
+
+    consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
+    while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
+        appendMethod(decl, method());
+    }
+    consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
+
+    tempRootPop();
+    return decl;
+}
+
 ObjStmt* declaration() {
     ObjStmt* stmt = NULL;
 
     if (match(TOKEN_CLASS)) {
-//        classDeclaration();
+        stmt = (ObjStmt*) classDeclaration();
     } else if (match(TOKEN_FUN)) {
         stmt = funDeclaration();
     } else if (match(TOKEN_VAR)) {

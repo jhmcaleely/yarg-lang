@@ -82,6 +82,20 @@ ObjStmtFor* newStmtFor() {
     return loop;
 }
 
+ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength) {
+    ObjStmtClassDeclaration* decl = ALLOCATE_OBJ(ObjStmtClassDeclaration, OBJ_STMT_CLASSDECLARATION);
+    decl->stmt.nextStmt = NULL;
+    decl->name = NULL;
+    decl->superclass = NULL;
+    decl->methodCapacity = 0;
+    decl->methodCount = 0;
+    decl->methods = NULL;
+    tempRootPush(OBJ_VAL(decl));
+    decl->name = copyString(name, nameLength);
+    tempRootPop();
+    return decl;
+}
+
 ObjFunctionDeclaration* newObjFunctionDeclaration() {
     ObjFunctionDeclaration* fun = ALLOCATE_OBJ(ObjFunctionDeclaration, OBJ_FUNDECLARATION);
     fun->arity = 0;
@@ -178,6 +192,20 @@ void appendObjArgument(ObjArguments* args, ObjExpr* expr) {
     args->arguments[args->count++] = (Obj*) expr;
 }
 
+void appendMethod(ObjStmtClassDeclaration* class_, ObjStmtFunDeclaration* method) {
+    if (class_->methodCapacity < class_->methodCount + 1) {
+        class_->methodCapacity = GROW_CAPACITY(class_->methodCapacity);
+        class_->methods = (Obj**)realloc(class_->methods, sizeof(Obj*) * class_->methodCapacity);
+
+        if (class_->methods == NULL) {
+            printf("Out of memory!");
+            exit(1);
+        }
+    }
+    class_->methods[class_->methodCount++] = (Obj*) method;    
+}
+
+
 ObjExprCall* newExprCall(ObjArguments* args) {
     ObjExprCall* call = ALLOCATE_OBJ(ObjExprCall, OBJ_EXPR_CALL);
     call->args = args;
@@ -207,6 +235,18 @@ ObjExprBuiltin* newExprBuiltin(ExprBuiltin fn, int arity) {
     return builtin;
 }
 
+ObjExprDot* newExprDot(const char* name, int nameLength) {
+    ObjExprDot* expr = ALLOCATE_OBJ(ObjExprDot, OBJ_EXPR_DOT);
+    expr->expr.nextExpr = NULL;
+    expr->name = NULL;
+    expr->assignment = NULL;
+    expr->callArgs = NULL;
+    tempRootPush(OBJ_VAL(expr));
+    expr->name = copyString(name, nameLength);
+    tempRootPop();
+    return expr;
+}
+
 static void printExprOperation(ObjExprOperation* opexpr) {
     switch (opexpr->operation) {
         case EXPR_OP_EQUAL: printf("=="); break;
@@ -233,6 +273,22 @@ static void printExprOperation(ObjExprOperation* opexpr) {
     printf("(");
     printExpr(opexpr->rhs);
     printf(")");
+}
+
+void printExprDot(ObjExprDot* dot) {
+    printf(".");
+    printObject(OBJ_VAL(dot->name));
+    if (dot->assignment) {
+        printf(" = ");
+        printExpr(dot->assignment);
+    } else if (dot->callArgs) {
+        printf("(");
+        for (int i = 0; i < dot->callArgs->count; i++) {
+            printExpr((ObjExpr*)dot->callArgs->arguments[i]);
+            printf(", ");
+        }
+        printf(")");
+    }
 }
 
 void printExpr(ObjExpr* expr) {
@@ -325,6 +381,10 @@ void printExpr(ObjExpr* expr) {
                 printf("%d:%d", fn->builtin, fn->arity);
                 break;
             }
+            case OBJ_EXPR_DOT: {
+                printExprDot((ObjExprDot*)cursor);
+                break;
+            }
             default:
                 printf("<unknown>");
         }
@@ -370,6 +430,38 @@ void printStmtFor(ObjStmtFor* loop) {
     printExpr(loop->loopExpression);
     printf(")\n");
     printStmts(loop->body);
+}
+
+void printStmtClassDeclaration(ObjStmtClassDeclaration* class_) {
+    printf("class ");
+    printObject(OBJ_VAL(class_->name));
+    if (class_->superclass) {
+        printf(" < ");
+        printObject(OBJ_VAL(class_->superclass));
+    }
+    printf("\n{\n");
+    for (int i = 0; i < class_->methodCount; i++) {
+        printFunDeclaration((ObjStmtFunDeclaration*)class_->methods[i]);
+    }
+    printf("}\n");
+}
+
+void printStmtReturn(ObjStmtReturnOrYield* stmt) {
+    printf("return");
+    if (stmt->value) {
+        printf(" ");
+        printExpr(stmt->value);
+    }
+    printf(";\n");
+}
+
+void printStmtYield(ObjStmtReturnOrYield* stmt) {
+    printf("yield");
+    if (stmt->value) {
+        printf(" ");
+        printExpr(stmt->value);
+    }
+    printf(";\n");
 }
 
 void printStmts(ObjStmt* stmts) {
@@ -422,6 +514,21 @@ void printStmts(ObjStmt* stmts) {
             case OBJ_STMT_FOR: {
                 ObjStmtFor* loop = (ObjStmtFor*)cursor;
                 printStmtFor(loop);
+                break;
+            }
+            case OBJ_STMT_CLASSDECLARATION: {
+                ObjStmtClassDeclaration* class_ = (ObjStmtClassDeclaration*)cursor;
+                printStmtClassDeclaration(class_);
+                break;
+            }
+            case OBJ_STMT_RETURN: {
+                ObjStmtReturnOrYield* stmt = (ObjStmtReturnOrYield*)cursor;
+                printStmtReturn(stmt);
+                break;
+            }
+            case OBJ_STMT_YIELD: {
+                ObjStmtReturnOrYield* stmt = (ObjStmtReturnOrYield*)cursor;
+                printStmtYield(stmt);
                 break;
             }
             default:
