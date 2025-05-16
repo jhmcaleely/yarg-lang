@@ -768,6 +768,7 @@ static void generateStmtClassDeclaration(ObjStmtClassDeclaration* decl) {
     currentClass = &classCompiler;
 
     if (decl->superclass) {
+        generateGetNamedVariable(((ObjExprNamedVariable*)decl->superclass)->name);
 
         beginScope();
         ObjString* super = copyString("super", 5);
