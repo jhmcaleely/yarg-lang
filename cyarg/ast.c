@@ -95,6 +95,7 @@ ObjStmtFor* newStmtFor() {
 ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength) {
     ObjStmtClassDeclaration* decl = ALLOCATE_OBJ(ObjStmtClassDeclaration, OBJ_STMT_CLASSDECLARATION);
     decl->stmt.nextStmt = NULL;
+    decl->stmt.line = parser.previous.line;
     decl->name = NULL;
     decl->superclass = NULL;
     decl->methodCapacity = 0;
