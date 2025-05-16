@@ -447,6 +447,34 @@ static void generateExprDot(ObjExprDot* dot) {
     }
 }
 
+static void generateExprSuper(ObjExprSuper* super) {
+    if (currentClass == NULL) {
+        error("Can't use 'super' outside of a class.");
+    } else if (!currentClass->hasSuperclass) {
+        error("Can't use 'super' in a class with no superclass.");
+    }
+    uint8_t name = identifierConstant(super->name);
+
+    ObjString* this_ = copyString("this", 4);
+    tempRootPush(OBJ_VAL(this_));
+    ObjString* super_ = copyString("super", 5);
+    tempRootPush(OBJ_VAL(super_));
+
+    generateGetNamedVariable(this_);
+    if (super->callArgs) {
+        generateArgs(super->callArgs);
+        generateGetNamedVariable(super_);
+        emitBytes(OP_SUPER_INVOKE, name);
+        emitByte(super->callArgs->count);
+    } else {
+        generateGetNamedVariable(super_);
+        emitBytes(OP_GET_SUPER, name);
+    }
+
+    tempRootPop();
+    tempRootPop();
+}
+
 static void generateExprElt(ObjExpr* expr) {
     
     switch (expr->obj.type) {
@@ -503,6 +531,11 @@ static void generateExprElt(ObjExpr* expr) {
         case OBJ_EXPR_DOT: {
             ObjExprDot* dot = (ObjExprDot*)expr;
             generateExprDot(dot);
+            break;
+        }
+        case OBJ_EXPR_SUPER: {
+            ObjExprSuper* super = (ObjExprSuper*)expr;
+            generateExprSuper(super);
             break;
         }
         default:

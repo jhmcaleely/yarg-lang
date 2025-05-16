@@ -182,7 +182,19 @@ static ObjArguments* arrayInitExpressionsList() {
     return args;
 }
 
-static ObjExpr* super_(bool canAssign) { return NULL; }
+static ObjExpr* super_(bool canAssign) {
+
+    consume(TOKEN_DOT, "Expect '.' after 'super'.");
+    consume(TOKEN_IDENTIFIER, "Expect superclass method name.");
+    ObjExprSuper* super_ = newExprSuper(parser.previous.start, parser.previous.length);
+    tempRootPush(OBJ_VAL(super_));
+
+    if (match(TOKEN_LEFT_PAREN)) {
+        super_->callArgs = argumentList();
+    }
+    tempRootPop();
+    return (ObjExpr*)super_;
+}
 
 static ObjExpr* dot(bool canAssign) { 
 

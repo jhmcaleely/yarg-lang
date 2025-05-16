@@ -210,6 +210,12 @@ typedef struct {
     ObjArguments* callArgs;
 } ObjExprDot;
 
+typedef struct {
+    ObjExpr expr;
+    ObjString* name;
+    ObjArguments* callArgs;
+} ObjExprSuper;
+
 ObjExprNumber* newExprNumberDouble(double value);
 ObjExprNumber* newExprNumberInteger(int value);
 ObjExprNumber* newExprNumberUInteger32(uint32_t value);
@@ -224,6 +230,7 @@ ObjExprArrayInit* newExprArrayInit(ObjArguments* args);
 ObjExprArrayElement* newExprArrayElement();
 ObjExprBuiltin* newExprBuiltin(ExprBuiltin fn, int arity);
 ObjExprDot* newExprDot(const char* name, int nameLength);
+ObjExprSuper* newExprSuper(const char* name, int nameLength);
 
 void appendObjArgument(ObjArguments* args, ObjExpr* expr);
 void appendMethod(ObjStmtClassDeclaration* class_, ObjStmtFunDeclaration* method);

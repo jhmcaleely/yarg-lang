@@ -1,7 +1,16 @@
-class Foo {
-  method1(a) { return a; }
+class Base {
+  foo() {
+    print "Base.foo()";
+  }
 }
 
-print Foo; // expect: Foo
-var a = Foo();
-print a.method1(1);
+class Derived < Base {
+  bar() {
+    print "Derived.bar()";
+    super.foo();
+  }
+}
+
+Derived().bar();
+// expect: Derived.bar()
+// expect: Base.foo()

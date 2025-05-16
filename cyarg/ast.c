@@ -205,7 +205,6 @@ void appendMethod(ObjStmtClassDeclaration* class_, ObjStmtFunDeclaration* method
     class_->methods[class_->methodCount++] = (Obj*) method;    
 }
 
-
 ObjExprCall* newExprCall(ObjArguments* args) {
     ObjExprCall* call = ALLOCATE_OBJ(ObjExprCall, OBJ_EXPR_CALL);
     call->args = args;
@@ -247,6 +246,18 @@ ObjExprDot* newExprDot(const char* name, int nameLength) {
     return expr;
 }
 
+ObjExprSuper* newExprSuper(const char* name, int nameLength) {
+    ObjExprSuper* expr = ALLOCATE_OBJ(ObjExprSuper, OBJ_EXPR_SUPER);
+    expr->expr.nextExpr = NULL;
+    expr->name = NULL;
+    expr->callArgs = NULL;
+    tempRootPush(OBJ_VAL(expr));
+    expr->name = copyString(name, nameLength);
+    tempRootPop();
+    return expr;
+}
+
+
 static void printExprOperation(ObjExprOperation* opexpr) {
     switch (opexpr->operation) {
         case EXPR_OP_EQUAL: printf("=="); break;
@@ -275,6 +286,15 @@ static void printExprOperation(ObjExprOperation* opexpr) {
     printf(")");
 }
 
+void printObjCallArgs(ObjArguments* args) {
+    printf("(");
+    for (int i = 0; i < args->count; i++) {
+        printExpr((ObjExpr*)args->arguments[i]);
+        printf(", ");
+    }
+    printf(")");
+}
+
 void printExprDot(ObjExprDot* dot) {
     printf(".");
     printObject(OBJ_VAL(dot->name));
@@ -282,12 +302,15 @@ void printExprDot(ObjExprDot* dot) {
         printf(" = ");
         printExpr(dot->assignment);
     } else if (dot->callArgs) {
-        printf("(");
-        for (int i = 0; i < dot->callArgs->count; i++) {
-            printExpr((ObjExpr*)dot->callArgs->arguments[i]);
-            printf(", ");
-        }
-        printf(")");
+        printObjCallArgs(dot->callArgs);
+    }
+}
+
+void printExprSuper(ObjExprSuper* expr) {
+    printf("super.");
+    printObject(OBJ_VAL(expr->name));
+    if (expr->callArgs) {
+        printObjCallArgs(expr->callArgs);
     }
 }
 
@@ -347,12 +370,7 @@ void printExpr(ObjExpr* expr) {
             }
             case OBJ_EXPR_CALL: {
                 ObjExprCall* call = (ObjExprCall*)cursor;
-                printf("(");
-                for (int i = 0; i < call->args->count; i++) {
-                    printExpr((ObjExpr*)call->args->arguments[i]);
-                    printf(", ");
-                }
-                printf(")");
+                printObjCallArgs(call->args);
                 break;
             }
             case OBJ_EXPR_ARRAYINIT: {
@@ -383,6 +401,10 @@ void printExpr(ObjExpr* expr) {
             }
             case OBJ_EXPR_DOT: {
                 printExprDot((ObjExprDot*)cursor);
+                break;
+            }
+            case OBJ_EXPR_SUPER: {
+                printExprSuper((ObjExprSuper*)cursor);
                 break;
             }
             default:
@@ -437,7 +459,7 @@ void printStmtClassDeclaration(ObjStmtClassDeclaration* class_) {
     printObject(OBJ_VAL(class_->name));
     if (class_->superclass) {
         printf(" < ");
-        printObject(OBJ_VAL(class_->superclass));
+        printExpr(class_->superclass);
     }
     printf("\n{\n");
     for (int i = 0; i < class_->methodCount; i++) {
