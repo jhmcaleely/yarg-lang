@@ -183,7 +183,6 @@ static ObjArguments* arrayInitExpressionsList() {
 }
 
 static ObjExpr* super_(bool canAssign) { return NULL; }
-static ObjExpr* this_(bool canAssign) { return NULL; }
 
 static ObjExpr* dot(bool canAssign) { 
 
@@ -199,7 +198,6 @@ static ObjExpr* dot(bool canAssign) {
     tempRootPop();
     return (ObjExpr*) expr;
 }
-
 
 static ObjExpr* deref(bool canAssign) {
     
@@ -272,6 +270,10 @@ static ObjExpr* builtin(bool canAssign) {
 static ObjExpr* variable(bool canAssign) {
 
     return namedVariable(parser.previous, canAssign);
+}
+
+static ObjExpr* this_(bool canAssign) {     
+    return variable(false); 
 }
 
 static ObjExpr* unary(bool canAssign) {
