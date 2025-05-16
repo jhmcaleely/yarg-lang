@@ -172,7 +172,7 @@ static ObjArguments* arrayInitExpressionsList() {
     if (!check(TOKEN_RIGHT_SQUARE_BRACKET)) {
         do {
             appendObjArgument(args, expression());
-            if (args->count == 255) {
+            if (args->count > 255) {
                 error("Can't have more than 255 array initialisers.");
             }
 
