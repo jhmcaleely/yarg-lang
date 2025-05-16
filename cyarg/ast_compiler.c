@@ -28,6 +28,7 @@ typedef struct AstCompiler {
     ObjFunction* function;
     ObjStmt* ast;
     FunctionType type;
+    ObjStmt* recent;
 
     Local locals[UINT8_COUNT];
     int localCount;
@@ -49,6 +50,7 @@ static void initCompiler(AstCompiler* compiler, FunctionType type) {
     compiler->ast = NULL;
     compiler->function = NULL;
     compiler->type = type;
+    compiler->recent = NULL;
 
     compiler->localCount = 0;
     compiler->scopeDepth = 0;
@@ -80,7 +82,7 @@ static Chunk* currentChunk() {
 }
 
 static void emitByte(uint8_t byte) {
-    writeChunk(currentChunk(), byte, parser.previous.line);
+    writeChunk(currentChunk(), byte, current->recent->line);
 }
 
 static void emitBytes(uint8_t byte1, uint8_t byte2) {
@@ -797,6 +799,7 @@ static void generateStmtClassDeclaration(ObjStmtClassDeclaration* decl) {
 }
 
 static void generateStmt(ObjStmt* stmt) {
+    current->recent = stmt;
     switch (stmt->obj.type) {
         case OBJ_STMT_EXPRESSION:
             generateExpr(((ObjStmtExpression*)stmt)->expression);
@@ -850,6 +853,7 @@ static ObjFunction* endCompiler() {
     emitReturn();
 
     current->ast = NULL;
+    current->recent = NULL;
     ObjFunction* function = current->function;
     current = current->enclosing;
 
@@ -877,6 +881,7 @@ void markAstCompilerRoots() {
     while (compiler != NULL) {
         markObject((Obj*)compiler->function);
         markObject((Obj*)compiler->ast);
+        markObject((Obj*)compiler->recent);
 
         for (int i = 0; i < compiler->localCount; i++) {
             markObject((Obj*)compiler->locals[i].name);

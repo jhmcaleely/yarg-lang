@@ -7,6 +7,7 @@ typedef struct ObjStmt ObjStmt;
 
 typedef struct ObjStmt {
     Obj obj;
+    int line;
     ObjStmt* nextStmt;
 } ObjStmt;
 

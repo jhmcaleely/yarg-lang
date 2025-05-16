@@ -3,9 +3,11 @@
 
 #include "ast.h"
 #include "memory.h"
+#include "parser.h"
 
 ObjStmtExpression* newStmtExpression(ObjExpr* expr) {
     ObjStmtExpression* stmt = ALLOCATE_OBJ(ObjStmtExpression, OBJ_STMT_EXPRESSION);
+    stmt->stmt.line = parser.previous.line;
     stmt->stmt.nextStmt = NULL;
     stmt->expression = expr;
 
@@ -14,6 +16,7 @@ ObjStmtExpression* newStmtExpression(ObjExpr* expr) {
 
 ObjStmtPrint* newStmtPrint(ObjExpr* expr) {
     ObjStmtPrint* stmt = ALLOCATE_OBJ(ObjStmtPrint, OBJ_STMT_PRINT);
+    stmt->stmt.line = parser.previous.line;
     stmt->stmt.nextStmt = NULL;
     stmt->expression = expr;
 
@@ -24,6 +27,7 @@ ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr
     ObjStmtVarDeclaration* stmt = ALLOCATE_OBJ(ObjStmtVarDeclaration, OBJ_STMT_VARDECLARATION);
     tempRootPush(OBJ_VAL(stmt));
     stmt->stmt.nextStmt = NULL;
+    stmt->stmt.line = parser.previous.line;
     stmt->name = copyString(name, nameLength);
     stmt->initialiser = expr;
     tempRootPop();
@@ -33,6 +37,7 @@ ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr
 ObjStmtBlock* newStmtBlock() {
     ObjStmtBlock* block = ALLOCATE_OBJ(ObjStmtBlock, OBJ_STMT_BLOCK);
     block->stmt.nextStmt = NULL;
+    block->stmt.line = parser.previous.line;
     block->statements = NULL;
     return block;
 }
@@ -40,6 +45,7 @@ ObjStmtBlock* newStmtBlock() {
 ObjStmtIf* newStmtIf() {
     ObjStmtIf* ctrl = ALLOCATE_OBJ(ObjStmtIf, OBJ_STMT_IF);
     ctrl->stmt.nextStmt = NULL;
+    ctrl->stmt.line = parser.previous.line;
     ctrl->test = NULL;
     ctrl->ifStmt = NULL;
     ctrl->elseStmt = NULL;
@@ -49,6 +55,7 @@ ObjStmtIf* newStmtIf() {
 ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength) {
     ObjStmtFunDeclaration* fun = ALLOCATE_OBJ(ObjStmtFunDeclaration, OBJ_STMT_FUNDECLARATION);
     fun->stmt.nextStmt = NULL;
+    fun->stmt.line = parser.previous.line;
     fun->name = NULL;
     fun->function = NULL;
     tempRootPush(OBJ_VAL(fun));
@@ -60,6 +67,7 @@ ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength) {
 ObjStmtWhile* newStmtWhile() {
     ObjStmtWhile* loop = ALLOCATE_OBJ(ObjStmtWhile, OBJ_STMT_WHILE);
     loop->stmt.nextStmt = NULL;
+    loop->stmt.line = parser.previous.line;
     loop->test = NULL;
     loop->loop = NULL;
     return loop;
@@ -68,6 +76,7 @@ ObjStmtWhile* newStmtWhile() {
 ObjStmtReturnOrYield* newStmtReturnOrYield(bool ret) {
     ObjStmtReturnOrYield* stmt = ALLOCATE_OBJ(ObjStmtReturnOrYield, ret ? OBJ_STMT_RETURN : OBJ_STMT_YIELD);
     stmt->stmt.nextStmt = NULL;
+    stmt->stmt.line = parser.previous.line;
     stmt->value = NULL;
     return stmt;
 }
@@ -75,6 +84,7 @@ ObjStmtReturnOrYield* newStmtReturnOrYield(bool ret) {
 ObjStmtFor* newStmtFor() {
     ObjStmtFor* loop = ALLOCATE_OBJ(ObjStmtFor, OBJ_STMT_FOR);
     loop->stmt.nextStmt = NULL;
+    loop->stmt.line = parser.previous.line;
     loop->condition = NULL;
     loop->initializer = NULL;
     loop->loopExpression = NULL;
