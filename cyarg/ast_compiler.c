@@ -88,8 +88,7 @@ static void errorAt(const char* location, const char* message) {
 }
 
 static void error(const char* message) {
-    fprintf(stderr, ": %s\n", message);
-    current->hadError = true;
+    errorAt(NULL, message);
 }
 
 static Chunk* currentChunk() {
@@ -125,7 +124,7 @@ static int resolveLocal(AstCompiler* compiler, ObjString* name) {
         Local* local = &compiler->locals[i];
         if (identifiersEqual(name, local->name)) {
             if (local->depth == -1) {
-                error("Can't read local variable in its own initializer.");
+                errorAt(name->chars, "Can't read local variable in its own initializer.");
             }
             return i;
         }
@@ -136,7 +135,7 @@ static int resolveLocal(AstCompiler* compiler, ObjString* name) {
 
 static void addLocal(ObjString* name) {
     if (current->localCount == UINT8_COUNT) {
-        error("Too many local variables in function.");
+        errorAt(name->chars, "Too many local variables in function.");
         return;
     }
 
@@ -248,7 +247,7 @@ static void declareVariable(ObjString* name) {
         }
 
         if (identifiersEqual(name, local->name)) {
-            error("Already a variable with this name in this scope.");
+            errorAt(name->chars, "Already a variable with this name in this scope.");
         }
     }
 
