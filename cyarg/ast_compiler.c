@@ -29,6 +29,7 @@ typedef struct AstCompiler {
     ObjStmt* ast;
     FunctionType type;
     ObjStmt* recent;
+    bool hadError;
 
     Local locals[UINT8_COUNT];
     int localCount;
@@ -41,16 +42,18 @@ typedef struct ClassCompiler {
     bool hasSuperclass;
 } ClassCompiler;
 
+bool hadCompilerError = false;
 static struct AstCompiler* current = NULL;
 static ClassCompiler* currentClass = NULL;
 
-static void initCompiler(AstCompiler* compiler, FunctionType type) {
+static void initCompiler(AstCompiler* compiler, FunctionType type, ObjString* name) {
 
     compiler->enclosing = current;
     compiler->ast = NULL;
     compiler->function = NULL;
     compiler->type = type;
     compiler->recent = NULL;
+    compiler->hadError = false;
 
     compiler->localCount = 0;
     compiler->scopeDepth = 0;
@@ -58,8 +61,7 @@ static void initCompiler(AstCompiler* compiler, FunctionType type) {
     compiler->function = newFunction();
     current = compiler;
     if (type != TYPE_SCRIPT) {
-        current->function->name = copyString(parser.previous.start,
-                                             parser.previous.length);
+        current->function->name = name;
     }
 
     Local* local = &current->locals[current->localCount++];
@@ -73,8 +75,21 @@ static void initCompiler(AstCompiler* compiler, FunctionType type) {
     }
 }
 
+static void errorAt(const char* location, const char* message) {
+    int line = current->recent ? current->recent->line : 1;
+    fprintf(stderr, "[line %d] Error", line);
+
+    if (location) {
+        fprintf(stderr, " at '%s'", location);
+    }
+
+    fprintf(stderr, ": %s\n", message);
+    current->hadError = true;
+}
+
 static void error(const char* message) {
-    fprintf(stderr, "%s\n", message);
+    fprintf(stderr, ": %s\n", message);
+    current->hadError = true;
 }
 
 static Chunk* currentChunk() {
@@ -82,7 +97,7 @@ static Chunk* currentChunk() {
 }
 
 static void emitByte(uint8_t byte) {
-    writeChunk(currentChunk(), byte, current->recent->line);
+    writeChunk(currentChunk(), byte, current->recent ? current->recent->line : 1);
 }
 
 static void emitBytes(uint8_t byte1, uint8_t byte2) {
@@ -341,7 +356,7 @@ static void generateExprNamedVariable(ObjExprNamedVariable* var) {
     ObjString* this_ = copyString("this", 4);
     tempRootPush(OBJ_VAL(this_));
     if (identifiersEqual(this_, var->name) && currentClass == NULL) {
-        error("Can't use 'this' outside of a class.");
+        errorAt("this", "Can't use 'this' outside of a class.");
         tempRootPop();
         return;
     }
@@ -451,9 +466,9 @@ static void generateExprDot(ObjExprDot* dot) {
 
 static void generateExprSuper(ObjExprSuper* super) {
     if (currentClass == NULL) {
-        error("Can't use 'super' outside of a class.");
+        errorAt("super", "Can't use 'super' outside of a class.");
     } else if (!currentClass->hasSuperclass) {
-        error("Can't use 'super' in a class with no superclass.");
+        errorAt("super", "Can't use 'super' in a class with no superclass.");
     }
     uint8_t name = identifierConstant(super->name);
 
@@ -622,9 +637,9 @@ static void generateStmtIf(ObjStmtIf* ctrl) {
     patchJump(elseJump);
 }
 
-static void generateFunction(FunctionType type, ObjFunctionDeclaration* decl) {
+static void generateFunction(FunctionType type, ObjFunctionDeclaration* decl, ObjString* name) {
     AstCompiler compiler;
-    initCompiler(&compiler, type);
+    initCompiler(&compiler, type, name);
     beginScope();
 
     for (int i = 0; i < decl->arity; i++) {
@@ -649,7 +664,7 @@ static void generateStmtFunDeclaration(ObjStmtFunDeclaration* decl) {
     uint8_t global = parseVariable(decl->name);
     markInitialized();
 
-    generateFunction(TYPE_FUNCTION, decl->function);
+    generateFunction(TYPE_FUNCTION, decl->function, decl->name);
 
     defineVariable(global);
 }
@@ -669,14 +684,14 @@ static void generateStmtWhile(ObjStmtWhile* loop) {
 
 static void generateStmtYield(ObjStmtReturnOrYield* stmt) {
     if (current->type == TYPE_SCRIPT) {
-        error("Can't yield from top-level code.");
+        errorAt("yield", "Can't yield from top-level code.");
     }
 
     if (!stmt->value) {
         emitBytes(OP_NIL, OP_YIELD);
     } else {
         if (current->type == TYPE_INITIALIZER) {
-            error("Can't yield a value from an initializer.");
+            errorAt("yield", "Can't yield a value from an initializer.");
         }
 
         generateExpr(stmt->value);
@@ -686,14 +701,14 @@ static void generateStmtYield(ObjStmtReturnOrYield* stmt) {
 
 static void generateStmtReturn(ObjStmtReturnOrYield* stmt) {
     if (current->type == TYPE_SCRIPT) {
-        error("Can't return from top-level code.");
+        errorAt("return", "Can't return from top-level code.");
     }
     
     if (!stmt->value) {
         emitReturn();
     } else {
         if (current->type == TYPE_INITIALIZER) {
-            error("Can't return a value from an initializer.");
+            errorAt("return", "Can't return a value from an initializer.");
         }
 
         generateExpr(stmt->value);
@@ -751,7 +766,7 @@ static void generateStmtMethodDeclaration(ObjStmtFunDeclaration* method) {
         type = TYPE_INITIALIZER;
     }
     
-    generateFunction(type, method->function);
+    generateFunction(type, method->function, method->name);
 
     emitBytes(OP_METHOD, constant);
     tempRootPop(); // initi
@@ -854,26 +869,35 @@ static ObjFunction* endCompiler() {
 
     current->ast = NULL;
     current->recent = NULL;
+    hadCompilerError |= current->hadError;
     ObjFunction* function = current->function;
-    current = current->enclosing;
 
+    current = current->enclosing;
     return function;
 }
 
 ObjFunction* astCompile(const char* source) {
+    hadCompilerError = false;
+
     initScanner(source);
     struct AstCompiler compiler;
-    initCompiler(&compiler, TYPE_SCRIPT);
+    initCompiler(&compiler, TYPE_SCRIPT, NULL);
 
     parse(&current->ast);
 #ifdef DEBUG_AST_PARSE
     printStmts(current->ast);
 #endif
 
-    generate(current->ast);
+    if (!parser.hadError) {
+
+        generate(current->ast);
+    }
+
+    bool compileError = parser.hadError || hadCompilerError;
 
     ObjFunction* function = endCompiler();
-    return parser.hadError ? NULL : function;
+
+    return compileError ? NULL : function;
 }
 
 void markAstCompilerRoots() {

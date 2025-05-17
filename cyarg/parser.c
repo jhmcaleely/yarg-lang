@@ -155,7 +155,7 @@ static ObjArguments* argumentList() {
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
             appendObjArgument(args, expression());
-            if (args->count == 255) {
+            if (args->count > 255) {
                 error("Can't have more than 255 arguments.");
             }
         } while (match(TOKEN_COMMA));
@@ -267,7 +267,7 @@ static ObjExpr* builtin(bool canAssign) {
         case TOKEN_IMPORT: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_IMPORT, 1);
         case TOKEN_MAKE_ARRAY: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_MAKE_ARRAY, 1);
         case TOKEN_MAKE_ROUTINE: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_MAKE_ROUTINE, 1);
-        case TOKEN_MAKE_CHANNEL: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_MAKE_ROUTINE, 1);
+        case TOKEN_MAKE_CHANNEL: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_MAKE_CHANNEL, 1);
         case TOKEN_RESUME: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_RESUME, 1);
         case TOKEN_SEND: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_SEND, 1);
         case TOKEN_RECEIVE: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_RECEIVE, 1);      
@@ -675,7 +675,7 @@ static ObjFunctionDeclaration* function(FunctionType type) {
             fun->params[fun->arity] = expression();
             fun->arity++;
             if (fun->arity > 255) {
-                errorAtCurrent("Can't have more than 255 parameters.");
+                errorAt(&parser.previous, "Can't have more than 255 parameters.");
             }
         } while (match(TOKEN_COMMA));
     }
