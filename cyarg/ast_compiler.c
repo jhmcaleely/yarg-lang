@@ -87,6 +87,19 @@ static void errorAt(const char* location, const char* message) {
     current->hadError = true;
 }
 
+static void errorAtValue(Value location, const char* message) {
+    int line = current->recent ? current->recent->line : 1;
+    fprintf(stderr, "[line %d] Error", line);
+
+    fprintf(stderr, " at '");
+    printSourceValue(stderr, location);
+    fprintf(stderr, "'");
+
+    fprintf(stderr, ": %s\n", message);
+    current->hadError = true;
+}
+
+
 static void error(const char* message) {
     errorAt(NULL, message);
 }
@@ -145,7 +158,7 @@ static void addLocal(ObjString* name) {
     local->isCaptured = false;
 }
 
-static int addUpvalue(AstCompiler* compiler, uint8_t index, bool isLocal) {
+static int addUpvalue(AstCompiler* compiler, uint8_t index, bool isLocal, ObjString* name) {
     int upvalueCount = compiler->function->upvalueCount;
 
     for (int i = 0; i < upvalueCount; i++) {
@@ -156,7 +169,7 @@ static int addUpvalue(AstCompiler* compiler, uint8_t index, bool isLocal) {
     }
 
     if (upvalueCount == UINT8_COUNT) {
-        error("Too many closure variables in function.");
+        errorAt(name->chars, "Too many closure variables in function.");
         return 0;
     }
 
@@ -171,12 +184,12 @@ static int resolveUpvalue(AstCompiler* compiler, ObjString* name) {
     int local = resolveLocal(compiler->enclosing, name);
     if (local != -1) {
         compiler->enclosing->locals[local].isCaptured = true;
-        return addUpvalue(compiler, (uint8_t)local, true);
+        return addUpvalue(compiler, (uint8_t)local, true, name);
     }
 
     int upvalue = resolveUpvalue(compiler->enclosing, name);
     if (upvalue != -1) {
-        return addUpvalue(compiler, (uint8_t)upvalue, false);
+        return addUpvalue(compiler, (uint8_t)upvalue, false, name);
     }
 
     return -1;
@@ -186,7 +199,7 @@ static uint8_t makeConstant(Value value) {
 
     int constant = addConstant(currentChunk(), value);
     if (constant > UINT8_MAX) {
-        error("Too many constants in one chunk.");
+        errorAtValue(value, "Too many constants in one chunk.");
         return 0;
     }
 
@@ -248,6 +261,7 @@ static void declareVariable(ObjString* name) {
 
         if (identifiersEqual(name, local->name)) {
             errorAt(name->chars, "Already a variable with this name in this scope.");
+            return;
         }
     }
 
@@ -491,6 +505,13 @@ static void generateExprSuper(ObjExprSuper* super) {
     tempRootPop();
 }
 
+static void generateExprType(ObjExprType* type) {
+    switch (type->type) {
+        case EXPR_TYPE_MUINT32: emitByte(OP_TYPE_LITERAL); return;
+        default: return; // unreachable.
+    }
+}
+
 static void generateExprElt(ObjExpr* expr) {
     
     switch (expr->obj.type) {
@@ -552,6 +573,11 @@ static void generateExprElt(ObjExpr* expr) {
         case OBJ_EXPR_SUPER: {
             ObjExprSuper* super = (ObjExprSuper*)expr;
             generateExprSuper(super);
+            break;
+        }
+        case OBJ_EXPR_TYPE: {
+            ObjExprType* t = (ObjExprType*)expr;
+            generateExprType(t);
             break;
         }
         default:
@@ -892,9 +918,9 @@ ObjFunction* astCompile(const char* source) {
         generate(current->ast);
     }
 
-    bool compileError = parser.hadError || hadCompilerError;
-
     ObjFunction* function = endCompiler();
+
+    bool compileError = parser.hadError || hadCompilerError;
 
     return compileError ? NULL : function;
 }

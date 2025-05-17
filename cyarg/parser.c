@@ -279,6 +279,13 @@ static ObjExpr* builtin(bool canAssign) {
     } 
 }
 
+static ObjExpr* type(bool canAssign) {
+    switch (parser.previous.type) {
+        case TOKEN_MACHINE_UINT32: return (ObjExpr*) newExprType(EXPR_TYPE_MUINT32);
+        default: return NULL; // Unreachable
+    }
+}
+
 static ObjExpr* variable(bool canAssign) {
 
     return namedVariable(parser.previous, canAssign);
@@ -448,7 +455,7 @@ static AstParseRule rules[] = {
     [TOKEN_IF]                   = {NULL,      NULL,   PREC_NONE},
     [TOKEN_IMPORT]               = {builtin,   NULL,   PREC_NONE},
     [TOKEN_LEN]                  = {builtin,   NULL,   PREC_NONE},
-    [TOKEN_MACHINE_UINT32]       = {literal,   NULL,   PREC_NONE},
+    [TOKEN_MACHINE_UINT32]       = {type,      NULL,   PREC_NONE},
     [TOKEN_MAKE_ARRAY]           = {builtin,   NULL,   PREC_NONE},
     [TOKEN_MAKE_CHANNEL]         = {builtin,   NULL,   PREC_NONE},
     [TOKEN_MAKE_ROUTINE]         = {builtin,   NULL,   PREC_NONE},

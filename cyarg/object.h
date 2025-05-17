@@ -79,7 +79,8 @@ typedef enum {
     OBJ_EXPR_ARRAYELEMENT,
     OBJ_EXPR_BUILTIN,
     OBJ_EXPR_DOT,
-    OBJ_EXPR_SUPER
+    OBJ_EXPR_SUPER,
+    OBJ_EXPR_TYPE
 } ObjType;
 
 struct Obj {
@@ -185,7 +186,9 @@ ObjUniformArray* newUniformArray(ObjYargType* element_type, size_t capacity);
 ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);
 ObjUpvalue* newUpvalue(Value* slot);
+
 void printObject(Value value);
+void fprintObject(FILE* op, Value value);
 
 static inline bool isObjType(Value value, ObjType type) {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;

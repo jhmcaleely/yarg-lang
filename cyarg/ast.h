@@ -217,6 +217,15 @@ typedef struct {
     ObjArguments* callArgs;
 } ObjExprSuper;
 
+typedef enum {
+    EXPR_TYPE_MUINT32
+} ExprTypeType;
+
+typedef struct {
+    ObjExpr expr;
+    ExprTypeType type;
+} ObjExprType;
+
 ObjExprNumber* newExprNumberDouble(double value);
 ObjExprNumber* newExprNumberInteger(int value);
 ObjExprNumber* newExprNumberUInteger32(uint32_t value);
@@ -232,6 +241,7 @@ ObjExprArrayElement* newExprArrayElement();
 ObjExprBuiltin* newExprBuiltin(ExprBuiltin fn, int arity);
 ObjExprDot* newExprDot(const char* name, int nameLength);
 ObjExprSuper* newExprSuper(const char* name, int nameLength);
+ObjExprType* newExprType(ExprTypeType type);
 
 void appendObjArgument(ObjArguments* args, ObjExpr* expr);
 void appendMethod(ObjStmtClassDeclaration* class_, ObjStmtFunDeclaration* method);
@@ -251,5 +261,6 @@ ObjFunctionDeclaration* newObjFunctionDeclaration();
 
 void printStmts(ObjStmt* stmts);
 void printExpr(ObjExpr* expr);
+void printSourceValue(FILE* op, Value value);
 
 #endif

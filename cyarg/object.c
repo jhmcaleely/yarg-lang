@@ -182,106 +182,110 @@ ObjUpvalue* newUpvalue(Value* slot) {
     return upvalue;
 }
 
-static void printFunction(ObjFunction* function) {
+static void printFunction(FILE* op, ObjFunction* function) {
     if (function->name == NULL) {
-        printf("<script>");
+        fprintf(op, "<script>");
         return;
     }
-    printf("<fn %s>", function->name->chars);
+    fprintf(op, "<fn %s>", function->name->chars);
 }
 
-static void printRoutine(ObjRoutine* routine) {
-    printf("<R%s %p>"
+static void printRoutine(FILE* op, ObjRoutine* routine) {
+    fprintf(op, "<R%s %p>"
           , routine->type == ROUTINE_ISR ? "i" : "n"
           , routine);
 }
 
-static void printChannel(ObjChannel* channel) {
-    printf("<ch ");
+static void printChannel(FILE* op, ObjChannel* channel) {
+    fprintf(op, "<ch ");
     if (channel->present) {
-        printValue(channel->data);
+        fprintValue(op, channel->data);
     }
     else {
-        printf(" NIL");
+        fprintf(op, " NIL");
     }
-    printf(">");
+    fprintf(op, ">");
 }
 
-static void printArray(Value a) {
+static void printArray(FILE* op, Value a) {
     if (IS_VALARRAY(a)) {
-        printf("[array %d]", AS_VALARRAY(a)->array.count);
+        fprintf(op, "[array %d]", AS_VALARRAY(a)->array.count);
     } else if (IS_UNIFORMARRAY(a)) {
-        printf("[array %.zd]", AS_UNIFORMARRAY(a)->count);
+        fprintf(op, "[array %.zd]", AS_UNIFORMARRAY(a)->count);
     }
 }
 
-static void printType(ObjYargType* type) {
+static void printType(FILE* op, ObjYargType* type) {
     switch (type->yt) {
-        case TypeAny: printf("Type:Any"); break;
-        case TypeBool: printf("Type:Bool"); break;
-        case TypeNilVal: printf("Type:NilVal"); break;
-        case TypeDouble: printf("Type:Double"); break;
-        case TypeMachineUint32: printf("Type:TypeMachineUint32"); break;
-        case TypeInteger: printf("Type:Integer"); break;
-        case TypeString: printf("Type:String"); break;
-        case TypeClass: printf("Type:Class"); break;
-        case TypeInstance: printf("Type:%s", type->instanceKlass->name->chars); break;
-        case TypeFunction: printf("Type:Function"); break;
-        case TypeNativeBlob: printf("Type:NativeBlob"); break;
-        case TypeRoutine: printf("Type:Routine"); break;
-        case TypeChannel: printf("Type:Channel"); break;
-        case TypeArray: printf("Type:Array"); break;
-        case TypeYargType: printf("Type:Type"); break;
-        default: printf("Type:Unknown"); break;
+        case TypeAny: fprintf(op, "Type:Any"); break;
+        case TypeBool: fprintf(op, "Type:Bool"); break;
+        case TypeNilVal: fprintf(op, "Type:NilVal"); break;
+        case TypeDouble: fprintf(op, "Type:Double"); break;
+        case TypeMachineUint32: fprintf(op, "Type:TypeMachineUint32"); break;
+        case TypeInteger: fprintf(op, "Type:Integer"); break;
+        case TypeString: fprintf(op, "Type:String"); break;
+        case TypeClass: fprintf(op, "Type:Class"); break;
+        case TypeInstance: fprintf(op, "Type:%s", type->instanceKlass->name->chars); break;
+        case TypeFunction: fprintf(op, "Type:Function"); break;
+        case TypeNativeBlob: fprintf(op, "Type:NativeBlob"); break;
+        case TypeRoutine: fprintf(op, "Type:Routine"); break;
+        case TypeChannel: fprintf(op, "Type:Channel"); break;
+        case TypeArray: fprintf(op, "Type:Array"); break;
+        case TypeYargType: fprintf(op, "Type:Type"); break;
+        default: fprintf(op, "Type:Unknown"); break;
+    }
+}
+
+void fprintObject(FILE* op, Value value) {
+    switch (OBJ_TYPE(value)) {
+        case OBJ_BOUND_METHOD:
+            printFunction(op, AS_BOUND_METHOD(value)->method->function);
+            break;
+        case OBJ_CLASS:
+            fprintf(op, "%s", AS_CLASS(value)->name->chars);
+            break;
+        case OBJ_CLOSURE:
+            printFunction(op, AS_CLOSURE(value)->function);
+            break;
+        case OBJ_FUNCTION:
+            printFunction(op, AS_FUNCTION(value));
+            break;
+        case OBJ_INSTANCE:
+            fprintf(op, "%s instance", AS_INSTANCE(value)->klass->name->chars);
+            break;
+        case OBJ_NATIVE:
+            fprintf(op, "<native fn>");
+            break;
+        case OBJ_BLOB:
+            fprintf(op, "<blob %p>", AS_BLOB(value)->blob);
+            break;
+        case OBJ_ROUTINE:
+            printRoutine(op, AS_ROUTINE(value));
+            break;
+        case OBJ_CHANNEL:
+            printChannel(op, AS_CHANNEL(value));
+            break;
+        case OBJ_STRING:
+            fprintf(op, "%s", AS_CSTRING(value));
+            break;
+        case OBJ_UPVALUE:
+            fprintf(op, "upvalue");
+            break;
+        case OBJ_VALARRAY:
+            printArray(op, value);
+            break;
+        case OBJ_UNIFORMARRAY:
+            printArray(op, value);
+            break;
+        case OBJ_YARGTYPE:
+            printType(op, AS_YARGTYPE(value));
+            break;
+        default:
+            fprintf(op, "<implementation object %d>", OBJ_TYPE(value));
+            break;
     }
 }
 
 void printObject(Value value) {
-    switch (OBJ_TYPE(value)) {
-        case OBJ_BOUND_METHOD:
-            printFunction(AS_BOUND_METHOD(value)->method->function);
-            break;
-        case OBJ_CLASS:
-            printf("%s", AS_CLASS(value)->name->chars);
-            break;
-        case OBJ_CLOSURE:
-            printFunction(AS_CLOSURE(value)->function);
-            break;
-        case OBJ_FUNCTION:
-            printFunction(AS_FUNCTION(value));
-            break;
-        case OBJ_INSTANCE:
-            printf("%s instance", AS_INSTANCE(value)->klass->name->chars);
-            break;
-        case OBJ_NATIVE:
-            printf("<native fn>");
-            break;
-        case OBJ_BLOB:
-            printf("<blob %p>", AS_BLOB(value)->blob);
-            break;
-        case OBJ_ROUTINE:
-            printRoutine(AS_ROUTINE(value));
-            break;
-        case OBJ_CHANNEL:
-            printChannel(AS_CHANNEL(value));
-            break;
-        case OBJ_STRING:
-            printf("%s", AS_CSTRING(value));
-            break;
-        case OBJ_UPVALUE:
-            printf("upvalue");
-            break;
-        case OBJ_VALARRAY:
-            printArray(value);
-            break;
-        case OBJ_UNIFORMARRAY:
-            printArray(value);
-            break;
-        case OBJ_YARGTYPE:
-            printType(AS_YARGTYPE(value));
-            break;
-        default:
-            printf("<implementation object %d>", OBJ_TYPE(value));
-            break;
-    }
+    fprintObject(stdout, value);
 }

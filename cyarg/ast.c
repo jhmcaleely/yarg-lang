@@ -268,6 +268,12 @@ ObjExprSuper* newExprSuper(const char* name, int nameLength) {
     return expr;
 }
 
+ObjExprType* newExprType(ExprTypeType type) {
+    ObjExprType* expr = ALLOCATE_OBJ(ObjExprType, OBJ_EXPR_TYPE);
+    expr->expr.nextExpr = NULL;
+    expr->type = type;
+    return expr;
+}
 
 static void printExprOperation(ObjExprOperation* opexpr) {
     switch (opexpr->operation) {
@@ -569,5 +575,14 @@ void printStmts(ObjStmt* stmts) {
                 break;
         }
         cursor = cursor->nextStmt;
+    }
+}
+
+void printSourceValue(FILE* op, Value value) {
+    if (IS_STRING(value)) {
+        fprintf(op, "\"%s\"", AS_CSTRING(value));
+        return;
+    } else {
+        fprintValue(op, value);
     }
 }
