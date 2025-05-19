@@ -915,7 +915,7 @@ static ObjFunction* endCompiler() {
     return function;
 }
 
-ObjFunction* astCompile(const char* source) {
+ObjFunction* compile(const char* source) {
     hadCompilerError = false;
 
     initScanner(source);
@@ -939,7 +939,7 @@ ObjFunction* astCompile(const char* source) {
     return compileError ? NULL : function;
 }
 
-void markAstCompilerRoots() {
+void markCompilerRoots() {
     AstCompiler* compiler = current;
     while (compiler != NULL) {
         markObject((Obj*)compiler->function);

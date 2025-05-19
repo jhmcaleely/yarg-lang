@@ -44,7 +44,7 @@ static void disassembleFile(const char* path) {
         return;
     }
 
-    ObjFunction* result = astCompile(source);
+    ObjFunction* result = compile(source);
     if (!result) {
         return;
     }

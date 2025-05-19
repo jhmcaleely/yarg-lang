@@ -731,7 +731,7 @@ InterpretResult run(ObjRoutine* routine) {
 }
 
 InterpretResult interpret(const char* source) {
-    ObjFunction* function = astCompile(source);
+    ObjFunction* function = compile(source);
     if (function == NULL) return INTERPRET_COMPILE_ERROR;
 
     tempRootPush(OBJ_VAL(function));
