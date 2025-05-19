@@ -102,8 +102,13 @@ typedef struct {
 } ObjStmtVarDeclaration;
 
 typedef struct {
+    Obj obj;
+    ObjStmt* stmts;
+} ObjBlock;
+
+typedef struct {
     ObjStmt stmt;
-    ObjStmt* statements;
+    ObjBlock* statements;
 } ObjStmtBlock;
 
 typedef struct {
@@ -117,7 +122,7 @@ typedef struct {
     Obj obj;
     unsigned int arity;
     ObjExpr* params[UINT8_MAX];
-    ObjStmtBlock* body;
+    ObjBlock* body;
 } ObjFunctionDeclaration;
 
 typedef struct {
@@ -258,6 +263,7 @@ ObjStmtFor* newStmtFor();
 ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength);
 
 ObjFunctionDeclaration* newObjFunctionDeclaration();
+ObjBlock* newObjBlock();
 
 void printStmts(ObjStmt* stmts);
 void printExpr(ObjExpr* expr);

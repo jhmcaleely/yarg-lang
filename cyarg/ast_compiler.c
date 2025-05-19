@@ -650,9 +650,13 @@ static void endScope() {
 static void generate(ObjStmt* stmt);
 static ObjFunction* endCompiler();
 
+static void generateObjBlock(ObjBlock* stmts) {
+    generate(stmts->stmts);
+}
+
 static void generateStmtBlock(ObjStmtBlock* block) {
     beginScope();
-    generate(block->statements);
+    generateObjBlock(block->statements);
     endScope();
 }
 
@@ -682,7 +686,7 @@ static void generateFunction(FunctionType type, ObjFunctionDeclaration* decl, Ob
         defineVariable(constant);
     }
 
-    generate((ObjStmt*)decl->body);
+    generateObjBlock(decl->body);
 
     ObjFunction* function = endCompiler();
     function->arity = decl->arity;

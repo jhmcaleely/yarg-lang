@@ -554,12 +554,12 @@ static ObjStmt* varDeclaration() {
 static ObjStmt* declaration();
 static ObjStmt* statement();
 
-static ObjStmtBlock* block() {
+static ObjBlock* block() {
 
-    ObjStmtBlock* block = newStmtBlock();
+    ObjBlock* block = newObjBlock();
     tempRootPush(OBJ_VAL(block));
 
-    ObjStmt** cursor = &block->statements;
+    ObjStmt** cursor = &block->stmts;
 
     while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
         *cursor = declaration();
@@ -653,6 +653,14 @@ static ObjStmtFor* forStatement() {
     return loop;
 }
 
+ObjStmtBlock* blockStatement() {
+    ObjStmtBlock* stmt = newStmtBlock();
+    tempRootPush(OBJ_VAL(stmt));
+    stmt->statements = block();
+    tempRootPop();
+    return stmt;
+}
+
 ObjStmt* statement() {
     if (match(TOKEN_PRINT)) {
         return (ObjStmt*) printStatement();
@@ -665,7 +673,7 @@ ObjStmt* statement() {
     } else if (match(TOKEN_WHILE)) {
         return (ObjStmt*) whileStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {
-        return (ObjStmt*)block();
+        return (ObjStmt*)blockStatement();
     } else {
         return (ObjStmt*) expressionStatement();
     }
