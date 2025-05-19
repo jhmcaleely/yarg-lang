@@ -30,6 +30,7 @@ typedef struct AstCompiler {
     FunctionType type;
     ObjStmt* recent;
     bool hadError;
+    bool panicMode;
 
     Local locals[UINT8_COUNT];
     int localCount;
@@ -54,6 +55,7 @@ static void initCompiler(AstCompiler* compiler, FunctionType type, ObjString* na
     compiler->type = type;
     compiler->recent = NULL;
     compiler->hadError = false;
+    compiler->panicMode = false;
 
     compiler->localCount = 0;
     compiler->scopeDepth = 0;
@@ -76,6 +78,10 @@ static void initCompiler(AstCompiler* compiler, FunctionType type, ObjString* na
 }
 
 static void errorAt(const char* location, const char* message) {
+    if (current->panicMode) return;
+
+    current->panicMode = true;
+
     int line = current->recent ? current->recent->line : 1;
     fprintf(stderr, "[line %d] Error", line);
 
@@ -88,6 +94,10 @@ static void errorAt(const char* location, const char* message) {
 }
 
 static void errorAtValue(Value location, const char* message) {
+    if (current->panicMode) return;
+
+    current->panicMode = true;
+
     int line = current->recent ? current->recent->line : 1;
     fprintf(stderr, "[line %d] Error", line);
 
@@ -839,6 +849,7 @@ static void generateStmtClassDeclaration(ObjStmtClassDeclaration* decl) {
 }
 
 static void generateStmt(ObjStmt* stmt) {
+    current->panicMode = false;
     current->recent = stmt;
     switch (stmt->obj.type) {
         case OBJ_STMT_EXPRESSION:
