@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "ast_compiler.h"
+#include "compiler.h"
 #include "memory.h"
 #include "vm.h"
 #include "yargtype.h"

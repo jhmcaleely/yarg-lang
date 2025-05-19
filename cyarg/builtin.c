@@ -14,7 +14,7 @@
 #include "vm.h"
 #include "debug.h"
 #include "files.h"
-#include "ast_compiler.h"
+#include "compiler.h"
 #include "channel.h"
 #include "yargtype.h"
 

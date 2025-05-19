@@ -9,7 +9,7 @@
 #include "debug.h"
 #include "vm.h"
 #include "files.h"
-#include "ast_compiler.h"
+#include "compiler.h"
 
 const char* defaultScript = "main.ya";
 

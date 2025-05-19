@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include "common.h"
-#include "ast_compiler.h"
+#include "compiler.h"
 #include "debug.h"
 #include "object.h"
 #include "memory.h"
