@@ -22,8 +22,8 @@ typedef struct {
     bool isLocal;
 } Upvalue;
 
-typedef struct AstCompiler {
-    struct AstCompiler* enclosing;
+typedef struct Compiler {
+    struct Compiler* enclosing;
     ObjFunction* function;
     ObjStmt* ast;
     FunctionType type;
@@ -35,7 +35,7 @@ typedef struct AstCompiler {
     int localCount;
     Upvalue upvalues[UINT8_COUNT];
     int scopeDepth;
-} AstCompiler;
+} Compiler;
 
 typedef struct ClassCompiler {
     struct ClassCompiler* enclosing;
@@ -43,10 +43,10 @@ typedef struct ClassCompiler {
 } ClassCompiler;
 
 bool hadCompilerError = false;
-static struct AstCompiler* current = NULL;
+static struct Compiler* current = NULL;
 static ClassCompiler* currentClass = NULL;
 
-static void initCompiler(AstCompiler* compiler, FunctionType type, ObjString* name) {
+static void initCompiler(Compiler* compiler, FunctionType type, ObjString* name) {
 
     compiler->enclosing = current;
     compiler->ast = NULL;
@@ -141,7 +141,7 @@ static bool identifiersEqual(ObjString* a, ObjString* b) {
     return memcmp(a->chars, b->chars, a->length) == 0;
 }
 
-static int resolveLocal(AstCompiler* compiler, ObjString* name) {
+static int resolveLocal(Compiler* compiler, ObjString* name) {
     for (int i = compiler->localCount - 1; i >= 0; i--) {
         Local* local = &compiler->locals[i];
         if (identifiersEqual(name, local->name)) {
@@ -167,7 +167,7 @@ static void addLocal(ObjString* name) {
     local->isCaptured = false;
 }
 
-static int addUpvalue(AstCompiler* compiler, uint8_t index, bool isLocal, ObjString* name) {
+static int addUpvalue(Compiler* compiler, uint8_t index, bool isLocal, ObjString* name) {
     int upvalueCount = compiler->function->upvalueCount;
 
     for (int i = 0; i < upvalueCount; i++) {
@@ -187,7 +187,7 @@ static int addUpvalue(AstCompiler* compiler, uint8_t index, bool isLocal, ObjStr
     return compiler->function->upvalueCount++;
 }
 
-static int resolveUpvalue(AstCompiler* compiler, ObjString* name) {
+static int resolveUpvalue(Compiler* compiler, ObjString* name) {
     if (compiler->enclosing == NULL) return -1;
 
     int local = resolveLocal(compiler->enclosing, name);
@@ -676,7 +676,7 @@ static void generateStmtIf(ObjStmtIf* ctrl) {
 }
 
 static void generateFunction(FunctionType type, ObjFunctionDeclaration* decl, ObjString* name) {
-    AstCompiler compiler;
+    Compiler compiler;
     initCompiler(&compiler, type, name);
     beginScope();
 
@@ -919,7 +919,7 @@ ObjFunction* compile(const char* source) {
     hadCompilerError = false;
 
     initScanner(source);
-    struct AstCompiler compiler;
+    struct Compiler compiler;
     initCompiler(&compiler, TYPE_SCRIPT, NULL);
 
     parse(&current->ast);
@@ -940,7 +940,7 @@ ObjFunction* compile(const char* source) {
 }
 
 void markCompilerRoots() {
-    AstCompiler* compiler = current;
+    Compiler* compiler = current;
     while (compiler != NULL) {
         markObject((Obj*)compiler->function);
         markObject((Obj*)compiler->ast);
