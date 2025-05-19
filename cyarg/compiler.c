@@ -5,7 +5,6 @@
 #include "compiler.h"
 #include "parser.h"
 #include "ast.h"
-#include "compiler_common.h"
 #include "memory.h"
 #include "object.h"
 #include "scanner.h"

@@ -3,7 +3,6 @@
 #include <stdio.h>
 
 #include "parser.h"
-#include "compiler_common.h"
 #include "ast.h"
 #include "memory.h"
 
