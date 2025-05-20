@@ -7,6 +7,7 @@
 #include "value.h"
 #include "vm.h"
 #include "yargtype.h"
+#include "print.h"
 
 #define ALLOCATE_OBJ(type, objectType) \
     (type*)allocateObject(sizeof(type), objectType)
@@ -20,7 +21,7 @@ Obj* allocateObject(size_t size, ObjType type) {
     vm.objects = object;
 
 #ifdef DEBUG_LOG_GC
-    printf("%p allocate %zu for %d\n", (void*)object, size, type);
+    PRINTERR("%p allocate %zu for %d\n", (void*)object, size, type);
 #endif
 
     return object;
@@ -184,34 +185,34 @@ ObjUpvalue* newUpvalue(Value* slot) {
 
 static void printFunction(FILE* op, ObjFunction* function) {
     if (function->name == NULL) {
-        fprintf(op, "<script>");
+        FPRINTMSG(op, "<script>");
         return;
     }
-    fprintf(op, "<fn %s>", function->name->chars);
+    FPRINTMSG(op, "<fn %s>", function->name->chars);
 }
 
 static void printRoutine(FILE* op, ObjRoutine* routine) {
-    fprintf(op, "<R%s %p>"
+    FPRINTMSG(op, "<R%s %p>"
           , routine->type == ROUTINE_ISR ? "i" : "n"
           , routine);
 }
 
 static void printChannel(FILE* op, ObjChannel* channel) {
-    fprintf(op, "<ch ");
+    FPRINTMSG(op, "<ch ");
     if (channel->present) {
         fprintValue(op, channel->data);
     }
     else {
-        fprintf(op, " NIL");
+        FPRINTMSG(op, " NIL");
     }
-    fprintf(op, ">");
+    FPRINTMSG(op, ">");
 }
 
 static void printArray(FILE* op, Value a) {
     if (IS_VALARRAY(a)) {
-        fprintf(op, "[array %d]", AS_VALARRAY(a)->array.count);
+        FPRINTMSG(op, "[array %d]", AS_VALARRAY(a)->array.count);
     } else if (IS_UNIFORMARRAY(a)) {
-        fprintf(op, "[array %.zd]", AS_UNIFORMARRAY(a)->count);
+        FPRINTMSG(op, "[array %.zd]", AS_UNIFORMARRAY(a)->count);
     }
 }
 
@@ -251,13 +252,13 @@ void fprintObject(FILE* op, Value value) {
             printFunction(op, AS_FUNCTION(value));
             break;
         case OBJ_INSTANCE:
-            fprintf(op, "%s instance", AS_INSTANCE(value)->klass->name->chars);
+            FPRINTMSG(op, "%s instance", AS_INSTANCE(value)->klass->name->chars);
             break;
         case OBJ_NATIVE:
-            fprintf(op, "<native fn>");
+            FPRINTMSG(op, "<native fn>");
             break;
         case OBJ_BLOB:
-            fprintf(op, "<blob %p>", AS_BLOB(value)->blob);
+            FPRINTMSG(op, "<blob %p>", AS_BLOB(value)->blob);
             break;
         case OBJ_ROUTINE:
             printRoutine(op, AS_ROUTINE(value));
@@ -266,10 +267,10 @@ void fprintObject(FILE* op, Value value) {
             printChannel(op, AS_CHANNEL(value));
             break;
         case OBJ_STRING:
-            fprintf(op, "%s", AS_CSTRING(value));
+            FPRINTMSG(op, "%s", AS_CSTRING(value));
             break;
         case OBJ_UPVALUE:
-            fprintf(op, "upvalue");
+            FPRINTMSG(op, "upvalue");
             break;
         case OBJ_VALARRAY:
             printArray(op, value);
@@ -281,7 +282,7 @@ void fprintObject(FILE* op, Value value) {
             printType(op, AS_YARGTYPE(value));
             break;
         default:
-            fprintf(op, "<implementation object %d>", OBJ_TYPE(value));
+            FPRINTMSG(op, "<implementation object %d>", OBJ_TYPE(value));
             break;
     }
 }

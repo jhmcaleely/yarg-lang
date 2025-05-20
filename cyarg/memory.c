@@ -6,9 +6,9 @@
 #include "vm.h"
 #include "yargtype.h"
 #include "ast.h"
+#include "print.h"
 
 #ifdef DEBUG_LOG_GC
-#include <stdio.h>
 #include "debug.h"
 #endif
 
@@ -33,7 +33,7 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
 
     void* result = realloc(pointer, newSize);
     if (result == NULL) {
-        printf("help! no memory.");
+        PRINTERR("help! no memory.");
         exit(1);
     }
     return result;
@@ -58,9 +58,9 @@ void markObject(Obj* object) {
     if (object->isMarked) return;
 
 #ifdef DEBUG_LOG_GC
-    printf("%p mark ", (void*)object);
+    PRINTERR("%p mark ", (void*)object);
     printValue(OBJ_VAL(object));
-    printf("\n");
+    PRINTERR("\n");
 #endif
 
     object->isMarked = true;
@@ -91,9 +91,9 @@ static void markExpr(Obj* expr) {
 
 static void blackenObject(Obj* object) {
 #ifdef DEBUG_LOG_GC
-    printf("%p blacken ", (void*)object);
+    PRINTERR("%p blacken ", (void*)object);
     printValue(OBJ_VAL(object));
-    printf("\n");
+    PRINTERR("\n");
 #endif
 
     switch (object->type) {
@@ -344,7 +344,7 @@ static void blackenObject(Obj* object) {
 
 static void freeObject(Obj* object) {
 #ifdef DEBUG_LOG_GC
-    printf("%p free type %d\n", (void*)object, object->type);
+    PRINTERR("%p free type %d\n", (void*)object, object->type);
 #endif
 
     switch (object->type) {
@@ -506,7 +506,7 @@ void collectGarbage() {
     platform_mutex_enter(&vm.heap);
 
 #ifdef DEBUG_LOG_GC
-    printf("-- gc begin\n");
+    PRINTERR("-- gc begin\n");
     size_t before = vm.bytesAllocated;
 #endif
 
@@ -518,10 +518,10 @@ void collectGarbage() {
     vm.nextGC = vm.bytesAllocated * GC_HEAP_GROW_FACTOR;
 
 #ifdef DEBUG_LOG_GC
-    printf("-- gc end\n");
-    printf("   collected %zu bytes (from %zu to %zu) next at %zu\n",
-           before - vm.bytesAllocated, before, vm.bytesAllocated,
-           vm.nextGC);
+    PRINTERR("-- gc end\n");
+    PRINTERR("   collected %zu bytes (from %zu to %zu) next at %zu\n",
+             before - vm.bytesAllocated, before, vm.bytesAllocated,
+             vm.nextGC);
 #endif
 
     platform_mutex_leave(&vm.heap);

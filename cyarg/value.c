@@ -4,6 +4,7 @@
 #include "object.h"
 #include "memory.h"
 #include "value.h"
+#include "print.h"
 
 void initValueArray(ValueArray* array) {
     array->values = NULL;
@@ -34,27 +35,27 @@ void printValue(Value value) {
 void fprintValue(FILE* op, Value value) {
 #ifdef NAN_BOXING
     if (IS_BOOL(value)) {
-        fprintf(op, AS_BOOL(value) ? "true" : "false");
+        FPRINTMSG(op, AS_BOOL(value) ? "true" : "false");
     } else if (IS_NIL(value)) {
-        fprintf(op, "nil");
+        FPRINTMSG(op, "nil");
     } else if (IS_DOUBLE(value)) {
-        fprintf(op, "%#g", AS_DOUBLE(value));
+        FPRINTMSG(op, "%#g", AS_DOUBLE(value));
     } else if (IS_UINTEGER(value)) {
-        fprintf(op, "%u", AS_UINTEGER(value));
+        FPRINTMSG(op, "%u", AS_UINTEGER(value));
     } else if (IS_INTEGER(value)) {
-        fprintf(op, "%d", AS_INTEGER(value));
+        FPRINTMSG(op, "%d", AS_INTEGER(value));
     } else if (IS_OBJ(value)) {
         fprintObject(op, value);
     }
 #else
     switch (value.type) {
         case VAL_BOOL:
-            fprintf(op, AS_BOOL(value) ? "true" : "false");
+            FPRINTMSG(op, AS_BOOL(value) ? "true" : "false");
             break;
-        case VAL_NIL: fprintf(op, "nil"); break;
-        case VAL_DOUBLE: fprintf(op, "%#g", AS_DOUBLE(value)); break;
-        case VAL_UINTEGER: fprintf(op, "%u", AS_UINTEGER(value)); break;
-        case VAL_INTEGER: fprintf(op, "%d", AS_INTEGER(value)); break;
+        case VAL_NIL: FPRINTMSG(op, "nil"); break;
+        case VAL_DOUBLE: FPRINTMSG(op, "%#g", AS_DOUBLE(value)); break;
+        case VAL_UINTEGER: FPRINTMSG(op, "%u", AS_UINTEGER(value)); break;
+        case VAL_INTEGER: FPRINTMSG(op, "%d", AS_INTEGER(value)); break;
         case VAL_OBJ: fprintObject(op, value); break;
     }
 #endif
