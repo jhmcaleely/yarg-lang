@@ -14,6 +14,8 @@
 
 Obj* allocateObject(size_t size, ObjType type) {
     Obj* object = (Obj*)reallocate(NULL, 0, size);
+    memset(object, 0, size);
+
     object->type = type;
     object->isMarked = false;
 
