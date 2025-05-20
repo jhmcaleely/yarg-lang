@@ -2,6 +2,7 @@
 #define cyarg_value_h
 
 #include <string.h>
+#include <stdio.h>
 
 #include "common.h"
 
@@ -148,7 +149,9 @@ bool valuesEqual(Value a, Value b);
 void initValueArray(ValueArray* array);
 void appendToValueArray(ValueArray* array, Value value);
 void freeValueArray(ValueArray* array);
+
 void printValue(Value value);
+void fprintValue(FILE* op, Value value);
 
 bool is_positive_integer(Value a);
 uint32_t as_positive_integer(Value a);

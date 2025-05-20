@@ -54,7 +54,34 @@ typedef enum {
     OBJ_UPVALUE,
     OBJ_VALARRAY,
     OBJ_UNIFORMARRAY,
-    OBJ_YARGTYPE
+    OBJ_YARGTYPE,
+    OBJ_FUNDECLARATION,
+    OBJ_ARGUMENTS,
+    OBJ_BLOCK,
+    OBJ_STMT_EXPRESSION,
+    OBJ_STMT_PRINT,
+    OBJ_STMT_VARDECLARATION,
+    OBJ_STMT_BLOCK,
+    OBJ_STMT_IF,
+    OBJ_STMT_FUNDECLARATION,
+    OBJ_STMT_WHILE,
+    OBJ_STMT_RETURN,
+    OBJ_STMT_YIELD,
+    OBJ_STMT_FOR,
+    OBJ_STMT_CLASSDECLARATION,
+    OBJ_EXPR_NUMBER,
+    OBJ_EXPR_OPERATION,
+    OBJ_EXPR_GROUPING,
+    OBJ_EXPR_NAMEDVARIABLE,
+    OBJ_EXPR_LITERAL,
+    OBJ_EXPR_STRING,
+    OBJ_EXPR_CALL,
+    OBJ_EXPR_ARRAYINIT,
+    OBJ_EXPR_ARRAYELEMENT,
+    OBJ_EXPR_BUILTIN,
+    OBJ_EXPR_DOT,
+    OBJ_EXPR_SUPER,
+    OBJ_EXPR_TYPE
 } ObjType;
 
 struct Obj {
@@ -160,7 +187,9 @@ ObjUniformArray* newUniformArray(ObjYargType* element_type, size_t capacity);
 ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);
 ObjUpvalue* newUpvalue(Value* slot);
+
 void printObject(Value value);
+void fprintObject(FILE* op, Value value);
 
 static inline bool isObjType(Value value, ObjType type) {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;

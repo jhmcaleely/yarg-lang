@@ -237,7 +237,6 @@ static TokenType identifierType() {
                     case 'e': 
                         if (scanner.current - scanner.start > 2) {
                             switch (scanner.start[2]) {
-                                case 't': return checkKeyword(3, 8, "_element", TOKEN_SET_ELEMENT);
                                 case 'n': return checkKeyword(3, 1, "d", TOKEN_SEND);
                             }
                         }

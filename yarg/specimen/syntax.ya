@@ -1,5 +1,16 @@
-// scratch file for syntax experiments
-var test = make_array(muint32, 2);
-print test[0];
-test[0] = 0d3;
-print test[0];
+class Base {
+  foo() {
+    print "Base.foo()";
+  }
+}
+
+class Derived < Base {
+  bar() {
+    print "Derived.bar()";
+    super.foo();
+  }
+}
+
+Derived().bar();
+// expect: Derived.bar()
+// expect: Base.foo()

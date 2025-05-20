@@ -5,9 +5,10 @@
 #include "memory.h"
 #include "vm.h"
 #include "yargtype.h"
+#include "ast.h"
+#include "print.h"
 
 #ifdef DEBUG_LOG_GC
-#include <stdio.h>
 #include "debug.h"
 #endif
 
@@ -32,7 +33,7 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
 
     void* result = realloc(pointer, newSize);
     if (result == NULL) {
-        printf("help! no memory.");
+        PRINTERR("help! no memory.");
         exit(1);
     }
     return result;
@@ -42,7 +43,7 @@ void tempRootPush(Value value) {
     *vm.tempRootsTop = value;
     vm.tempRootsTop++;
 
-    if (vm.tempRootsTop - &vm.tempRoots[0] > TEMP_ROOTS_MAX) {
+    if (vm.tempRootsTop - &vm.tempRoots[0] >= TEMP_ROOTS_MAX) {
         fatalVMError("Allocation Stash Max Exeeded.");
     }
 }
@@ -57,9 +58,9 @@ void markObject(Obj* object) {
     if (object->isMarked) return;
 
 #ifdef DEBUG_LOG_GC
-    printf("%p mark ", (void*)object);
+    PRINTERR("%p mark ", (void*)object);
     printValue(OBJ_VAL(object));
-    printf("\n");
+    PRINTERR("\n");
 #endif
 
     object->isMarked = true;
@@ -84,11 +85,15 @@ static void markArray(ValueArray* array) {
     }
 }
 
+static void markExpr(Obj* expr) {
+    markObject((Obj*)((ObjExpr*)expr)->nextExpr);
+}
+
 static void blackenObject(Obj* object) {
 #ifdef DEBUG_LOG_GC
-    printf("%p blacken ", (void*)object);
+    PRINTERR("%p blacken ", (void*)object);
     printValue(OBJ_VAL(object));
-    printf("\n");
+    PRINTERR("\n");
 #endif
 
     switch (object->type) {
@@ -157,6 +162,178 @@ static void blackenObject(Obj* object) {
             }
             break;
         }
+        case OBJ_FUNDECLARATION: {
+            ObjFunctionDeclaration* fun = (ObjFunctionDeclaration*)object;
+            markObject((Obj*)fun->body);
+            for (int i = 0; i < fun->arity; i++) {
+                markObject((Obj*)fun->params[i]);
+            }
+            break;
+        }
+        case OBJ_ARGUMENTS: {
+            ObjArguments* args = (ObjArguments*)object;
+            for (int i = 0; i < args->count; i++) {
+                markObject((Obj*)args->arguments[i]);
+            }
+            break;
+        }
+        case OBJ_BLOCK: {
+            ObjBlock* block = (ObjBlock*)object;
+            markObject((Obj*)block->stmts);
+            break;
+        }
+        case OBJ_STMT_EXPRESSION: {
+            ObjStmtExpression* stmt = (ObjStmtExpression*)object;
+            markObject((Obj*)stmt->stmt.nextStmt);
+            markObject((Obj*)stmt->expression);
+            break;
+        }
+        case OBJ_STMT_PRINT: {
+            ObjStmtPrint* stmt = (ObjStmtPrint*)object;
+            markObject((Obj*)stmt->stmt.nextStmt);
+            markObject((Obj*)stmt->expression);
+            break;
+        }
+        case OBJ_STMT_VARDECLARATION: {
+            ObjStmtVarDeclaration* stmt = (ObjStmtVarDeclaration*)object;
+            markObject((Obj*)stmt->stmt.nextStmt);
+            markObject((Obj*)stmt->name);
+            markObject((Obj*)stmt->initialiser);
+            break;
+        }
+        case OBJ_STMT_BLOCK: {
+            ObjStmtBlock* block = (ObjStmtBlock*)object;
+            markObject((Obj*)block->stmt.nextStmt);
+            markObject((Obj*)block->statements);
+            break;
+        }
+        case OBJ_STMT_IF: {
+            ObjStmtIf* ctrl = (ObjStmtIf*)object;
+            markObject((Obj*)ctrl->stmt.nextStmt);
+            markObject((Obj*)ctrl->test);
+            markObject((Obj*)ctrl->ifStmt);
+            markObject((Obj*)ctrl->elseStmt);
+            break;
+        }
+        case OBJ_STMT_FUNDECLARATION: {
+            ObjStmtFunDeclaration* fun = (ObjStmtFunDeclaration*)object;
+            markObject((Obj*)fun->stmt.nextStmt);
+            markObject((Obj*)fun->name);
+            markObject((Obj*)fun->function);
+            break;
+        }
+        case OBJ_STMT_WHILE: {
+            ObjStmtWhile* loop = (ObjStmtWhile*)object;
+            markObject((Obj*)loop->stmt.nextStmt);
+            markObject((Obj*)loop->test);
+            markObject((Obj*)loop->loop);
+            break;
+        }
+        case OBJ_STMT_YIELD:
+            // fall through
+        case OBJ_STMT_RETURN: {
+            ObjStmtReturnOrYield* stmt = (ObjStmtReturnOrYield*)object;
+            markObject((Obj*)stmt->stmt.nextStmt);
+            markObject((Obj*)stmt->value);
+            break;
+        }
+        case OBJ_STMT_FOR: {
+            ObjStmtFor* loop = (ObjStmtFor*)object;
+            markObject((Obj*)loop->stmt.nextStmt);
+            markObject((Obj*)loop->condition);
+            markObject((Obj*)loop->initializer);
+            markObject((Obj*)loop->loopExpression);
+            markObject((Obj*)loop->body);
+            break;
+        }
+        case OBJ_STMT_CLASSDECLARATION: {
+            ObjStmtClassDeclaration* decl = (ObjStmtClassDeclaration*)object;
+            markObject((Obj*)decl->stmt.nextStmt);
+            markObject((Obj*)decl->name);
+            markObject((Obj*)decl->superclass);
+            for (int i = 0; i < decl->methodCount; i++) {
+                markObject(decl->methods[i]);
+            }
+            break;
+        }
+        case OBJ_EXPR_NUMBER: {
+            ObjExprNumber* expr = (ObjExprNumber*)object;
+            markObject((Obj*)expr->expr.nextExpr);
+            break;
+        }       
+        case OBJ_EXPR_OPERATION: {
+            ObjExprOperation* expr = (ObjExprOperation*)object;
+            markObject((Obj*)expr->expr.nextExpr);
+            markObject((Obj*)expr->rhs);
+            break;
+
+        }
+        case OBJ_EXPR_GROUPING: {
+            ObjExprGrouping* expr = (ObjExprGrouping*)object;
+            markObject((Obj*)expr->expr.nextExpr);
+            markObject((Obj*)expr->expression);
+            break;
+        }
+        case OBJ_EXPR_NAMEDVARIABLE: {
+            ObjExprNamedVariable* var = (ObjExprNamedVariable*)object;
+            markObject((Obj*)var->expr.nextExpr);
+            markObject((Obj*)var->assignment);
+            markObject((Obj*)var->name);
+            break;
+        }
+        case OBJ_EXPR_LITERAL: {
+            ObjExprLiteral* lit = (ObjExprLiteral*)object;
+            markObject((Obj*)lit->expr.nextExpr);
+            break;
+        }
+        case OBJ_EXPR_STRING: {
+            ObjExprString* str = (ObjExprString*)object;
+            markObject((Obj*)str->expr.nextExpr);
+            markObject((Obj*)str->string);
+            break;
+        }
+        case OBJ_EXPR_CALL: {
+            markExpr(object);
+            ObjExprCall* call = (ObjExprCall*)object;
+            markObject((Obj*)call->args);
+            break;
+        }
+        case OBJ_EXPR_ARRAYINIT: {
+            markExpr(object);
+            ObjExprArrayInit* array = (ObjExprArrayInit*)object;
+            markObject((Obj*)array->args);
+            break;
+        }
+        case OBJ_EXPR_ARRAYELEMENT: {
+            markExpr(object);
+            ObjExprArrayElement* array = (ObjExprArrayElement*)object;
+            markObject((Obj*)array->element);
+            markObject((Obj*)array->assignment);
+            break;
+        }
+        case OBJ_EXPR_BUILTIN: {
+            markExpr(object);
+            break;
+        }
+        case OBJ_EXPR_DOT: {
+            markExpr(object);
+            ObjExprDot* expr = (ObjExprDot*)object;
+            markObject((Obj*)expr->name);
+            markObject((Obj*)expr->assignment);
+            markObject((Obj*)expr->callArgs);
+            break;
+        }
+        case OBJ_EXPR_SUPER: {
+            markExpr(object);
+            ObjExprSuper* expr = (ObjExprSuper*)object;
+            markObject((Obj*)expr->name);
+            markObject((Obj*)expr->callArgs);
+            break;
+        }
+        case OBJ_EXPR_TYPE: {
+            markExpr(object);
+            break;
+        }
         case OBJ_NATIVE:
         case OBJ_BLOB:
         case OBJ_CHANNEL:
@@ -167,7 +344,7 @@ static void blackenObject(Obj* object) {
 
 static void freeObject(Obj* object) {
 #ifdef DEBUG_LOG_GC
-    printf("%p free type %d\n", (void*)object, object->type);
+    PRINTERR("%p free type %d\n", (void*)object, object->type);
 #endif
 
     switch (object->type) {
@@ -239,6 +416,43 @@ static void freeObject(Obj* object) {
             FREE(ObjYargType, object);
             break;
         }
+        case OBJ_FUNDECLARATION: FREE(ObjFunctionDeclaration, object); break;
+        case OBJ_BLOCK: FREE(ObjBlock, object); break;
+        case OBJ_STMT_EXPRESSION: FREE(ObjStmtExpression, object); break;
+        case OBJ_STMT_PRINT: FREE(ObjStmtPrint, object); break;
+        case OBJ_STMT_VARDECLARATION: FREE(ObjStmtVarDeclaration, object); break;
+        case OBJ_STMT_BLOCK: FREE(ObjStmtBlock, object); break;
+        case OBJ_STMT_IF: FREE(ObjStmtIf, object); break;
+        case OBJ_STMT_FUNDECLARATION: FREE(ObjStmtFunDeclaration, object); break;
+        case OBJ_STMT_WHILE: FREE(ObjStmtWhile, object); break;
+        case OBJ_STMT_YIELD: FREE(ObjStmtReturnOrYield, object); break;
+        case OBJ_STMT_RETURN: FREE(ObjStmtReturnOrYield, object); break;
+        case OBJ_STMT_FOR: FREE(ObjStmtFor, object); break;
+        case OBJ_STMT_CLASSDECLARATION: {
+            ObjStmtClassDeclaration* decl = (ObjStmtClassDeclaration*)object;
+            FREE_ARRAY(Obj*, decl->methods, decl->methodCapacity);
+            FREE(ObjStmtClassDeclaration, object);
+            break;
+        }
+        case OBJ_EXPR_NUMBER: FREE(ObjExprNumber, object); break;
+        case OBJ_EXPR_OPERATION: FREE(ObjExprOperation, object); break;
+        case OBJ_EXPR_GROUPING: FREE(ObjExprGrouping, object); break;
+        case OBJ_EXPR_NAMEDVARIABLE: FREE(ObjExprNamedVariable, object); break;
+        case OBJ_EXPR_LITERAL: FREE(ObjExprLiteral, object); break;
+        case OBJ_EXPR_STRING: FREE(ObjExprString, object); break;
+        case OBJ_ARGUMENTS: {
+            ObjArguments* args = (ObjArguments*)object;
+            FREE_ARRAY(Obj*, args->arguments, args->capacity);
+            FREE(ObjArguments, object);
+            break;
+        }
+        case OBJ_EXPR_CALL: FREE(ObjExprCall, object); break;
+        case OBJ_EXPR_ARRAYINIT: FREE(ObjExprArrayInit, object); break;
+        case OBJ_EXPR_ARRAYELEMENT: FREE(ObjExprArrayElement, object); break;
+        case OBJ_EXPR_BUILTIN: FREE(ObjExprBuiltin, object); break;
+        case OBJ_EXPR_DOT: FREE(ObjExprDot, object); break;
+        case OBJ_EXPR_SUPER: FREE(OBJ_EXPR_SUPER, object); break;
+        case OBJ_EXPR_TYPE: FREE(ObjExprType, object); break;
     }
 }
 
@@ -292,7 +506,7 @@ void collectGarbage() {
     platform_mutex_enter(&vm.heap);
 
 #ifdef DEBUG_LOG_GC
-    printf("-- gc begin\n");
+    PRINTERR("-- gc begin\n");
     size_t before = vm.bytesAllocated;
 #endif
 
@@ -304,10 +518,10 @@ void collectGarbage() {
     vm.nextGC = vm.bytesAllocated * GC_HEAP_GROW_FACTOR;
 
 #ifdef DEBUG_LOG_GC
-    printf("-- gc end\n");
-    printf("   collected %zu bytes (from %zu to %zu) next at %zu\n",
-           before - vm.bytesAllocated, before, vm.bytesAllocated,
-           vm.nextGC);
+    PRINTERR("-- gc end\n");
+    PRINTERR("   collected %zu bytes (from %zu to %zu) next at %zu\n",
+             before - vm.bytesAllocated, before, vm.bytesAllocated,
+             vm.nextGC);
 #endif
 
     platform_mutex_leave(&vm.heap);
