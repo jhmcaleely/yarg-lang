@@ -1,6 +1,13 @@
 # yarg-lang
 
-Yarg is an experimental dynamic language for microcontrollers.
+Yarg-Lang is a project to experiment with a dynamic language targetting microcontrollers.
+
+## Aims
+
+  - A dynamic environment for on-device prototyping
+  - Tooling to deploy working prototypes
+  - Sufficient static typing to reasonably add device specific code without writing C
+  - Interop with C libraries available on device
 
 Not (yet) intended for use. Additional documentation on the [wiki][wiki]
 
