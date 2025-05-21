@@ -20,6 +20,8 @@ Not (yet) intended for use. Additional documentation on the [wiki][wiki]
 | `tools/` | Miscellaneous tools |
 | `vscode-yarg/` | A VS Code Language Extension for Yarg |
 | `yarg/specimen/` | Samples of Yarg |
+| `yarg/specimen/conway-life-display` | A Yarg implemention of: [jhmcaleely/conway-life-display](https://github.com/jhmcaleely/conway-life-display) |
+| `yarg/specimen/todo` | Things that don't work yet |
 | `yarg/test/` | A Test Suite |
 
 ## Name
