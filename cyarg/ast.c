@@ -4,19 +4,9 @@
 #include "ast.h"
 #include "memory.h"
 
-ObjStmtExpression* newStmtExpression(ObjExpr* expr, int line) {
-    ObjStmtExpression* stmt = ALLOCATE_OBJ(ObjStmtExpression, OBJ_STMT_EXPRESSION);
+ObjStmtExpression* newStmtExpression(ObjExpr* expr, ObjType type, int line) {
+    ObjStmtExpression* stmt = ALLOCATE_OBJ(ObjStmtExpression, type);
     stmt->stmt.line = line;
-    stmt->stmt.nextStmt = NULL;
-    stmt->expression = expr;
-
-    return stmt;
-}
-
-ObjStmtPrint* newStmtPrint(ObjExpr* expr, int line) {
-    ObjStmtPrint* stmt = ALLOCATE_OBJ(ObjStmtPrint, OBJ_STMT_PRINT);
-    stmt->stmt.line = line;
-    stmt->stmt.nextStmt = NULL;
     stmt->expression = expr;
 
     return stmt;
@@ -508,20 +498,28 @@ void printStmtYield(ObjStmtReturnOrYield* stmt) {
     printf(";\n");
 }
 
+void printStmtExpression(ObjStmtExpression* stmt) {
+    switch (stmt->stmt.obj.type) {
+        case OBJ_STMT_PRINT:
+            printf("print ");
+            break;
+        case OBJ_STMT_EXPRESSION:
+        default:
+            break;
+    }
+    printExpr(stmt->expression);
+    printf(";\n");
+}
+
 void printStmts(ObjStmt* stmts) {
     ObjStmt* cursor = stmts;
     while (cursor) {
         switch (cursor->obj.type) {
-            case OBJ_STMT_EXPRESSION:
-                printf("(");
-                printExpr(((ObjStmtExpression*)cursor)->expression);
-                printf(");\n");
-                break;
             case OBJ_STMT_PRINT:
-                printf("print ");
-                printExpr(((ObjStmtPrint*)cursor)->expression);
-                printf(";\n");
+            case OBJ_STMT_EXPRESSION: {
+                printStmtExpression((ObjStmtExpression*)cursor);
                 break;
+            }
             case OBJ_STMT_VARDECLARATION: {
                 ObjStmtVarDeclaration* decl = (ObjStmtVarDeclaration*)cursor;
                 printf("var ");

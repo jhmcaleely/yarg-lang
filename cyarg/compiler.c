@@ -860,7 +860,7 @@ static void generateStmt(ObjStmt* stmt) {
             emitByte(OP_POP);
             break;
         case OBJ_STMT_PRINT:
-            generateExpr(((ObjStmtPrint*)stmt)->expression);
+            generateExpr(((ObjStmtExpression*)stmt)->expression);
             emitByte(OP_PRINT);
             break;
         case OBJ_STMT_VARDECLARATION:

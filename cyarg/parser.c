@@ -527,11 +527,11 @@ static ObjExpr* expression() {
     return parsePrecedence(PREC_ASSIGNMENT);
 }
 
-static ObjStmtPrint* printStatement() {
+static ObjStmtExpression* printStatement() {
     ObjExpr* expr = expression();
     tempRootPush(OBJ_VAL(expr));
     consume(TOKEN_SEMICOLON, "Expect ';' after value.");
-    ObjStmtPrint* print = newStmtPrint(expr, parser.previous.line);
+    ObjStmtExpression* print = newStmtExpression(expr, OBJ_STMT_PRINT, parser.previous.line);
     tempRootPop();
     return print;
 }
@@ -540,7 +540,7 @@ static ObjStmtExpression* expressionStatement() {
     ObjExpr* expr = expression();
     tempRootPush(OBJ_VAL(expr));
     consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
-    ObjStmtExpression* expressionStatement = newStmtExpression(expr, parser.previous.line);
+    ObjStmtExpression* expressionStatement = newStmtExpression(expr, OBJ_STMT_EXPRESSION, parser.previous.line);
     tempRootPop();
     return expressionStatement;
 }

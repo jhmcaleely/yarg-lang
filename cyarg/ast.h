@@ -114,11 +114,6 @@ typedef struct  {
 
 typedef struct {
     ObjStmt stmt;
-    ObjExpr* expression;
-} ObjStmtPrint;
-
-typedef struct {
-    ObjStmt stmt;
     ObjString* name;
     ObjExpr* initialiser;
 } ObjStmtVarDeclaration;
@@ -273,8 +268,7 @@ ObjExprType* newExprType(ExprTypeType type);
 void appendObjArgument(ObjArguments* args, ObjExpr* expr);
 void appendMethod(ObjStmtClassDeclaration* class_, ObjStmtFunDeclaration* method);
 
-ObjStmtExpression* newStmtExpression(ObjExpr* expr, int line);
-ObjStmtPrint* newStmtPrint(ObjExpr* expr, int line);
+ObjStmtExpression* newStmtExpression(ObjExpr* expr, ObjType statement, int line);
 ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr* expr, int line);
 ObjStmtBlock* newStmtBlock(int line);
 ObjStmtIf* newStmtIf(int line);
