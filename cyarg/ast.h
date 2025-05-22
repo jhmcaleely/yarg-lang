@@ -114,11 +114,6 @@ typedef struct  {
 
 typedef struct {
     ObjStmt stmt;
-    ObjExpr* expression;
-} ObjStmtPrint;
-
-typedef struct {
-    ObjStmt stmt;
     ObjString* name;
     ObjExpr* initialiser;
 } ObjStmtVarDeclaration;
@@ -158,11 +153,6 @@ typedef struct {
     ObjExpr* test;
     ObjStmt* loop;
 } ObjStmtWhile;
-
-typedef struct {
-    ObjStmt stmt;
-    ObjExpr* value;
-} ObjStmtReturnOrYield;
 
 typedef struct {
     ObjStmt stmt;
@@ -273,16 +263,14 @@ ObjExprType* newExprType(ExprTypeType type);
 void appendObjArgument(ObjArguments* args, ObjExpr* expr);
 void appendMethod(ObjStmtClassDeclaration* class_, ObjStmtFunDeclaration* method);
 
-ObjStmtExpression* newStmtExpression(ObjExpr* expr);
-ObjStmtPrint* newStmtPrint(ObjExpr* expr);
-ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr* expr);
-ObjStmtBlock* newStmtBlock();
-ObjStmtIf* newStmtIf();
-ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength);
-ObjStmtWhile* newStmtWhile();
-ObjStmtReturnOrYield* newStmtReturnOrYield(bool ret);
-ObjStmtFor* newStmtFor();
-ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength);
+ObjStmtExpression* newStmtExpression(ObjExpr* expr, ObjType statement, int line);
+ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr* expr, int line);
+ObjStmtBlock* newStmtBlock(int line);
+ObjStmtIf* newStmtIf(int line);
+ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength, int line);
+ObjStmtWhile* newStmtWhile(int line);
+ObjStmtFor* newStmtFor(int line);
+ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength, int line);
 
 ObjFunctionDeclaration* newObjFunctionDeclaration();
 ObjBlock* newObjBlock();

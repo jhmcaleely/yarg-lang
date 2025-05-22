@@ -28,6 +28,40 @@ Obj* allocateObject(size_t size, ObjType type) {
     return object;
 }
 
+void initDynamicObjArray(DynamicObjArray* array) {
+    array->objects = NULL;
+    array->stash = NULL;
+    array->objectCapacity = 0;
+    array->objectCount = 0;
+}
+
+void freeDynamicObjArray(DynamicObjArray* array) {
+    FREE_ARRAY(Obj*, array->objects, array->objectCapacity);
+    initDynamicObjArray(array);
+}
+
+void appendToDynamicObjArray(DynamicObjArray* array, Obj* obj) {
+    array->stash = obj;
+    if (array->objectCapacity < array->objectCount + 1) {
+        int oldCapacity = array->objectCapacity;
+        array->objectCapacity = GROW_CAPACITY(oldCapacity);
+        array->objects = GROW_ARRAY(Obj*, array->objects, oldCapacity, array->objectCapacity);
+    }
+    array->objects[array->objectCount] = obj;
+    array->objectCount++;
+    array->stash = NULL;
+}
+
+Obj* removeLastFromDynamicObjArray(DynamicObjArray* array) {
+    Obj* end = NULL;
+    if (array->objectCount > 1) {
+        end = array->objects[array->objectCount - 1];
+        array->objectCount--;
+    }
+    return end;
+}
+
+
 ObjBoundMethod* newBoundMethod(Value reciever, ObjClosure* method) {
     ObjBoundMethod* bound = ALLOCATE_OBJ(ObjBoundMethod,
                                          OBJ_BOUND_METHOD);

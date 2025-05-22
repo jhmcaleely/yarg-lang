@@ -720,36 +720,36 @@ static void generateStmtWhile(ObjStmtWhile* loop) {
     emitByte(OP_POP);
 }
 
-static void generateStmtYield(ObjStmtReturnOrYield* stmt) {
+static void generateStmtYield(ObjStmtExpression* stmt) {
     if (current->type == TYPE_SCRIPT) {
         errorAt("yield", "Can't yield from top-level code.");
     }
 
-    if (!stmt->value) {
+    if (!stmt->expression) {
         emitBytes(OP_NIL, OP_YIELD);
     } else {
         if (current->type == TYPE_INITIALIZER) {
             errorAt("yield", "Can't yield a value from an initializer.");
         }
 
-        generateExpr(stmt->value);
+        generateExpr(stmt->expression);
         emitByte(OP_YIELD);
     }
 }
 
-static void generateStmtReturn(ObjStmtReturnOrYield* stmt) {
+static void generateStmtReturn(ObjStmtExpression* stmt) {
     if (current->type == TYPE_SCRIPT) {
         errorAt("return", "Can't return from top-level code.");
     }
     
-    if (!stmt->value) {
+    if (!stmt->expression) {
         emitReturn();
     } else {
         if (current->type == TYPE_INITIALIZER) {
             errorAt("return", "Can't return a value from an initializer.");
         }
 
-        generateExpr(stmt->value);
+        generateExpr(stmt->expression);
         emitByte(OP_RETURN);
     }
 }
@@ -860,7 +860,7 @@ static void generateStmt(ObjStmt* stmt) {
             emitByte(OP_POP);
             break;
         case OBJ_STMT_PRINT:
-            generateExpr(((ObjStmtPrint*)stmt)->expression);
+            generateExpr(((ObjStmtExpression*)stmt)->expression);
             emitByte(OP_PRINT);
             break;
         case OBJ_STMT_VARDECLARATION:
@@ -879,10 +879,10 @@ static void generateStmt(ObjStmt* stmt) {
             generateStmtWhile((ObjStmtWhile*)stmt);
             break;
         case OBJ_STMT_YIELD:
-            generateStmtYield((ObjStmtReturnOrYield*)stmt);
+            generateStmtYield((ObjStmtExpression*)stmt);
             break;
         case OBJ_STMT_RETURN:
-            generateStmtReturn((ObjStmtReturnOrYield*)stmt);
+            generateStmtReturn((ObjStmtExpression*)stmt);
             break;
         case OBJ_STMT_FOR:
             generateStmtFor((ObjStmtFor*)stmt);
@@ -922,19 +922,27 @@ ObjFunction* compile(const char* source) {
     struct Compiler compiler;
     initCompiler(&compiler, TYPE_SCRIPT, NULL);
 
-    parse(&current->ast);
 #ifdef DEBUG_AST_PARSE
+    collectGarbage();
+    size_t bytesAllocated = vm.bytesAllocated;
+#endif
+
+    bool parseError = parse(&current->ast);
+
+#ifdef DEBUG_AST_PARSE
+    collectGarbage();
+    printf("Parse Tree (%zu net bytes)\n", vm.bytesAllocated - bytesAllocated);
     printStmts(current->ast);
 #endif
 
-    if (!parser.hadError) {
+    if (!parseError) {
 
         generate(current->ast);
     }
 
     ObjFunction* function = endCompiler();
 
-    bool compileError = parser.hadError || hadCompilerError;
+    bool compileError = parseError || hadCompilerError;
 
     return compileError ? NULL : function;
 }
@@ -945,6 +953,7 @@ void markCompilerRoots() {
         markObject((Obj*)compiler->function);
         markObject((Obj*)compiler->ast);
         markObject((Obj*)compiler->recent);
+        markParserRoots();
 
         for (int i = 0; i < compiler->localCount; i++) {
             markObject((Obj*)compiler->locals[i].name);

@@ -3,31 +3,20 @@
 
 #include "ast.h"
 #include "memory.h"
-#include "parser.h"
 
-ObjStmtExpression* newStmtExpression(ObjExpr* expr) {
-    ObjStmtExpression* stmt = ALLOCATE_OBJ(ObjStmtExpression, OBJ_STMT_EXPRESSION);
-    stmt->stmt.line = parser.previous.line;
-    stmt->stmt.nextStmt = NULL;
+ObjStmtExpression* newStmtExpression(ObjExpr* expr, ObjType type, int line) {
+    ObjStmtExpression* stmt = ALLOCATE_OBJ(ObjStmtExpression, type);
+    stmt->stmt.line = line;
     stmt->expression = expr;
 
     return stmt;
 }
 
-ObjStmtPrint* newStmtPrint(ObjExpr* expr) {
-    ObjStmtPrint* stmt = ALLOCATE_OBJ(ObjStmtPrint, OBJ_STMT_PRINT);
-    stmt->stmt.line = parser.previous.line;
-    stmt->stmt.nextStmt = NULL;
-    stmt->expression = expr;
-
-    return stmt;
-}
-
-ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr* expr) {
+ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr* expr, int line) {
     ObjStmtVarDeclaration* stmt = ALLOCATE_OBJ(ObjStmtVarDeclaration, OBJ_STMT_VARDECLARATION);
     tempRootPush(OBJ_VAL(stmt));
     stmt->stmt.nextStmt = NULL;
-    stmt->stmt.line = parser.previous.line;
+    stmt->stmt.line = line;
     stmt->name = copyString(name, nameLength);
     stmt->initialiser = expr;
     tempRootPop();
@@ -40,28 +29,28 @@ ObjBlock* newObjBlock() {
     return block;
 }
 
-ObjStmtBlock* newStmtBlock() {
+ObjStmtBlock* newStmtBlock(int line) {
     ObjStmtBlock* block = ALLOCATE_OBJ(ObjStmtBlock, OBJ_STMT_BLOCK);
     block->stmt.nextStmt = NULL;
-    block->stmt.line = parser.previous.line;
+    block->stmt.line = line;
     block->statements = NULL;
     return block;
 }
 
-ObjStmtIf* newStmtIf() {
+ObjStmtIf* newStmtIf(int line) {
     ObjStmtIf* ctrl = ALLOCATE_OBJ(ObjStmtIf, OBJ_STMT_IF);
     ctrl->stmt.nextStmt = NULL;
-    ctrl->stmt.line = parser.previous.line;
+    ctrl->stmt.line = line;
     ctrl->test = NULL;
     ctrl->ifStmt = NULL;
     ctrl->elseStmt = NULL;
     return ctrl;
 }
 
-ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength) {
+ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength, int line) {
     ObjStmtFunDeclaration* fun = ALLOCATE_OBJ(ObjStmtFunDeclaration, OBJ_STMT_FUNDECLARATION);
     fun->stmt.nextStmt = NULL;
-    fun->stmt.line = parser.previous.line;
+    fun->stmt.line = line;
     fun->name = NULL;
     fun->function = NULL;
     tempRootPush(OBJ_VAL(fun));
@@ -70,27 +59,19 @@ ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength) {
     return fun;
 }
 
-ObjStmtWhile* newStmtWhile() {
+ObjStmtWhile* newStmtWhile(int line) {
     ObjStmtWhile* loop = ALLOCATE_OBJ(ObjStmtWhile, OBJ_STMT_WHILE);
     loop->stmt.nextStmt = NULL;
-    loop->stmt.line = parser.previous.line;
+    loop->stmt.line = line;
     loop->test = NULL;
     loop->loop = NULL;
     return loop;
 }
 
-ObjStmtReturnOrYield* newStmtReturnOrYield(bool ret) {
-    ObjStmtReturnOrYield* stmt = ALLOCATE_OBJ(ObjStmtReturnOrYield, ret ? OBJ_STMT_RETURN : OBJ_STMT_YIELD);
-    stmt->stmt.nextStmt = NULL;
-    stmt->stmt.line = parser.previous.line;
-    stmt->value = NULL;
-    return stmt;
-}
-
-ObjStmtFor* newStmtFor() {
+ObjStmtFor* newStmtFor(int line) {
     ObjStmtFor* loop = ALLOCATE_OBJ(ObjStmtFor, OBJ_STMT_FOR);
     loop->stmt.nextStmt = NULL;
-    loop->stmt.line = parser.previous.line;
+    loop->stmt.line = line;
     loop->condition = NULL;
     loop->initializer = NULL;
     loop->loopExpression = NULL;
@@ -98,10 +79,10 @@ ObjStmtFor* newStmtFor() {
     return loop;
 }
 
-ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength) {
+ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength, int line) {
     ObjStmtClassDeclaration* decl = ALLOCATE_OBJ(ObjStmtClassDeclaration, OBJ_STMT_CLASSDECLARATION);
     decl->stmt.nextStmt = NULL;
-    decl->stmt.line = parser.previous.line;
+    decl->stmt.line = line;
     decl->name = NULL;
     decl->superclass = NULL;
     decl->methodCapacity = 0;
@@ -313,7 +294,9 @@ void printObjCallArgs(ObjArguments* args) {
     printf("(");
     for (int i = 0; i < args->count; i++) {
         printExpr((ObjExpr*)args->arguments[i]);
-        printf(", ");
+        if (i < args->count - 1) {
+            printf(", ");
+        }
     }
     printf(")");
 }
@@ -337,13 +320,29 @@ void printExprSuper(ObjExprSuper* expr) {
     }
 }
 
+void printExprBuiltin(ObjExprBuiltin* fn) {
+    switch (fn->builtin) {
+        case EXPR_BUILTIN_RPOKE: printf("rpoke"); break;
+        case EXPR_BUILTIN_IMPORT: printf("import"); break;
+        case EXPR_BUILTIN_MAKE_ARRAY: printf("make_array"); break;
+        case EXPR_BUILTIN_MAKE_ROUTINE: printf("make_routine"); break;
+        case EXPR_BUILTIN_MAKE_CHANNEL: printf("make_channel"); break;
+        case EXPR_BUILTIN_RESUME: printf("resume"); break;
+        case EXPR_BUILTIN_START: printf("start"); break;
+        case EXPR_BUILTIN_RECEIVE: printf("receive"); break;
+        case EXPR_BUILTIN_SEND: printf("send"); break;
+        case EXPR_BUILTIN_PEEK: printf("peek"); break;
+        case EXPR_BUILTIN_SHARE: printf("share"); break;
+        case EXPR_BUILTIN_RPEEK: printf("rpeek"); break;
+        case EXPR_BUILTIN_LEN: printf("len"); break;
+    }
+}
+
 void printExpr(ObjExpr* expr) {
     ObjExpr* cursor = expr;
     while (cursor) {
         switch (cursor->obj.type) {
-            case OBJ_EXPR_OPERATION:
-                printExprOperation((ObjExprOperation*)cursor);
-                break;
+            case OBJ_EXPR_OPERATION: printExprOperation((ObjExprOperation*)cursor); break;
             case OBJ_EXPR_GROUPING: {
                 ObjExprGrouping* expr = (ObjExprGrouping*)cursor;
                 printf("(");
@@ -361,7 +360,7 @@ void printExpr(ObjExpr* expr) {
                         printf("%d", num->val.integer);
                         break;
                     case NUMBER_UINTEGER32:
-                        printf("u%d", num->val.uinteger32);
+                        printf("u%u", num->val.uinteger32);
                         break;
                 }
                 break;
@@ -417,21 +416,10 @@ void printExpr(ObjExpr* expr) {
                 }
                 break;
             }
-            case OBJ_EXPR_BUILTIN: {
-                ObjExprBuiltin* fn = (ObjExprBuiltin*)cursor;
-                printf("%d:%d", fn->builtin, fn->arity);
-                break;
-            }
-            case OBJ_EXPR_DOT: {
-                printExprDot((ObjExprDot*)cursor);
-                break;
-            }
-            case OBJ_EXPR_SUPER: {
-                printExprSuper((ObjExprSuper*)cursor);
-                break;
-            }
-            default:
-                printf("<unknown>");
+            case OBJ_EXPR_BUILTIN: printExprBuiltin((ObjExprBuiltin*)cursor); break;
+            case OBJ_EXPR_DOT: printExprDot((ObjExprDot*)cursor); break;
+            case OBJ_EXPR_SUPER: printExprSuper((ObjExprSuper*)cursor); break;
+            default: printf("<unknown>"); break;
         }
         cursor = cursor->nextExpr;
     }
@@ -454,10 +442,13 @@ void printFunDeclaration(ObjStmtFunDeclaration* decl) {
     printf("(");
     for (int i = 0; i < decl->function->arity; i++) {
         printExpr(decl->function->params[i]);
-        printf(", ");
+        if (i < decl->function->arity - 1) {
+            printf(", ");
+        }
     }
-    printf(")\n");
+    printf(")\n{\n");
     printStmts(decl->function->body->stmts);
+    printf("}");
 }
 
 void printStmtWhile(ObjStmtWhile* loop) {
@@ -487,99 +478,57 @@ void printStmtClassDeclaration(ObjStmtClassDeclaration* class_) {
     printf("\n{\n");
     for (int i = 0; i < class_->methodCount; i++) {
         printFunDeclaration((ObjStmtFunDeclaration*)class_->methods[i]);
+        printf("\n");
     }
+    printf("}");
+}
+
+void printStmtExpression(ObjStmtExpression* stmt) {
+    switch (stmt->stmt.obj.type) {
+        case OBJ_STMT_RETURN: printf("return "); break;
+        case OBJ_STMT_YIELD: printf("yield "); break;
+        case OBJ_STMT_PRINT: printf("print "); break;
+        case OBJ_STMT_EXPRESSION: break;
+        default: break;
+    }
+    printExpr(stmt->expression);
+    printf(";");
+}
+
+void printStmtVarDeclaration(ObjStmtVarDeclaration* decl) {
+    printf("var ");
+    printObject(OBJ_VAL(decl->name));
+    if (decl->initialiser) {
+        printf(" = ");
+        printExpr(decl->initialiser);
+    }
+    printf(";");
+}
+
+void printStmtBlock(ObjStmtBlock* block) {
+    printf("{\n");
+    printStmts(block->statements->stmts);
     printf("}\n");
-}
-
-void printStmtReturn(ObjStmtReturnOrYield* stmt) {
-    printf("return");
-    if (stmt->value) {
-        printf(" ");
-        printExpr(stmt->value);
-    }
-    printf(";\n");
-}
-
-void printStmtYield(ObjStmtReturnOrYield* stmt) {
-    printf("yield");
-    if (stmt->value) {
-        printf(" ");
-        printExpr(stmt->value);
-    }
-    printf(";\n");
 }
 
 void printStmts(ObjStmt* stmts) {
     ObjStmt* cursor = stmts;
     while (cursor) {
         switch (cursor->obj.type) {
-            case OBJ_STMT_EXPRESSION:
-                printf("(");
-                printExpr(((ObjStmtExpression*)cursor)->expression);
-                printf(");\n");
-                break;
+            case OBJ_STMT_RETURN: // fall through
+            case OBJ_STMT_YIELD:
             case OBJ_STMT_PRINT:
-                printf("print ");
-                printExpr(((ObjStmtPrint*)cursor)->expression);
-                printf(";\n");
-                break;
-            case OBJ_STMT_VARDECLARATION: {
-                ObjStmtVarDeclaration* decl = (ObjStmtVarDeclaration*)cursor;
-                printf("var ");
-                printObject(OBJ_VAL(decl->name));
-                if (decl->initialiser) {
-                    printf(" = ");
-                    printExpr(decl->initialiser);
-                }
-                printf(";\n");
-                break;
-            }
-            case OBJ_STMT_BLOCK: {
-                ObjStmtBlock* block = (ObjStmtBlock*)cursor;
-                printf("{\n");
-                printStmts(block->statements->stmts);
-                printf("}\n");
-                break;
-            }
-            case OBJ_STMT_IF: {
-                ObjStmtIf* ctrl = (ObjStmtIf*)cursor;
-                printStmtIf(ctrl);
-                break;
-            }
-            case OBJ_STMT_FUNDECLARATION: {
-                ObjStmtFunDeclaration* decl = (ObjStmtFunDeclaration*)cursor;
-                printFunDeclaration(decl);
-                break;
-            }
-            case OBJ_STMT_WHILE: {
-                ObjStmtWhile* loop = (ObjStmtWhile*)cursor;
-                printStmtWhile(loop);
-                break;
-            }
-            case OBJ_STMT_FOR: {
-                ObjStmtFor* loop = (ObjStmtFor*)cursor;
-                printStmtFor(loop);
-                break;
-            }
-            case OBJ_STMT_CLASSDECLARATION: {
-                ObjStmtClassDeclaration* class_ = (ObjStmtClassDeclaration*)cursor;
-                printStmtClassDeclaration(class_);
-                break;
-            }
-            case OBJ_STMT_RETURN: {
-                ObjStmtReturnOrYield* stmt = (ObjStmtReturnOrYield*)cursor;
-                printStmtReturn(stmt);
-                break;
-            }
-            case OBJ_STMT_YIELD: {
-                ObjStmtReturnOrYield* stmt = (ObjStmtReturnOrYield*)cursor;
-                printStmtYield(stmt);
-                break;
-            }
-            default:
-                printf("Unknown stmt;\n");
-                break;
+            case OBJ_STMT_EXPRESSION: printStmtExpression((ObjStmtExpression*)cursor); break;
+            case OBJ_STMT_VARDECLARATION: printStmtVarDeclaration((ObjStmtVarDeclaration*)cursor); break;
+            case OBJ_STMT_BLOCK: printStmtBlock((ObjStmtBlock*)cursor); break;
+            case OBJ_STMT_IF: printStmtIf((ObjStmtIf*)cursor); break;
+            case OBJ_STMT_FUNDECLARATION: printFunDeclaration((ObjStmtFunDeclaration*)cursor); break;
+            case OBJ_STMT_WHILE: printStmtWhile((ObjStmtWhile*)cursor); break;
+            case OBJ_STMT_FOR: printStmtFor((ObjStmtFor*)cursor); break;
+            case OBJ_STMT_CLASSDECLARATION: printStmtClassDeclaration((ObjStmtClassDeclaration*)cursor); break;
+            default: printf("Unknown stmt;"); break;
         }
+        printf("\n");
         cursor = cursor->nextStmt;
     }
 }
