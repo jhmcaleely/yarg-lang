@@ -4,7 +4,6 @@
 #include "object.h"
 #include "memory.h"
 #include "value.h"
-#include "print.h"
 
 void initValueArray(ValueArray* array) {
     array->values = NULL;

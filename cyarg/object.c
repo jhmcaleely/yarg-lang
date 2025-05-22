@@ -7,7 +7,6 @@
 #include "value.h"
 #include "vm.h"
 #include "yargtype.h"
-#include "print.h"
 
 #define ALLOCATE_OBJ(type, objectType) \
     (type*)allocateObject(sizeof(type), objectType)

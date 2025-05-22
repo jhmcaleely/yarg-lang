@@ -7,6 +7,8 @@
 
 #define UINT8_COUNT (UINT8_MAX + 1)
 
+#include "print.h"
+
 // Global source configruation options
 // Managed in CMakePresets.json and CMakeLists.txt
 

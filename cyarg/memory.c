@@ -6,7 +6,6 @@
 #include "vm.h"
 #include "yargtype.h"
 #include "ast.h"
-#include "print.h"
 
 #ifdef DEBUG_LOG_GC
 #include "debug.h"
@@ -515,7 +514,8 @@ void collectGarbage() {
     tableRemoveWhite(&vm.strings);
     sweep();
 
-    vm.nextGC = vm.bytesAllocated * GC_HEAP_GROW_FACTOR;
+    size_t candidateGC = vm.bytesAllocated * GC_HEAP_GROW_FACTOR;
+    vm.nextGC = candidateGC > ALWAYS_GC_ABOVE ? ALWAYS_GC_ABOVE : candidateGC;
 
 #ifdef DEBUG_LOG_GC
     PRINTERR("-- gc end\n");
