@@ -376,14 +376,10 @@ static void generateGetNamedVariable(ObjString* name) {
 static void generateExprNamedVariable(ObjExprNamedVariable* var) {
 
     ObjString* this_ = copyString("this", 4);
-    tempRootPush(OBJ_VAL(this_));
     if (identifiersEqual(this_, var->name) && currentClass == NULL) {
         errorAt("this", "Can't use 'this' outside of a class.");
-        tempRootPop();
         return;
     }
-
-    tempRootPop();
     this_ = NULL;
 
     uint8_t getOp, setOp;
