@@ -71,8 +71,12 @@ target_sources(cyarg
 endif()
 
 add_compile_definitions(NAN_BOXING)
-#add_compile_definitions(DEBUG_TRACE_EXECUTION)
+
+if (HOST_TYPE STREQUAL "Interactive")
+add_compile_definitions(DEBUG_TRACE_EXECUTION)
+add_compile_definitions(DEBUG_AST_PARSE)
 add_compile_definitions(DEBUG_STRESS_GC)
+endif()
 #add_compile_definitions(DEBUG_LOG_GC)
 
 if (PICO_BOARD)

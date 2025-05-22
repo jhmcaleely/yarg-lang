@@ -8,6 +8,19 @@
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
+                "HOST_TYPE": "Interactive",
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_TOOLCHAIN_FILE": ""
+            }
+        },
+        {
+            "name": "hosttest",
+            "displayName": "Host Test (for test pass)",
+            "description": "Using defaults for your cmake install",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "HOST_TYPE": "Test",
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_TOOLCHAIN_FILE": ""
             }

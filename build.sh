@@ -15,9 +15,12 @@ cmake --build build/pico
 
 cmake --preset host
 cmake --build build/host
+
+cmake --preset hosttest
+cmake --build build/hosttest
 popd
 
-cp cyarg/build/host/cyarg bin/
+cp cyarg/build/hosttest/cyarg bin/
 
 mkdir build
 cp cyarg/build/pico/cyarg.uf2 build/yarg-lang.uf2
