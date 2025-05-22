@@ -12,7 +12,7 @@ ObjStmtExpression* newStmtExpression(ObjExpr* expr, ObjType type, int line) {
     return stmt;
 }
 
-ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr* expr, int line) {
+ObjStmtVarDeclaration* newStmtVarDeclaration(const char* name, int nameLength, ObjExpr* expr, int line) {
     ObjStmtVarDeclaration* stmt = ALLOCATE_OBJ(ObjStmtVarDeclaration, OBJ_STMT_VARDECLARATION);
     tempRootPush(OBJ_VAL(stmt));
     stmt->stmt.nextStmt = NULL;

@@ -264,7 +264,7 @@ void appendObjArgument(ObjArguments* args, ObjExpr* expr);
 void appendMethod(ObjStmtClassDeclaration* class_, ObjStmtFunDeclaration* method);
 
 ObjStmtExpression* newStmtExpression(ObjExpr* expr, ObjType statement, int line);
-ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr* expr, int line);
+ObjStmtVarDeclaration* newStmtVarDeclaration(const char* name, int nameLength, ObjExpr* expr, int line);
 ObjStmtBlock* newStmtBlock(int line);
 ObjStmtIf* newStmtIf(int line);
 ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength, int line);
