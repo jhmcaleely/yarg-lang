@@ -6,6 +6,7 @@
 typedef struct ObjStmt ObjStmt;
 
 bool parse(ObjStmt** ast_root);
+void markParserRoots();
 
 
 #endif

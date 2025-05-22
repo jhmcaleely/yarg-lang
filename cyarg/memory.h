@@ -4,7 +4,7 @@
 #include "common.h"
 #include "object.h"
 
-#define TEMP_ROOTS_MAX 20
+#define TEMP_ROOTS_MAX 8
 #define FIRST_GC_AT 50 * 1024
 #ifdef CYARG_PICO_TARGET
 #define ALWAYS_GC_ABOVE 100 * 1024
@@ -33,6 +33,7 @@ void tempRootPush(Value value);
 Value tempRootPop();
 
 void markObject(Obj* object);
+void markDynamicObjArray(DynamicObjArray* array);
 void markValue(Value value);
 void collectGarbage();
 void freeObjects();

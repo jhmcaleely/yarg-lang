@@ -91,6 +91,13 @@ struct Obj {
 };
 
 typedef struct {
+    Obj* stash;
+    Obj** objects;
+    int objectCapacity;
+    int objectCount;
+} DynamicObjArray;
+
+typedef struct {
     Obj obj;
     int arity;
     int upvalueCount;
@@ -173,6 +180,11 @@ typedef struct ObjUniformArray {
     (type*)allocateObject(sizeof(type), objectType)
 
 Obj* allocateObject(size_t size, ObjType type);
+
+void initDynamicObjArray(DynamicObjArray* array);
+void freeDynamicObjArray(DynamicObjArray* array);
+void appendToDynamicObjArray(DynamicObjArray* array, Obj* obj);
+Obj* removeLastFromDynamicObjArray(DynamicObjArray* array);
 
 ObjBoundMethod* newBoundMethod(Value receiver, 
                                ObjClosure* method);

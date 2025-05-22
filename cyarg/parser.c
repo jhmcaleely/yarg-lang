@@ -14,7 +14,33 @@ typedef struct {
     Token previous;
     bool hadError;
     bool panicMode;
+    DynamicObjArray workingNodes;
 } Parser;
+
+Parser parser;
+
+void initParser() {
+    parser.hadError = false;
+    parser.panicMode = false;
+    initDynamicObjArray(&parser.workingNodes);
+}
+
+void endParser() {
+    freeDynamicObjArray(&parser.workingNodes);
+}
+
+void markParserRoots() {
+    markDynamicObjArray(&parser.workingNodes);
+}
+
+void pushWorkingNode(Obj* obj) {
+    appendToDynamicObjArray(&parser.workingNodes, obj);
+
+}
+
+void popWorkingNode() {
+    removeLastFromDynamicObjArray(&parser.workingNodes);
+} 
 
 typedef ObjExpr* (*AstParseFn)(bool canAssign);
 
@@ -27,8 +53,6 @@ typedef struct {
 static AstParseRule* getRule(TokenType type);
 static ObjExpr* parsePrecedence(Precedence precedence);
 static ObjExpr* expression();
-
-Parser parser;
 
 void errorAt(Token* token, const char* message) {
     if (parser.panicMode) return;
@@ -150,9 +174,9 @@ static ObjExpr* namedVariable(Token name, bool canAssign) {
     ObjExprNamedVariable* expr = newExprNamedVariable(name.start, name.length, NULL);
 
     if (canAssign && match(TOKEN_EQUAL)) {
-        tempRootPush(OBJ_VAL(expr));
+        pushWorkingNode((Obj*)expr);
         expr->assignment = expression();
-        tempRootPop();
+        popWorkingNode();
     }
 
     return (ObjExpr*)expr;
@@ -160,7 +184,7 @@ static ObjExpr* namedVariable(Token name, bool canAssign) {
 
 static ObjArguments* argumentList() {
     ObjArguments* args = newObjArguments();
-    tempRootPush(OBJ_VAL(args));
+    pushWorkingNode((Obj*)args);
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
             appendObjArgument(args, expression());
@@ -170,13 +194,13 @@ static ObjArguments* argumentList() {
         } while (match(TOKEN_COMMA));
     }
     consume(TOKEN_RIGHT_PAREN, "Expect ')' aftger arguments.");
-    tempRootPop();
+    popWorkingNode();
     return args;
 }
 
 static ObjArguments* arrayInitExpressionsList() {
     ObjArguments* args = newObjArguments();
-    tempRootPush(OBJ_VAL(args));
+    pushWorkingNode((Obj*)args);
 
     if (!check(TOKEN_RIGHT_SQUARE_BRACKET)) {
         do {
@@ -187,7 +211,7 @@ static ObjArguments* arrayInitExpressionsList() {
 
         } while (match(TOKEN_COMMA));
     }
-    tempRootPop();
+    popWorkingNode();
     return args;
 }
 
@@ -196,12 +220,12 @@ static ObjExpr* super_(bool canAssign) {
     consume(TOKEN_DOT, "Expect '.' after 'super'.");
     consume(TOKEN_IDENTIFIER, "Expect superclass method name.");
     ObjExprSuper* super_ = newExprSuper(parser.previous.start, parser.previous.length);
-    tempRootPush(OBJ_VAL(super_));
+    pushWorkingNode((Obj*)super_);
 
     if (match(TOKEN_LEFT_PAREN)) {
         super_->callArgs = argumentList();
     }
-    tempRootPop();
+    popWorkingNode();
     return (ObjExpr*)super_;
 }
 
@@ -209,21 +233,21 @@ static ObjExpr* dot(bool canAssign) {
 
     consume(TOKEN_IDENTIFIER, "Expect property name after '.'.");
     ObjExprDot* expr = newExprDot(parser.previous.start, parser.previous.length);
-    tempRootPush((OBJ_VAL(expr)));
+    pushWorkingNode((Obj*)expr);
     
     if (canAssign && match(TOKEN_EQUAL)) {
         expr->assignment = expression();
     } else if (match(TOKEN_LEFT_PAREN)) {
         expr->callArgs = argumentList();
     }
-    tempRootPop();
+    popWorkingNode();
     return (ObjExpr*) expr;
 }
 
 static ObjExpr* deref(bool canAssign) {
     
     ObjExprArrayElement* elmt = newExprArrayElement();
-    tempRootPush(OBJ_VAL(elmt));
+    pushWorkingNode((Obj*)elmt);
 
     elmt->element = parsePrecedence(PREC_ASSIGNMENT);   // prevents assignment within []
     consume(TOKEN_RIGHT_SQUARE_BRACKET, "Expect ] after expression.");
@@ -232,27 +256,27 @@ static ObjExpr* deref(bool canAssign) {
         elmt->assignment = expression();
     }
 
-    tempRootPop();
+    popWorkingNode();
     return (ObjExpr*)elmt;
 }
 
 static ObjExpr* arrayinit(bool canAssign) {
 
     ObjArguments* args = arrayInitExpressionsList();
-    tempRootPush(OBJ_VAL(args));
+    pushWorkingNode((Obj*)args);
     consume(TOKEN_RIGHT_SQUARE_BRACKET, "Expect ']' initialising array.");
     
     ObjExprArrayInit* array = newExprArrayInit(args);
 
-    tempRootPop();
+    popWorkingNode();
     return (ObjExpr*)array;
 }
 
 static ObjExpr* call(bool canAssign) {
     ObjArguments* args = argumentList();
-    tempRootPush(OBJ_VAL(args));
+    pushWorkingNode((Obj*)args);
     ObjExprCall* call = newExprCall(args);
-    tempRootPop();
+    popWorkingNode();
     return (ObjExpr*)call;
 }
 
@@ -308,7 +332,7 @@ static ObjExpr* unary(bool canAssign) {
     TokenType operatorType = parser.previous.type;
 
     ObjExpr* rhs = parsePrecedence(PREC_UNARY);
-    tempRootPush(OBJ_VAL(rhs));
+    pushWorkingNode((Obj*)rhs);
 
     ExprOp op;
     switch (operatorType) {
@@ -318,32 +342,32 @@ static ObjExpr* unary(bool canAssign) {
     }
 
     ObjExprOperation* expr = newExprOperation(rhs, op);
-    tempRootPop();
+    popWorkingNode();
     return (ObjExpr*) expr; 
 }
 
 static ObjExpr* grouping(bool canAssign) {
     ObjExpr* expr = expression();
-    tempRootPush(OBJ_VAL(expr));
+    pushWorkingNode((Obj*)expr);
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
     ObjExprGrouping* grp = newExprGrouping(expr);
-    tempRootPop();
+    popWorkingNode();
     return (ObjExpr*)grp; 
 }
 
 static ObjExpr* and_(bool canAssign) { 
     ObjExpr* rhs = parsePrecedence(PREC_AND);
-    tempRootPush(OBJ_VAL(rhs));
+    pushWorkingNode((Obj*)rhs);
     ObjExprOperation* expr = newExprOperation(rhs, EXPR_OP_LOGICAL_AND);
-    tempRootPop();
+    popWorkingNode();
     return (ObjExpr*) expr;
 }
 
 static ObjExpr* or_(bool canAssign) {
     ObjExpr* rhs = parsePrecedence(PREC_OR);
-    tempRootPush(OBJ_VAL(rhs));
+    pushWorkingNode((Obj*)rhs);
     ObjExprOperation* expr = newExprOperation(rhs, EXPR_OP_LOGICAL_OR);
-    tempRootPop();
+    popWorkingNode();
     return (ObjExpr*) expr;
 }
 
@@ -351,7 +375,7 @@ static ObjExpr* binary(bool canAssign) {
     TokenType operatorType = parser.previous.type;
     AstParseRule* rule = getRule(operatorType);
     ObjExpr* rhs = parsePrecedence((Precedence)(rule->precedence + 1));
-    tempRootPush(OBJ_VAL(rhs));
+    pushWorkingNode((Obj*)rhs);
 
     ExprOp op;
     switch (operatorType) {
@@ -376,7 +400,7 @@ static ObjExpr* binary(bool canAssign) {
     }
 
     ObjExprOperation* expr = newExprOperation(rhs, op);
-    tempRootPop();
+    popWorkingNode();
     return (ObjExpr*) expr;
 }
 
@@ -503,7 +527,7 @@ static ObjExpr* parsePrecedence(Precedence precedence) {
     bool canAssign = precedence <= PREC_ASSIGNMENT;
 
     ObjExpr* expr = prefixRule(canAssign);
-    tempRootPush(OBJ_VAL(expr));
+    pushWorkingNode((Obj*)expr);
 
     ObjExpr** cursor = &expr->nextExpr;
     while (precedence <= getRule(parser.current.type)->precedence) {
@@ -517,7 +541,7 @@ static ObjExpr* parsePrecedence(Precedence precedence) {
         error("Invalid assignment target.");
     }
 
-    tempRootPop();
+    popWorkingNode();
     return expr;
 }
 
@@ -527,33 +551,33 @@ static ObjExpr* expression() {
 
 static ObjStmtExpression* printStatement() {
     ObjExpr* expr = expression();
-    tempRootPush(OBJ_VAL(expr));
+    pushWorkingNode((Obj*)expr);
     consume(TOKEN_SEMICOLON, "Expect ';' after value.");
     ObjStmtExpression* print = newStmtExpression(expr, OBJ_STMT_PRINT, parser.previous.line);
-    tempRootPop();
+    popWorkingNode();
     return print;
 }
 
 static ObjStmtExpression* expressionStatement() {
     ObjExpr* expr = expression();
-    tempRootPush(OBJ_VAL(expr));
+    pushWorkingNode((Obj*)expr);
     consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
     ObjStmtExpression* expressionStatement = newStmtExpression(expr, OBJ_STMT_EXPRESSION, parser.previous.line);
-    tempRootPop();
+    popWorkingNode();
     return expressionStatement;
 }
 
 static ObjStmt* varDeclaration() {
     consume(TOKEN_IDENTIFIER, "Expect variable name.");
     ObjStmtVarDeclaration* decl = newStmtVarDeclaration((char*)parser.previous.start, parser.previous.length, NULL, parser.previous.line);
-    tempRootPush(OBJ_VAL(decl));
+    pushWorkingNode((Obj*)decl);
 
     if (match(TOKEN_EQUAL)) {
         decl->initialiser = expression();
     }
     consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration");
 
-    tempRootPop();
+    popWorkingNode();
 
     return (ObjStmt*) decl;
 }
@@ -564,7 +588,7 @@ static ObjStmt* statement();
 static ObjBlock* block() {
 
     ObjBlock* block = newObjBlock();
-    tempRootPush(OBJ_VAL(block));
+    pushWorkingNode((Obj*)block);
 
     ObjStmt** cursor = &block->stmts;
 
@@ -575,14 +599,14 @@ static ObjBlock* block() {
 
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
 
-    tempRootPop();
+    popWorkingNode();
 
     return block;
 }
 
 ObjStmt* ifStatement() {
     ObjStmtIf* ctrl = newStmtIf(parser.previous.line);
-    tempRootPush(OBJ_VAL(ctrl));
+    pushWorkingNode((Obj*)ctrl);
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
     ctrl->test = expression();
@@ -592,13 +616,13 @@ ObjStmt* ifStatement() {
     if (match(TOKEN_ELSE)) {
         ctrl->elseStmt = statement();
     }
-    tempRootPop();
+    popWorkingNode();
     return (ObjStmt*)ctrl;
 }
 
 ObjStmtWhile* whileStatement() {
     ObjStmtWhile* loop = newStmtWhile(parser.previous.line);
-    tempRootPush(OBJ_VAL(loop));
+    pushWorkingNode((Obj*)loop);
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
     loop->test = expression();
@@ -606,22 +630,22 @@ ObjStmtWhile* whileStatement() {
 
     loop->loop = statement();
 
-    tempRootPop();
+    popWorkingNode();
     return loop;
 }
 
 static ObjStmtExpression* returnOrYieldStatement(ObjType type, const char* msg) {
     ObjStmtExpression* stmt = newStmtExpression(NULL, type, parser.previous.line);
-    tempRootPush(OBJ_VAL(stmt));
+    pushWorkingNode((Obj*)stmt);
     
     if (match(TOKEN_SEMICOLON)) {
-        tempRootPop();
+        popWorkingNode();
         return stmt;
     } else {
         stmt->expression = expression();
         consume(TOKEN_SEMICOLON, msg);
         
-        tempRootPop();
+        popWorkingNode();
         return stmt;
     }
 }
@@ -629,7 +653,7 @@ static ObjStmtExpression* returnOrYieldStatement(ObjType type, const char* msg) 
 static ObjStmtFor* forStatement() {
 
     ObjStmtFor* loop = newStmtFor(parser.previous.line);
-    tempRootPush(OBJ_VAL(loop));
+    pushWorkingNode((Obj*)loop);
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
     if (match(TOKEN_SEMICOLON)) {
@@ -652,15 +676,15 @@ static ObjStmtFor* forStatement() {
 
     loop->body = statement();
 
-    tempRootPop();
+    popWorkingNode();
     return loop;
 }
 
 ObjStmtBlock* blockStatement() {
     ObjStmtBlock* stmt = newStmtBlock(parser.previous.line);
-    tempRootPush(OBJ_VAL(stmt));
+    pushWorkingNode((Obj*)stmt);
     stmt->statements = block();
-    tempRootPop();
+    popWorkingNode();
     return stmt;
 }
 
@@ -687,7 +711,7 @@ ObjStmt* statement() {
 static ObjFunctionDeclaration* function(FunctionType type) {
 
     ObjFunctionDeclaration* fun = newObjFunctionDeclaration();
-    tempRootPush(OBJ_VAL(fun));
+    pushWorkingNode((Obj*)fun);
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
     if (!check(TOKEN_RIGHT_PAREN)) {
@@ -704,25 +728,25 @@ static ObjFunctionDeclaration* function(FunctionType type) {
 
     fun->body = block();
 
-    tempRootPop();
+    popWorkingNode();
     return fun;
 }
 
 static ObjStmt* funDeclaration() {
     consume(TOKEN_IDENTIFIER, "Expect function name.");
     ObjStmtFunDeclaration* fun = newStmtFunDeclaration(parser.previous.start, parser.previous.length, parser.previous.line);
-    tempRootPush(OBJ_VAL(fun));
+    pushWorkingNode((Obj*)fun);
 
     fun->function = function(TYPE_FUNCTION);
     
-    tempRootPop();
+    popWorkingNode();
     return (ObjStmt*)fun;
 }
 
 static ObjStmtFunDeclaration* method() {
     consume(TOKEN_IDENTIFIER, "Expect method name.");
     ObjStmtFunDeclaration* method = newStmtFunDeclaration(parser.previous.start, parser.previous.length, parser.previous.line);
-    tempRootPush(OBJ_VAL(method));
+    pushWorkingNode((Obj*)method);
 
     FunctionType type = TYPE_METHOD;
     if (parser.previous.length == 4 &&
@@ -732,7 +756,7 @@ static ObjStmtFunDeclaration* method() {
     
     method->function = function(type);
 
-    tempRootPop();
+    popWorkingNode();
     return method;
 }
 
@@ -746,7 +770,7 @@ static ObjStmtClassDeclaration* classDeclaration() {
     Token className = parser.previous;
 
     ObjStmtClassDeclaration* decl = newStmtClassDeclaration(className.start, className.length, parser.previous.line);
-    tempRootPush(OBJ_VAL(decl));
+    pushWorkingNode((Obj*)decl);
 
     if (match(TOKEN_LESS)) {
         consume(TOKEN_IDENTIFIER, "Expect superclass name.");
@@ -764,7 +788,7 @@ static ObjStmtClassDeclaration* classDeclaration() {
     }
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
 
-    tempRootPop();
+    popWorkingNode();
     return decl;
 }
 
@@ -785,14 +809,11 @@ ObjStmt* declaration() {
     return stmt;
 }
 
-
 bool parse(ObjStmt** ast_root) {
-    ObjStmt** cursor = ast_root;
-
-    parser.hadError = false;
-    parser.panicMode = false;
-
+    initParser();
     advance();
+
+    ObjStmt** cursor = ast_root;
     while (!match(TOKEN_EOF)) {
         *cursor = declaration();
         if (*cursor) {
@@ -800,5 +821,10 @@ bool parse(ObjStmt** ast_root) {
         }
     }
 
+#ifdef DEBUG_AST_PARSE
+    printf("Parse Tree max working objects: %d\n", parser.workingNodes.objectCapacity);
+#endif
+
+    endParser();
     return parser.hadError;
 }

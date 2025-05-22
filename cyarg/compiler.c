@@ -953,6 +953,7 @@ void markCompilerRoots() {
         markObject((Obj*)compiler->function);
         markObject((Obj*)compiler->ast);
         markObject((Obj*)compiler->recent);
+        markParserRoots();
 
         for (int i = 0; i < compiler->localCount; i++) {
             markObject((Obj*)compiler->locals[i].name);

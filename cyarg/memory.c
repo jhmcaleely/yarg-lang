@@ -92,6 +92,13 @@ static void markStmt(Obj* stmt) {
     markObject((Obj*)((ObjStmt*)stmt)->nextStmt);
 }
 
+void markDynamicObjArray(DynamicObjArray* array) {
+    markObject(array->stash);
+    for (int i = 0; i < array->objectCount; i++) {
+        markObject(array->objects[i]);
+    }
+}
+
 static void blackenObject(Obj* object) {
 #ifdef DEBUG_LOG_GC
     PRINTERR("%p blacken ", (void*)object);
