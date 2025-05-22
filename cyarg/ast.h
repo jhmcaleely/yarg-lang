@@ -107,70 +107,6 @@ typedef struct {
     ExprLiteral literal;
 } ObjExprLiteral;
 
-typedef struct  {
-    ObjStmt stmt;
-    ObjExpr* expression;
-} ObjStmtExpression;
-
-typedef struct {
-    ObjStmt stmt;
-    ObjString* name;
-    ObjExpr* initialiser;
-} ObjStmtVarDeclaration;
-
-typedef struct {
-    Obj obj;
-    ObjStmt* stmts;
-} ObjBlock;
-
-typedef struct {
-    ObjStmt stmt;
-    ObjBlock* statements;
-} ObjStmtBlock;
-
-typedef struct {
-    ObjStmt stmt;
-    ObjExpr* test;
-    ObjStmt* ifStmt;
-    ObjStmt* elseStmt;
-} ObjStmtIf;
-
-typedef struct {
-    Obj obj;
-    unsigned int arity;
-    ObjExpr* params[UINT8_MAX];
-    ObjBlock* body;
-} ObjFunctionDeclaration;
-
-typedef struct {
-    ObjStmt stmt;
-    ObjString* name;
-    ObjFunctionDeclaration* function;
-} ObjStmtFunDeclaration;
-
-typedef struct {
-    ObjStmt stmt;
-    ObjExpr* test;
-    ObjStmt* loop;
-} ObjStmtWhile;
-
-typedef struct {
-    ObjStmt stmt;
-    ObjStmt* initializer;
-    ObjExpr* condition;
-    ObjExpr* loopExpression;
-    ObjStmt* body;
-} ObjStmtFor;
-
-typedef struct {
-    ObjStmt stmt;
-    ObjString* name;
-    ObjExpr* superclass;
-    Obj** methods;
-    int methodCapacity;
-    int methodCount;
-} ObjStmtClassDeclaration;
-
 typedef enum {
     NUMBER_DOUBLE,
     NUMBER_INTEGER,
@@ -243,15 +179,78 @@ typedef struct {
     ExprTypeType type;
 } ObjExprType;
 
+typedef struct  {
+    ObjStmt stmt;
+    ObjExpr* expression;
+} ObjStmtExpression;
+
+typedef struct {
+    ObjStmt stmt;
+    ObjString* name;
+    ObjExpr* initialiser;
+} ObjStmtVarDeclaration;
+
+typedef struct {
+    Obj obj;
+    ObjStmt* stmts;
+} ObjBlock;
+
+typedef struct {
+    ObjStmt stmt;
+    ObjBlock* statements;
+} ObjStmtBlock;
+
+typedef struct {
+    ObjStmt stmt;
+    ObjExpr* test;
+    ObjStmt* ifStmt;
+    ObjStmt* elseStmt;
+} ObjStmtIf;
+
+typedef struct {
+    Obj obj;
+    unsigned int arity;
+    ObjExpr* params[UINT8_MAX];
+    ObjBlock* body;
+} ObjFunctionDeclaration;
+
+typedef struct {
+    ObjStmt stmt;
+    ObjString* name;
+    ObjFunctionDeclaration* function;
+} ObjStmtFunDeclaration;
+
+typedef struct {
+    ObjStmt stmt;
+    ObjExpr* test;
+    ObjStmt* loop;
+} ObjStmtWhile;
+
+typedef struct {
+    ObjStmt stmt;
+    ObjStmt* initializer;
+    ObjExpr* condition;
+    ObjExpr* loopExpression;
+    ObjStmt* body;
+} ObjStmtFor;
+
+typedef struct {
+    ObjStmt stmt;
+    ObjString* name;
+    ObjExpr* superclass;
+    Obj** methods;
+    int methodCapacity;
+    int methodCount;
+} ObjStmtClassDeclaration;
+
 ObjExprNumber* newExprNumberDouble(double value);
 ObjExprNumber* newExprNumberInteger(int value);
 ObjExprNumber* newExprNumberUInteger32(uint32_t value);
+ObjExprLiteral* newExprLiteral(ExprLiteral literal);
+ObjExprString* newExprString(const char* str, int strLength);
 ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op);
 ObjExprGrouping* newExprGrouping(ObjExpr* expression);
 ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength, ObjExpr* expr);
-ObjExprLiteral* newExprLiteral(ExprLiteral literal);
-ObjExprString* newExprString(const char* str, int strLength);
-ObjArguments* newObjArguments();
 ObjExprCall* newExprCall(ObjArguments* args);
 ObjExprArrayInit* newExprArrayInit(ObjArguments* args);
 ObjExprArrayElement* newExprArrayElement();
@@ -260,20 +259,22 @@ ObjExprDot* newExprDot(const char* name, int nameLength);
 ObjExprSuper* newExprSuper(const char* name, int nameLength);
 ObjExprType* newExprType(ExprTypeType type);
 
-void appendObjArgument(ObjArguments* args, ObjExpr* expr);
 void appendMethod(ObjStmtClassDeclaration* class_, ObjStmtFunDeclaration* method);
 
 ObjStmtExpression* newStmtExpression(ObjExpr* expr, ObjType statement, int line);
 ObjStmtVarDeclaration* newStmtVarDeclaration(const char* name, int nameLength, ObjExpr* expr, int line);
+ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength, int line);
+ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength, int line);
 ObjStmtBlock* newStmtBlock(int line);
 ObjStmtIf* newStmtIf(int line);
-ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength, int line);
 ObjStmtWhile* newStmtWhile(int line);
 ObjStmtFor* newStmtFor(int line);
-ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength, int line);
 
 ObjFunctionDeclaration* newObjFunctionDeclaration();
 ObjBlock* newObjBlock();
+ObjArguments* newObjArguments();
+
+void appendObjArgument(ObjArguments* args, ObjExpr* expr);
 
 void printStmts(ObjStmt* stmts);
 void printExpr(ObjExpr* expr);
