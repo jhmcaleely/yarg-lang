@@ -156,11 +156,6 @@ typedef struct {
 
 typedef struct {
     ObjStmt stmt;
-    ObjExpr* value;
-} ObjStmtReturnOrYield;
-
-typedef struct {
-    ObjStmt stmt;
     ObjStmt* initializer;
     ObjExpr* condition;
     ObjExpr* loopExpression;
@@ -274,7 +269,6 @@ ObjStmtBlock* newStmtBlock(int line);
 ObjStmtIf* newStmtIf(int line);
 ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength, int line);
 ObjStmtWhile* newStmtWhile(int line);
-ObjStmtReturnOrYield* newStmtReturnOrYield(bool ret, int line);
 ObjStmtFor* newStmtFor(int line);
 ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength, int line);
 

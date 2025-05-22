@@ -185,6 +185,8 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)block->stmts);
             break;
         }
+        case OBJ_STMT_YIELD: // fall through
+        case OBJ_STMT_RETURN:
         case OBJ_STMT_PRINT:
         case OBJ_STMT_EXPRESSION: {
             markStmt(object);
@@ -224,14 +226,6 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)loop->stmt.nextStmt);
             markObject((Obj*)loop->test);
             markObject((Obj*)loop->loop);
-            break;
-        }
-        case OBJ_STMT_YIELD:
-            // fall through
-        case OBJ_STMT_RETURN: {
-            ObjStmtReturnOrYield* stmt = (ObjStmtReturnOrYield*)object;
-            markObject((Obj*)stmt->stmt.nextStmt);
-            markObject((Obj*)stmt->value);
             break;
         }
         case OBJ_STMT_FOR: {
@@ -415,6 +409,8 @@ static void freeObject(Obj* object) {
         }
         case OBJ_FUNDECLARATION: FREE(ObjFunctionDeclaration, object); break;
         case OBJ_BLOCK: FREE(ObjBlock, object); break;
+        case OBJ_STMT_RETURN: // fall through
+        case OBJ_STMT_YIELD:
         case OBJ_STMT_PRINT:
         case OBJ_STMT_EXPRESSION: FREE(ObjStmtExpression, object); break;
         case OBJ_STMT_VARDECLARATION: FREE(ObjStmtVarDeclaration, object); break;
@@ -422,8 +418,6 @@ static void freeObject(Obj* object) {
         case OBJ_STMT_IF: FREE(ObjStmtIf, object); break;
         case OBJ_STMT_FUNDECLARATION: FREE(ObjStmtFunDeclaration, object); break;
         case OBJ_STMT_WHILE: FREE(ObjStmtWhile, object); break;
-        case OBJ_STMT_YIELD: FREE(ObjStmtReturnOrYield, object); break;
-        case OBJ_STMT_RETURN: FREE(ObjStmtReturnOrYield, object); break;
         case OBJ_STMT_FOR: FREE(ObjStmtFor, object); break;
         case OBJ_STMT_CLASSDECLARATION: {
             ObjStmtClassDeclaration* decl = (ObjStmtClassDeclaration*)object;

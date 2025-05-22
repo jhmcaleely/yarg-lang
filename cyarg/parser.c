@@ -612,20 +612,16 @@ ObjStmtWhile* whileStatement() {
     return loop;
 }
 
-static ObjStmtReturnOrYield* returnOrYieldStatement(bool ret) {
-    ObjStmtReturnOrYield* stmt = newStmtReturnOrYield(ret, parser.previous.line);
+static ObjStmtExpression* returnOrYieldStatement(ObjType type, const char* msg) {
+    ObjStmtExpression* stmt = newStmtExpression(NULL, type, parser.previous.line);
     tempRootPush(OBJ_VAL(stmt));
     
     if (match(TOKEN_SEMICOLON)) {
         tempRootPop();
         return stmt;
     } else {
-        stmt->value = expression();
-        if (ret) {
-            consume(TOKEN_SEMICOLON, "Expect ';' after return value.");
-        } else {
-            consume(TOKEN_SEMICOLON, "Expect ';' after yield value.");
-        }
+        stmt->expression = expression();
+        consume(TOKEN_SEMICOLON, msg);
         
         tempRootPop();
         return stmt;
@@ -677,8 +673,10 @@ ObjStmt* statement() {
         return (ObjStmt*) forStatement();
     } else if (match(TOKEN_IF)) {
         return ifStatement();
-    } else if (match(TOKEN_YIELD) || match(TOKEN_RETURN)) {
-        return (ObjStmt*) returnOrYieldStatement(parser.previous.type == TOKEN_RETURN);
+    } else if (match(TOKEN_YIELD)) {
+        return (ObjStmt*) returnOrYieldStatement(OBJ_STMT_YIELD, "Expect ';' after yield value.");
+    } else if (match(TOKEN_RETURN)) {
+        return (ObjStmt*) returnOrYieldStatement(OBJ_STMT_RETURN, "Expect ';' after return value.");
     } else if (match(TOKEN_WHILE)) {
         return (ObjStmt*) whileStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {

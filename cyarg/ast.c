@@ -68,14 +68,6 @@ ObjStmtWhile* newStmtWhile(int line) {
     return loop;
 }
 
-ObjStmtReturnOrYield* newStmtReturnOrYield(bool ret, int line) {
-    ObjStmtReturnOrYield* stmt = ALLOCATE_OBJ(ObjStmtReturnOrYield, ret ? OBJ_STMT_RETURN : OBJ_STMT_YIELD);
-    stmt->stmt.nextStmt = NULL;
-    stmt->stmt.line = line;
-    stmt->value = NULL;
-    return stmt;
-}
-
 ObjStmtFor* newStmtFor(int line) {
     ObjStmtFor* loop = ALLOCATE_OBJ(ObjStmtFor, OBJ_STMT_FOR);
     loop->stmt.nextStmt = NULL;
@@ -480,32 +472,13 @@ void printStmtClassDeclaration(ObjStmtClassDeclaration* class_) {
     printf("}\n");
 }
 
-void printStmtReturn(ObjStmtReturnOrYield* stmt) {
-    printf("return");
-    if (stmt->value) {
-        printf(" ");
-        printExpr(stmt->value);
-    }
-    printf(";\n");
-}
-
-void printStmtYield(ObjStmtReturnOrYield* stmt) {
-    printf("yield");
-    if (stmt->value) {
-        printf(" ");
-        printExpr(stmt->value);
-    }
-    printf(";\n");
-}
-
 void printStmtExpression(ObjStmtExpression* stmt) {
     switch (stmt->stmt.obj.type) {
-        case OBJ_STMT_PRINT:
-            printf("print ");
-            break;
-        case OBJ_STMT_EXPRESSION:
-        default:
-            break;
+        case OBJ_STMT_RETURN: printf("return "); break;
+        case OBJ_STMT_YIELD: printf("yield "); break;
+        case OBJ_STMT_PRINT: printf("print "); break;
+        case OBJ_STMT_EXPRESSION: break;
+        default: break;
     }
     printExpr(stmt->expression);
     printf(";\n");
@@ -515,6 +488,8 @@ void printStmts(ObjStmt* stmts) {
     ObjStmt* cursor = stmts;
     while (cursor) {
         switch (cursor->obj.type) {
+            case OBJ_STMT_RETURN:
+            case OBJ_STMT_YIELD:
             case OBJ_STMT_PRINT:
             case OBJ_STMT_EXPRESSION: {
                 printStmtExpression((ObjStmtExpression*)cursor);
@@ -561,16 +536,6 @@ void printStmts(ObjStmt* stmts) {
             case OBJ_STMT_CLASSDECLARATION: {
                 ObjStmtClassDeclaration* class_ = (ObjStmtClassDeclaration*)cursor;
                 printStmtClassDeclaration(class_);
-                break;
-            }
-            case OBJ_STMT_RETURN: {
-                ObjStmtReturnOrYield* stmt = (ObjStmtReturnOrYield*)cursor;
-                printStmtReturn(stmt);
-                break;
-            }
-            case OBJ_STMT_YIELD: {
-                ObjStmtReturnOrYield* stmt = (ObjStmtReturnOrYield*)cursor;
-                printStmtYield(stmt);
                 break;
             }
             default:
