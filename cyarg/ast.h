@@ -4,13 +4,6 @@
 #include "object.h"
 
 typedef enum {
-    TYPE_FUNCTION,
-    TYPE_INITIALIZER,
-    TYPE_METHOD,
-    TYPE_SCRIPT
-} FunctionType;
-
-typedef enum {
     PREC_NONE,
     PREC_ASSIGNMENT, // =
     PREC_OR,         // or

@@ -708,7 +708,7 @@ ObjStmt* statement() {
     }
 }
 
-static ObjFunctionDeclaration* function(FunctionType type) {
+static ObjFunctionDeclaration* function() {
 
     ObjFunctionDeclaration* fun = newObjFunctionDeclaration();
     pushWorkingNode((Obj*)fun);
@@ -732,32 +732,15 @@ static ObjFunctionDeclaration* function(FunctionType type) {
     return fun;
 }
 
-static ObjStmt* funDeclaration() {
-    consume(TOKEN_IDENTIFIER, "Expect function name.");
+static ObjStmtFunDeclaration* funDeclaration(const char* msg) {
+    consume(TOKEN_IDENTIFIER, msg);
     ObjStmtFunDeclaration* fun = newStmtFunDeclaration(parser.previous.start, parser.previous.length, parser.previous.line);
     pushWorkingNode((Obj*)fun);
 
-    fun->function = function(TYPE_FUNCTION);
+    fun->function = function();
     
     popWorkingNode();
-    return (ObjStmt*)fun;
-}
-
-static ObjStmtFunDeclaration* method() {
-    consume(TOKEN_IDENTIFIER, "Expect method name.");
-    ObjStmtFunDeclaration* method = newStmtFunDeclaration(parser.previous.start, parser.previous.length, parser.previous.line);
-    pushWorkingNode((Obj*)method);
-
-    FunctionType type = TYPE_METHOD;
-    if (parser.previous.length == 4 &&
-        memcmp(parser.previous.start, "init", 4) == 0) {
-        type = TYPE_INITIALIZER;
-    }
-    
-    method->function = function(type);
-
-    popWorkingNode();
-    return method;
+    return fun;
 }
 
 static bool tokenIdentifiersEqual(Token* a, Token* b) {
@@ -784,7 +767,7 @@ static ObjStmtClassDeclaration* classDeclaration() {
 
     consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
     while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
-        appendMethod(decl, method());
+        appendMethod(decl, funDeclaration("Expect method name."));
     }
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
 
@@ -798,7 +781,7 @@ ObjStmt* declaration() {
     if (match(TOKEN_CLASS)) {
         stmt = (ObjStmt*) classDeclaration();
     } else if (match(TOKEN_FUN)) {
-        stmt = funDeclaration();
+        stmt = (ObjStmt*) funDeclaration("Expect function name.");
     } else if (match(TOKEN_VAR)) {
         stmt = varDeclaration();
     } else {
