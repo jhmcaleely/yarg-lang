@@ -273,16 +273,16 @@ ObjExprType* newExprType(ExprTypeType type);
 void appendObjArgument(ObjArguments* args, ObjExpr* expr);
 void appendMethod(ObjStmtClassDeclaration* class_, ObjStmtFunDeclaration* method);
 
-ObjStmtExpression* newStmtExpression(ObjExpr* expr);
-ObjStmtPrint* newStmtPrint(ObjExpr* expr);
-ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr* expr);
-ObjStmtBlock* newStmtBlock();
-ObjStmtIf* newStmtIf();
-ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength);
-ObjStmtWhile* newStmtWhile();
-ObjStmtReturnOrYield* newStmtReturnOrYield(bool ret);
-ObjStmtFor* newStmtFor();
-ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength);
+ObjStmtExpression* newStmtExpression(ObjExpr* expr, int line);
+ObjStmtPrint* newStmtPrint(ObjExpr* expr, int line);
+ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr* expr, int line);
+ObjStmtBlock* newStmtBlock(int line);
+ObjStmtIf* newStmtIf(int line);
+ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength, int line);
+ObjStmtWhile* newStmtWhile(int line);
+ObjStmtReturnOrYield* newStmtReturnOrYield(bool ret, int line);
+ObjStmtFor* newStmtFor(int line);
+ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength, int line);
 
 ObjFunctionDeclaration* newObjFunctionDeclaration();
 ObjBlock* newObjBlock();

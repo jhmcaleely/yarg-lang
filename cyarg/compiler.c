@@ -922,19 +922,19 @@ ObjFunction* compile(const char* source) {
     struct Compiler compiler;
     initCompiler(&compiler, TYPE_SCRIPT, NULL);
 
-    parse(&current->ast);
+    bool parseError = parse(&current->ast);
 #ifdef DEBUG_AST_PARSE
     printStmts(current->ast);
 #endif
 
-    if (!parser.hadError) {
+    if (!parseError) {
 
         generate(current->ast);
     }
 
     ObjFunction* function = endCompiler();
 
-    bool compileError = parser.hadError || hadCompilerError;
+    bool compileError = parseError || hadCompilerError;
 
     return compileError ? NULL : function;
 }

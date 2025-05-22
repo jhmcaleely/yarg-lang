@@ -6,6 +6,16 @@
 #include "ast.h"
 #include "memory.h"
 
+#include "scanner.h"
+#include <stdbool.h>
+
+typedef struct {
+    Token current;
+    Token previous;
+    bool hadError;
+    bool panicMode;
+} Parser;
+
 typedef ObjExpr* (*AstParseFn)(bool canAssign);
 
 typedef struct {
@@ -521,7 +531,7 @@ static ObjStmtPrint* printStatement() {
     ObjExpr* expr = expression();
     tempRootPush(OBJ_VAL(expr));
     consume(TOKEN_SEMICOLON, "Expect ';' after value.");
-    ObjStmtPrint* print = newStmtPrint(expr);
+    ObjStmtPrint* print = newStmtPrint(expr, parser.previous.line);
     tempRootPop();
     return print;
 }
@@ -530,14 +540,14 @@ static ObjStmtExpression* expressionStatement() {
     ObjExpr* expr = expression();
     tempRootPush(OBJ_VAL(expr));
     consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
-    ObjStmtExpression* expressionStatement = newStmtExpression(expr);
+    ObjStmtExpression* expressionStatement = newStmtExpression(expr, parser.previous.line);
     tempRootPop();
     return expressionStatement;
 }
 
 static ObjStmt* varDeclaration() {
     consume(TOKEN_IDENTIFIER, "Expect variable name.");
-    ObjStmtVarDeclaration* decl = newStmtVarDeclaration((char*)parser.previous.start, parser.previous.length, NULL);
+    ObjStmtVarDeclaration* decl = newStmtVarDeclaration((char*)parser.previous.start, parser.previous.length, NULL, parser.previous.line);
     tempRootPush(OBJ_VAL(decl));
 
     if (match(TOKEN_EQUAL)) {
@@ -573,7 +583,7 @@ static ObjBlock* block() {
 }
 
 ObjStmt* ifStatement() {
-    ObjStmtIf* ctrl = newStmtIf();
+    ObjStmtIf* ctrl = newStmtIf(parser.previous.line);
     tempRootPush(OBJ_VAL(ctrl));
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
@@ -589,7 +599,7 @@ ObjStmt* ifStatement() {
 }
 
 ObjStmtWhile* whileStatement() {
-    ObjStmtWhile* loop = newStmtWhile();
+    ObjStmtWhile* loop = newStmtWhile(parser.previous.line);
     tempRootPush(OBJ_VAL(loop));
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
@@ -603,7 +613,7 @@ ObjStmtWhile* whileStatement() {
 }
 
 static ObjStmtReturnOrYield* returnOrYieldStatement(bool ret) {
-    ObjStmtReturnOrYield* stmt = newStmtReturnOrYield(ret);
+    ObjStmtReturnOrYield* stmt = newStmtReturnOrYield(ret, parser.previous.line);
     tempRootPush(OBJ_VAL(stmt));
     
     if (match(TOKEN_SEMICOLON)) {
@@ -624,7 +634,7 @@ static ObjStmtReturnOrYield* returnOrYieldStatement(bool ret) {
 
 static ObjStmtFor* forStatement() {
 
-    ObjStmtFor* loop = newStmtFor();
+    ObjStmtFor* loop = newStmtFor(parser.previous.line);
     tempRootPush(OBJ_VAL(loop));
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
@@ -653,7 +663,7 @@ static ObjStmtFor* forStatement() {
 }
 
 ObjStmtBlock* blockStatement() {
-    ObjStmtBlock* stmt = newStmtBlock();
+    ObjStmtBlock* stmt = newStmtBlock(parser.previous.line);
     tempRootPush(OBJ_VAL(stmt));
     stmt->statements = block();
     tempRootPop();
@@ -704,7 +714,7 @@ static ObjFunctionDeclaration* function(FunctionType type) {
 
 static ObjStmt* funDeclaration() {
     consume(TOKEN_IDENTIFIER, "Expect function name.");
-    ObjStmtFunDeclaration* fun = newStmtFunDeclaration(parser.previous.start, parser.previous.length);
+    ObjStmtFunDeclaration* fun = newStmtFunDeclaration(parser.previous.start, parser.previous.length, parser.previous.line);
     tempRootPush(OBJ_VAL(fun));
 
     fun->function = function(TYPE_FUNCTION);
@@ -715,7 +725,7 @@ static ObjStmt* funDeclaration() {
 
 static ObjStmtFunDeclaration* method() {
     consume(TOKEN_IDENTIFIER, "Expect method name.");
-    ObjStmtFunDeclaration* method = newStmtFunDeclaration(parser.previous.start, parser.previous.length);
+    ObjStmtFunDeclaration* method = newStmtFunDeclaration(parser.previous.start, parser.previous.length, parser.previous.line);
     tempRootPush(OBJ_VAL(method));
 
     FunctionType type = TYPE_METHOD;
@@ -739,7 +749,7 @@ static ObjStmtClassDeclaration* classDeclaration() {
     consume(TOKEN_IDENTIFIER, "Expect class name.");
     Token className = parser.previous;
 
-    ObjStmtClassDeclaration* decl = newStmtClassDeclaration(className.start, className.length);
+    ObjStmtClassDeclaration* decl = newStmtClassDeclaration(className.start, className.length, parser.previous.line);
     tempRootPush(OBJ_VAL(decl));
 
     if (match(TOKEN_LESS)) {
@@ -780,7 +790,7 @@ ObjStmt* declaration() {
 }
 
 
-void parse(ObjStmt** ast_root) {
+bool parse(ObjStmt** ast_root) {
     ObjStmt** cursor = ast_root;
 
     parser.hadError = false;
@@ -793,4 +803,6 @@ void parse(ObjStmt** ast_root) {
             cursor = &(*cursor)->nextStmt;
         }
     }
+
+    return parser.hadError;
 }

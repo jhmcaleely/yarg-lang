@@ -3,31 +3,30 @@
 
 #include "ast.h"
 #include "memory.h"
-#include "parser.h"
 
-ObjStmtExpression* newStmtExpression(ObjExpr* expr) {
+ObjStmtExpression* newStmtExpression(ObjExpr* expr, int line) {
     ObjStmtExpression* stmt = ALLOCATE_OBJ(ObjStmtExpression, OBJ_STMT_EXPRESSION);
-    stmt->stmt.line = parser.previous.line;
+    stmt->stmt.line = line;
     stmt->stmt.nextStmt = NULL;
     stmt->expression = expr;
 
     return stmt;
 }
 
-ObjStmtPrint* newStmtPrint(ObjExpr* expr) {
+ObjStmtPrint* newStmtPrint(ObjExpr* expr, int line) {
     ObjStmtPrint* stmt = ALLOCATE_OBJ(ObjStmtPrint, OBJ_STMT_PRINT);
-    stmt->stmt.line = parser.previous.line;
+    stmt->stmt.line = line;
     stmt->stmt.nextStmt = NULL;
     stmt->expression = expr;
 
     return stmt;
 }
 
-ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr* expr) {
+ObjStmtVarDeclaration* newStmtVarDeclaration(char* name, int nameLength, ObjExpr* expr, int line) {
     ObjStmtVarDeclaration* stmt = ALLOCATE_OBJ(ObjStmtVarDeclaration, OBJ_STMT_VARDECLARATION);
     tempRootPush(OBJ_VAL(stmt));
     stmt->stmt.nextStmt = NULL;
-    stmt->stmt.line = parser.previous.line;
+    stmt->stmt.line = line;
     stmt->name = copyString(name, nameLength);
     stmt->initialiser = expr;
     tempRootPop();
@@ -40,28 +39,28 @@ ObjBlock* newObjBlock() {
     return block;
 }
 
-ObjStmtBlock* newStmtBlock() {
+ObjStmtBlock* newStmtBlock(int line) {
     ObjStmtBlock* block = ALLOCATE_OBJ(ObjStmtBlock, OBJ_STMT_BLOCK);
     block->stmt.nextStmt = NULL;
-    block->stmt.line = parser.previous.line;
+    block->stmt.line = line;
     block->statements = NULL;
     return block;
 }
 
-ObjStmtIf* newStmtIf() {
+ObjStmtIf* newStmtIf(int line) {
     ObjStmtIf* ctrl = ALLOCATE_OBJ(ObjStmtIf, OBJ_STMT_IF);
     ctrl->stmt.nextStmt = NULL;
-    ctrl->stmt.line = parser.previous.line;
+    ctrl->stmt.line = line;
     ctrl->test = NULL;
     ctrl->ifStmt = NULL;
     ctrl->elseStmt = NULL;
     return ctrl;
 }
 
-ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength) {
+ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength, int line) {
     ObjStmtFunDeclaration* fun = ALLOCATE_OBJ(ObjStmtFunDeclaration, OBJ_STMT_FUNDECLARATION);
     fun->stmt.nextStmt = NULL;
-    fun->stmt.line = parser.previous.line;
+    fun->stmt.line = line;
     fun->name = NULL;
     fun->function = NULL;
     tempRootPush(OBJ_VAL(fun));
@@ -70,27 +69,27 @@ ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength) {
     return fun;
 }
 
-ObjStmtWhile* newStmtWhile() {
+ObjStmtWhile* newStmtWhile(int line) {
     ObjStmtWhile* loop = ALLOCATE_OBJ(ObjStmtWhile, OBJ_STMT_WHILE);
     loop->stmt.nextStmt = NULL;
-    loop->stmt.line = parser.previous.line;
+    loop->stmt.line = line;
     loop->test = NULL;
     loop->loop = NULL;
     return loop;
 }
 
-ObjStmtReturnOrYield* newStmtReturnOrYield(bool ret) {
+ObjStmtReturnOrYield* newStmtReturnOrYield(bool ret, int line) {
     ObjStmtReturnOrYield* stmt = ALLOCATE_OBJ(ObjStmtReturnOrYield, ret ? OBJ_STMT_RETURN : OBJ_STMT_YIELD);
     stmt->stmt.nextStmt = NULL;
-    stmt->stmt.line = parser.previous.line;
+    stmt->stmt.line = line;
     stmt->value = NULL;
     return stmt;
 }
 
-ObjStmtFor* newStmtFor() {
+ObjStmtFor* newStmtFor(int line) {
     ObjStmtFor* loop = ALLOCATE_OBJ(ObjStmtFor, OBJ_STMT_FOR);
     loop->stmt.nextStmt = NULL;
-    loop->stmt.line = parser.previous.line;
+    loop->stmt.line = line;
     loop->condition = NULL;
     loop->initializer = NULL;
     loop->loopExpression = NULL;
@@ -98,10 +97,10 @@ ObjStmtFor* newStmtFor() {
     return loop;
 }
 
-ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength) {
+ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength, int line) {
     ObjStmtClassDeclaration* decl = ALLOCATE_OBJ(ObjStmtClassDeclaration, OBJ_STMT_CLASSDECLARATION);
     decl->stmt.nextStmt = NULL;
-    decl->stmt.line = parser.previous.line;
+    decl->stmt.line = line;
     decl->name = NULL;
     decl->superclass = NULL;
     decl->methodCapacity = 0;
