@@ -19,7 +19,7 @@ fun flash(seconds) {
     var flasher = make_routine(toggle, true);
 
     var duty = alarm_add_repeating_ms(-500, flasher);
-    alarm_add_in_ms(seconds * 1000, elapsed); 
+    alarm_add_in_ms(seconds * 0d1000, elapsed); 
     var msg = receive(done); 
     alarm_cancel_repeating(duty); 
 }

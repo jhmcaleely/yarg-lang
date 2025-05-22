@@ -9,7 +9,7 @@ fun flash(count) {
 
     fun sleep() {
         while (true) {
-            sleep_ms(500);
+            sleep_ms(0d500);
             yield 1;
         }
     }
