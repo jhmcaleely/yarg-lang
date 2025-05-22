@@ -272,7 +272,7 @@ static ObjExpr* literal(bool canAssign) {
 static ObjExpr* builtin(bool canAssign) {     
     switch (parser.previous.type) {
         case TOKEN_RPEEK: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_RPEEK, 1);
-        case TOKEN_RPOKE: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_RPOKE, 1);
+        case TOKEN_RPOKE: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_RPOKE, 2);
         case TOKEN_IMPORT: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_IMPORT, 1);
         case TOKEN_MAKE_ARRAY: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_MAKE_ARRAY, 1);
         case TOKEN_MAKE_ROUTINE: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_MAKE_ROUTINE, 1);
@@ -421,8 +421,6 @@ static ObjExpr* number(bool canAssign) {
     }
     return (ObjExpr*) val;
 }
-
-
 
 static AstParseRule rules[] = {
     [TOKEN_LEFT_PAREN]           = {grouping,  call,   PREC_CALL},

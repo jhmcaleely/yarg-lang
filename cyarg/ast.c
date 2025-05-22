@@ -294,7 +294,9 @@ void printObjCallArgs(ObjArguments* args) {
     printf("(");
     for (int i = 0; i < args->count; i++) {
         printExpr((ObjExpr*)args->arguments[i]);
-        printf(", ");
+        if (i < args->count - 1) {
+            printf(", ");
+        }
     }
     printf(")");
 }
@@ -318,13 +320,29 @@ void printExprSuper(ObjExprSuper* expr) {
     }
 }
 
+void printExprBuiltin(ObjExprBuiltin* fn) {
+    switch (fn->builtin) {
+        case EXPR_BUILTIN_RPOKE: printf("rpoke"); break;
+        case EXPR_BUILTIN_IMPORT: printf("import"); break;
+        case EXPR_BUILTIN_MAKE_ARRAY: printf("make_array"); break;
+        case EXPR_BUILTIN_MAKE_ROUTINE: printf("make_routine"); break;
+        case EXPR_BUILTIN_MAKE_CHANNEL: printf("make_channel"); break;
+        case EXPR_BUILTIN_RESUME: printf("resume"); break;
+        case EXPR_BUILTIN_START: printf("start"); break;
+        case EXPR_BUILTIN_RECEIVE: printf("receive"); break;
+        case EXPR_BUILTIN_SEND: printf("send"); break;
+        case EXPR_BUILTIN_PEEK: printf("peek"); break;
+        case EXPR_BUILTIN_SHARE: printf("share"); break;
+        case EXPR_BUILTIN_RPEEK: printf("rpeek"); break;
+        case EXPR_BUILTIN_LEN: printf("len"); break;
+    }
+}
+
 void printExpr(ObjExpr* expr) {
     ObjExpr* cursor = expr;
     while (cursor) {
         switch (cursor->obj.type) {
-            case OBJ_EXPR_OPERATION:
-                printExprOperation((ObjExprOperation*)cursor);
-                break;
+            case OBJ_EXPR_OPERATION: printExprOperation((ObjExprOperation*)cursor); break;
             case OBJ_EXPR_GROUPING: {
                 ObjExprGrouping* expr = (ObjExprGrouping*)cursor;
                 printf("(");
@@ -342,7 +360,7 @@ void printExpr(ObjExpr* expr) {
                         printf("%d", num->val.integer);
                         break;
                     case NUMBER_UINTEGER32:
-                        printf("u%d", num->val.uinteger32);
+                        printf("u%u", num->val.uinteger32);
                         break;
                 }
                 break;
@@ -398,21 +416,10 @@ void printExpr(ObjExpr* expr) {
                 }
                 break;
             }
-            case OBJ_EXPR_BUILTIN: {
-                ObjExprBuiltin* fn = (ObjExprBuiltin*)cursor;
-                printf("%d:%d", fn->builtin, fn->arity);
-                break;
-            }
-            case OBJ_EXPR_DOT: {
-                printExprDot((ObjExprDot*)cursor);
-                break;
-            }
-            case OBJ_EXPR_SUPER: {
-                printExprSuper((ObjExprSuper*)cursor);
-                break;
-            }
-            default:
-                printf("<unknown>");
+            case OBJ_EXPR_BUILTIN: printExprBuiltin((ObjExprBuiltin*)cursor); break;
+            case OBJ_EXPR_DOT: printExprDot((ObjExprDot*)cursor); break;
+            case OBJ_EXPR_SUPER: printExprSuper((ObjExprSuper*)cursor); break;
+            default: printf("<unknown>"); break;
         }
         cursor = cursor->nextExpr;
     }
@@ -435,10 +442,13 @@ void printFunDeclaration(ObjStmtFunDeclaration* decl) {
     printf("(");
     for (int i = 0; i < decl->function->arity; i++) {
         printExpr(decl->function->params[i]);
-        printf(", ");
+        if (i < decl->function->arity - 1) {
+            printf(", ");
+        }
     }
-    printf(")\n");
+    printf(")\n{\n");
     printStmts(decl->function->body->stmts);
+    printf("}");
 }
 
 void printStmtWhile(ObjStmtWhile* loop) {
@@ -468,8 +478,9 @@ void printStmtClassDeclaration(ObjStmtClassDeclaration* class_) {
     printf("\n{\n");
     for (int i = 0; i < class_->methodCount; i++) {
         printFunDeclaration((ObjStmtFunDeclaration*)class_->methods[i]);
+        printf("\n");
     }
-    printf("}\n");
+    printf("}");
 }
 
 void printStmtExpression(ObjStmtExpression* stmt) {
@@ -481,67 +492,43 @@ void printStmtExpression(ObjStmtExpression* stmt) {
         default: break;
     }
     printExpr(stmt->expression);
-    printf(";\n");
+    printf(";");
+}
+
+void printStmtVarDeclaration(ObjStmtVarDeclaration* decl) {
+    printf("var ");
+    printObject(OBJ_VAL(decl->name));
+    if (decl->initialiser) {
+        printf(" = ");
+        printExpr(decl->initialiser);
+    }
+    printf(";");
+}
+
+void printStmtBlock(ObjStmtBlock* block) {
+    printf("{\n");
+    printStmts(block->statements->stmts);
+    printf("}\n");
 }
 
 void printStmts(ObjStmt* stmts) {
     ObjStmt* cursor = stmts;
     while (cursor) {
         switch (cursor->obj.type) {
-            case OBJ_STMT_RETURN:
+            case OBJ_STMT_RETURN: // fall through
             case OBJ_STMT_YIELD:
             case OBJ_STMT_PRINT:
-            case OBJ_STMT_EXPRESSION: {
-                printStmtExpression((ObjStmtExpression*)cursor);
-                break;
-            }
-            case OBJ_STMT_VARDECLARATION: {
-                ObjStmtVarDeclaration* decl = (ObjStmtVarDeclaration*)cursor;
-                printf("var ");
-                printObject(OBJ_VAL(decl->name));
-                if (decl->initialiser) {
-                    printf(" = ");
-                    printExpr(decl->initialiser);
-                }
-                printf(";\n");
-                break;
-            }
-            case OBJ_STMT_BLOCK: {
-                ObjStmtBlock* block = (ObjStmtBlock*)cursor;
-                printf("{\n");
-                printStmts(block->statements->stmts);
-                printf("}\n");
-                break;
-            }
-            case OBJ_STMT_IF: {
-                ObjStmtIf* ctrl = (ObjStmtIf*)cursor;
-                printStmtIf(ctrl);
-                break;
-            }
-            case OBJ_STMT_FUNDECLARATION: {
-                ObjStmtFunDeclaration* decl = (ObjStmtFunDeclaration*)cursor;
-                printFunDeclaration(decl);
-                break;
-            }
-            case OBJ_STMT_WHILE: {
-                ObjStmtWhile* loop = (ObjStmtWhile*)cursor;
-                printStmtWhile(loop);
-                break;
-            }
-            case OBJ_STMT_FOR: {
-                ObjStmtFor* loop = (ObjStmtFor*)cursor;
-                printStmtFor(loop);
-                break;
-            }
-            case OBJ_STMT_CLASSDECLARATION: {
-                ObjStmtClassDeclaration* class_ = (ObjStmtClassDeclaration*)cursor;
-                printStmtClassDeclaration(class_);
-                break;
-            }
-            default:
-                printf("Unknown stmt;\n");
-                break;
+            case OBJ_STMT_EXPRESSION: printStmtExpression((ObjStmtExpression*)cursor); break;
+            case OBJ_STMT_VARDECLARATION: printStmtVarDeclaration((ObjStmtVarDeclaration*)cursor); break;
+            case OBJ_STMT_BLOCK: printStmtBlock((ObjStmtBlock*)cursor); break;
+            case OBJ_STMT_IF: printStmtIf((ObjStmtIf*)cursor); break;
+            case OBJ_STMT_FUNDECLARATION: printFunDeclaration((ObjStmtFunDeclaration*)cursor); break;
+            case OBJ_STMT_WHILE: printStmtWhile((ObjStmtWhile*)cursor); break;
+            case OBJ_STMT_FOR: printStmtFor((ObjStmtFor*)cursor); break;
+            case OBJ_STMT_CLASSDECLARATION: printStmtClassDeclaration((ObjStmtClassDeclaration*)cursor); break;
+            default: printf("Unknown stmt;"); break;
         }
+        printf("\n");
         cursor = cursor->nextStmt;
     }
 }
