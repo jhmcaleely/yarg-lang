@@ -702,7 +702,7 @@ ObjStmt* statement() {
     } else if (match(TOKEN_WHILE)) {
         return (ObjStmt*) whileStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {
-        return (ObjStmt*)blockStatement();
+        return (ObjStmt*) blockStatement();
     } else {
         return (ObjStmt*) expressionStatement();
     }
