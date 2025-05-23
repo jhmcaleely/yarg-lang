@@ -170,9 +170,9 @@ void appendExpr(ObjExprSet* args, ObjExpr* expr) {
     args->arguments[args->count++] = (Obj*) expr;
 }
 
-ObjExprCall* newExprCall(ObjExprSet* args) {
+ObjExprCall* newExprCall() {
     ObjExprCall* call = ALLOCATE_OBJ(ObjExprCall, OBJ_EXPR_CALL);
-    call->args = args;
+    initDynamicObjArray(&call->arguments);
     return call;
 }
 
@@ -370,7 +370,7 @@ void printExpr(ObjExpr* expr) {
             }
             case OBJ_EXPR_CALL: {
                 ObjExprCall* call = (ObjExprCall*)cursor;
-                printObjCallArgs(call->args);
+                printCallArgs(&call->arguments);
                 break;
             }
             case OBJ_EXPR_ARRAYINIT: {

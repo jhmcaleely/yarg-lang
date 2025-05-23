@@ -425,10 +425,16 @@ static void generateExprSet(ObjExprSet* args) {
     }
 }
 
-static void generateExprCall(ObjExprCall* call) {
-    generateExprSet(call->args);
+static void generateExprSet2(DynamicObjArray* args) {
+    for (int i = 0; i < args->objectCount; i++) {
+        generateExpr((ObjExpr*)args->objects[i]);
+    } 
+}
 
-    emitBytes(OP_CALL, call->args->count);
+static void generateExprCall(ObjExprCall* call) {
+    generateExprSet2(&call->arguments);
+
+    emitBytes(OP_CALL, call->arguments.objectCount);
 }
 
 static void generateExprArrayInit(ObjExprArrayInit* array) {
