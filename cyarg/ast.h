@@ -184,13 +184,8 @@ typedef struct {
 } ObjStmtVarDeclaration;
 
 typedef struct {
-    Obj obj;
-    ObjStmt* stmts;
-} ObjBlock;
-
-typedef struct {
     ObjStmt stmt;
-    ObjBlock* statements;
+    ObjStmt* statements;
 } ObjStmtBlock;
 
 typedef struct {
@@ -204,7 +199,7 @@ typedef struct {
     Obj obj;
     unsigned int arity;
     ObjExpr* params[UINT8_MAX];
-    ObjBlock* body;
+    ObjStmt* body;
 } ObjFunctionDeclaration;
 
 typedef struct {
@@ -264,7 +259,6 @@ ObjStmtWhile* newStmtWhile(int line);
 ObjStmtFor* newStmtFor(int line);
 
 ObjFunctionDeclaration* newObjFunctionDeclaration();
-ObjBlock* newObjBlock();
 ObjArguments* newObjArguments();
 
 void appendObjArgument(ObjArguments* args, ObjExpr* expr);

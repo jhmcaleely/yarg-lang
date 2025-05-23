@@ -23,12 +23,6 @@ ObjStmtVarDeclaration* newStmtVarDeclaration(const char* name, int nameLength, O
     return stmt;
 }
 
-ObjBlock* newObjBlock() {
-    ObjBlock* block = ALLOCATE_OBJ(ObjBlock, OBJ_BLOCK);
-    block->stmts = NULL;
-    return block;
-}
-
 ObjStmtBlock* newStmtBlock(int line) {
     ObjStmtBlock* block = ALLOCATE_OBJ(ObjStmtBlock, OBJ_STMT_BLOCK);
     block->stmt.nextStmt = NULL;
@@ -447,7 +441,7 @@ void printFunDeclaration(ObjStmtFunDeclaration* decl) {
         }
     }
     printf(")\n{\n");
-    printStmts(decl->function->body->stmts);
+    printStmts(decl->function->body);
     printf("}");
 }
 
@@ -507,7 +501,7 @@ void printStmtVarDeclaration(ObjStmtVarDeclaration* decl) {
 
 void printStmtBlock(ObjStmtBlock* block) {
     printf("{\n");
-    printStmts(block->statements->stmts);
+    printStmts(block->statements);
     printf("}\n");
 }
 

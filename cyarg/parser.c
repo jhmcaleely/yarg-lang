@@ -585,12 +585,9 @@ static ObjStmt* varDeclaration() {
 static ObjStmt* declaration();
 static ObjStmt* statement();
 
-static ObjBlock* block() {
+static void block(ObjStmt** statements) {
 
-    ObjBlock* block = newObjBlock();
-    pushWorkingNode((Obj*)block);
-
-    ObjStmt** cursor = &block->stmts;
+    ObjStmt** cursor = statements;
 
     while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
         *cursor = declaration();
@@ -598,10 +595,6 @@ static ObjBlock* block() {
     }
 
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
-
-    popWorkingNode();
-
-    return block;
 }
 
 ObjStmt* ifStatement() {
@@ -683,7 +676,7 @@ static ObjStmtFor* forStatement() {
 ObjStmtBlock* blockStatement() {
     ObjStmtBlock* stmt = newStmtBlock(parser.previous.line);
     pushWorkingNode((Obj*)stmt);
-    stmt->statements = block();
+    block(&stmt->statements);
     popWorkingNode();
     return stmt;
 }
@@ -726,7 +719,7 @@ static ObjFunctionDeclaration* function() {
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
     consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
 
-    fun->body = block();
+    block(&fun->body);
 
     popWorkingNode();
     return fun;
