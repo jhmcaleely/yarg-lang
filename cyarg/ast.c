@@ -43,10 +43,7 @@ ObjStmtIf* newStmtIf(int line) {
 
 ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength, int line) {
     ObjStmtFunDeclaration* fun = ALLOCATE_OBJ(ObjStmtFunDeclaration, OBJ_STMT_FUNDECLARATION);
-    fun->stmt.nextStmt = NULL;
     fun->stmt.line = line;
-    fun->name = NULL;
-    fun->function = NULL;
     tempRootPush(OBJ_VAL(fun));
     fun->name = copyString(name, nameLength);
     tempRootPop();
@@ -86,13 +83,6 @@ ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLengt
     decl->name = copyString(name, nameLength);
     tempRootPop();
     return decl;
-}
-
-ObjFunctionDeclaration* newObjFunctionDeclaration() {
-    ObjFunctionDeclaration* fun = ALLOCATE_OBJ(ObjFunctionDeclaration, OBJ_FUNDECLARATION);
-    fun->arity = 0;
-    fun->body = NULL;
-    return fun;
 }
 
 ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op) {
@@ -434,14 +424,14 @@ void printFunDeclaration(ObjStmtFunDeclaration* decl) {
     printf("fun ");
     printObject(OBJ_VAL(decl->name));
     printf("(");
-    for (int i = 0; i < decl->function->arity; i++) {
-        printExpr(decl->function->params[i]);
-        if (i < decl->function->arity - 1) {
+    for (int i = 0; i < decl->arity; i++) {
+        printExpr(decl->params[i]);
+        if (i < decl->arity - 1) {
             printf(", ");
         }
     }
     printf(")\n{\n");
-    printStmts(decl->function->body);
+    printStmts(decl->body);
     printf("}");
 }
 

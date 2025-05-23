@@ -701,9 +701,9 @@ ObjStmt* statement() {
     }
 }
 
-static ObjFunctionDeclaration* function() {
-
-    ObjFunctionDeclaration* fun = newObjFunctionDeclaration();
+static ObjStmtFunDeclaration* funDeclaration(const char* msg) {
+    consume(TOKEN_IDENTIFIER, msg);
+    ObjStmtFunDeclaration* fun = newStmtFunDeclaration(parser.previous.start, parser.previous.length, parser.previous.line);
     pushWorkingNode((Obj*)fun);
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
@@ -720,17 +720,6 @@ static ObjFunctionDeclaration* function() {
     consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
 
     block(&fun->body);
-
-    popWorkingNode();
-    return fun;
-}
-
-static ObjStmtFunDeclaration* funDeclaration(const char* msg) {
-    consume(TOKEN_IDENTIFIER, msg);
-    ObjStmtFunDeclaration* fun = newStmtFunDeclaration(parser.previous.start, parser.previous.length, parser.previous.line);
-    pushWorkingNode((Obj*)fun);
-
-    fun->function = function();
     
     popWorkingNode();
     return fun;

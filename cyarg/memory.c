@@ -172,14 +172,6 @@ static void blackenObject(Obj* object) {
             }
             break;
         }
-        case OBJ_FUNDECLARATION: {
-            ObjFunctionDeclaration* fun = (ObjFunctionDeclaration*)object;
-            markObject((Obj*)fun->body);
-            for (int i = 0; i < fun->arity; i++) {
-                markObject((Obj*)fun->params[i]);
-            }
-            break;
-        }
         case OBJ_ARGUMENTS: {
             ObjArguments* args = (ObjArguments*)object;
             for (int i = 0; i < args->count; i++) {
@@ -218,9 +210,12 @@ static void blackenObject(Obj* object) {
         }
         case OBJ_STMT_FUNDECLARATION: {
             ObjStmtFunDeclaration* fun = (ObjStmtFunDeclaration*)object;
-            markObject((Obj*)fun->stmt.nextStmt);
+            markStmt(object);
             markObject((Obj*)fun->name);
-            markObject((Obj*)fun->function);
+            markObject((Obj*)fun->body);
+            for (int i = 0; i < fun->arity; i++) {
+                markObject((Obj*)fun->params[i]);
+            }
             break;
         }
         case OBJ_STMT_WHILE: {
@@ -409,7 +404,6 @@ static void freeObject(Obj* object) {
             FREE(ObjYargType, object);
             break;
         }
-        case OBJ_FUNDECLARATION: FREE(ObjFunctionDeclaration, object); break;
         case OBJ_STMT_RETURN: // fall through
         case OBJ_STMT_YIELD:
         case OBJ_STMT_PRINT:

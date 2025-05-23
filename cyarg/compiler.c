@@ -674,9 +674,9 @@ static void generateStmtIf(ObjStmtIf* ctrl) {
     patchJump(elseJump);
 }
 
-static void generateFunction(FunctionType type, ObjFunctionDeclaration* decl, ObjString* name) {
+static void generateFunction(FunctionType type, ObjStmtFunDeclaration* decl) {
     Compiler compiler;
-    initCompiler(&compiler, type, name);
+    initCompiler(&compiler, type, decl->name);
     beginScope();
 
     for (int i = 0; i < decl->arity; i++) {
@@ -701,7 +701,7 @@ static void generateStmtFunDeclaration(ObjStmtFunDeclaration* decl) {
     uint8_t global = parseVariable(decl->name);
     markInitialized();
 
-    generateFunction(TYPE_FUNCTION, decl->function, decl->name);
+    generateFunction(TYPE_FUNCTION, decl);
 
     defineVariable(global);
 }
@@ -803,7 +803,7 @@ static void generateStmtMethodDeclaration(ObjStmtFunDeclaration* method) {
         type = TYPE_INITIALIZER;
     }
     
-    generateFunction(type, method->function, method->name);
+    generateFunction(type, method);
 
     emitBytes(OP_METHOD, constant);
     tempRootPop(); // initi

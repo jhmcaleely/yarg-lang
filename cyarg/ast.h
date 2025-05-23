@@ -196,16 +196,11 @@ typedef struct {
 } ObjStmtIf;
 
 typedef struct {
-    Obj obj;
+    ObjStmt stmt;
+    ObjString* name;
     unsigned int arity;
     ObjExpr* params[UINT8_MAX];
     ObjStmt* body;
-} ObjFunctionDeclaration;
-
-typedef struct {
-    ObjStmt stmt;
-    ObjString* name;
-    ObjFunctionDeclaration* function;
 } ObjStmtFunDeclaration;
 
 typedef struct {
@@ -258,7 +253,6 @@ ObjStmtIf* newStmtIf(int line);
 ObjStmtWhile* newStmtWhile(int line);
 ObjStmtFor* newStmtFor(int line);
 
-ObjFunctionDeclaration* newObjFunctionDeclaration();
 ObjArguments* newObjArguments();
 
 void appendObjArgument(ObjArguments* args, ObjExpr* expr);
