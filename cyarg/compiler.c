@@ -440,12 +440,12 @@ static void generateExprCall(ObjExprCall* call) {
 static void generateExprArrayInit(ObjExprArrayInit* array) {
  
     emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_ARRAY);
-    emitConstant(INTEGER_VAL(array->args->count));
+    emitConstant(INTEGER_VAL(array->initializers.objectCount));
     emitBytes(OP_CALL, 1);
  
-    for (int i = 0; i < array->args->count; i++) {
+    for (int i = 0; i < array->initializers.objectCount; i++) {
         emitConstant(INTEGER_VAL(i));
-        generateExpr((ObjExpr*)array->args->arguments[i]);
+        generateExpr((ObjExpr*)array->initializers.objects[i]);
         emitByte(OP_SET_ELEMENT);
     }
 }

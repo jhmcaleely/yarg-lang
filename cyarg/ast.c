@@ -176,10 +176,9 @@ ObjExprCall* newExprCall() {
     return call;
 }
 
-ObjExprArrayInit* newExprArrayInit(ObjExprSet* args) {
+ObjExprArrayInit* newExprArrayInit() {
     ObjExprArrayInit* array = ALLOCATE_OBJ(ObjExprArrayInit, OBJ_EXPR_ARRAYINIT);
-    array->expr.nextExpr = NULL;
-    array->args = args;
+    initDynamicObjArray(&array->initializers);
     return array;
 }
 
@@ -376,8 +375,8 @@ void printExpr(ObjExpr* expr) {
             case OBJ_EXPR_ARRAYINIT: {
                 ObjExprArrayInit* array = (ObjExprArrayInit*)cursor;
                 printf("[");
-                for (int i = 0; i < array->args->count; i++) {
-                    printExpr((ObjExpr*)array->args->arguments[i]);
+                for (int i = 0; i < array->initializers.objectCount; i++) {
+                    printExpr((ObjExpr*)array->initializers.objects[i]);
                     printf(", ");
                 }
                 printf("]");

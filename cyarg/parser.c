@@ -227,21 +227,17 @@ static void expressionList2(DynamicObjArray* items) {
 
 }
 
-static ObjExprSet* arrayInitExpressionsList() {
-    ObjExprSet* args = newObjExprSet();
-    pushWorkingNode((Obj*)args);
+static void arrayInitExpressionsList(DynamicObjArray* initializers) {
 
     if (!check(TOKEN_RIGHT_SQUARE_BRACKET)) {
         do {
-            appendExpr(args, expression());
-            if (args->count > 255) {
+            appendToDynamicObjArray(initializers, (Obj*)expression());
+            if (initializers->objectCount > 255) {
                 error("Can't have more than 255 array initialisers.");
             }
 
         } while (match(TOKEN_COMMA));
     }
-    popWorkingNode();
-    return args;
 }
 
 static ObjExpr* super_(bool canAssign) {
@@ -291,12 +287,12 @@ static ObjExpr* deref(bool canAssign) {
 
 static ObjExpr* arrayinit(bool canAssign) {
 
-    ObjExprSet* args = arrayInitExpressionsList();
-    pushWorkingNode((Obj*)args);
+    ObjExprArrayInit* array = newExprArrayInit();
+    pushWorkingNode((Obj*)array);
+
+    arrayInitExpressionsList(&array->initializers);
     consume(TOKEN_RIGHT_SQUARE_BRACKET, "Expect ']' initialising array.");
     
-    ObjExprArrayInit* array = newExprArrayInit(args);
-
     popWorkingNode();
     return (ObjExpr*)array;
 }
