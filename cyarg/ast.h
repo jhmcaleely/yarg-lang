@@ -126,16 +126,16 @@ typedef struct {
     int count;
     int capacity;
     Obj** arguments;
-} ObjArguments;
+} ObjExprSet;
 
 typedef struct {
     ObjExpr expr;
-    ObjArguments* args;
+    ObjExprSet* args;
 } ObjExprCall;
 
 typedef struct {
     ObjExpr expr;
-    ObjArguments* args;
+    ObjExprSet* args;
 } ObjExprArrayInit;
 
 typedef struct {
@@ -154,13 +154,13 @@ typedef struct {
     ObjExpr expr;
     ObjString* name;
     ObjExpr* assignment;
-    ObjArguments* callArgs;
+    ObjExprSet* callArgs;
 } ObjExprDot;
 
 typedef struct {
     ObjExpr expr;
     ObjString* name;
-    ObjArguments* callArgs;
+    ObjExprSet* callArgs;
 } ObjExprSuper;
 
 typedef enum {
@@ -191,7 +191,7 @@ typedef struct {
 typedef struct {
     ObjStmt stmt;
     ObjString* name;
-    ObjArguments* parameters;
+    ObjExprSet* parameters;
     ObjStmt* body;
 } ObjStmtFunDeclaration;
 
@@ -233,8 +233,8 @@ ObjExprString* newExprString(const char* str, int strLength);
 ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op);
 ObjExprGrouping* newExprGrouping(ObjExpr* expression);
 ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength, ObjExpr* expr);
-ObjExprCall* newExprCall(ObjArguments* args);
-ObjExprArrayInit* newExprArrayInit(ObjArguments* args);
+ObjExprCall* newExprCall(ObjExprSet* args);
+ObjExprArrayInit* newExprArrayInit(ObjExprSet* args);
 ObjExprArrayElement* newExprArrayElement();
 ObjExprBuiltin* newExprBuiltin(ExprBuiltin fn, int arity);
 ObjExprDot* newExprDot(const char* name, int nameLength);
@@ -254,9 +254,9 @@ ObjStmtIf* newStmtIf(int line);
 ObjStmtWhile* newStmtWhile(int line);
 ObjStmtFor* newStmtFor(int line);
 
-ObjArguments* newObjArguments();
+ObjExprSet* newObjExprSet();
 
-void appendObjArgument(ObjArguments* args, ObjExpr* expr);
+void appendExpr(ObjExprSet* args, ObjExpr* expr);
 
 void printStmts(ObjStmt* stmts);
 void printExpr(ObjExpr* expr);

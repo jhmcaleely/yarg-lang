@@ -182,12 +182,12 @@ static ObjExpr* namedVariable(Token name, bool canAssign) {
     return (ObjExpr*)expr;
 }
 
-static ObjArguments* argumentList() {
-    ObjArguments* args = newObjArguments();
+static ObjExprSet* expressionList() {
+    ObjExprSet* args = newObjExprSet();
     pushWorkingNode((Obj*)args);
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
-            appendObjArgument(args, expression());
+            appendExpr(args, expression());
             if (args->count > 255) {
                 error("Can't have more than 255 arguments.");
             }
@@ -198,13 +198,13 @@ static ObjArguments* argumentList() {
     return args;
 }
 
-static ObjArguments* arrayInitExpressionsList() {
-    ObjArguments* args = newObjArguments();
+static ObjExprSet* arrayInitExpressionsList() {
+    ObjExprSet* args = newObjExprSet();
     pushWorkingNode((Obj*)args);
 
     if (!check(TOKEN_RIGHT_SQUARE_BRACKET)) {
         do {
-            appendObjArgument(args, expression());
+            appendExpr(args, expression());
             if (args->count > 255) {
                 error("Can't have more than 255 array initialisers.");
             }
@@ -223,7 +223,7 @@ static ObjExpr* super_(bool canAssign) {
     pushWorkingNode((Obj*)super_);
 
     if (match(TOKEN_LEFT_PAREN)) {
-        super_->callArgs = argumentList();
+        super_->callArgs = expressionList();
     }
     popWorkingNode();
     return (ObjExpr*)super_;
@@ -238,7 +238,7 @@ static ObjExpr* dot(bool canAssign) {
     if (canAssign && match(TOKEN_EQUAL)) {
         expr->assignment = expression();
     } else if (match(TOKEN_LEFT_PAREN)) {
-        expr->callArgs = argumentList();
+        expr->callArgs = expressionList();
     }
     popWorkingNode();
     return (ObjExpr*) expr;
@@ -262,7 +262,7 @@ static ObjExpr* deref(bool canAssign) {
 
 static ObjExpr* arrayinit(bool canAssign) {
 
-    ObjArguments* args = arrayInitExpressionsList();
+    ObjExprSet* args = arrayInitExpressionsList();
     pushWorkingNode((Obj*)args);
     consume(TOKEN_RIGHT_SQUARE_BRACKET, "Expect ']' initialising array.");
     
@@ -273,7 +273,7 @@ static ObjExpr* arrayinit(bool canAssign) {
 }
 
 static ObjExpr* call(bool canAssign) {
-    ObjArguments* args = argumentList();
+    ObjExprSet* args = expressionList();
     pushWorkingNode((Obj*)args);
     ObjExprCall* call = newExprCall(args);
     popWorkingNode();
@@ -707,10 +707,10 @@ static ObjStmtFunDeclaration* funDeclaration(const char* msg) {
     pushWorkingNode((Obj*)fun);
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
-    fun->parameters = newObjArguments();
+    fun->parameters = newObjExprSet();
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
-            appendObjArgument(fun->parameters, expression());
+            appendExpr(fun->parameters, expression());
             if (fun->parameters->count > 255) {
                 errorAt(&parser.previous, "Can't have more than 255 parameters.");
             }

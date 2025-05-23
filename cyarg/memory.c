@@ -172,8 +172,8 @@ static void blackenObject(Obj* object) {
             }
             break;
         }
-        case OBJ_ARGUMENTS: {
-            ObjArguments* args = (ObjArguments*)object;
+        case OBJ_EXPRSET: {
+            ObjExprSet* args = (ObjExprSet*)object;
             for (int i = 0; i < args->count; i++) {
                 markObject((Obj*)args->arguments[i]);
             }
@@ -424,10 +424,10 @@ static void freeObject(Obj* object) {
         case OBJ_EXPR_NAMEDVARIABLE: FREE(ObjExprNamedVariable, object); break;
         case OBJ_EXPR_LITERAL: FREE(ObjExprLiteral, object); break;
         case OBJ_EXPR_STRING: FREE(ObjExprString, object); break;
-        case OBJ_ARGUMENTS: {
-            ObjArguments* args = (ObjArguments*)object;
+        case OBJ_EXPRSET: {
+            ObjExprSet* args = (ObjExprSet*)object;
             FREE_ARRAY(Obj*, args->arguments, args->capacity);
-            FREE(ObjArguments, object);
+            FREE(ObjExprSet, object);
             break;
         }
         case OBJ_EXPR_CALL: FREE(ObjExprCall, object); break;

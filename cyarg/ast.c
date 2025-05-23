@@ -153,15 +153,15 @@ ObjExprString* newExprString(const char* str, int strLength) {
     return string;
 }
 
-ObjArguments* newObjArguments() {
-    ObjArguments* args = ALLOCATE_OBJ(ObjArguments, OBJ_ARGUMENTS);
-    args->arguments = NULL;
-    args->count = 0;
-    args->capacity = 0;
-    return args;
+ObjExprSet* newObjExprSet() {
+    ObjExprSet* set = ALLOCATE_OBJ(ObjExprSet, OBJ_EXPRSET);
+    set->arguments = NULL;
+    set->count = 0;
+    set->capacity = 0;
+    return set;
 }
 
-void appendObjArgument(ObjArguments* args, ObjExpr* expr) {
+void appendExpr(ObjExprSet* args, ObjExpr* expr) {
     if (args->capacity < args->count + 1) {
         args->capacity = GROW_CAPACITY(args->capacity);
         args->arguments = (Obj**)realloc(args->arguments, sizeof(Obj*) * args->capacity);
@@ -187,13 +187,13 @@ void appendMethod(ObjStmtClassDeclaration* class_, ObjStmtFunDeclaration* method
     class_->methods[class_->methodCount++] = (Obj*) method;    
 }
 
-ObjExprCall* newExprCall(ObjArguments* args) {
+ObjExprCall* newExprCall(ObjExprSet* args) {
     ObjExprCall* call = ALLOCATE_OBJ(ObjExprCall, OBJ_EXPR_CALL);
     call->args = args;
     return call;
 }
 
-ObjExprArrayInit* newExprArrayInit(ObjArguments* args) {
+ObjExprArrayInit* newExprArrayInit(ObjExprSet* args) {
     ObjExprArrayInit* array = ALLOCATE_OBJ(ObjExprArrayInit, OBJ_EXPR_ARRAYINIT);
     array->expr.nextExpr = NULL;
     array->args = args;
@@ -274,7 +274,7 @@ static void printExprOperation(ObjExprOperation* opexpr) {
     printf(")");
 }
 
-void printObjCallArgs(ObjArguments* args) {
+void printObjCallArgs(ObjExprSet* args) {
     printf("(");
     for (int i = 0; i < args->count; i++) {
         printExpr((ObjExpr*)args->arguments[i]);
