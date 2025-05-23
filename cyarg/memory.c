@@ -213,9 +213,7 @@ static void blackenObject(Obj* object) {
             markStmt(object);
             markObject((Obj*)fun->name);
             markObject((Obj*)fun->body);
-            for (int i = 0; i < fun->arity; i++) {
-                markObject((Obj*)fun->params[i]);
-            }
+            markObject((Obj*)fun->parameters);
             break;
         }
         case OBJ_STMT_WHILE: {

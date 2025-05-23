@@ -423,14 +423,8 @@ void printStmtIf(ObjStmtIf* ctrl) {
 void printFunDeclaration(ObjStmtFunDeclaration* decl) {
     printf("fun ");
     printObject(OBJ_VAL(decl->name));
-    printf("(");
-    for (int i = 0; i < decl->arity; i++) {
-        printExpr(decl->params[i]);
-        if (i < decl->arity - 1) {
-            printf(", ");
-        }
-    }
-    printf(")\n{\n");
+    printObjCallArgs(decl->parameters);
+    printf("\n{\n");
     printStmts(decl->body);
     printf("}");
 }

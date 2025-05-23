@@ -191,8 +191,7 @@ typedef struct {
 typedef struct {
     ObjStmt stmt;
     ObjString* name;
-    unsigned int arity;
-    ObjExpr* params[UINT8_MAX];
+    ObjArguments* parameters;
     ObjStmt* body;
 } ObjStmtFunDeclaration;
 
