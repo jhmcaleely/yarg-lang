@@ -172,6 +172,11 @@ typedef struct {
     ExprTypeType type;
 } ObjExprType;
 
+typedef struct {
+    ObjStmt stmt;
+    ObjStmt* statements;
+} ObjStmtBlock;
+
 typedef struct  {
     ObjStmt stmt;
     ObjExpr* expression;
@@ -185,8 +190,20 @@ typedef struct {
 
 typedef struct {
     ObjStmt stmt;
-    ObjStmt* statements;
-} ObjStmtBlock;
+    ObjString* name;
+    unsigned int arity;
+    ObjExpr* params[UINT8_MAX];
+    ObjStmt* body;
+} ObjStmtFunDeclaration;
+
+typedef struct {
+    ObjStmt stmt;
+    ObjString* name;
+    ObjExpr* superclass;
+    Obj** methods;
+    int methodCapacity;
+    int methodCount;
+} ObjStmtClassDeclaration;
 
 typedef struct {
     ObjStmt stmt;
@@ -194,14 +211,6 @@ typedef struct {
     ObjStmt* ifStmt;
     ObjStmt* elseStmt;
 } ObjStmtIf;
-
-typedef struct {
-    ObjStmt stmt;
-    ObjString* name;
-    unsigned int arity;
-    ObjExpr* params[UINT8_MAX];
-    ObjStmt* body;
-} ObjStmtFunDeclaration;
 
 typedef struct {
     ObjStmt stmt;
@@ -216,15 +225,6 @@ typedef struct {
     ObjExpr* loopExpression;
     ObjStmt* body;
 } ObjStmtFor;
-
-typedef struct {
-    ObjStmt stmt;
-    ObjString* name;
-    ObjExpr* superclass;
-    Obj** methods;
-    int methodCapacity;
-    int methodCount;
-} ObjStmtClassDeclaration;
 
 ObjExprNumber* newExprNumberDouble(double value);
 ObjExprNumber* newExprNumberInteger(int value);
@@ -242,13 +242,15 @@ ObjExprDot* newExprDot(const char* name, int nameLength);
 ObjExprSuper* newExprSuper(const char* name, int nameLength);
 ObjExprType* newExprType(ExprTypeType type);
 
-void appendMethod(ObjStmtClassDeclaration* class_, ObjStmtFunDeclaration* method);
-
 ObjStmtExpression* newStmtExpression(ObjExpr* expr, ObjType statement, int line);
+ObjStmtBlock* newStmtBlock(int line);
+
 ObjStmtVarDeclaration* newStmtVarDeclaration(const char* name, int nameLength, ObjExpr* expr, int line);
 ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength, int line);
 ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength, int line);
-ObjStmtBlock* newStmtBlock(int line);
+
+void appendMethod(ObjStmtClassDeclaration* class_, ObjStmtFunDeclaration* method);
+
 ObjStmtIf* newStmtIf(int line);
 ObjStmtWhile* newStmtWhile(int line);
 ObjStmtFor* newStmtFor(int line);
