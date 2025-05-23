@@ -213,7 +213,7 @@ static void blackenObject(Obj* object) {
             markStmt(object);
             markObject((Obj*)fun->name);
             markObject((Obj*)fun->body);
-            markObject((Obj*)fun->parameters);
+            markDynamicObjArray(&fun->parameters);
             break;
         }
         case OBJ_STMT_WHILE: {
@@ -409,7 +409,12 @@ static void freeObject(Obj* object) {
         case OBJ_STMT_VARDECLARATION: FREE(ObjStmtVarDeclaration, object); break;
         case OBJ_STMT_BLOCK: FREE(ObjStmtBlock, object); break;
         case OBJ_STMT_IF: FREE(ObjStmtIf, object); break;
-        case OBJ_STMT_FUNDECLARATION: FREE(ObjStmtFunDeclaration, object); break;
+        case OBJ_STMT_FUNDECLARATION: {
+            ObjStmtFunDeclaration* fun = (ObjStmtFunDeclaration*)object;
+            freeDynamicObjArray(&fun->parameters);
+            FREE(ObjStmtFunDeclaration, object); 
+            break;
+        }
         case OBJ_STMT_WHILE: FREE(ObjStmtWhile, object); break;
         case OBJ_STMT_FOR: FREE(ObjStmtFor, object); break;
         case OBJ_STMT_CLASSDECLARATION: {

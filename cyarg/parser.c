@@ -722,11 +722,10 @@ static ObjStmtFunDeclaration* funDeclaration(const char* msg) {
     pushWorkingNode((Obj*)fun);
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
-    fun->parameters = newObjExprSet();
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
-            appendExpr(fun->parameters, expression());
-            if (fun->parameters->count > 255) {
+            appendToDynamicObjArray(&fun->parameters, (Obj*)expression());
+            if (fun->parameters.objectCount > 255) {
                 errorAt(&parser.previous, "Can't have more than 255 parameters.");
             }
         } while (match(TOKEN_COMMA));

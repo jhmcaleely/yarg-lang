@@ -44,6 +44,7 @@ ObjStmtIf* newStmtIf(int line) {
 ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength, int line) {
     ObjStmtFunDeclaration* fun = ALLOCATE_OBJ(ObjStmtFunDeclaration, OBJ_STMT_FUNDECLARATION);
     fun->stmt.line = line;
+    initDynamicObjArray(&fun->parameters);
     tempRootPush(OBJ_VAL(fun));
     fun->name = copyString(name, nameLength);
     tempRootPop();
@@ -285,6 +286,17 @@ void printObjCallArgs(ObjExprSet* args) {
     printf(")");
 }
 
+void printCallArgs(DynamicObjArray* args) {
+    printf("(");
+    for (int i = 0; i < args->objectCount; i++) {
+        printExpr((ObjExpr*)args->objects[i]);
+        if (i < args->objectCount - 1) {
+            printf(", ");
+        }
+    }
+    printf(")");
+}
+
 void printExprDot(ObjExprDot* dot) {
     printf(".");
     printObject(OBJ_VAL(dot->name));
@@ -423,7 +435,7 @@ void printStmtIf(ObjStmtIf* ctrl) {
 void printFunDeclaration(ObjStmtFunDeclaration* decl) {
     printf("fun ");
     printObject(OBJ_VAL(decl->name));
-    printObjCallArgs(decl->parameters);
+    printCallArgs(&decl->parameters);
     printf("\n{\n");
     printStmts(decl->body);
     printf("}");

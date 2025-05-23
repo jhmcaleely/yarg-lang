@@ -679,15 +679,15 @@ static void generateFunction(FunctionType type, ObjStmtFunDeclaration* decl) {
     initCompiler(&compiler, type, decl->name);
     beginScope();
 
-    for (int i = 0; i < decl->parameters->count; i++) {
-        uint8_t constant = parseVariable(((ObjExprNamedVariable*)decl->parameters->arguments[i])->name);
+    for (int i = 0; i < decl->parameters.objectCount; i++) {
+        uint8_t constant = parseVariable(((ObjExprNamedVariable*)decl->parameters.objects[i])->name);
         defineVariable(constant);
     }
 
     generate(decl->body);
 
     ObjFunction* function = endCompiler();
-    function->arity = decl->parameters->count;
+    function->arity = decl->parameters.objectCount;
     emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
 
     for (int i = 0; i < function->upvalueCount; i++) {

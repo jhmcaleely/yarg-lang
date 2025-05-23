@@ -176,7 +176,7 @@ typedef struct {
 typedef struct {
     ObjStmt stmt;
     ObjString* name;
-    ObjExprSet* parameters;
+    DynamicObjArray parameters;
     ObjStmt* body;
 } ObjStmtFunDeclaration;
 
