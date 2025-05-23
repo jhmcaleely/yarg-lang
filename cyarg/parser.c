@@ -763,7 +763,7 @@ static ObjStmtClassDeclaration* classDeclaration() {
 
     consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
     while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
-        appendMethod(decl, funDeclaration("Expect method name."));
+        appendToDynamicObjArray(&decl->methods, (Obj*)funDeclaration("Expect method name."));
     }
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
 

@@ -73,13 +73,8 @@ ObjStmtFor* newStmtFor(int line) {
 
 ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength, int line) {
     ObjStmtClassDeclaration* decl = ALLOCATE_OBJ(ObjStmtClassDeclaration, OBJ_STMT_CLASSDECLARATION);
-    decl->stmt.nextStmt = NULL;
     decl->stmt.line = line;
-    decl->name = NULL;
-    decl->superclass = NULL;
-    decl->methodCapacity = 0;
-    decl->methodCount = 0;
-    decl->methods = NULL;
+    initDynamicObjArray(&decl->methods);
     tempRootPush(OBJ_VAL(decl));
     decl->name = copyString(name, nameLength);
     tempRootPop();
@@ -173,19 +168,6 @@ void appendExpr(ObjExprSet* args, ObjExpr* expr) {
         }
     }
     args->arguments[args->count++] = (Obj*) expr;
-}
-
-void appendMethod(ObjStmtClassDeclaration* class_, ObjStmtFunDeclaration* method) {
-    if (class_->methodCapacity < class_->methodCount + 1) {
-        class_->methodCapacity = GROW_CAPACITY(class_->methodCapacity);
-        class_->methods = (Obj**)realloc(class_->methods, sizeof(Obj*) * class_->methodCapacity);
-
-        if (class_->methods == NULL) {
-            printf("Out of memory!");
-            exit(1);
-        }
-    }
-    class_->methods[class_->methodCount++] = (Obj*) method;    
 }
 
 ObjExprCall* newExprCall(ObjExprSet* args) {
@@ -466,8 +448,8 @@ void printStmtClassDeclaration(ObjStmtClassDeclaration* class_) {
         printExpr(class_->superclass);
     }
     printf("\n{\n");
-    for (int i = 0; i < class_->methodCount; i++) {
-        printFunDeclaration((ObjStmtFunDeclaration*)class_->methods[i]);
+    for (int i = 0; i < class_->methods.objectCount; i++) {
+        printFunDeclaration((ObjStmtFunDeclaration*)class_->methods.objects[i]);
         printf("\n");
     }
     printf("}");

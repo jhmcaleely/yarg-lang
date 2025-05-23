@@ -838,8 +838,8 @@ static void generateStmtClassDeclaration(ObjStmtClassDeclaration* decl) {
 
     // Make the class name conveniently available on the stack for method definition.
     generateGetNamedVariable(decl->name);
-    for (int i = 0; i < decl->methodCount; i++) {
-        generateStmtMethodDeclaration((ObjStmtFunDeclaration*)decl->methods[i]);
+    for (int i = 0; i < decl->methods.objectCount; i++) {
+        generateStmtMethodDeclaration((ObjStmtFunDeclaration*)decl->methods.objects[i]);
     }
     emitByte(OP_POP);
 

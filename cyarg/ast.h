@@ -184,9 +184,7 @@ typedef struct {
     ObjStmt stmt;
     ObjString* name;
     ObjExpr* superclass;
-    Obj** methods;
-    int methodCapacity;
-    int methodCount;
+    DynamicObjArray methods;
 } ObjStmtClassDeclaration;
 
 typedef struct {
@@ -232,8 +230,6 @@ ObjStmtBlock* newStmtBlock(int line);
 ObjStmtVarDeclaration* newStmtVarDeclaration(const char* name, int nameLength, ObjExpr* expr, int line);
 ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength, int line);
 ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength, int line);
-
-void appendMethod(ObjStmtClassDeclaration* class_, ObjStmtFunDeclaration* method);
 
 ObjStmtIf* newStmtIf(int line);
 ObjStmtWhile* newStmtWhile(int line);

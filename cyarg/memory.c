@@ -234,12 +234,10 @@ static void blackenObject(Obj* object) {
         }
         case OBJ_STMT_CLASSDECLARATION: {
             ObjStmtClassDeclaration* decl = (ObjStmtClassDeclaration*)object;
-            markObject((Obj*)decl->stmt.nextStmt);
+            markStmt(object);
             markObject((Obj*)decl->name);
             markObject((Obj*)decl->superclass);
-            for (int i = 0; i < decl->methodCount; i++) {
-                markObject(decl->methods[i]);
-            }
+            markDynamicObjArray(&decl->methods);
             break;
         }
         case OBJ_EXPR_NUMBER: {
@@ -419,7 +417,7 @@ static void freeObject(Obj* object) {
         case OBJ_STMT_FOR: FREE(ObjStmtFor, object); break;
         case OBJ_STMT_CLASSDECLARATION: {
             ObjStmtClassDeclaration* decl = (ObjStmtClassDeclaration*)object;
-            FREE_ARRAY(Obj*, decl->methods, decl->methodCapacity);
+            freeDynamicObjArray(&decl->methods);
             FREE(ObjStmtClassDeclaration, object);
             break;
         }
