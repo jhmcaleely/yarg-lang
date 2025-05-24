@@ -107,13 +107,6 @@ typedef struct {
 } ObjExprString;
 
 typedef struct {
-    Obj obj;
-    int count;
-    int capacity;
-    Obj** arguments;
-} ObjExprSet;
-
-typedef struct {
     ObjExpr expr;
     DynamicObjArray arguments;
 } ObjExprCall;
@@ -146,7 +139,8 @@ typedef struct {
 typedef struct {
     ObjExpr expr;
     ObjString* name;
-    ObjExprSet* callArgs;
+    bool call;
+    DynamicObjArray arguments;
 } ObjExprSuper;
 
 typedef enum {
@@ -235,10 +229,6 @@ ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLengt
 ObjStmtIf* newStmtIf(int line);
 ObjStmtWhile* newStmtWhile(int line);
 ObjStmtFor* newStmtFor(int line);
-
-ObjExprSet* newObjExprSet();
-
-void appendExpr(ObjExprSet* args, ObjExpr* expr);
 
 void printStmts(ObjStmt* stmts);
 void printExpr(ObjExpr* expr);

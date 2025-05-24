@@ -197,22 +197,6 @@ static ObjExpr* namedVariable(Token name, bool canAssign) {
     return (ObjExpr*)expr;
 }
 
-static ObjExprSet* expressionList() {
-    ObjExprSet* args = newObjExprSet();
-    pushWorkingNode((Obj*)args);
-    if (!check(TOKEN_RIGHT_PAREN)) {
-        do {
-            appendExpr(args, expression());
-            if (args->count > 255) {
-                error("Can't have more than 255 arguments.");
-            }
-        } while (match(TOKEN_COMMA));
-    }
-    consume(TOKEN_RIGHT_PAREN, "Expect ')' aftger arguments.");
-    popWorkingNode();
-    return args;
-}
-
 static void expressionList2(DynamicObjArray* items) {
 
     if (!check(TOKEN_RIGHT_PAREN)) {
@@ -248,7 +232,8 @@ static ObjExpr* super_(bool canAssign) {
     pushWorkingNode((Obj*)super_);
 
     if (match(TOKEN_LEFT_PAREN)) {
-        super_->callArgs = expressionList();
+        super_->call = true;
+        expressionList2(&super_->arguments);
     }
     popWorkingNode();
     return (ObjExpr*)super_;

@@ -419,12 +419,6 @@ static void generateExprLiteral(ObjExprLiteral* lit) {
     }
 }
 
-static void generateExprSet(ObjExprSet* args) {
-    for (int i = 0; i < args->count; i++) {
-        generateExpr((ObjExpr*)args->arguments[i]);
-    }
-}
-
 static void generateExprSet2(DynamicObjArray* args) {
     for (int i = 0; i < args->objectCount; i++) {
         generateExpr((ObjExpr*)args->objects[i]);
@@ -509,11 +503,11 @@ static void generateExprSuper(ObjExprSuper* super) {
     tempRootPush(OBJ_VAL(super_));
 
     generateGetNamedVariable(this_);
-    if (super->callArgs) {
-        generateExprSet(super->callArgs);
+    if (super->call) {
+        generateExprSet2(&super->arguments);
         generateGetNamedVariable(super_);
         emitBytes(OP_SUPER_INVOKE, name);
-        emitByte(super->callArgs->count);
+        emitByte(super->arguments.objectCount);
     } else {
         generateGetNamedVariable(super_);
         emitBytes(OP_GET_SUPER, name);

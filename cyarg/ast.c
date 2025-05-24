@@ -149,27 +149,6 @@ ObjExprString* newExprString(const char* str, int strLength) {
     return string;
 }
 
-ObjExprSet* newObjExprSet() {
-    ObjExprSet* set = ALLOCATE_OBJ(ObjExprSet, OBJ_EXPRSET);
-    set->arguments = NULL;
-    set->count = 0;
-    set->capacity = 0;
-    return set;
-}
-
-void appendExpr(ObjExprSet* args, ObjExpr* expr) {
-    if (args->capacity < args->count + 1) {
-        args->capacity = GROW_CAPACITY(args->capacity);
-        args->arguments = (Obj**)realloc(args->arguments, sizeof(Obj*) * args->capacity);
-
-        if (args->arguments == NULL) {
-            printf("Out of memory!");
-            exit(1);
-        }
-    }
-    args->arguments[args->count++] = (Obj*) expr;
-}
-
 ObjExprCall* newExprCall() {
     ObjExprCall* call = ALLOCATE_OBJ(ObjExprCall, OBJ_EXPR_CALL);
     initDynamicObjArray(&call->arguments);
@@ -200,6 +179,7 @@ ObjExprBuiltin* newExprBuiltin(ExprBuiltin fn, int arity) {
 
 ObjExprDot* newExprDot(const char* name, int nameLength) {
     ObjExprDot* expr = ALLOCATE_OBJ(ObjExprDot, OBJ_EXPR_DOT);
+    initDynamicObjArray(&expr->callArgs);
     tempRootPush(OBJ_VAL(expr));
     expr->name = copyString(name, nameLength);
     tempRootPop();
@@ -208,9 +188,7 @@ ObjExprDot* newExprDot(const char* name, int nameLength) {
 
 ObjExprSuper* newExprSuper(const char* name, int nameLength) {
     ObjExprSuper* expr = ALLOCATE_OBJ(ObjExprSuper, OBJ_EXPR_SUPER);
-    expr->expr.nextExpr = NULL;
-    expr->name = NULL;
-    expr->callArgs = NULL;
+    initDynamicObjArray(&expr->arguments);
     tempRootPush(OBJ_VAL(expr));
     expr->name = copyString(name, nameLength);
     tempRootPop();
@@ -252,17 +230,6 @@ static void printExprOperation(ObjExprOperation* opexpr) {
     printf(")");
 }
 
-void printObjCallArgs(ObjExprSet* args) {
-    printf("(");
-    for (int i = 0; i < args->count; i++) {
-        printExpr((ObjExpr*)args->arguments[i]);
-        if (i < args->count - 1) {
-            printf(", ");
-        }
-    }
-    printf(")");
-}
-
 void printCallArgs(DynamicObjArray* args) {
     printf("(");
     for (int i = 0; i < args->objectCount; i++) {
@@ -288,8 +255,8 @@ void printExprDot(ObjExprDot* dot) {
 void printExprSuper(ObjExprSuper* expr) {
     printf("super.");
     printObject(OBJ_VAL(expr->name));
-    if (expr->callArgs) {
-        printObjCallArgs(expr->callArgs);
+    if (expr->call) {
+        printCallArgs(&expr->arguments);
     }
 }
 
