@@ -197,7 +197,7 @@ static ObjExpr* namedVariable(Token name, bool canAssign) {
     return (ObjExpr*)expr;
 }
 
-static void expressionList2(DynamicObjArray* items) {
+static void expressionList(DynamicObjArray* items) {
 
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
@@ -233,7 +233,7 @@ static ObjExpr* super_(bool canAssign) {
 
     if (match(TOKEN_LEFT_PAREN)) {
         super_->call = true;
-        expressionList2(&super_->arguments);
+        expressionList(&super_->arguments);
     }
     popWorkingNode();
     return (ObjExpr*)super_;
@@ -249,7 +249,7 @@ static ObjExpr* dot(bool canAssign) {
         expr->assignment = expression();
     } else if (match(TOKEN_LEFT_PAREN)) {
         expr->call = true;
-        expressionList2(&expr->callArgs);
+        expressionList(&expr->callArgs);
     }
     popWorkingNode();
     return (ObjExpr*) expr;
@@ -286,7 +286,7 @@ static ObjExpr* arrayinit(bool canAssign) {
 static ObjExpr* call(bool canAssign) {
     ObjExprCall* call = newExprCall();
     pushWorkingNode((Obj*)call);
-    expressionList2(&call->arguments);
+    expressionList(&call->arguments);
     popWorkingNode();
     return (ObjExpr*)call;
 }
