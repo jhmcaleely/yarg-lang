@@ -481,9 +481,9 @@ static void generateExprDot(ObjExprDot* dot) {
         generateExpr(dot->assignment);
         emitBytes(OP_SET_PROPERTY, name);
     } else if (dot->call) {
-        generateExprSet(&dot->callArgs);
+        generateExprSet(&dot->call->arguments);
         emitBytes(OP_INVOKE, name);
-        emitByte(dot->callArgs.objectCount);
+        emitByte(dot->call->arguments.objectCount);
     } else {
         emitBytes(OP_GET_PROPERTY, name);
     }
@@ -504,10 +504,10 @@ static void generateExprSuper(ObjExprSuper* super) {
 
     generateGetNamedVariable(this_);
     if (super->call) {
-        generateExprSet(&super->arguments);
+        generateExprSet(&super->call->arguments);
         generateGetNamedVariable(super_);
         emitBytes(OP_SUPER_INVOKE, name);
-        emitByte(super->arguments.objectCount);
+        emitByte(super->call->arguments.objectCount);
     } else {
         generateGetNamedVariable(super_);
         emitBytes(OP_GET_SUPER, name);

@@ -179,7 +179,6 @@ ObjExprBuiltin* newExprBuiltin(ExprBuiltin fn, int arity) {
 
 ObjExprDot* newExprDot(const char* name, int nameLength) {
     ObjExprDot* expr = ALLOCATE_OBJ(ObjExprDot, OBJ_EXPR_DOT);
-    initDynamicObjArray(&expr->callArgs);
     tempRootPush(OBJ_VAL(expr));
     expr->name = copyString(name, nameLength);
     tempRootPop();
@@ -188,7 +187,6 @@ ObjExprDot* newExprDot(const char* name, int nameLength) {
 
 ObjExprSuper* newExprSuper(const char* name, int nameLength) {
     ObjExprSuper* expr = ALLOCATE_OBJ(ObjExprSuper, OBJ_EXPR_SUPER);
-    initDynamicObjArray(&expr->arguments);
     tempRootPush(OBJ_VAL(expr));
     expr->name = copyString(name, nameLength);
     tempRootPop();
@@ -248,7 +246,7 @@ void printExprDot(ObjExprDot* dot) {
         printf(" = ");
         printExpr(dot->assignment);
     } else if (dot->call) {
-        printCallArgs(&dot->callArgs);
+        printExpr((ObjExpr*)dot->call);
     }
 }
 
@@ -256,7 +254,7 @@ void printExprSuper(ObjExprSuper* expr) {
     printf("super.");
     printObject(OBJ_VAL(expr->name));
     if (expr->call) {
-        printCallArgs(&expr->arguments);
+        printExpr((ObjExpr*)expr->call);
     }
 }
 

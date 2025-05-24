@@ -132,15 +132,13 @@ typedef struct {
     ObjExpr expr;
     ObjString* name;
     ObjExpr* assignment;
-    bool call;
-    DynamicObjArray callArgs;
+    ObjExprCall* call;
 } ObjExprDot;
 
 typedef struct {
     ObjExpr expr;
     ObjString* name;
-    bool call;
-    DynamicObjArray arguments;
+    ObjExprCall* call;
 } ObjExprSuper;
 
 typedef enum {

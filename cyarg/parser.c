@@ -232,8 +232,8 @@ static ObjExpr* super_(bool canAssign) {
     pushWorkingNode((Obj*)super_);
 
     if (match(TOKEN_LEFT_PAREN)) {
-        super_->call = true;
-        expressionList(&super_->arguments);
+        super_->call = newExprCall();
+        expressionList(&super_->call->arguments);
     }
     popWorkingNode();
     return (ObjExpr*)super_;
@@ -248,8 +248,8 @@ static ObjExpr* dot(bool canAssign) {
     if (canAssign && match(TOKEN_EQUAL)) {
         expr->assignment = expression();
     } else if (match(TOKEN_LEFT_PAREN)) {
-        expr->call = true;
-        expressionList(&expr->callArgs);
+        expr->call = newExprCall();
+        expressionList(&expr->call->arguments);
     }
     popWorkingNode();
     return (ObjExpr*) expr;
