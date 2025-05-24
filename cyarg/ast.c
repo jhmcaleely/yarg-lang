@@ -200,10 +200,6 @@ ObjExprBuiltin* newExprBuiltin(ExprBuiltin fn, int arity) {
 
 ObjExprDot* newExprDot(const char* name, int nameLength) {
     ObjExprDot* expr = ALLOCATE_OBJ(ObjExprDot, OBJ_EXPR_DOT);
-    expr->expr.nextExpr = NULL;
-    expr->name = NULL;
-    expr->assignment = NULL;
-    expr->callArgs = NULL;
     tempRootPush(OBJ_VAL(expr));
     expr->name = copyString(name, nameLength);
     tempRootPop();
@@ -284,8 +280,8 @@ void printExprDot(ObjExprDot* dot) {
     if (dot->assignment) {
         printf(" = ");
         printExpr(dot->assignment);
-    } else if (dot->callArgs) {
-        printObjCallArgs(dot->callArgs);
+    } else if (dot->call) {
+        printCallArgs(&dot->callArgs);
     }
 }
 

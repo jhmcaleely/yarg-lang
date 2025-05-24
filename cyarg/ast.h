@@ -139,7 +139,8 @@ typedef struct {
     ObjExpr expr;
     ObjString* name;
     ObjExpr* assignment;
-    ObjExprSet* callArgs;
+    bool call;
+    DynamicObjArray callArgs;
 } ObjExprDot;
 
 typedef struct {

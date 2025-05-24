@@ -304,7 +304,7 @@ static void blackenObject(Obj* object) {
             ObjExprDot* expr = (ObjExprDot*)object;
             markObject((Obj*)expr->name);
             markObject((Obj*)expr->assignment);
-            markObject((Obj*)expr->callArgs);
+            markDynamicObjArray(&expr->callArgs);
             break;
         }
         case OBJ_EXPR_SUPER: {
@@ -447,7 +447,12 @@ static void freeObject(Obj* object) {
         }
         case OBJ_EXPR_ARRAYELEMENT: FREE(ObjExprArrayElement, object); break;
         case OBJ_EXPR_BUILTIN: FREE(ObjExprBuiltin, object); break;
-        case OBJ_EXPR_DOT: FREE(ObjExprDot, object); break;
+        case OBJ_EXPR_DOT: {
+            ObjExprDot* dot = (ObjExprDot*)object;
+            freeDynamicObjArray(&dot->callArgs);
+            FREE(ObjExprDot, object); 
+            break;
+        }
         case OBJ_EXPR_SUPER: FREE(OBJ_EXPR_SUPER, object); break;
         case OBJ_EXPR_TYPE: FREE(ObjExprType, object); break;
     }

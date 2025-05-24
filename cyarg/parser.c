@@ -263,7 +263,8 @@ static ObjExpr* dot(bool canAssign) {
     if (canAssign && match(TOKEN_EQUAL)) {
         expr->assignment = expression();
     } else if (match(TOKEN_LEFT_PAREN)) {
-        expr->callArgs = expressionList();
+        expr->call = true;
+        expressionList2(&expr->callArgs);
     }
     popWorkingNode();
     return (ObjExpr*) expr;

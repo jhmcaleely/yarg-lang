@@ -486,10 +486,10 @@ static void generateExprDot(ObjExprDot* dot) {
     if (dot->assignment) {
         generateExpr(dot->assignment);
         emitBytes(OP_SET_PROPERTY, name);
-    } else if (dot->callArgs) {
-        generateExprSet(dot->callArgs);
+    } else if (dot->call) {
+        generateExprSet2(&dot->callArgs);
         emitBytes(OP_INVOKE, name);
-        emitByte(dot->callArgs->count);
+        emitByte(dot->callArgs.objectCount);
     } else {
         emitBytes(OP_GET_PROPERTY, name);
     }
