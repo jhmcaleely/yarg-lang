@@ -43,10 +43,8 @@ ObjStmtIf* newStmtIf(int line) {
 
 ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength, int line) {
     ObjStmtFunDeclaration* fun = ALLOCATE_OBJ(ObjStmtFunDeclaration, OBJ_STMT_FUNDECLARATION);
-    fun->stmt.nextStmt = NULL;
     fun->stmt.line = line;
-    fun->name = NULL;
-    fun->function = NULL;
+    initDynamicObjArray(&fun->parameters);
     tempRootPush(OBJ_VAL(fun));
     fun->name = copyString(name, nameLength);
     tempRootPop();
@@ -75,24 +73,12 @@ ObjStmtFor* newStmtFor(int line) {
 
 ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength, int line) {
     ObjStmtClassDeclaration* decl = ALLOCATE_OBJ(ObjStmtClassDeclaration, OBJ_STMT_CLASSDECLARATION);
-    decl->stmt.nextStmt = NULL;
     decl->stmt.line = line;
-    decl->name = NULL;
-    decl->superclass = NULL;
-    decl->methodCapacity = 0;
-    decl->methodCount = 0;
-    decl->methods = NULL;
+    initDynamicObjArray(&decl->methods);
     tempRootPush(OBJ_VAL(decl));
     decl->name = copyString(name, nameLength);
     tempRootPop();
     return decl;
-}
-
-ObjFunctionDeclaration* newObjFunctionDeclaration() {
-    ObjFunctionDeclaration* fun = ALLOCATE_OBJ(ObjFunctionDeclaration, OBJ_FUNDECLARATION);
-    fun->arity = 0;
-    fun->body = NULL;
-    return fun;
 }
 
 ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op) {
@@ -163,50 +149,15 @@ ObjExprString* newExprString(const char* str, int strLength) {
     return string;
 }
 
-ObjArguments* newObjArguments() {
-    ObjArguments* args = ALLOCATE_OBJ(ObjArguments, OBJ_ARGUMENTS);
-    args->arguments = NULL;
-    args->count = 0;
-    args->capacity = 0;
-    return args;
-}
-
-void appendObjArgument(ObjArguments* args, ObjExpr* expr) {
-    if (args->capacity < args->count + 1) {
-        args->capacity = GROW_CAPACITY(args->capacity);
-        args->arguments = (Obj**)realloc(args->arguments, sizeof(Obj*) * args->capacity);
-
-        if (args->arguments == NULL) {
-            printf("Out of memory!");
-            exit(1);
-        }
-    }
-    args->arguments[args->count++] = (Obj*) expr;
-}
-
-void appendMethod(ObjStmtClassDeclaration* class_, ObjStmtFunDeclaration* method) {
-    if (class_->methodCapacity < class_->methodCount + 1) {
-        class_->methodCapacity = GROW_CAPACITY(class_->methodCapacity);
-        class_->methods = (Obj**)realloc(class_->methods, sizeof(Obj*) * class_->methodCapacity);
-
-        if (class_->methods == NULL) {
-            printf("Out of memory!");
-            exit(1);
-        }
-    }
-    class_->methods[class_->methodCount++] = (Obj*) method;    
-}
-
-ObjExprCall* newExprCall(ObjArguments* args) {
+ObjExprCall* newExprCall() {
     ObjExprCall* call = ALLOCATE_OBJ(ObjExprCall, OBJ_EXPR_CALL);
-    call->args = args;
+    initDynamicObjArray(&call->arguments);
     return call;
 }
 
-ObjExprArrayInit* newExprArrayInit(ObjArguments* args) {
+ObjExprArrayInit* newExprArrayInit() {
     ObjExprArrayInit* array = ALLOCATE_OBJ(ObjExprArrayInit, OBJ_EXPR_ARRAYINIT);
-    array->expr.nextExpr = NULL;
-    array->args = args;
+    initDynamicObjArray(&array->initializers);
     return array;
 }
 
@@ -228,10 +179,6 @@ ObjExprBuiltin* newExprBuiltin(ExprBuiltin fn, int arity) {
 
 ObjExprDot* newExprDot(const char* name, int nameLength) {
     ObjExprDot* expr = ALLOCATE_OBJ(ObjExprDot, OBJ_EXPR_DOT);
-    expr->expr.nextExpr = NULL;
-    expr->name = NULL;
-    expr->assignment = NULL;
-    expr->callArgs = NULL;
     tempRootPush(OBJ_VAL(expr));
     expr->name = copyString(name, nameLength);
     tempRootPop();
@@ -240,9 +187,6 @@ ObjExprDot* newExprDot(const char* name, int nameLength) {
 
 ObjExprSuper* newExprSuper(const char* name, int nameLength) {
     ObjExprSuper* expr = ALLOCATE_OBJ(ObjExprSuper, OBJ_EXPR_SUPER);
-    expr->expr.nextExpr = NULL;
-    expr->name = NULL;
-    expr->callArgs = NULL;
     tempRootPush(OBJ_VAL(expr));
     expr->name = copyString(name, nameLength);
     tempRootPop();
@@ -284,11 +228,11 @@ static void printExprOperation(ObjExprOperation* opexpr) {
     printf(")");
 }
 
-void printObjCallArgs(ObjArguments* args) {
+void printCallArgs(DynamicObjArray* args) {
     printf("(");
-    for (int i = 0; i < args->count; i++) {
-        printExpr((ObjExpr*)args->arguments[i]);
-        if (i < args->count - 1) {
+    for (int i = 0; i < args->objectCount; i++) {
+        printExpr((ObjExpr*)args->objects[i]);
+        if (i < args->objectCount - 1) {
             printf(", ");
         }
     }
@@ -301,16 +245,16 @@ void printExprDot(ObjExprDot* dot) {
     if (dot->assignment) {
         printf(" = ");
         printExpr(dot->assignment);
-    } else if (dot->callArgs) {
-        printObjCallArgs(dot->callArgs);
+    } else if (dot->call) {
+        printExpr((ObjExpr*)dot->call);
     }
 }
 
 void printExprSuper(ObjExprSuper* expr) {
     printf("super.");
     printObject(OBJ_VAL(expr->name));
-    if (expr->callArgs) {
-        printObjCallArgs(expr->callArgs);
+    if (expr->call) {
+        printExpr((ObjExpr*)expr->call);
     }
 }
 
@@ -386,14 +330,14 @@ void printExpr(ObjExpr* expr) {
             }
             case OBJ_EXPR_CALL: {
                 ObjExprCall* call = (ObjExprCall*)cursor;
-                printObjCallArgs(call->args);
+                printCallArgs(&call->arguments);
                 break;
             }
             case OBJ_EXPR_ARRAYINIT: {
                 ObjExprArrayInit* array = (ObjExprArrayInit*)cursor;
                 printf("[");
-                for (int i = 0; i < array->args->count; i++) {
-                    printExpr((ObjExpr*)array->args->arguments[i]);
+                for (int i = 0; i < array->initializers.objectCount; i++) {
+                    printExpr((ObjExpr*)array->initializers.objects[i]);
                     printf(", ");
                 }
                 printf("]");
@@ -433,15 +377,9 @@ void printStmtIf(ObjStmtIf* ctrl) {
 void printFunDeclaration(ObjStmtFunDeclaration* decl) {
     printf("fun ");
     printObject(OBJ_VAL(decl->name));
-    printf("(");
-    for (int i = 0; i < decl->function->arity; i++) {
-        printExpr(decl->function->params[i]);
-        if (i < decl->function->arity - 1) {
-            printf(", ");
-        }
-    }
-    printf(")\n{\n");
-    printStmts(decl->function->body);
+    printCallArgs(&decl->parameters);
+    printf("\n{\n");
+    printStmts(decl->body);
     printf("}");
 }
 
@@ -470,8 +408,8 @@ void printStmtClassDeclaration(ObjStmtClassDeclaration* class_) {
         printExpr(class_->superclass);
     }
     printf("\n{\n");
-    for (int i = 0; i < class_->methodCount; i++) {
-        printFunDeclaration((ObjStmtFunDeclaration*)class_->methods[i]);
+    for (int i = 0; i < class_->methods.objectCount; i++) {
+        printFunDeclaration((ObjStmtFunDeclaration*)class_->methods.objects[i]);
         printf("\n");
     }
     printf("}");

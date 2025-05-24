@@ -9,6 +9,21 @@
 #include "scanner.h"
 #include <stdbool.h>
 
+typedef enum {
+    PREC_NONE,
+    PREC_ASSIGNMENT, // =
+    PREC_OR,         // or
+    PREC_AND,        // and
+    PREC_EQUALITY,   // == !=
+    PREC_COMPARISON, // < > <= >=
+    PREC_TERM,       // + - | ^ & %
+    PREC_FACTOR,     // * / << >>
+    PREC_UNARY,      // ! -
+    PREC_CALL,       // . ()
+    PREC_DEREF,      // []
+    PREC_PRIMARY
+} Precedence;
+
 typedef struct {
     Token current;
     Token previous;
@@ -182,37 +197,31 @@ static ObjExpr* namedVariable(Token name, bool canAssign) {
     return (ObjExpr*)expr;
 }
 
-static ObjArguments* argumentList() {
-    ObjArguments* args = newObjArguments();
-    pushWorkingNode((Obj*)args);
+static void expressionList(DynamicObjArray* items) {
+
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
-            appendObjArgument(args, expression());
-            if (args->count > 255) {
+            appendToDynamicObjArray(items, (Obj*) expression());
+            if (items->objectCount > 255) {
                 error("Can't have more than 255 arguments.");
             }
         } while (match(TOKEN_COMMA));
     }
     consume(TOKEN_RIGHT_PAREN, "Expect ')' aftger arguments.");
-    popWorkingNode();
-    return args;
+
 }
 
-static ObjArguments* arrayInitExpressionsList() {
-    ObjArguments* args = newObjArguments();
-    pushWorkingNode((Obj*)args);
+static void arrayInitExpressionsList(DynamicObjArray* initializers) {
 
     if (!check(TOKEN_RIGHT_SQUARE_BRACKET)) {
         do {
-            appendObjArgument(args, expression());
-            if (args->count > 255) {
+            appendToDynamicObjArray(initializers, (Obj*)expression());
+            if (initializers->objectCount > 255) {
                 error("Can't have more than 255 array initialisers.");
             }
 
         } while (match(TOKEN_COMMA));
     }
-    popWorkingNode();
-    return args;
 }
 
 static ObjExpr* super_(bool canAssign) {
@@ -223,7 +232,8 @@ static ObjExpr* super_(bool canAssign) {
     pushWorkingNode((Obj*)super_);
 
     if (match(TOKEN_LEFT_PAREN)) {
-        super_->callArgs = argumentList();
+        super_->call = newExprCall();
+        expressionList(&super_->call->arguments);
     }
     popWorkingNode();
     return (ObjExpr*)super_;
@@ -238,7 +248,8 @@ static ObjExpr* dot(bool canAssign) {
     if (canAssign && match(TOKEN_EQUAL)) {
         expr->assignment = expression();
     } else if (match(TOKEN_LEFT_PAREN)) {
-        expr->callArgs = argumentList();
+        expr->call = newExprCall();
+        expressionList(&expr->call->arguments);
     }
     popWorkingNode();
     return (ObjExpr*) expr;
@@ -262,20 +273,20 @@ static ObjExpr* deref(bool canAssign) {
 
 static ObjExpr* arrayinit(bool canAssign) {
 
-    ObjArguments* args = arrayInitExpressionsList();
-    pushWorkingNode((Obj*)args);
+    ObjExprArrayInit* array = newExprArrayInit();
+    pushWorkingNode((Obj*)array);
+
+    arrayInitExpressionsList(&array->initializers);
     consume(TOKEN_RIGHT_SQUARE_BRACKET, "Expect ']' initialising array.");
     
-    ObjExprArrayInit* array = newExprArrayInit(args);
-
     popWorkingNode();
     return (ObjExpr*)array;
 }
 
 static ObjExpr* call(bool canAssign) {
-    ObjArguments* args = argumentList();
-    pushWorkingNode((Obj*)args);
-    ObjExprCall* call = newExprCall(args);
+    ObjExprCall* call = newExprCall();
+    pushWorkingNode((Obj*)call);
+    expressionList(&call->arguments);
     popWorkingNode();
     return (ObjExpr*)call;
 }
@@ -701,17 +712,16 @@ ObjStmt* statement() {
     }
 }
 
-static ObjFunctionDeclaration* function() {
-
-    ObjFunctionDeclaration* fun = newObjFunctionDeclaration();
+static ObjStmtFunDeclaration* funDeclaration(const char* msg) {
+    consume(TOKEN_IDENTIFIER, msg);
+    ObjStmtFunDeclaration* fun = newStmtFunDeclaration(parser.previous.start, parser.previous.length, parser.previous.line);
     pushWorkingNode((Obj*)fun);
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
-            fun->params[fun->arity] = expression();
-            fun->arity++;
-            if (fun->arity > 255) {
+            appendToDynamicObjArray(&fun->parameters, (Obj*)expression());
+            if (fun->parameters.objectCount > 255) {
                 errorAt(&parser.previous, "Can't have more than 255 parameters.");
             }
         } while (match(TOKEN_COMMA));
@@ -720,17 +730,6 @@ static ObjFunctionDeclaration* function() {
     consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
 
     block(&fun->body);
-
-    popWorkingNode();
-    return fun;
-}
-
-static ObjStmtFunDeclaration* funDeclaration(const char* msg) {
-    consume(TOKEN_IDENTIFIER, msg);
-    ObjStmtFunDeclaration* fun = newStmtFunDeclaration(parser.previous.start, parser.previous.length, parser.previous.line);
-    pushWorkingNode((Obj*)fun);
-
-    fun->function = function();
     
     popWorkingNode();
     return fun;
@@ -760,7 +759,7 @@ static ObjStmtClassDeclaration* classDeclaration() {
 
     consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
     while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
-        appendMethod(decl, funDeclaration("Expect method name."));
+        appendToDynamicObjArray(&decl->methods, (Obj*)funDeclaration("Expect method name."));
     }
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
 

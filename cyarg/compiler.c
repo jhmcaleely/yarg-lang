@@ -419,27 +419,27 @@ static void generateExprLiteral(ObjExprLiteral* lit) {
     }
 }
 
-static void generateArgs(ObjArguments* args) {
-    for (int i = 0; i < args->count; i++) {
-        generateExpr((ObjExpr*)args->arguments[i]);
-    }
+static void generateExprSet(DynamicObjArray* args) {
+    for (int i = 0; i < args->objectCount; i++) {
+        generateExpr((ObjExpr*)args->objects[i]);
+    } 
 }
 
 static void generateExprCall(ObjExprCall* call) {
-    generateArgs(call->args);
+    generateExprSet(&call->arguments);
 
-    emitBytes(OP_CALL, call->args->count);
+    emitBytes(OP_CALL, call->arguments.objectCount);
 }
 
 static void generateExprArrayInit(ObjExprArrayInit* array) {
  
     emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_ARRAY);
-    emitConstant(INTEGER_VAL(array->args->count));
+    emitConstant(INTEGER_VAL(array->initializers.objectCount));
     emitBytes(OP_CALL, 1);
  
-    for (int i = 0; i < array->args->count; i++) {
+    for (int i = 0; i < array->initializers.objectCount; i++) {
         emitConstant(INTEGER_VAL(i));
-        generateExpr((ObjExpr*)array->args->arguments[i]);
+        generateExpr((ObjExpr*)array->initializers.objects[i]);
         emitByte(OP_SET_ELEMENT);
     }
 }
@@ -480,10 +480,10 @@ static void generateExprDot(ObjExprDot* dot) {
     if (dot->assignment) {
         generateExpr(dot->assignment);
         emitBytes(OP_SET_PROPERTY, name);
-    } else if (dot->callArgs) {
-        generateArgs(dot->callArgs);
+    } else if (dot->call) {
+        generateExprSet(&dot->call->arguments);
         emitBytes(OP_INVOKE, name);
-        emitByte(dot->callArgs->count);
+        emitByte(dot->call->arguments.objectCount);
     } else {
         emitBytes(OP_GET_PROPERTY, name);
     }
@@ -503,11 +503,11 @@ static void generateExprSuper(ObjExprSuper* super) {
     tempRootPush(OBJ_VAL(super_));
 
     generateGetNamedVariable(this_);
-    if (super->callArgs) {
-        generateArgs(super->callArgs);
+    if (super->call) {
+        generateExprSet(&super->call->arguments);
         generateGetNamedVariable(super_);
         emitBytes(OP_SUPER_INVOKE, name);
-        emitByte(super->callArgs->count);
+        emitByte(super->call->arguments.objectCount);
     } else {
         generateGetNamedVariable(super_);
         emitBytes(OP_GET_SUPER, name);
@@ -674,20 +674,20 @@ static void generateStmtIf(ObjStmtIf* ctrl) {
     patchJump(elseJump);
 }
 
-static void generateFunction(FunctionType type, ObjFunctionDeclaration* decl, ObjString* name) {
+static void generateFunction(FunctionType type, ObjStmtFunDeclaration* decl) {
     Compiler compiler;
-    initCompiler(&compiler, type, name);
+    initCompiler(&compiler, type, decl->name);
     beginScope();
 
-    for (int i = 0; i < decl->arity; i++) {
-        uint8_t constant = parseVariable(((ObjExprNamedVariable*)decl->params[i])->name);
+    for (int i = 0; i < decl->parameters.objectCount; i++) {
+        uint8_t constant = parseVariable(((ObjExprNamedVariable*)decl->parameters.objects[i])->name);
         defineVariable(constant);
     }
 
     generate(decl->body);
 
     ObjFunction* function = endCompiler();
-    function->arity = decl->arity;
+    function->arity = decl->parameters.objectCount;
     emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
 
     for (int i = 0; i < function->upvalueCount; i++) {
@@ -701,7 +701,7 @@ static void generateStmtFunDeclaration(ObjStmtFunDeclaration* decl) {
     uint8_t global = parseVariable(decl->name);
     markInitialized();
 
-    generateFunction(TYPE_FUNCTION, decl->function, decl->name);
+    generateFunction(TYPE_FUNCTION, decl);
 
     defineVariable(global);
 }
@@ -803,7 +803,7 @@ static void generateStmtMethodDeclaration(ObjStmtFunDeclaration* method) {
         type = TYPE_INITIALIZER;
     }
     
-    generateFunction(type, method->function, method->name);
+    generateFunction(type, method);
 
     emitBytes(OP_METHOD, constant);
     tempRootPop(); // initi
@@ -838,8 +838,8 @@ static void generateStmtClassDeclaration(ObjStmtClassDeclaration* decl) {
 
     // Make the class name conveniently available on the stack for method definition.
     generateGetNamedVariable(decl->name);
-    for (int i = 0; i < decl->methodCount; i++) {
-        generateStmtMethodDeclaration((ObjStmtFunDeclaration*)decl->methods[i]);
+    for (int i = 0; i < decl->methods.objectCount; i++) {
+        generateStmtMethodDeclaration((ObjStmtFunDeclaration*)decl->methods.objects[i]);
     }
     emitByte(OP_POP);
 

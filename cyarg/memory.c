@@ -172,21 +172,6 @@ static void blackenObject(Obj* object) {
             }
             break;
         }
-        case OBJ_FUNDECLARATION: {
-            ObjFunctionDeclaration* fun = (ObjFunctionDeclaration*)object;
-            markObject((Obj*)fun->body);
-            for (int i = 0; i < fun->arity; i++) {
-                markObject((Obj*)fun->params[i]);
-            }
-            break;
-        }
-        case OBJ_ARGUMENTS: {
-            ObjArguments* args = (ObjArguments*)object;
-            for (int i = 0; i < args->count; i++) {
-                markObject((Obj*)args->arguments[i]);
-            }
-            break;
-        }
         case OBJ_STMT_YIELD: // fall through
         case OBJ_STMT_RETURN:
         case OBJ_STMT_PRINT:
@@ -218,9 +203,10 @@ static void blackenObject(Obj* object) {
         }
         case OBJ_STMT_FUNDECLARATION: {
             ObjStmtFunDeclaration* fun = (ObjStmtFunDeclaration*)object;
-            markObject((Obj*)fun->stmt.nextStmt);
+            markStmt(object);
             markObject((Obj*)fun->name);
-            markObject((Obj*)fun->function);
+            markObject((Obj*)fun->body);
+            markDynamicObjArray(&fun->parameters);
             break;
         }
         case OBJ_STMT_WHILE: {
@@ -241,12 +227,10 @@ static void blackenObject(Obj* object) {
         }
         case OBJ_STMT_CLASSDECLARATION: {
             ObjStmtClassDeclaration* decl = (ObjStmtClassDeclaration*)object;
-            markObject((Obj*)decl->stmt.nextStmt);
+            markStmt(object);
             markObject((Obj*)decl->name);
             markObject((Obj*)decl->superclass);
-            for (int i = 0; i < decl->methodCount; i++) {
-                markObject(decl->methods[i]);
-            }
+            markDynamicObjArray(&decl->methods);
             break;
         }
         case OBJ_EXPR_NUMBER: {
@@ -288,13 +272,13 @@ static void blackenObject(Obj* object) {
         case OBJ_EXPR_CALL: {
             markExpr(object);
             ObjExprCall* call = (ObjExprCall*)object;
-            markObject((Obj*)call->args);
+            markDynamicObjArray(&call->arguments);
             break;
         }
         case OBJ_EXPR_ARRAYINIT: {
             markExpr(object);
             ObjExprArrayInit* array = (ObjExprArrayInit*)object;
-            markObject((Obj*)array->args);
+            markDynamicObjArray(&array->initializers);
             break;
         }
         case OBJ_EXPR_ARRAYELEMENT: {
@@ -313,14 +297,14 @@ static void blackenObject(Obj* object) {
             ObjExprDot* expr = (ObjExprDot*)object;
             markObject((Obj*)expr->name);
             markObject((Obj*)expr->assignment);
-            markObject((Obj*)expr->callArgs);
+            markObject((Obj*)expr->call);
             break;
         }
         case OBJ_EXPR_SUPER: {
             markExpr(object);
             ObjExprSuper* expr = (ObjExprSuper*)object;
             markObject((Obj*)expr->name);
-            markObject((Obj*)expr->callArgs);
+            markObject((Obj*)expr->call);
             break;
         }
         case OBJ_EXPR_TYPE: {
@@ -409,7 +393,6 @@ static void freeObject(Obj* object) {
             FREE(ObjYargType, object);
             break;
         }
-        case OBJ_FUNDECLARATION: FREE(ObjFunctionDeclaration, object); break;
         case OBJ_STMT_RETURN: // fall through
         case OBJ_STMT_YIELD:
         case OBJ_STMT_PRINT:
@@ -417,12 +400,17 @@ static void freeObject(Obj* object) {
         case OBJ_STMT_VARDECLARATION: FREE(ObjStmtVarDeclaration, object); break;
         case OBJ_STMT_BLOCK: FREE(ObjStmtBlock, object); break;
         case OBJ_STMT_IF: FREE(ObjStmtIf, object); break;
-        case OBJ_STMT_FUNDECLARATION: FREE(ObjStmtFunDeclaration, object); break;
+        case OBJ_STMT_FUNDECLARATION: {
+            ObjStmtFunDeclaration* fun = (ObjStmtFunDeclaration*)object;
+            freeDynamicObjArray(&fun->parameters);
+            FREE(ObjStmtFunDeclaration, object); 
+            break;
+        }
         case OBJ_STMT_WHILE: FREE(ObjStmtWhile, object); break;
         case OBJ_STMT_FOR: FREE(ObjStmtFor, object); break;
         case OBJ_STMT_CLASSDECLARATION: {
             ObjStmtClassDeclaration* decl = (ObjStmtClassDeclaration*)object;
-            FREE_ARRAY(Obj*, decl->methods, decl->methodCapacity);
+            freeDynamicObjArray(&decl->methods);
             FREE(ObjStmtClassDeclaration, object);
             break;
         }
@@ -432,14 +420,18 @@ static void freeObject(Obj* object) {
         case OBJ_EXPR_NAMEDVARIABLE: FREE(ObjExprNamedVariable, object); break;
         case OBJ_EXPR_LITERAL: FREE(ObjExprLiteral, object); break;
         case OBJ_EXPR_STRING: FREE(ObjExprString, object); break;
-        case OBJ_ARGUMENTS: {
-            ObjArguments* args = (ObjArguments*)object;
-            FREE_ARRAY(Obj*, args->arguments, args->capacity);
-            FREE(ObjArguments, object);
+        case OBJ_EXPR_CALL: {
+            ObjExprCall* call = (ObjExprCall*)object;
+            freeDynamicObjArray(&call->arguments);
+            FREE(ObjExprCall, object); 
             break;
         }
-        case OBJ_EXPR_CALL: FREE(ObjExprCall, object); break;
-        case OBJ_EXPR_ARRAYINIT: FREE(ObjExprArrayInit, object); break;
+        case OBJ_EXPR_ARRAYINIT: {
+            ObjExprArrayInit* init = (ObjExprArrayInit*)object;
+            freeDynamicObjArray(&init->initializers);
+            FREE(ObjExprArrayInit, object); 
+            break;
+        }
         case OBJ_EXPR_ARRAYELEMENT: FREE(ObjExprArrayElement, object); break;
         case OBJ_EXPR_BUILTIN: FREE(ObjExprBuiltin, object); break;
         case OBJ_EXPR_DOT: FREE(ObjExprDot, object); break;

@@ -3,21 +3,6 @@
 
 #include "object.h"
 
-typedef enum {
-    PREC_NONE,
-    PREC_ASSIGNMENT, // =
-    PREC_OR,         // or
-    PREC_AND,        // and
-    PREC_EQUALITY,   // == !=
-    PREC_COMPARISON, // < > <= >=
-    PREC_TERM,       // + - | ^ & %
-    PREC_FACTOR,     // * / << >>
-    PREC_UNARY,      // ! -
-    PREC_CALL,       // . ()
-    PREC_DEREF,      // []
-    PREC_PRIMARY
-} Precedence;
-
 typedef struct ObjStmt ObjStmt;
 
 typedef struct ObjStmt {
@@ -122,20 +107,13 @@ typedef struct {
 } ObjExprString;
 
 typedef struct {
-    Obj obj;
-    int count;
-    int capacity;
-    Obj** arguments;
-} ObjArguments;
-
-typedef struct {
     ObjExpr expr;
-    ObjArguments* args;
+    DynamicObjArray arguments;
 } ObjExprCall;
 
 typedef struct {
     ObjExpr expr;
-    ObjArguments* args;
+    DynamicObjArray initializers;
 } ObjExprArrayInit;
 
 typedef struct {
@@ -154,13 +132,13 @@ typedef struct {
     ObjExpr expr;
     ObjString* name;
     ObjExpr* assignment;
-    ObjArguments* callArgs;
+    ObjExprCall* call;
 } ObjExprDot;
 
 typedef struct {
     ObjExpr expr;
     ObjString* name;
-    ObjArguments* callArgs;
+    ObjExprCall* call;
 } ObjExprSuper;
 
 typedef enum {
@@ -171,6 +149,11 @@ typedef struct {
     ObjExpr expr;
     ExprTypeType type;
 } ObjExprType;
+
+typedef struct {
+    ObjStmt stmt;
+    ObjStmt* statements;
+} ObjStmtBlock;
 
 typedef struct  {
     ObjStmt stmt;
@@ -185,8 +168,17 @@ typedef struct {
 
 typedef struct {
     ObjStmt stmt;
-    ObjStmt* statements;
-} ObjStmtBlock;
+    ObjString* name;
+    DynamicObjArray parameters;
+    ObjStmt* body;
+} ObjStmtFunDeclaration;
+
+typedef struct {
+    ObjStmt stmt;
+    ObjString* name;
+    ObjExpr* superclass;
+    DynamicObjArray methods;
+} ObjStmtClassDeclaration;
 
 typedef struct {
     ObjStmt stmt;
@@ -194,19 +186,6 @@ typedef struct {
     ObjStmt* ifStmt;
     ObjStmt* elseStmt;
 } ObjStmtIf;
-
-typedef struct {
-    Obj obj;
-    unsigned int arity;
-    ObjExpr* params[UINT8_MAX];
-    ObjStmt* body;
-} ObjFunctionDeclaration;
-
-typedef struct {
-    ObjStmt stmt;
-    ObjString* name;
-    ObjFunctionDeclaration* function;
-} ObjStmtFunDeclaration;
 
 typedef struct {
     ObjStmt stmt;
@@ -222,15 +201,6 @@ typedef struct {
     ObjStmt* body;
 } ObjStmtFor;
 
-typedef struct {
-    ObjStmt stmt;
-    ObjString* name;
-    ObjExpr* superclass;
-    Obj** methods;
-    int methodCapacity;
-    int methodCount;
-} ObjStmtClassDeclaration;
-
 ObjExprNumber* newExprNumberDouble(double value);
 ObjExprNumber* newExprNumberInteger(int value);
 ObjExprNumber* newExprNumberUInteger32(uint32_t value);
@@ -239,29 +209,24 @@ ObjExprString* newExprString(const char* str, int strLength);
 ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op);
 ObjExprGrouping* newExprGrouping(ObjExpr* expression);
 ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength, ObjExpr* expr);
-ObjExprCall* newExprCall(ObjArguments* args);
-ObjExprArrayInit* newExprArrayInit(ObjArguments* args);
+ObjExprCall* newExprCall();
+ObjExprArrayInit* newExprArrayInit();
 ObjExprArrayElement* newExprArrayElement();
 ObjExprBuiltin* newExprBuiltin(ExprBuiltin fn, int arity);
 ObjExprDot* newExprDot(const char* name, int nameLength);
 ObjExprSuper* newExprSuper(const char* name, int nameLength);
 ObjExprType* newExprType(ExprTypeType type);
 
-void appendMethod(ObjStmtClassDeclaration* class_, ObjStmtFunDeclaration* method);
-
 ObjStmtExpression* newStmtExpression(ObjExpr* expr, ObjType statement, int line);
+ObjStmtBlock* newStmtBlock(int line);
+
 ObjStmtVarDeclaration* newStmtVarDeclaration(const char* name, int nameLength, ObjExpr* expr, int line);
 ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength, int line);
 ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength, int line);
-ObjStmtBlock* newStmtBlock(int line);
+
 ObjStmtIf* newStmtIf(int line);
 ObjStmtWhile* newStmtWhile(int line);
 ObjStmtFor* newStmtFor(int line);
-
-ObjFunctionDeclaration* newObjFunctionDeclaration();
-ObjArguments* newObjArguments();
-
-void appendObjArgument(ObjArguments* args, ObjExpr* expr);
 
 void printStmts(ObjStmt* stmts);
 void printExpr(ObjExpr* expr);
