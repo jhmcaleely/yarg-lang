@@ -240,9 +240,13 @@ bool rpeekBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* 
     uint32_t nominal_address = AS_UINTEGER(args[0]);
     Register* reg = (Register*) (uintptr_t)nominal_address;
 
+#ifdef CYARG_PICO_TARGET
     uint32_t res = *reg;
-
     *result = UINTEGER_VAL(res);
+#else
+    printf("rpeek(%08x)\n", nominal_address);
+    *result = UINTEGER_VAL(0);
+#endif
     return true;
 }
 
@@ -252,8 +256,11 @@ bool rpokeBuiltin(ObjRoutine* routineContext, int argCount, Value* args, Value* 
     Register* reg = (Register*) (uintptr_t)nominal_address;
 
     uint32_t val = AS_UINTEGER(args[1]);
-
+#ifdef CYARG_PICO_TARGET
     *reg = val;
+#else
+    printf("rpoke(%08x, %08x)\n", nominal_address, val);
+#endif
     return true;
 }
 
