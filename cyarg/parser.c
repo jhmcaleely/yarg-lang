@@ -767,11 +767,29 @@ static ObjStmtClassDeclaration* classDeclaration() {
     return decl;
 }
 
+static ObjStmtStructDeclaration* structDeclaration() {
+    consume(TOKEN_IDENTIFIER, "Expect struct name.");
+    Token structName = parser.previous;
+    consume(TOKEN_AT, "Expect struct address declaration.");
+    ObjStmtStructDeclaration* struct_ = newStmtStructDeclaration(structName.start, structName.length, parser.previous.line);
+    pushWorkingNode((Obj*)struct_);
+
+    struct_->address = expression();
+    consume(TOKEN_LEFT_BRACE, "Expect '{' before struct body.");
+    while (!check(TOKEN_RIGHT_BRACE)) {
+        advance();
+    }
+    popWorkingNode();
+    return struct_;
+}
+
 ObjStmt* declaration() {
     ObjStmt* stmt = NULL;
 
     if (match(TOKEN_CLASS)) {
         stmt = (ObjStmt*) classDeclaration();
+    } else if (match(TOKEN_STRUCT)) {
+        stmt = (ObjStmt*) structDeclaration();
     } else if (match(TOKEN_FUN)) {
         stmt = (ObjStmt*) funDeclaration("Expect function name.");
     } else if (match(TOKEN_VAR)) {

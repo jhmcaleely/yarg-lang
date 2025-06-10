@@ -242,7 +242,14 @@ static TokenType identifierType() {
                         }
                         break;
                     case 'h': return checkKeyword(2, 3, "are", TOKEN_SHARE);
-                    case 't': return checkKeyword(2, 3, "art", TOKEN_START);
+                    case 't':
+                        if (scanner.current - scanner.start > 2) {
+                            switch (scanner.start[2]) {
+                                case 'a': return checkKeyword(3, 2, "rt", TOKEN_START);                                
+                                case 'r': return checkKeyword(3, 3, "uct", TOKEN_STRUCT);
+                            }
+                        }
+                        break;
                     case 'u': return checkKeyword(2, 3, "per", TOKEN_SUPER);
                 }
             }
@@ -322,6 +329,7 @@ Token scanToken() {
         case '}': return makeToken(TOKEN_RIGHT_BRACE);
         case '[': return makeToken(TOKEN_LEFT_SQUARE_BRACKET);
         case ']': return makeToken(TOKEN_RIGHT_SQUARE_BRACKET);
+        case '@': return makeToken(TOKEN_AT);
         case ';': return makeToken(TOKEN_SEMICOLON);
         case ',': return makeToken(TOKEN_COMMA);
         case '.': return makeToken(TOKEN_DOT);

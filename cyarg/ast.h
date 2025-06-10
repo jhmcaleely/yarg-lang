@@ -182,6 +182,12 @@ typedef struct {
 
 typedef struct {
     ObjStmt stmt;
+    ObjString* name;
+    ObjExpr* address;
+} ObjStmtStructDeclaration;
+
+typedef struct {
+    ObjStmt stmt;
     ObjExpr* test;
     ObjStmt* ifStmt;
     ObjStmt* elseStmt;
@@ -223,6 +229,7 @@ ObjStmtBlock* newStmtBlock(int line);
 ObjStmtVarDeclaration* newStmtVarDeclaration(const char* name, int nameLength, ObjExpr* expr, int line);
 ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength, int line);
 ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength, int line);
+ObjStmtStructDeclaration* newStmtStructDeclaration(const char* name, int nameLength, int line);
 
 ObjStmtIf* newStmtIf(int line);
 ObjStmtWhile* newStmtWhile(int line);

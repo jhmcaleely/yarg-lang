@@ -81,6 +81,15 @@ ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLengt
     return decl;
 }
 
+ObjStmtStructDeclaration* newStmtStructDeclaration(const char* name, int nameLength, int line) {
+    ObjStmtStructDeclaration* struct_ = ALLOCATE_OBJ(ObjStmtStructDeclaration, OBJ_STMT_STRUCTDECLARATION);
+    struct_->stmt.line = line;
+    tempRootPush(OBJ_VAL(struct_));
+    struct_->name = copyString(name, nameLength);
+    tempRootPop();
+    return struct_;
+}
+
 ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op) {
     ObjExprOperation* operation = ALLOCATE_OBJ(ObjExprOperation, OBJ_EXPR_OPERATION);
     operation->expr.nextExpr = NULL;
@@ -415,6 +424,17 @@ void printStmtClassDeclaration(ObjStmtClassDeclaration* class_) {
     printf("}");
 }
 
+void printStmtStructDeclaration(ObjStmtStructDeclaration* struct_) {
+    printf("struct ");
+    printObject(OBJ_VAL(struct_->name));
+    if (struct_->address) {
+        printf("@");
+        printExpr(struct_->address);
+    }
+    printf("\n{\n");
+    printf("}");
+}
+
 void printStmtExpression(ObjStmtExpression* stmt) {
     switch (stmt->stmt.obj.type) {
         case OBJ_STMT_RETURN: printf("return "); break;
@@ -458,6 +478,7 @@ void printStmts(ObjStmt* stmts) {
             case OBJ_STMT_WHILE: printStmtWhile((ObjStmtWhile*)cursor); break;
             case OBJ_STMT_FOR: printStmtFor((ObjStmtFor*)cursor); break;
             case OBJ_STMT_CLASSDECLARATION: printStmtClassDeclaration((ObjStmtClassDeclaration*)cursor); break;
+            case OBJ_STMT_STRUCTDECLARATION: printStmtStructDeclaration((ObjStmtStructDeclaration*)cursor); break;
             default: printf("Unknown stmt;"); break;
         }
         printf("\n");
