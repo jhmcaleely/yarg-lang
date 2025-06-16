@@ -767,12 +767,33 @@ static ObjStmtClassDeclaration* classDeclaration() {
     return decl;
 }
 
+static AccessRule consumeAccessToken() {
+
+    if (parser.current.type == TOKEN_ACCESS) {
+        advance();
+
+        if (memcmp(parser.previous.start, "ro", 2) == 0) {
+            return ACCESS_RO;
+        } else if (memcmp(parser.previous.start, "wo", 2) == 0) {
+            return ACCESS_WO;
+        } else if (memcmp(parser.previous.start, "rw", 2) == 0) {
+            return ACCESS_RW;
+        }
+    }
+
+    error("Expected access rule ro, rw or wo.");
+    return ACCESS_RW;
+}
+
 static ObjStmtFieldDeclaration* fieldDeclaration() {
     consume(TOKEN_MACHINE_UINT32, "Expect type.");
-    consume(TOKEN_IDENTIFIER, "Expect access rule.");
+    AccessRule rule = consumeAccessToken();
     consume(TOKEN_IDENTIFIER, "Expect field name.");
     ObjStmtFieldDeclaration* field = newStmtFieldDeclaration(parser.previous.start, parser.previous.length, parser.previous.line);
     pushWorkingNode((Obj*)field);
+
+    field->access = rule;
+
     if (match(TOKEN_AT)) {
         field->offset = expression();
     }

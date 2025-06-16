@@ -434,7 +434,13 @@ void printStmtClassDeclaration(ObjStmtClassDeclaration* class_) {
 }
 
 void printFieldDeclaration(ObjStmtFieldDeclaration* field) {
-    printf("muint32 xx ");
+    printf("muint32 ");
+    switch (field->access) {
+        case ACCESS_RW: printf("rw"); break;
+        case ACCESS_RO: printf("ro"); break;
+        case ACCESS_WO: printf("wo"); break;
+    }
+    printf(" ");
     printObject(OBJ_VAL(field->name));
     if (field->offset) {
         printf("@");

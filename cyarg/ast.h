@@ -180,9 +180,16 @@ typedef struct {
     DynamicObjArray methods;
 } ObjStmtClassDeclaration;
 
+typedef enum {
+    ACCESS_RW,
+    ACCESS_RO,
+    ACCESS_WO,
+} AccessRule;
+
 typedef struct {
     ObjStmt stmt;
     ObjString* name;
+    AccessRule access;
     ObjExpr* offset;
 } ObjStmtFieldDeclaration;
 

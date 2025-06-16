@@ -220,6 +220,7 @@ static TokenType identifierType() {
                             }
                         }
                         break;
+                    case 'o': return checkKeyword(2, 0, "", TOKEN_ACCESS);
                     case 'p':
                         if (scanner.current - scanner.start > 2) {
                             switch (scanner.start[2]) {
@@ -228,6 +229,7 @@ static TokenType identifierType() {
                             }
                         }
                         break;
+                    case 'w': return checkKeyword(2, 0, "", TOKEN_ACCESS);
                 }
             }
             break;
@@ -263,7 +265,14 @@ static TokenType identifierType() {
             }
             break;
         case 'v': return checkKeyword(1, 2, "ar", TOKEN_VAR);
-        case 'w': return checkKeyword(1, 4, "hile", TOKEN_WHILE);
+        case 'w': 
+            if (scanner.current - scanner.start > 1) {
+                switch (scanner.start[1]) {
+                    case 'h': return checkKeyword(2, 3, "ile", TOKEN_WHILE);
+                    case 'o': return checkKeyword(2, 0, "", TOKEN_ACCESS);
+                }
+            }
+        return checkKeyword(1, 4, "hile", TOKEN_WHILE);
         case 'y': return checkKeyword(1, 4, "ield", TOKEN_YIELD);
     }
 
