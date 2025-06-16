@@ -90,6 +90,15 @@ ObjStmtStructDeclaration* newStmtStructDeclaration(const char* name, int nameLen
     return struct_;
 }
 
+ObjStmtFieldDeclaration* newStmtFieldDeclaration(const char* name, int nameLength, int line) {
+    ObjStmtFieldDeclaration* field = ALLOCATE_OBJ(ObjStmtFieldDeclaration, OBJ_STMT_FIELDDECLARATION);
+    field->stmt.line = line;
+    tempRootPush(OBJ_VAL(field));
+    field->name = copyString(name, nameLength);
+    tempRootPop();
+    return field;
+}
+
 ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op) {
     ObjExprOperation* operation = ALLOCATE_OBJ(ObjExprOperation, OBJ_EXPR_OPERATION);
     operation->expr.nextExpr = NULL;
@@ -424,6 +433,15 @@ void printStmtClassDeclaration(ObjStmtClassDeclaration* class_) {
     printf("}");
 }
 
+void printFieldDeclaration(ObjStmtFieldDeclaration* field) {
+    printf("muint32 xx ");
+    printObject(OBJ_VAL(field->name));
+    if (field->offset) {
+        printf("@");
+        printExpr(field->offset);
+    }
+}
+
 void printStmtStructDeclaration(ObjStmtStructDeclaration* struct_) {
     printf("struct ");
     printObject(OBJ_VAL(struct_->name));
@@ -432,6 +450,10 @@ void printStmtStructDeclaration(ObjStmtStructDeclaration* struct_) {
         printExpr(struct_->address);
     }
     printf("\n{\n");
+    for (int i = 0; i < struct_->fields.objectCount; i++) {
+        printFieldDeclaration((ObjStmtFieldDeclaration*)struct_->fields.objects[i]);
+        printf("\n");
+    }
     printf("}");
 }
 

@@ -238,6 +238,14 @@ static void blackenObject(Obj* object) {
             markStmt(object);
             markObject((Obj*)struct_->name);
             markObject((Obj*)struct_->address);
+            markDynamicObjArray(&struct_->fields);
+            break;
+        }
+        case OBJ_STMT_FIELDDECLARATION: {
+            ObjStmtFieldDeclaration* field = (ObjStmtFieldDeclaration*)object;
+            markStmt(object);
+            markObject((Obj*)field->name);
+            markObject((Obj*)field->offset);
             break;
         }
         case OBJ_EXPR_NUMBER: {
@@ -421,7 +429,13 @@ static void freeObject(Obj* object) {
             FREE(ObjStmtClassDeclaration, object);
             break;
         }
-        case OBJ_STMT_STRUCTDECLARATION: FREE(ObjStmtStructDeclaration, object); break;
+        case OBJ_STMT_STRUCTDECLARATION: {
+            ObjStmtStructDeclaration* struct_ = (ObjStmtStructDeclaration*)object;
+            freeDynamicObjArray(&struct_->fields);
+            FREE(ObjStmtStructDeclaration, object); 
+            break;
+        }
+        case OBJ_STMT_FIELDDECLARATION: FREE(ObjStmtFieldDeclaration, object); break;
         case OBJ_EXPR_NUMBER: FREE(ObjExprNumber, object); break;
         case OBJ_EXPR_OPERATION: FREE(ObjExprOperation, object); break;
         case OBJ_EXPR_GROUPING: FREE(ObjExprGrouping, object); break;

@@ -767,6 +767,20 @@ static ObjStmtClassDeclaration* classDeclaration() {
     return decl;
 }
 
+static ObjStmtFieldDeclaration* fieldDeclaration() {
+    consume(TOKEN_MACHINE_UINT32, "Expect type.");
+    consume(TOKEN_IDENTIFIER, "Expect access rule.");
+    consume(TOKEN_IDENTIFIER, "Expect field name.");
+    ObjStmtFieldDeclaration* field = newStmtFieldDeclaration(parser.previous.start, parser.previous.length, parser.previous.line);
+    pushWorkingNode((Obj*)field);
+    if (match(TOKEN_AT)) {
+        field->offset = expression();
+    }
+    consume(TOKEN_SEMICOLON, "Expect ';' after field declaration.");
+    popWorkingNode();
+    return field;
+}
+
 static ObjStmtStructDeclaration* structDeclaration() {
     consume(TOKEN_IDENTIFIER, "Expect struct name.");
     Token structName = parser.previous;
@@ -777,8 +791,9 @@ static ObjStmtStructDeclaration* structDeclaration() {
     struct_->address = expression();
     consume(TOKEN_LEFT_BRACE, "Expect '{' before struct body.");
     while (!check(TOKEN_RIGHT_BRACE)) {
-        advance();
+        appendToDynamicObjArray(&struct_->fields, (Obj*)fieldDeclaration());
     }
+    consume(TOKEN_RIGHT_BRACE, "Expect '}' after field declarations.");
     popWorkingNode();
     return struct_;
 }
