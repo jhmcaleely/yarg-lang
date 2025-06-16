@@ -3,7 +3,7 @@ struct sio_hw@0xd0000000 {
 }
 
 fun coreNum() {
-    return sio_hw.cpuid;
+    return rpeek(sio_hw.cpuid);
 }
 
 print coreNum();
