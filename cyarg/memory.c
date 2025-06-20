@@ -172,6 +172,12 @@ static void blackenObject(Obj* object) {
             }
             break;
         }
+        case OBJ_AST: {
+            ObjAst* ast = (ObjAst*)object;
+            markObject((Obj*)ast->statements);
+            markTable(&ast->constants);
+            break;
+        }
         case OBJ_STMT_YIELD: // fall through
         case OBJ_STMT_RETURN:
         case OBJ_STMT_PRINT:
@@ -406,6 +412,11 @@ static void freeObject(Obj* object) {
         }
         case OBJ_YARGTYPE: {
             FREE(ObjYargType, object);
+            break;
+        }
+        case OBJ_AST: {
+            ObjAst* ast = (ObjAst*)object;
+            freeTable(&ast->constants);
             break;
         }
         case OBJ_STMT_RETURN: // fall through

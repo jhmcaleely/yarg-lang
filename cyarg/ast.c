@@ -4,6 +4,12 @@
 #include "ast.h"
 #include "memory.h"
 
+ObjAst* newObjAst() {
+    ObjAst* ast = ALLOCATE_OBJ(ObjAst, OBJ_AST);
+    initTable(&ast->constants);
+    return ast;
+}
+
 ObjStmtExpression* newStmtExpression(ObjExpr* expr, ObjType type, int line) {
     ObjStmtExpression* stmt = ALLOCATE_OBJ(ObjStmtExpression, type);
     stmt->stmt.line = line;

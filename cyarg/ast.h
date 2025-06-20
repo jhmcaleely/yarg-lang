@@ -18,6 +18,12 @@ typedef struct ObjExpr {
     ObjExpr* nextExpr;
 } ObjExpr;
 
+typedef struct ObjAst {
+    Obj obj;
+    ObjStmt* statements;
+    Table constants;
+} ObjAst;
+
 typedef enum {
     EXPR_OP_EQUAL,
     EXPR_OP_GREATER,
@@ -220,6 +226,8 @@ typedef struct {
     ObjExpr* loopExpression;
     ObjStmt* body;
 } ObjStmtFor;
+
+ObjAst* newObjAst();
 
 ObjExprNumber* newExprNumberDouble(double value);
 ObjExprNumber* newExprNumberInteger(int value);

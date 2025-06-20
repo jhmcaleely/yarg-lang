@@ -32,7 +32,7 @@ typedef struct {
 typedef struct Compiler {
     struct Compiler* enclosing;
     ObjFunction* function;
-    ObjStmt* ast;
+    ObjAst* ast;
     FunctionType type;
     ObjStmt* recent;
     bool hadError;
@@ -66,8 +66,11 @@ static void initCompiler(Compiler* compiler, FunctionType type, ObjString* name)
     compiler->localCount = 0;
     compiler->scopeDepth = 0;
 
-    compiler->function = newFunction();
+    compiler->ast = newObjAst();
     current = compiler;
+
+    compiler->function = newFunction();
+
     if (type != TYPE_SCRIPT) {
         current->function->name = name;
     }
@@ -926,17 +929,17 @@ ObjFunction* compile(const char* source) {
     size_t bytesAllocated = vm.bytesAllocated;
 #endif
 
-    bool parseError = parse(&current->ast);
+    bool parseError = parse(&current->ast->statements);
 
 #ifdef DEBUG_AST_PARSE
     collectGarbage();
     printf("Parse Tree (%zu net bytes)\n", vm.bytesAllocated - bytesAllocated);
-    printStmts(current->ast);
+    printStmts(current->ast->statements);
 #endif
 
     if (!parseError) {
 
-        generate(current->ast);
+        generate(current->ast->statements);
     }
 
     ObjFunction* function = endCompiler();
