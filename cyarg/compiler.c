@@ -929,7 +929,7 @@ ObjFunction* compile(const char* source) {
     size_t bytesAllocated = vm.bytesAllocated;
 #endif
 
-    bool parseError = parse(&current->ast->statements);
+    bool parseError = parse(current->ast);
 
 #ifdef DEBUG_AST_PARSE
     collectGarbage();

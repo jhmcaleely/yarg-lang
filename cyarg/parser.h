@@ -3,9 +3,9 @@
 
 #include <stdbool.h>
 
-typedef struct ObjStmt ObjStmt;
+typedef struct ObjAst ObjAst;
 
-bool parse(ObjStmt** ast_root);
+bool parse(ObjAst* ast);
 void markParserRoots();
 
 

@@ -30,21 +30,25 @@ typedef struct {
     bool hadError;
     bool panicMode;
     DynamicObjArray workingNodes;
+    ObjAst* ast;
 } Parser;
 
 Parser parser;
 
-void initParser() {
+void initParser(ObjAst* ast) {
     parser.hadError = false;
     parser.panicMode = false;
+    parser.ast = ast;
     initDynamicObjArray(&parser.workingNodes);
 }
 
 void endParser() {
+    parser.ast = NULL;
     freeDynamicObjArray(&parser.workingNodes);
 }
 
 void markParserRoots() {
+    markObject((Obj*)parser.ast);
     markDynamicObjArray(&parser.workingNodes);
 }
 
@@ -815,6 +819,7 @@ static ObjStmtStructDeclaration* structDeclaration() {
         appendToDynamicObjArray(&struct_->fields, (Obj*)fieldDeclaration());
     }
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after field declarations.");
+    tableSet(&parser.ast->constants, struct_->name, OBJ_VAL(struct_));
     popWorkingNode();
     return struct_;
 }
@@ -838,11 +843,11 @@ ObjStmt* declaration() {
     return stmt;
 }
 
-bool parse(ObjStmt** ast_root) {
-    initParser();
+bool parse(ObjAst* ast_root) {
+    initParser(ast_root);
     advance();
 
-    ObjStmt** cursor = ast_root;
+    ObjStmt** cursor = &ast_root->statements;
     while (!match(TOKEN_EOF)) {
         *cursor = declaration();
         if (*cursor) {
