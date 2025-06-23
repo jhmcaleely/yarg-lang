@@ -88,6 +88,12 @@ typedef struct {
 
 typedef struct {
     ObjExpr expr;
+    ObjString* name;
+    ObjExpr* value;
+} ObjExprNamedConstant;
+
+typedef struct {
+    ObjExpr expr;
     ExprLiteral literal;
 } ObjExprLiteral;
 
@@ -237,7 +243,8 @@ ObjExprLiteral* newExprLiteral(ExprLiteral literal);
 ObjExprString* newExprString(const char* str, int strLength);
 ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op);
 ObjExprGrouping* newExprGrouping(ObjExpr* expression);
-ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength, ObjExpr* expr);
+ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength);
+ObjExprNamedConstant* newExprNamedConstant(const char* name, int nameLength);
 ObjExprCall* newExprCall();
 ObjExprArrayInit* newExprArrayInit();
 ObjExprArrayElement* newExprArrayElement();

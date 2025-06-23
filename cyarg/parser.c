@@ -193,21 +193,31 @@ static uint32_t strtoNum(const char* literal, int length, int radix) {
 
 
 static ObjExpr* namedVariable(Token name, bool canAssign) {
-    ObjExprNamedVariable* expr = newExprNamedVariable(name.start, name.length, NULL);
+
+    ObjString* nameString = copyString(name.start, name.length);
+    tempRootPush(OBJ_VAL(nameString));
 
     Value constant = NIL_VAL;
-    if (tableGet(&parser.ast->constants, expr->name, &constant)) {
+    if (tableGet(&parser.ast->constants, nameString, &constant)) {
+        ObjExprNamedConstant* expr = newExprNamedConstant(name.start, name.length);
         ObjStmtStructDeclaration* struct_ = (ObjStmtStructDeclaration*)AS_OBJ(constant);
-        return struct_->address;
-    }
+        expr->value = struct_->address;
 
-    if (canAssign && match(TOKEN_EQUAL)) {
-        pushWorkingNode((Obj*)expr);
-        expr->assignment = expression();
-        popWorkingNode();
-    }
+        tempRootPop();
+        return (ObjExpr*)expr;
 
-    return (ObjExpr*)expr;
+    } else {
+        ObjExprNamedVariable* expr = newExprNamedVariable(name.start, name.length);
+
+        if (canAssign && match(TOKEN_EQUAL)) {
+            pushWorkingNode((Obj*)expr);
+            expr->assignment = expression();
+            popWorkingNode();
+        }
+
+        tempRootPop();
+        return (ObjExpr*)expr;
+    }
 }
 
 static void expressionList(DynamicObjArray* items) {
@@ -258,7 +268,7 @@ static ObjExpr* dot(bool canAssign) {
     ObjExprDot* expr = newExprDot(parser.previous.start, parser.previous.length);
     pushWorkingNode((Obj*)expr);
 
-    if (parser.prevExpr->obj.type == OBJ_EXPR_NUMBER) { // hack, this is a struct...
+    if (parser.prevExpr->obj.type == OBJ_EXPR_NAMEDCONSTANT) { // hack, this is a struct...
         expr->offset = 10;
     }
     

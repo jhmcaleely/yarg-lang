@@ -414,6 +414,11 @@ static void generateExprNamedVariable(ObjExprNamedVariable* var) {
     }
 }
 
+static void generateExprNamedConstant(ObjExprNamedConstant* const_) {
+
+        generateExpr(const_->value);
+}
+
 static void generateExprLiteral(ObjExprLiteral* lit) {
     switch (lit->literal) {
         case EXPR_LITERAL_FALSE: emitByte(OP_FALSE); break;
@@ -553,6 +558,11 @@ static void generateExprElt(ObjExpr* expr) {
         case OBJ_EXPR_NAMEDVARIABLE: {
             ObjExprNamedVariable* var = (ObjExprNamedVariable*)expr;
             generateExprNamedVariable(var);
+            break;
+        }
+        case OBJ_EXPR_NAMEDCONSTANT: {
+            ObjExprNamedConstant* const_ = (ObjExprNamedConstant*)expr;
+            generateExprNamedConstant(const_);
             break;
         }
         case OBJ_EXPR_LITERAL: {

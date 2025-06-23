@@ -273,10 +273,17 @@ static void blackenObject(Obj* object) {
             break;
         }
         case OBJ_EXPR_NAMEDVARIABLE: {
+            markExpr(object);
             ObjExprNamedVariable* var = (ObjExprNamedVariable*)object;
-            markObject((Obj*)var->expr.nextExpr);
             markObject((Obj*)var->assignment);
             markObject((Obj*)var->name);
+            break;
+        }
+        case OBJ_EXPR_NAMEDCONSTANT: {
+            markExpr(object);
+            ObjExprNamedConstant* const_ = (ObjExprNamedConstant*)object;
+            markObject((Obj*)const_->value);
+            markObject((Obj*)const_->name);
             break;
         }
         case OBJ_EXPR_LITERAL: {
@@ -451,6 +458,7 @@ static void freeObject(Obj* object) {
         case OBJ_EXPR_OPERATION: FREE(ObjExprOperation, object); break;
         case OBJ_EXPR_GROUPING: FREE(ObjExprGrouping, object); break;
         case OBJ_EXPR_NAMEDVARIABLE: FREE(ObjExprNamedVariable, object); break;
+        case OBJ_EXPR_NAMEDCONSTANT: FREE(ObjExprNamedConstant, object); break;
         case OBJ_EXPR_LITERAL: FREE(ObjExprLiteral, object); break;
         case OBJ_EXPR_STRING: FREE(ObjExprString, object); break;
         case OBJ_EXPR_CALL: {

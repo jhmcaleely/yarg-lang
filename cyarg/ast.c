@@ -146,15 +146,22 @@ ObjExprNumber* newExprNumberUInteger32(uint32_t value) {
     return num;
 }
 
-ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength, ObjExpr* expr) {
+ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength) {
     ObjExprNamedVariable* var = ALLOCATE_OBJ(ObjExprNamedVariable, OBJ_EXPR_NAMEDVARIABLE);
-    var->expr.nextExpr = NULL;
-    var->assignment = expr;
     tempRootPush(OBJ_VAL(var));
     var->name = copyString(name, nameLength);
     tempRootPop();
     return var;
 }
+
+ObjExprNamedConstant* newExprNamedConstant(const char* name, int nameLength) {
+    ObjExprNamedConstant* var = ALLOCATE_OBJ(ObjExprNamedConstant, OBJ_EXPR_NAMEDCONSTANT);
+    tempRootPush(OBJ_VAL(var));
+    var->name = copyString(name, nameLength);
+    tempRootPop();
+    return var;
+}
+
 
 ObjExprLiteral* newExprLiteral(ExprLiteral literal) {
     ObjExprLiteral* lit = ALLOCATE_OBJ(ObjExprLiteral, OBJ_EXPR_LITERAL);
