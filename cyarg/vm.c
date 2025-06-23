@@ -390,7 +390,7 @@ InterpretResult run(ObjRoutine* routine) {
             }
             case OP_IMMEDIATE: {
                 uint8_t byte = READ_BYTE();
-                Value constant = INTEGER_VAL((int8_t)byte);
+                Value constant = UINTEGER_VAL((int8_t)byte);
                 push(routine, constant);
                 break;
             }

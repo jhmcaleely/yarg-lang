@@ -38,11 +38,11 @@ void fprintValue(FILE* op, Value value) {
     } else if (IS_NIL(value)) {
         FPRINTMSG(op, "nil");
     } else if (IS_DOUBLE(value)) {
-        FPRINTMSG(op, "%#g", AS_DOUBLE(value));
+        FPRINTMSG(op, "d%#g", AS_DOUBLE(value));
     } else if (IS_UINTEGER(value)) {
-        FPRINTMSG(op, "%u", AS_UINTEGER(value));
+        FPRINTMSG(op, "u%u", AS_UINTEGER(value));
     } else if (IS_INTEGER(value)) {
-        FPRINTMSG(op, "%d", AS_INTEGER(value));
+        FPRINTMSG(op, "i%d", AS_INTEGER(value));
     } else if (IS_OBJ(value)) {
         fprintObject(op, value);
     }

@@ -480,6 +480,11 @@ static void generateExprBuiltin(ObjExprBuiltin* fn) {
 static void generateExprDot(ObjExprDot* dot) {
     uint8_t name = identifierConstant(dot->name);
 
+    if (dot->offset) {
+        emitBytes(OP_IMMEDIATE, (uint8_t)dot->offset);
+        emitByte(OP_ADD);
+    } else
+
     if (dot->assignment) {
         generateExpr(dot->assignment);
         emitBytes(OP_SET_PROPERTY, name);

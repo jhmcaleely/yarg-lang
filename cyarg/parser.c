@@ -30,6 +30,7 @@ typedef struct {
     bool hadError;
     bool panicMode;
     DynamicObjArray workingNodes;
+    ObjExpr* prevExpr;
     ObjAst* ast;
 } Parser;
 
@@ -39,6 +40,7 @@ void initParser(ObjAst* ast) {
     parser.hadError = false;
     parser.panicMode = false;
     parser.ast = ast;
+    parser.prevExpr = NULL;
     initDynamicObjArray(&parser.workingNodes);
 }
 
@@ -49,6 +51,7 @@ void endParser() {
 
 void markParserRoots() {
     markObject((Obj*)parser.ast);
+    markObject((Obj*)parser.prevExpr);
     markDynamicObjArray(&parser.workingNodes);
 }
 
@@ -192,6 +195,12 @@ static uint32_t strtoNum(const char* literal, int length, int radix) {
 static ObjExpr* namedVariable(Token name, bool canAssign) {
     ObjExprNamedVariable* expr = newExprNamedVariable(name.start, name.length, NULL);
 
+    Value constant = NIL_VAL;
+    if (tableGet(&parser.ast->constants, expr->name, &constant)) {
+        ObjStmtStructDeclaration* struct_ = (ObjStmtStructDeclaration*)AS_OBJ(constant);
+        return struct_->address;
+    }
+
     if (canAssign && match(TOKEN_EQUAL)) {
         pushWorkingNode((Obj*)expr);
         expr->assignment = expression();
@@ -248,6 +257,10 @@ static ObjExpr* dot(bool canAssign) {
     consume(TOKEN_IDENTIFIER, "Expect property name after '.'.");
     ObjExprDot* expr = newExprDot(parser.previous.start, parser.previous.length);
     pushWorkingNode((Obj*)expr);
+
+    if (parser.prevExpr->obj.type == OBJ_EXPR_NUMBER) { // hack, this is a struct...
+        expr->offset = 10;
+    }
     
     if (canAssign && match(TOKEN_EQUAL)) {
         expr->assignment = expression();
@@ -542,6 +555,7 @@ static ObjExpr* parsePrecedence(Precedence precedence) {
     bool canAssign = precedence <= PREC_ASSIGNMENT;
 
     ObjExpr* expr = prefixRule(canAssign);
+    parser.prevExpr = expr;
     pushWorkingNode((Obj*)expr);
 
     ObjExpr** cursor = &expr->nextExpr;
@@ -549,6 +563,7 @@ static ObjExpr* parsePrecedence(Precedence precedence) {
         advance();
         AstParseFn infixRule = getRule(parser.previous.type)->infix;
         *cursor = infixRule(canAssign);
+        parser.prevExpr = *cursor;
         cursor = &(*cursor)->nextExpr;
     }
 
@@ -557,6 +572,7 @@ static ObjExpr* parsePrecedence(Precedence precedence) {
     }
 
     popWorkingNode();
+    parser.prevExpr = NULL;
     return expr;
 }
 

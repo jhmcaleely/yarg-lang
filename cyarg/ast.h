@@ -137,6 +137,7 @@ typedef struct {
 typedef struct {
     ObjExpr expr;
     ObjString* name;
+    int offset;
     ObjExpr* assignment;
     ObjExprCall* call;
 } ObjExprDot;
