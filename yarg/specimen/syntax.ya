@@ -1,5 +1,5 @@
 struct sio_hw@0xd0000000 {
-    muint32 ro cpuid@0x0;
+    muint32 ro cpuid@0x10;
 }
 
 fun coreNum() {

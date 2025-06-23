@@ -273,8 +273,10 @@ static ObjExpr* dot(bool canAssign) {
         Value val;
         tableGet(&parser.ast->constants, const_->name, &val);
         ObjStmtStructDeclaration* struct_ = (ObjStmtStructDeclaration*) AS_OBJ(val);
+        Value field;
+        tableGet(&struct_->fields, expr->name, &field);
 
-        ObjStmtFieldDeclaration* f = (ObjStmtFieldDeclaration*) struct_->fields.objects[0];
+        ObjStmtFieldDeclaration* f = (ObjStmtFieldDeclaration*) AS_OBJ(field);
 
         expr->offset = f->offset;
     }
@@ -849,7 +851,10 @@ static ObjStmtStructDeclaration* structDeclaration() {
     struct_->address = expression();
     consume(TOKEN_LEFT_BRACE, "Expect '{' before struct body.");
     while (!check(TOKEN_RIGHT_BRACE)) {
-        appendToDynamicObjArray(&struct_->fields, (Obj*)fieldDeclaration());
+        ObjStmtFieldDeclaration* field = fieldDeclaration();
+        pushWorkingNode((Obj*)field);
+        tableSet(&struct_->fields, field->name, OBJ_VAL(field));
+        popWorkingNode();
     }
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after field declarations.");
     tableSet(&parser.ast->constants, struct_->name, OBJ_VAL(struct_));

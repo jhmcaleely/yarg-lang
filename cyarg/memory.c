@@ -244,7 +244,7 @@ static void blackenObject(Obj* object) {
             markStmt(object);
             markObject((Obj*)struct_->name);
             markObject((Obj*)struct_->address);
-            markDynamicObjArray(&struct_->fields);
+            markTable(&struct_->fields);
             break;
         }
         case OBJ_STMT_FIELDDECLARATION: {
@@ -450,7 +450,7 @@ static void freeObject(Obj* object) {
         }
         case OBJ_STMT_STRUCTDECLARATION: {
             ObjStmtStructDeclaration* struct_ = (ObjStmtStructDeclaration*)object;
-            freeDynamicObjArray(&struct_->fields);
+            freeTable(&struct_->fields);
             FREE(ObjStmtStructDeclaration, object); 
             break;
         }

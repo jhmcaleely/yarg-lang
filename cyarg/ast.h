@@ -210,7 +210,7 @@ typedef struct {
     ObjStmt stmt;
     ObjString* name;
     ObjExpr* address;
-    DynamicObjArray fields;
+    Table fields;
 } ObjStmtStructDeclaration;
 
 typedef struct {

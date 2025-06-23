@@ -90,6 +90,7 @@ ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLengt
 ObjStmtStructDeclaration* newStmtStructDeclaration(const char* name, int nameLength, int line) {
     ObjStmtStructDeclaration* struct_ = ALLOCATE_OBJ(ObjStmtStructDeclaration, OBJ_STMT_STRUCTDECLARATION);
     struct_->stmt.line = line;
+    initTable(&struct_->fields);
     tempRootPush(OBJ_VAL(struct_));
     struct_->name = copyString(name, nameLength);
     tempRootPop();
@@ -469,9 +470,14 @@ void printStmtStructDeclaration(ObjStmtStructDeclaration* struct_) {
         printExpr(struct_->address);
     }
     printf("\n{\n");
-    for (int i = 0; i < struct_->fields.objectCount; i++) {
-        printFieldDeclaration((ObjStmtFieldDeclaration*)struct_->fields.objects[i]);
-        printf("\n");
+
+    for (int i = 0; i < struct_->fields.count; i++) {
+        Entry* entry = &struct_->fields.entries[i];
+        if (entry->key) {
+            Obj* field = AS_OBJ(entry->value);
+            printFieldDeclaration((ObjStmtFieldDeclaration*)field);
+            printf("\n");
+        }
     }
     printf("}");
 }
