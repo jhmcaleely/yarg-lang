@@ -269,7 +269,14 @@ static ObjExpr* dot(bool canAssign) {
     pushWorkingNode((Obj*)expr);
 
     if (parser.prevExpr->obj.type == OBJ_EXPR_NAMEDCONSTANT) { // hack, this is a struct...
-        expr->offset = 10;
+        ObjExprNamedConstant* const_ = (ObjExprNamedConstant*) parser.prevExpr;
+        Value val;
+        tableGet(&parser.ast->constants, const_->name, &val);
+        ObjStmtStructDeclaration* struct_ = (ObjStmtStructDeclaration*) AS_OBJ(val);
+
+        ObjStmtFieldDeclaration* f = (ObjStmtFieldDeclaration*) struct_->fields.objects[0];
+
+        expr->offset = f->offset;
     }
     
     if (canAssign && match(TOKEN_EQUAL)) {

@@ -325,6 +325,7 @@ static void blackenObject(Obj* object) {
             ObjExprDot* expr = (ObjExprDot*)object;
             markObject((Obj*)expr->name);
             markObject((Obj*)expr->assignment);
+            markObject((Obj*)expr->offset);
             markObject((Obj*)expr->call);
             break;
         }
