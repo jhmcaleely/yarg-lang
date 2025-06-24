@@ -9,11 +9,9 @@ Yarg aims to be a dedicated language for Microcontroller firmware development. I
   - Interupt based and multi-core multiprocessing
   - Many other modern language conveniences.
 
-Microcontrollers (like the $4 Raspberry Pi Pico, or the ESP32 family) are powerful computers, yet we commonly develop software for them with languages like C that were designed when resources were far more scarce. If you want to use some resources for modern language features, many general purpose languages are availablie in 'Micro', 'Tiny' or other cut-down versions of their implementation for microcontroller use. Yarg aims to remove the limitations that appear in cut-down implementations, and offer modern langauge features, by being dedicated to the task of Microcontroller development.
+Microcontrollers (such as the $4 Raspberry Pi Pico, or the ESP32 family) are powerful computers, yet we commonly develop software for them with languages like C that were designed when resources were far more scarce. Yarg aims to provide a richer language, spending some of these resources to achive that. Of course, if you want to use modern language features, many general purpose languages are available in 'Micro', 'Tiny' or other cut-down versions of their implementation for microcontroller use. These implementations are faced with choices when the resources available do not support the same implementation possible in their original general purpose implementation. Do they try to be compatible (but over-expensive), or do they document a limitation compared to the full language implementation? Yarg aims to remove the limitations these choices impose, and offer modern langauge features, by being dedicated to the task of Microcontroller development.
 
 Many samples for starting projects include polling, (while 'true'; sleep(x); do-stuff;), which can be wasteful of energy. How long is x? Modern microprocessors are designed to be normally off, and to wake when something interesting is happening. Yarg is a language designed with this in mind from the start.
-
-By providing specific targetting to microcontrollers, it will aim to become a friendly target for ai-assisted software development - a language where the tooling and runtime ensure language generators can produce code that does what it intends, and engineers can focus on the problem at hand.
 
 ## Aims
 
