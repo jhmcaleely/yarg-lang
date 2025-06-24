@@ -32,7 +32,7 @@ typedef struct {
 typedef struct Compiler {
     struct Compiler* enclosing;
     ObjFunction* function;
-    ObjStmt* ast;
+    ObjAst* ast;
     FunctionType type;
     ObjStmt* recent;
     bool hadError;
@@ -66,8 +66,11 @@ static void initCompiler(Compiler* compiler, FunctionType type, ObjString* name)
     compiler->localCount = 0;
     compiler->scopeDepth = 0;
 
-    compiler->function = newFunction();
+    compiler->ast = newObjAst();
     current = compiler;
+
+    compiler->function = newFunction();
+
     if (type != TYPE_SCRIPT) {
         current->function->name = name;
     }
@@ -411,6 +414,11 @@ static void generateExprNamedVariable(ObjExprNamedVariable* var) {
     }
 }
 
+static void generateExprNamedConstant(ObjExprNamedConstant* const_) {
+
+        generateExpr(const_->value);
+}
+
 static void generateExprLiteral(ObjExprLiteral* lit) {
     switch (lit->literal) {
         case EXPR_LITERAL_FALSE: emitByte(OP_FALSE); break;
@@ -477,7 +485,10 @@ static void generateExprBuiltin(ObjExprBuiltin* fn) {
 static void generateExprDot(ObjExprDot* dot) {
     uint8_t name = identifierConstant(dot->name);
 
-    if (dot->assignment) {
+    if (dot->offset) {
+        generateExpr(dot->offset);
+        emitByte(OP_ADD);
+    } else if (dot->assignment) {
         generateExpr(dot->assignment);
         emitBytes(OP_SET_PROPERTY, name);
     } else if (dot->call) {
@@ -545,6 +556,11 @@ static void generateExprElt(ObjExpr* expr) {
         case OBJ_EXPR_NAMEDVARIABLE: {
             ObjExprNamedVariable* var = (ObjExprNamedVariable*)expr;
             generateExprNamedVariable(var);
+            break;
+        }
+        case OBJ_EXPR_NAMEDCONSTANT: {
+            ObjExprNamedConstant* const_ = (ObjExprNamedConstant*)expr;
+            generateExprNamedConstant(const_);
             break;
         }
         case OBJ_EXPR_LITERAL: {
@@ -926,17 +942,17 @@ ObjFunction* compile(const char* source) {
     size_t bytesAllocated = vm.bytesAllocated;
 #endif
 
-    bool parseError = parse(&current->ast);
+    bool parseError = parse(current->ast);
 
 #ifdef DEBUG_AST_PARSE
     collectGarbage();
     printf("Parse Tree (%zu net bytes)\n", vm.bytesAllocated - bytesAllocated);
-    printStmts(current->ast);
+    printStmts(current->ast->statements);
 #endif
 
     if (!parseError) {
 
-        generate(current->ast);
+        generate(current->ast->statements);
     }
 
     ObjFunction* function = endCompiler();

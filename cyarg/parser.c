@@ -30,21 +30,28 @@ typedef struct {
     bool hadError;
     bool panicMode;
     DynamicObjArray workingNodes;
+    ObjExpr* prevExpr;
+    ObjAst* ast;
 } Parser;
 
 Parser parser;
 
-void initParser() {
+void initParser(ObjAst* ast) {
     parser.hadError = false;
     parser.panicMode = false;
+    parser.ast = ast;
+    parser.prevExpr = NULL;
     initDynamicObjArray(&parser.workingNodes);
 }
 
 void endParser() {
+    parser.ast = NULL;
     freeDynamicObjArray(&parser.workingNodes);
 }
 
 void markParserRoots() {
+    markObject((Obj*)parser.ast);
+    markObject((Obj*)parser.prevExpr);
     markDynamicObjArray(&parser.workingNodes);
 }
 
@@ -186,15 +193,31 @@ static uint32_t strtoNum(const char* literal, int length, int radix) {
 
 
 static ObjExpr* namedVariable(Token name, bool canAssign) {
-    ObjExprNamedVariable* expr = newExprNamedVariable(name.start, name.length, NULL);
 
-    if (canAssign && match(TOKEN_EQUAL)) {
-        pushWorkingNode((Obj*)expr);
-        expr->assignment = expression();
-        popWorkingNode();
+    ObjString* nameString = copyString(name.start, name.length);
+    tempRootPush(OBJ_VAL(nameString));
+
+    Value constant = NIL_VAL;
+    if (tableGet(&parser.ast->constants, nameString, &constant)) {
+        ObjExprNamedConstant* expr = newExprNamedConstant(name.start, name.length);
+        ObjStmtStructDeclaration* struct_ = (ObjStmtStructDeclaration*)AS_OBJ(constant);
+        expr->value = struct_->address;
+
+        tempRootPop();
+        return (ObjExpr*)expr;
+
+    } else {
+        ObjExprNamedVariable* expr = newExprNamedVariable(name.start, name.length);
+
+        if (canAssign && match(TOKEN_EQUAL)) {
+            pushWorkingNode((Obj*)expr);
+            expr->assignment = expression();
+            popWorkingNode();
+        }
+
+        tempRootPop();
+        return (ObjExpr*)expr;
     }
-
-    return (ObjExpr*)expr;
 }
 
 static void expressionList(DynamicObjArray* items) {
@@ -244,6 +267,19 @@ static ObjExpr* dot(bool canAssign) {
     consume(TOKEN_IDENTIFIER, "Expect property name after '.'.");
     ObjExprDot* expr = newExprDot(parser.previous.start, parser.previous.length);
     pushWorkingNode((Obj*)expr);
+
+    if (parser.prevExpr->obj.type == OBJ_EXPR_NAMEDCONSTANT) { // hack, this is a struct...
+        ObjExprNamedConstant* const_ = (ObjExprNamedConstant*) parser.prevExpr;
+        Value val;
+        tableGet(&parser.ast->constants, const_->name, &val);
+        ObjStmtStructDeclaration* struct_ = (ObjStmtStructDeclaration*) AS_OBJ(val);
+        Value field;
+        tableGet(&struct_->fields, expr->name, &field);
+
+        ObjStmtFieldDeclaration* f = (ObjStmtFieldDeclaration*) AS_OBJ(field);
+
+        expr->offset = f->offset;
+    }
     
     if (canAssign && match(TOKEN_EQUAL)) {
         expr->assignment = expression();
@@ -538,6 +574,7 @@ static ObjExpr* parsePrecedence(Precedence precedence) {
     bool canAssign = precedence <= PREC_ASSIGNMENT;
 
     ObjExpr* expr = prefixRule(canAssign);
+    parser.prevExpr = expr;
     pushWorkingNode((Obj*)expr);
 
     ObjExpr** cursor = &expr->nextExpr;
@@ -545,6 +582,7 @@ static ObjExpr* parsePrecedence(Precedence precedence) {
         advance();
         AstParseFn infixRule = getRule(parser.previous.type)->infix;
         *cursor = infixRule(canAssign);
+        parser.prevExpr = *cursor;
         cursor = &(*cursor)->nextExpr;
     }
 
@@ -553,6 +591,7 @@ static ObjExpr* parsePrecedence(Precedence precedence) {
     }
 
     popWorkingNode();
+    parser.prevExpr = NULL;
     return expr;
 }
 
@@ -767,11 +806,69 @@ static ObjStmtClassDeclaration* classDeclaration() {
     return decl;
 }
 
+static AccessRule consumeAccessToken() {
+
+    if (parser.current.type == TOKEN_ACCESS) {
+        advance();
+
+        if (memcmp(parser.previous.start, "ro", 2) == 0) {
+            return ACCESS_RO;
+        } else if (memcmp(parser.previous.start, "wo", 2) == 0) {
+            return ACCESS_WO;
+        } else if (memcmp(parser.previous.start, "rw", 2) == 0) {
+            return ACCESS_RW;
+        }
+    }
+
+    error("Expected access rule ro, rw or wo.");
+    return ACCESS_RW;
+}
+
+static ObjStmtFieldDeclaration* fieldDeclaration() {
+    consume(TOKEN_MACHINE_UINT32, "Expect type.");
+    AccessRule rule = consumeAccessToken();
+    consume(TOKEN_IDENTIFIER, "Expect field name.");
+    ObjStmtFieldDeclaration* field = newStmtFieldDeclaration(parser.previous.start, parser.previous.length, parser.previous.line);
+    pushWorkingNode((Obj*)field);
+
+    field->access = rule;
+
+    if (match(TOKEN_AT)) {
+        field->offset = expression();
+    }
+    consume(TOKEN_SEMICOLON, "Expect ';' after field declaration.");
+    popWorkingNode();
+    return field;
+}
+
+static ObjStmtStructDeclaration* structDeclaration() {
+    consume(TOKEN_IDENTIFIER, "Expect struct name.");
+    Token structName = parser.previous;
+    consume(TOKEN_AT, "Expect struct address declaration.");
+    ObjStmtStructDeclaration* struct_ = newStmtStructDeclaration(structName.start, structName.length, parser.previous.line);
+    pushWorkingNode((Obj*)struct_);
+
+    struct_->address = expression();
+    consume(TOKEN_LEFT_BRACE, "Expect '{' before struct body.");
+    while (!check(TOKEN_RIGHT_BRACE)) {
+        ObjStmtFieldDeclaration* field = fieldDeclaration();
+        pushWorkingNode((Obj*)field);
+        tableSet(&struct_->fields, field->name, OBJ_VAL(field));
+        popWorkingNode();
+    }
+    consume(TOKEN_RIGHT_BRACE, "Expect '}' after field declarations.");
+    tableSet(&parser.ast->constants, struct_->name, OBJ_VAL(struct_));
+    popWorkingNode();
+    return struct_;
+}
+
 ObjStmt* declaration() {
     ObjStmt* stmt = NULL;
 
     if (match(TOKEN_CLASS)) {
         stmt = (ObjStmt*) classDeclaration();
+    } else if (match(TOKEN_STRUCT)) {
+        stmt = (ObjStmt*) structDeclaration();
     } else if (match(TOKEN_FUN)) {
         stmt = (ObjStmt*) funDeclaration("Expect function name.");
     } else if (match(TOKEN_VAR)) {
@@ -784,11 +881,11 @@ ObjStmt* declaration() {
     return stmt;
 }
 
-bool parse(ObjStmt** ast_root) {
-    initParser();
+bool parse(ObjAst* ast_root) {
+    initParser(ast_root);
     advance();
 
-    ObjStmt** cursor = ast_root;
+    ObjStmt** cursor = &ast_root->statements;
     while (!match(TOKEN_EOF)) {
         *cursor = declaration();
         if (*cursor) {

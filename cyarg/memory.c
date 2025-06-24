@@ -172,6 +172,12 @@ static void blackenObject(Obj* object) {
             }
             break;
         }
+        case OBJ_AST: {
+            ObjAst* ast = (ObjAst*)object;
+            markObject((Obj*)ast->statements);
+            markTable(&ast->constants);
+            break;
+        }
         case OBJ_STMT_YIELD: // fall through
         case OBJ_STMT_RETURN:
         case OBJ_STMT_PRINT:
@@ -233,6 +239,21 @@ static void blackenObject(Obj* object) {
             markDynamicObjArray(&decl->methods);
             break;
         }
+        case OBJ_STMT_STRUCTDECLARATION: { 
+            ObjStmtStructDeclaration* struct_ = (ObjStmtStructDeclaration*)object;
+            markStmt(object);
+            markObject((Obj*)struct_->name);
+            markObject((Obj*)struct_->address);
+            markTable(&struct_->fields);
+            break;
+        }
+        case OBJ_STMT_FIELDDECLARATION: {
+            ObjStmtFieldDeclaration* field = (ObjStmtFieldDeclaration*)object;
+            markStmt(object);
+            markObject((Obj*)field->name);
+            markObject((Obj*)field->offset);
+            break;
+        }
         case OBJ_EXPR_NUMBER: {
             ObjExprNumber* expr = (ObjExprNumber*)object;
             markObject((Obj*)expr->expr.nextExpr);
@@ -252,10 +273,17 @@ static void blackenObject(Obj* object) {
             break;
         }
         case OBJ_EXPR_NAMEDVARIABLE: {
+            markExpr(object);
             ObjExprNamedVariable* var = (ObjExprNamedVariable*)object;
-            markObject((Obj*)var->expr.nextExpr);
             markObject((Obj*)var->assignment);
             markObject((Obj*)var->name);
+            break;
+        }
+        case OBJ_EXPR_NAMEDCONSTANT: {
+            markExpr(object);
+            ObjExprNamedConstant* const_ = (ObjExprNamedConstant*)object;
+            markObject((Obj*)const_->value);
+            markObject((Obj*)const_->name);
             break;
         }
         case OBJ_EXPR_LITERAL: {
@@ -297,6 +325,7 @@ static void blackenObject(Obj* object) {
             ObjExprDot* expr = (ObjExprDot*)object;
             markObject((Obj*)expr->name);
             markObject((Obj*)expr->assignment);
+            markObject((Obj*)expr->offset);
             markObject((Obj*)expr->call);
             break;
         }
@@ -393,6 +422,11 @@ static void freeObject(Obj* object) {
             FREE(ObjYargType, object);
             break;
         }
+        case OBJ_AST: {
+            ObjAst* ast = (ObjAst*)object;
+            freeTable(&ast->constants);
+            break;
+        }
         case OBJ_STMT_RETURN: // fall through
         case OBJ_STMT_YIELD:
         case OBJ_STMT_PRINT:
@@ -414,10 +448,18 @@ static void freeObject(Obj* object) {
             FREE(ObjStmtClassDeclaration, object);
             break;
         }
+        case OBJ_STMT_STRUCTDECLARATION: {
+            ObjStmtStructDeclaration* struct_ = (ObjStmtStructDeclaration*)object;
+            freeTable(&struct_->fields);
+            FREE(ObjStmtStructDeclaration, object); 
+            break;
+        }
+        case OBJ_STMT_FIELDDECLARATION: FREE(ObjStmtFieldDeclaration, object); break;
         case OBJ_EXPR_NUMBER: FREE(ObjExprNumber, object); break;
         case OBJ_EXPR_OPERATION: FREE(ObjExprOperation, object); break;
         case OBJ_EXPR_GROUPING: FREE(ObjExprGrouping, object); break;
         case OBJ_EXPR_NAMEDVARIABLE: FREE(ObjExprNamedVariable, object); break;
+        case OBJ_EXPR_NAMEDCONSTANT: FREE(ObjExprNamedConstant, object); break;
         case OBJ_EXPR_LITERAL: FREE(ObjExprLiteral, object); break;
         case OBJ_EXPR_STRING: FREE(ObjExprString, object); break;
         case OBJ_EXPR_CALL: {

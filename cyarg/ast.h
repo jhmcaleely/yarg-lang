@@ -18,6 +18,12 @@ typedef struct ObjExpr {
     ObjExpr* nextExpr;
 } ObjExpr;
 
+typedef struct ObjAst {
+    Obj obj;
+    ObjStmt* statements;
+    Table constants;
+} ObjAst;
+
 typedef enum {
     EXPR_OP_EQUAL,
     EXPR_OP_GREATER,
@@ -82,6 +88,12 @@ typedef struct {
 
 typedef struct {
     ObjExpr expr;
+    ObjString* name;
+    ObjExpr* value;
+} ObjExprNamedConstant;
+
+typedef struct {
+    ObjExpr expr;
     ExprLiteral literal;
 } ObjExprLiteral;
 
@@ -131,6 +143,7 @@ typedef struct {
 typedef struct {
     ObjExpr expr;
     ObjString* name;
+    ObjExpr* offset;
     ObjExpr* assignment;
     ObjExprCall* call;
 } ObjExprDot;
@@ -180,6 +193,26 @@ typedef struct {
     DynamicObjArray methods;
 } ObjStmtClassDeclaration;
 
+typedef enum {
+    ACCESS_RW,
+    ACCESS_RO,
+    ACCESS_WO,
+} AccessRule;
+
+typedef struct {
+    ObjStmt stmt;
+    ObjString* name;
+    AccessRule access;
+    ObjExpr* offset;
+} ObjStmtFieldDeclaration;
+
+typedef struct {
+    ObjStmt stmt;
+    ObjString* name;
+    ObjExpr* address;
+    Table fields;
+} ObjStmtStructDeclaration;
+
 typedef struct {
     ObjStmt stmt;
     ObjExpr* test;
@@ -201,6 +234,8 @@ typedef struct {
     ObjStmt* body;
 } ObjStmtFor;
 
+ObjAst* newObjAst();
+
 ObjExprNumber* newExprNumberDouble(double value);
 ObjExprNumber* newExprNumberInteger(int value);
 ObjExprNumber* newExprNumberUInteger32(uint32_t value);
@@ -208,7 +243,8 @@ ObjExprLiteral* newExprLiteral(ExprLiteral literal);
 ObjExprString* newExprString(const char* str, int strLength);
 ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op);
 ObjExprGrouping* newExprGrouping(ObjExpr* expression);
-ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength, ObjExpr* expr);
+ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength);
+ObjExprNamedConstant* newExprNamedConstant(const char* name, int nameLength);
 ObjExprCall* newExprCall();
 ObjExprArrayInit* newExprArrayInit();
 ObjExprArrayElement* newExprArrayElement();
@@ -223,6 +259,8 @@ ObjStmtBlock* newStmtBlock(int line);
 ObjStmtVarDeclaration* newStmtVarDeclaration(const char* name, int nameLength, ObjExpr* expr, int line);
 ObjStmtFunDeclaration* newStmtFunDeclaration(const char* name, int nameLength, int line);
 ObjStmtClassDeclaration* newStmtClassDeclaration(const char* name, int nameLength, int line);
+ObjStmtStructDeclaration* newStmtStructDeclaration(const char* name, int nameLength, int line);
+ObjStmtFieldDeclaration* newStmtFieldDeclaration(const char* name, int nameLength, int line);
 
 ObjStmtIf* newStmtIf(int line);
 ObjStmtWhile* newStmtWhile(int line);
