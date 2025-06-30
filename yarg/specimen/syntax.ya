@@ -9,10 +9,8 @@ fun gpio_callback(num, events) {
     state1 = !state1;
     gpio_put(gpio_led1, state1);
 }
-
 gpio_init(gpio_led1);
 gpio_set_direction(gpio_led1, GPIO_OUT);
-
 gpio_init(gpio_button1);
 
 gpio_handler_routine = make_routine(gpio_default_irq_handler, true);
