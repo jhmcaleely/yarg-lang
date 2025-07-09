@@ -167,6 +167,7 @@ typedef struct {
 typedef struct {
     ObjExpr expr;
     Table fields;
+    size_t size;
 } ObjExprTypeStruct;
 
 typedef struct {
