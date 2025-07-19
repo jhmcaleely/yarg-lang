@@ -166,7 +166,7 @@ typedef struct {
 
 typedef struct ObjValArray {
     Obj obj;
-    ValueArray array;
+    ValueCellArray array;
 } ObjValArray;
 
 typedef struct ObjUniformArray {

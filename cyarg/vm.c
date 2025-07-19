@@ -241,7 +241,7 @@ static bool derefElement(ObjRoutine* routine) {
             return false;
         }
 
-        result = array->array.values[index];
+        result = array->array.cells[index].val;
     } else if (IS_UNIFORMARRAY(peek(routine, 0))) {
         ObjUniformArray* array = AS_UNIFORMARRAY(pop(routine));
         if (index >= array->count || index < 0) {
@@ -275,7 +275,7 @@ static bool setArrayElement(ObjRoutine* routine) {
             return false;
         }
 
-        array->array.values[index] = new_value;
+        array->array.cells[index].val = new_value;
     } else if (IS_UNIFORMARRAY(boxed_array)) {
         ObjUniformArray* array = AS_UNIFORMARRAY(boxed_array);
         if (index >= array->count || index < 0) {
@@ -326,7 +326,7 @@ InterpretResult run(ObjRoutine* routine) {
     (uint16_t)((frame->ip[-2] << 8) | frame->ip[-1]))
 
 #define READ_CONSTANT() \
-    (frame->closure->function->chunk.constants.values[READ_BYTE()])
+    (frame->closure->function->chunk.constants.cells[READ_BYTE()].val)
 
 #define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(routine, valueType, op) \

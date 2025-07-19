@@ -124,11 +124,14 @@ ObjBlob* newBlob(size_t count) {
 
 ObjValArray* newValArray(size_t capacity) {
     ObjValArray* array = ALLOCATE_OBJ(ObjValArray, OBJ_VALARRAY);
-    initValueArray(&array->array);
+    initValueCellArray(&array->array);
     tempRootPush(OBJ_VAL(array));
 
     for (int i = 0; i < capacity; i++) {
-        appendToValueArray(&array->array, NIL_VAL);
+        ValueCell cell;
+        cell.val = NIL_VAL;
+        cell.required_type = CELL_TYPE_ANY; // Default to Any type
+        appendToValueCellArray(&array->array, cell);
     }
 
     tempRootPop();

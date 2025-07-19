@@ -2,7 +2,7 @@
 #define cyarg_chunk_h
 
 #include "common.h"
-#include "value.h"
+#include "value_cell.h"
 
 typedef enum {
     OP_CONSTANT,
@@ -61,7 +61,7 @@ typedef struct {
     int capacity;
     uint8_t* code;
     int* lines;
-    ValueArray constants;
+    ValueCellArray constants;
 } Chunk;
 
 typedef enum {

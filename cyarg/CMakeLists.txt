@@ -42,6 +42,7 @@ add_executable(cyarg
     memory.c
     debug.c
     value.c
+    value_cell.c
     routine.c
     vm.c
     ast.c
@@ -70,7 +71,7 @@ target_sources(cyarg
       files_stdlib.c)
 endif()
 
-add_compile_definitions(NAN_BOXING)
+#add_compile_definitions(NAN_BOXING)
 
 if (HOST_TYPE STREQUAL "Interactive")
 add_compile_definitions(DEBUG_TRACE_EXECUTION)

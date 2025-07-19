@@ -9,13 +9,13 @@ void initChunk(Chunk* chunk) {
     chunk->capacity = 0;
     chunk->code = NULL;
     chunk->lines = NULL;
-    initValueArray(&chunk->constants);
+    initValueCellArray(&chunk->constants);
 }
 
 void freeChunk(Chunk* chunk) {
     FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);
     FREE_ARRAY(int, chunk->lines, chunk->capacity);
-    freeValueArray(&chunk->constants);
+    freeValueCellArray(&chunk->constants);
     initChunk(chunk);
 }
 
@@ -34,7 +34,8 @@ void writeChunk(Chunk* chunk, uint8_t byte, int line) {
 
 int addConstant(Chunk* chunk, Value value) {
     tempRootPush(value);
-    appendToValueArray(&chunk->constants, value);
+    ValueCell cell = { .val = value, .required_type = CELL_TYPE_ANY };
+    appendToValueCellArray(&chunk->constants, cell);
     tempRootPop();
     return chunk->constants.count - 1;
 }

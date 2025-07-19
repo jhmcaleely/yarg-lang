@@ -139,17 +139,7 @@ typedef struct {
 
 #endif
 
-typedef struct {
-    int capacity;
-    int count;
-    Value* values;
-} ValueArray;
-
 bool valuesEqual(Value a, Value b);
-void initValueArray(ValueArray* array);
-void appendToValueArray(ValueArray* array, Value value);
-void freeValueArray(ValueArray* array);
-
 void printValue(Value value);
 void fprintValue(FILE* op, Value value);
 

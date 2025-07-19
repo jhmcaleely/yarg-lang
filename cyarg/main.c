@@ -51,8 +51,8 @@ static void disassembleFile(const char* path) {
 
     disassembleChunk(&result->chunk, path);
     for (int i = 0; i < result->chunk.constants.count; i++) {
-        if (IS_FUNCTION(result->chunk.constants.values[i])) {
-            ObjFunction* fun = AS_FUNCTION(result->chunk.constants.values[i]);
+        if (IS_FUNCTION(result->chunk.constants.cells[i].val)) {
+            ObjFunction* fun = AS_FUNCTION(result->chunk.constants.cells[i].val);
             disassembleChunk(&fun->chunk, fun->name->chars);
         }
     }

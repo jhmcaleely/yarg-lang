@@ -78,9 +78,9 @@ void markValue(Value value) {
     if (IS_OBJ(value)) markObject(AS_OBJ(value));
 }
 
-static void markArray(ValueArray* array) {
+static void markArray(ValueCellArray* array) {
     for (int i = 0; i < array->count; i++) {
-        markValue(array->values[i]);
+        markValue(array->cells[i].val);
     }
 }
 
@@ -407,7 +407,7 @@ static void freeObject(Obj* object) {
             break;
         case OBJ_VALARRAY: {
             ObjValArray* array = (ObjValArray*)object;
-            freeValueArray(&array->array);
+            freeValueCellArray(&array->array);
             FREE(ObjValArray, object);
             break;
         }
