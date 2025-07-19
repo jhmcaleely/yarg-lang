@@ -496,6 +496,16 @@ void printStmtExpression(ObjStmtExpression* stmt) {
 
 void printStmtVarDeclaration(ObjStmtVarDeclaration* decl) {
     printf("var ");
+    if (decl->type) {
+        ObjExprType* type = (ObjExprType*)decl->type;
+        switch (type->type) {
+            case EXPR_TYPE_MFLOAT64: printf("mfloat64 "); break;
+            case EXPR_TYPE_MUINT32: printf("muint32 "); break;
+            case EXPR_TYPE_INTEGER: printf("integer "); break;
+            case EXPR_TYPE_ANY: // fall through
+            default: break;
+        }
+    }
     printObject(OBJ_VAL(decl->name));
     if (decl->initialiser) {
         printf(" = ");

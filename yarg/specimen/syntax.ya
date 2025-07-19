@@ -1,9 +1,7 @@
-struct sio_hw@0xd0000000 {
-    muint32 ro cpuid@0x0;
-}
-
-fun coreNum() {
-    return rpeek(sio_hw.cpuid);
-}
-
-print coreNum();
+var integer counter = 1;
+var mfloat64 alternative = 1.1;
+var muint32 anotherAlternative = 2;
+var any counter1 = 2;
+counter1 = anotherAlternative;
+print counter1;  // expect: 2
+counter = alternative;  // expect error: incompatible types

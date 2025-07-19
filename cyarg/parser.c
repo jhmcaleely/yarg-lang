@@ -156,6 +156,19 @@ void consume(TokenType type, const char* message) {
     errorAtCurrent(message);
 }
 
+static bool checkTypeToken() {
+    switch (parser.current.type) {
+        case TOKEN_MACHINE_FLOAT64:
+        case TOKEN_MACHINE_UINT32:
+        case TOKEN_INTEGER:
+        case TOKEN_ANY:
+            return true;
+        default:
+            return false;
+    }
+}
+
+
 static uint32_t strtoNum(const char* literal, int length, int radix) {
     uint32_t val = 0;
     for (int i = length - 1 ; i >= 0; i--) {
@@ -618,15 +631,38 @@ static ObjStmtExpression* expressionStatement() {
 }
 
 static ObjStmt* varDeclaration() {
+
+    ObjExprType* type = NULL;;
+    if (checkTypeToken()) {
+        advance();
+        switch (parser.previous.type) {
+            case TOKEN_MACHINE_FLOAT64: type = newExprType(EXPR_TYPE_MFLOAT64); break;
+            case TOKEN_MACHINE_UINT32: type = newExprType(EXPR_TYPE_MUINT32); break;
+            case TOKEN_INTEGER: type = newExprType(EXPR_TYPE_INTEGER); break;
+            case TOKEN_ANY: type = newExprType(EXPR_TYPE_ANY); break;
+            default: 
+                error("Invalid type for variable declaration.");
+                type = NULL;
+                break;
+        }
+        pushWorkingNode((Obj*)type);
+    } else {
+        type = newExprType(EXPR_TYPE_ANY);
+        pushWorkingNode((Obj*)type);
+    }
+
     consume(TOKEN_IDENTIFIER, "Expect variable name.");
     ObjStmtVarDeclaration* decl = newStmtVarDeclaration((char*)parser.previous.start, parser.previous.length, NULL, parser.previous.line);
     pushWorkingNode((Obj*)decl);
+
+    decl->type = (ObjExpr*) type;
 
     if (match(TOKEN_EQUAL)) {
         decl->initialiser = expression();
     }
     consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration");
 
+    popWorkingNode();
     popWorkingNode();
 
     return (ObjStmt*) decl;
