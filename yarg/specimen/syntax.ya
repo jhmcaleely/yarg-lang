@@ -1,6 +1,71 @@
 import("machine");
 import("gpio");
 
+type io_bank0_status_ctrl struct {
+    muint32 ro status;
+    muint32 rw ctrl;
+}
+
+type io_bank0_irq_ctrl struct {
+    muint32 rw inte[4];
+    muint32 rw intf[4];
+    muint32 ro ints[4];
+}
+
+map struct {
+    io_bank0_status_ctrl rw io[30];
+    muint32 rw intr[4];
+    io_bank0_irq_ctrl rw proc_irq_ctrl[2];
+    io_bank0_irq_ctrl rw dormant_wake_irq_ctrl;
+} rw io_bank0_hw@0x40014000;
+
+fun gpio_acknowledge_irq(gpio, events) {
+    rpoke(io_bank0_hw.intr[gpio / 0d8], events << (0d4 * (gpio % 0d8)));
+}
+
+map struct {
+    muint32 rw register;
+    muint32 wo xor@0x1000;
+    muint32 wo set@0x2000;
+    muint32 wo clr@0x3000;
+} rw ctrl@0x40014100;
+
+fun gpio_set_irq_enabled(gpio, events, enabled) {
+    gpio_acknowledge_irq(gpio, events);
+
+    events = events << (0d4 * (gpio % 0d8));
+    if (enabled) {
+        rpoke(ctrl.set, events);
+    }
+    else {
+        rpoke(ctrl.clr, events);
+    }
+}
+
+
+var PPB_BASE = 0xe0000000;
+var M0PLUS_NVIC_ISER_OFFSET = 0x0000e100;
+
+map struct {
+    muint32 rw iser@0x0;
+    muint32 rw icer@0x80;
+    muint32 rw ispr@0x100;
+    muint32 rw icpr@0x180;
+} rw nvic_hw@0xe000e100;
+
+fun irq_set_mask_n_enabled(n, mask, enabled) {
+    if (enabled) {
+        rpoke(nvic_hw.icpr, mask);
+        rpoke(nvic_hw.iser, mask);
+    } else {
+        rpoke(nvic_hw.icer, mask);
+    }
+}
+
+fun irq_set_enabled(bank, enabled) {
+    irq_set_mask_n_enabled(bank / 0d32, 0d1 << (bank % 0d32), enabled);
+}
+
 var state1 = false;
 var gpio_button1 = 0d2;
 var gpio_led1 = 0d3;
@@ -9,11 +74,10 @@ fun gpio_callback(num, events) {
     state1 = !state1;
     gpio_put(gpio_led1, state1);
 }
+
 gpio_init(gpio_led1);
 gpio_set_direction(gpio_led1, GPIO_OUT);
-gpio_init(gpio_button1);
 
-gpio_handler_routine = make_routine(gpio_default_irq_handler, true);
-pinned_gpio_handler_routine = pin(gpio_handler_routine);
+gpio_init(gpio_button1);
 
 gpio_set_irq_enabled_with_callback(gpio_button1, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true, gpio_callback);
