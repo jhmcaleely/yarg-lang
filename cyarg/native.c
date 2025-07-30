@@ -10,7 +10,45 @@
 
 #ifdef CYARG_PICO_TARGET
 #include <hardware/gpio.h>
+#include <hardware/irq.h>
 #endif
+
+bool irq_add_shared_handlerNative(ObjRoutine* routine, int argCount, Value* args, Value* result) {
+    *result = NIL_VAL;
+    Value numVal = args[0];
+    unsigned int num = as_positive_integer(numVal);
+
+    uintptr_t isrRoutine = AS_UINTEGER(args[1]);
+
+    Value prioVal = args[2];
+    unsigned int prio = as_positive_integer(prioVal);
+
+    size_t handlerIndex = pinnedRoutineIndex(isrRoutine);
+
+    prepareRoutineStack(vm.pinnedRoutines[handlerIndex]);
+    vm.pinnedRoutines[handlerIndex]->state = EXEC_RUNNING;
+
+#ifdef CYARG_PICO_TARGET
+    irq_add_shared_handler(num, (irq_handler_t) isrRoutine, prio);
+#endif
+
+    return true;
+}
+
+bool irq_remove_handlerNative(ObjRoutine* routine, int argCount, Value* args, Value* result) {
+    *result = NIL_VAL;
+    Value numVal = args[0];
+    unsigned int num = as_positive_integer(numVal);
+
+    uintptr_t isrRoutine = AS_UINTEGER(args[1]);
+
+#ifdef CYARG_PICO_TARGET
+    irq_remove_handler(num, (irq_handler_t) isrRoutine);
+#endif
+
+    return true;
+}
+
 
 bool clockNative(ObjRoutine* routine, int argCount, Value* args, Value* result) {
     if (argCount != 0) {
