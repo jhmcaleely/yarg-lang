@@ -525,9 +525,9 @@ void printType(ObjExpr* type) {
         return;
     }
     else if (type->obj.type == OBJ_EXPR_TYPE) {
-        ObjExprType* type = (ObjExprType*)type;
+        ObjExprType* typeObject = (ObjExprType*)type;
 
-        switch (type->type) {
+        switch (typeObject->type) {
             case EXPR_TYPE_MFLOAT64: printf("mfloat64"); break;
             case EXPR_TYPE_MUINT32: printf("muint32"); break;
             case EXPR_TYPE_INTEGER: printf("integer"); break;
