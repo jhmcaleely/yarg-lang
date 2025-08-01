@@ -1,27 +1,10 @@
-var f;
-var g;
-
-{
-  var string local = "local";
-  fun f_() {
-    print local;
-    local = "after f";
-    print local;
-  }
-  f = f_;
-
-  fun g_() {
-    print local;
-    local = 10;
-    print local;
-  }
-  g = g_;
-}
-
-f();
-// expect: local
-// expect: after f
-
-g();
-// expect: after f
-// expect: after g
+var any[] test = make_array(0d10);
+print test;      // expect: [array 10]
+print test[0];   // expect: nil
+test[1] = 10;
+print test[1];   // expect: 10
+test[5] = 11;
+print test[3+2]; // expect: 11
+var test2 = [4, 6, 7];
+print test2[2];  // expect: 7
+print test[10];  // expect runtime error: Array index 10 out of bounds (0:9)
