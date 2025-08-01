@@ -1,4 +1,3 @@
-import("machine");
 import("gpio");
 
 var state1 = false;
