@@ -14,8 +14,4 @@ gpio_init(gpio_led1);
 gpio_set_direction(gpio_led1, GPIO_OUT);
 
 gpio_init(gpio_button1);
-
-gpio_handler_routine = make_routine(gpio_default_irq_handler, true);
-pinned_gpio_handler_routine = pin(gpio_handler_routine);
-
 gpio_set_irq_enabled_with_callback(gpio_button1, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true, gpio_callback);
