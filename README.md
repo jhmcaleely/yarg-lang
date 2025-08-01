@@ -35,6 +35,54 @@ Not (yet) intended for use. Additional documentation on the [wiki][wiki]
 | `yarg/specimen/todo` | Things that don't work yet |
 | `yarg/test/` | A Test Suite |
 
+## Samples
+
+### Blinky (aka 'Hello World' with a LED)
+
+`yarg/specimen/blinky.ya`:
+```
+import("gpio");
+
+gpio_init(pico_led);
+gpio_set_direction(pico_led, GPIO_OUT);
+
+var n = 5;
+var state = false;
+
+while (n > 0) {
+    state = !state;
+    gpio_put(pico_led, state);
+    sleep_ms(0d500);
+    n = n - 1;
+}
+```
+There's some work to be done here - constants should not need the '0d' decorator, and sleep_ms is currently a thin shim over a C function. I'd like to replace that with a native Yarg implementation.
+
+### Button Press
+
+`yarg/specimen/button.ya`:
+``` 
+import("gpio");
+
+var state1 = false;
+var gpio_button1 = 0d2;
+var gpio_led1 = 0d3;
+
+fun gpio_callback(num, events) {
+    state1 = !state1;
+    gpio_put(gpio_led1, state1);
+}
+
+gpio_init(gpio_led1);
+gpio_set_direction(gpio_led1, GPIO_OUT);
+
+gpio_init(gpio_button1);
+gpio_set_irq_enabled_with_callback(gpio_button1, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true, gpio_callback);
+```
+The interesting stuff hides in the GPIO library, allowing any suitable yarg function to be called back when the interrupt is raised by the button.
+
+
+
 ## Name
 
 [Cornish Yarg](https://en.wikipedia.org/wiki/Cornish_Yarg) is a cheese I enjoy.
