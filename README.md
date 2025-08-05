@@ -46,7 +46,7 @@ import("gpio");
 gpio_init(pico_led);
 gpio_set_direction(pico_led, GPIO_OUT);
 
-var n = 5;
+var n = 6;
 bool state = false;
 
 while (n > 0) {
