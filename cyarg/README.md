@@ -2,7 +2,7 @@
 
 A bytecode interpreter for Yarg, implemented in C.
 
-Targets microcontroller devices, currently starting with the Raspberry Pi Pico (RP2040/RP2350)
+Targets microcontroller devices, currently starting with the Raspberry Pi Pico (RP2040)
 
 ## Host Build
 
