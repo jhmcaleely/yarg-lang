@@ -351,7 +351,7 @@ bool newBuiltin(ObjRoutine* routineContext, int argCount, ValueCell* args, Value
             return true;
         }
         case TypeArray: {
-            *result = defaultArrayValue(AS_YARGTYPE(args[0].value));
+            *result = defaultValue(typeToCreate);
             return true;
         }
         case TypeString:
