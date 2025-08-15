@@ -213,6 +213,10 @@ size_t yt_sizeof_type_storage(Value type) {
             return sizeof(Value);
         case TypeMachineUint32:
             return sizeof(uint32_t);
+        case TypeStruct: {
+            ObjConcreteYargTypeStruct* st = (ObjConcreteYargTypeStruct*)t;
+            return sizeof(Value) * st->field_count;
+        }
         case TypeString:
         case TypeClass:
         case TypeInstance:
@@ -221,7 +225,7 @@ size_t yt_sizeof_type_storage(Value type) {
         case TypeRoutine:
         case TypeChannel:
         case TypeArray:
-        case TypeStruct:
+
         case TypePointer:
         case TypeYargType:
             return sizeof(uintptr_t);            

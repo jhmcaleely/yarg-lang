@@ -1,6 +1,9 @@
-place muint32[2] 0xd0000000 registers;
-print registers;
-rpeek(registers[0]);
-rpeek(registers[1]);
-
-
+var buffer = new(struct { header; data1; data2; });
+print buffer.header;
+*buffer.data1 = 42;
+print buffer.data1;
+print *buffer.data1;
+*buffer.data2 = 0xff;
+print *buffer.data2;
+print buffer.data2;
+rpeek(buffer.data2);

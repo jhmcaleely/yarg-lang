@@ -645,7 +645,7 @@ InterpretResult run(ObjRoutine* routine) {
                 break;
             }
             case OP_GET_PROPERTY: {
-                if (!IS_INSTANCE(peek(routine, 0)) && !IS_STRUCT(peek(routine, 0))) {
+                if (!IS_INSTANCE(peek(routine, 0)) && !IS_STRUCT(peek(routine, 0)) && !IS_POINTER(peek(routine, 0))) {
                     runtimeError(routine, "Only instances and structs have properties.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -679,7 +679,32 @@ InterpretResult run(ObjRoutine* routine) {
                     }
                     pop(routine);
                     push(routine, result);
-                }
+                } else if (IS_POINTER(peek(routine, 0))) {
+                    ObjPointer* pointer = AS_POINTER(peek(routine, 0));
+                    ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*) AS_YARGTYPE(pointer->destination_type);
+                    Obj** destObj = (Obj**)pointer->destination;
+                    ObjStruct* structObj = (ObjStruct*)*destObj;
+                    ObjString* name = READ_STRING();
+                    if (structType->core.yt != TypeStruct) {
+                        runtimeError(routine, "Cannot get field from non-struct type.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+
+                    Value indexVal;
+                    Value result = NIL_VAL;
+                    if (tableGet(&structType->field_names, name, &indexVal)) {
+                        uint32_t index = AS_UINTEGER(indexVal);
+
+                        ObjPointer* element_pointer = newPointerAtCell(structType->field_types[index], &structObj->fields[index]);
+                        result = OBJ_VAL(element_pointer);
+
+                    } else {
+                        runtimeError(routine, "field not present in pointer.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    pop(routine);
+                    push(routine, result);
+                } 
                 break;
             }
             case OP_SET_PROPERTY: {
