@@ -571,7 +571,8 @@ static void freeObject(Obj* object) {
         case OBJ_UNOWNED_STRUCT: FREE(ObjStruct, object); break;
         case OBJ_STRUCT: {
             ObjStruct* struct_ = (ObjStruct*) object;
-            FREE_ARRAY(Value, struct_->fields, struct_->field_count);
+            ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*)struct_->type;
+            struct_->fields = reallocate(struct_->fields, structType->storage_size, 0);
             FREE(ObjStruct, object);
             break;            
         }
