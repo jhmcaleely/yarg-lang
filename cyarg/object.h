@@ -201,7 +201,7 @@ typedef struct {
 typedef struct {
     Obj obj;
     ObjConcreteYargType* type;
-    Value* fields;
+    StoredValue* fields;
     size_t field_count;
 } ObjStruct;
 
@@ -236,6 +236,7 @@ ObjPointer* newPointerAt(Value type, Value location);
 ObjPointer* newPointerAtCell(Value type, StoredValue* location);
 ObjUniformArray* newUniformArrayAt(Value type, Value location);
 ObjStruct* newStructAtCell(Value type, void* location);
+StoredValue* structField(ObjStruct* struct_, size_t fieldIndex);
 
 Value createPointerToObj(Value type, Obj* target);
 

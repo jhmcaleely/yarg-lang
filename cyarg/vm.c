@@ -420,6 +420,21 @@ static void concatenate(ObjRoutine* routine) {
     push(routine, OBJ_VAL(result));
 }
 
+static bool assignToStorage(StoredValueCellTarget* lhs, Value rhsValue) {
+    if (IS_NIL(*lhs->type)) {
+        lhs->storedValue->asValue = rhsValue;
+        return true;
+    } else {
+        ObjConcreteYargType* lhsType = (ObjConcreteYargType*) AS_OBJ(*lhs->type);
+        if (isCompatibleType(lhsType, rhsValue)) {
+            packValueStorage(lhs, rhsValue);
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
 static bool assignTo(ValueCellTarget lhs, Value rhsValue) {
     if (IS_NIL(*lhs.type)) {
         *lhs.value = rhsValue;
@@ -671,8 +686,10 @@ InterpretResult run(ObjRoutine* routine) {
                     Value indexVal;
                     Value result = NIL_VAL;
                     if (tableGet(&type->field_names, name, &indexVal)) {
-                        uint32_t index = AS_UINTEGER(indexVal);
-                        result = object->fields[index];
+                        size_t index = AS_UINTEGER(indexVal);
+
+                        StoredValue* field = structField(object, index);
+                        result = unpackStoredValue(type->field_types[index], field);
                     } else {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
@@ -692,9 +709,10 @@ InterpretResult run(ObjRoutine* routine) {
                     Value indexVal;
                     Value result = NIL_VAL;
                     if (tableGet(&structType->field_names, name, &indexVal)) {
-                        uint32_t index = AS_UINTEGER(indexVal);
+                        size_t index = AS_UINTEGER(indexVal);
+                        StoredValue* field = structField(structObj, index);
 
-                        ObjPointer* element_pointer = newPointerAtCell(structType->field_types[index], (StoredValue*) &structObj->fields[index]);
+                        ObjPointer* element_pointer = newPointerAtCell(structType->field_types[index], field);
                         result = OBJ_VAL(element_pointer);
 
                     } else {
@@ -725,9 +743,11 @@ InterpretResult run(ObjRoutine* routine) {
                     Value indexVal;
                     Value result = peek(routine, 0);
                     if (tableGet(&type->field_names, name, &indexVal)) {
-                        uint32_t index = AS_UINTEGER(indexVal);
-                        ValueCellTarget trg = { .type = &type->field_types[index], .value = &object->fields[index] };
-                        if (!assignTo(trg, result)) {
+                        size_t index = AS_UINTEGER(indexVal);
+                        StoredValue* field = structField(object, index);
+
+                        StoredValueCellTarget trg = { .type = &type->field_types[index], .storedValue = field };
+                        if (!assignToStorage(&trg, result)) {
                             runtimeError(routine, "cannot assign to field type.");
                         }
                     } else {
@@ -995,8 +1015,9 @@ InterpretResult run(ObjRoutine* routine) {
                 uint8_t fieldCount = READ_BYTE();
                 ObjConcreteYargTypeStruct* st = (ObjConcreteYargTypeStruct*) newYargStructType(fieldCount);
                 tempRootPush(OBJ_VAL(st));
+                size_t fieldOffset = 0;
                 for (uint8_t i = 0; i < fieldCount; i++) {
-                    addFieldType(st, i, peek(routine, 1), peek(routine, 0));
+                    fieldOffset = addFieldType(st, i, fieldOffset, peek(routine, 1), peek(routine, 0));
                     pop(routine);
                     pop(routine);
                 }

@@ -269,7 +269,7 @@ ObjStruct* newStructAtCell(Value type, void* location) {
     tempRootPush(OBJ_VAL(object));
     object->type = AS_YARGTYPE(type);
     ObjConcreteYargTypeStruct* ct = (ObjConcreteYargTypeStruct*)object->type;
-    object->fields = (Value*)location;
+    object->fields = (StoredValue*)location;
     object->field_count = ct->field_count;
     tempRootPop();
     return object;
@@ -280,17 +280,25 @@ Value defaultStructValue(ObjConcreteYargType* type) {
     tempRootPush(OBJ_VAL(object));
     object->type = type;
     ObjConcreteYargTypeStruct* ct = (ObjConcreteYargTypeStruct*)type;
-    object->fields = GROW_ARRAY(Value, object->fields, 0, ct->field_count);
-    for (size_t i = 0; i < ct->field_count; i++) {
-        object->fields[i] = NIL_VAL;
-    }
-    object->field_count = ct->field_count;
 
+    object->fields = reallocate(object->fields, 0, ct->storage_size);
     for (size_t i = 0; i < ct->field_count; i++) {
-        object->fields[i] = defaultValue(ct->field_types[i]);
+        StoredValue* field = structField(object, i);
+        initialisePackedStorage(ct->field_types[i], field);
     }
+
     tempRootPop();
     return OBJ_VAL(object);
+}
+
+StoredValue* structField(ObjStruct* struct_, size_t fieldIndex) {
+    ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*)struct_->type;
+    if (fieldIndex >= structType->field_count) {
+        return NULL;
+    }
+    uint8_t* fieldPtr = (uint8_t*) struct_->fields;
+    fieldPtr += structType->field_indexes[fieldIndex];
+    return (StoredValue*)fieldPtr;
 }
 
 static ObjString* allocateString(char* chars, int length, uint32_t hash) {
@@ -430,10 +438,14 @@ static void printPointer(FILE* op, ObjPointer* ptr) {
     fprintf(op, ":%p>", (void*) ptr->destination);
 }
 
+static void fprintStoredValue(FILE* op, StoredValue* sv) {
+    fprintf(op, "<value>");
+}
+
 static void printStruct(FILE* op, ObjStruct* st) {
     fprintf(op, "struct{%zu:", st->field_count);
     for (size_t i = 0; i < st->field_count; i++) {
-        fprintValue(op, st->fields[i]);
+        fprintStoredValue(op, structField(st, i));
         fprintf(op, "; ");
     }
     fprintf(op, "}");

@@ -1,9 +1,4 @@
-var buffer = new(struct { header; data1; data2; });
-print buffer.header;
-*buffer.data1 = 42;
-print buffer.data1;
-print *buffer.data1;
-*buffer.data2 = 0xff;
-print *buffer.data2;
-print buffer.data2;
-rpeek(buffer.data2);
+var struct { a; b; muint32 c; } structure;
+print structure.c;
+structure.b = "hello";
+print structure.b;

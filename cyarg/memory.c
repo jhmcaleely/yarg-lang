@@ -84,6 +84,17 @@ void markValueCell(ValueCell* cell) {
     markValue(cell->type);
 }
 
+void markStoredValue(Value type, StoredValue* stored) {
+    if (stored == NULL) return;
+    if (IS_NIL(type)) {
+        markValue(stored->asValue);
+        return;
+    } else if (is_obj_type(AS_YARGTYPE(type))) {
+        markObject(stored->as.obj);
+        return;
+    }
+}
+
 static void markArray(ValueArray* array) {
     for (int i = 0; i < array->count; i++) {
         markValue(array->values[i]);
@@ -381,22 +392,17 @@ static void blackenObject(Obj* object) {
         case OBJ_POINTER: {
             ObjPointer* ptr = (ObjPointer*)object;
             markValue(ptr->destination_type);
-            StoredValue* packedStorage = (StoredValue*)ptr->destination;
-            if (ptr->destination != NULL) {
-                if (IS_NIL(ptr->destination_type)) {
-                    markValue(packedStorage->asValue);
-                } else if (is_obj_type(AS_YARGTYPE(ptr->destination_type))) {
-                    markObject(packedStorage->as.obj);
-                }
-            }
+            markStoredValue(ptr->destination_type, ptr->destination);
             break;
         }
         case OBJ_UNOWNED_STRUCT:
             // fall through
         case OBJ_STRUCT: {
             ObjStruct* struct_ = (ObjStruct*)object;
+            ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*)struct_->type;            
             for (int i = 0; i < struct_->field_count; i++) {
-                markValue(struct_->fields[i]);
+                StoredValue* field = structField(struct_, i);
+                markStoredValue(structType->field_types[i], field);
             }
             markObject((Obj*)struct_->type);
             break;
@@ -490,6 +496,7 @@ static void freeObject(Obj* object) {
         case OBJ_YARGTYPE_STRUCT: {
             ObjConcreteYargTypeStruct* t = (ObjConcreteYargTypeStruct*)object;
             FREE_ARRAY(Value, t->field_types, t->field_count);
+            FREE_ARRAY(size_t, t->field_indexes, t->field_count);
             FREE(ObjConcreteYargTypeStruct, object);
             break;
         }
