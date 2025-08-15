@@ -682,8 +682,7 @@ InterpretResult run(ObjRoutine* routine) {
                 } else if (IS_POINTER(peek(routine, 0))) {
                     ObjPointer* pointer = AS_POINTER(peek(routine, 0));
                     ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*) AS_YARGTYPE(pointer->destination_type);
-                    Obj** destObj = (Obj**)pointer->destination;
-                    ObjStruct* structObj = (ObjStruct*)*destObj;
+                    ObjStruct* structObj = (ObjStruct*)pointer->destination;
                     ObjString* name = READ_STRING();
                     if (structType->core.yt != TypeStruct) {
                         runtimeError(routine, "Cannot get field from non-struct type.");

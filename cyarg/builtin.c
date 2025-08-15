@@ -350,9 +350,11 @@ bool newBuiltin(ObjRoutine* routineContext, int argCount, ValueCell* args, Value
             return true;
         }
         case TypeStruct: {
-            Value struct_ = defaultValue(typeToCreate);
-            tempRootPush(struct_);
-            *result = createPointerToObj(typeToCreate, AS_OBJ(struct_));
+            Value* location = (Value*) createHeapCell(typeToCreate);
+            ObjStruct* struct_ = newStructAtCell(typeToCreate, location);
+            tempRootPush(OBJ_VAL(struct_));
+            initialisePackedStorage(typeToCreate, (void*) struct_->fields);
+            *result = OBJ_VAL(newPointerForHeapCell(typeToCreate, struct_));
             tempRootPop();
             return true;
         }

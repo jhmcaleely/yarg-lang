@@ -25,7 +25,7 @@ typedef struct ObjConcreteYargType ObjConcreteYargType;
 #define IS_UNIFORMARRAY(value) (isObjType(value, OBJ_UNIFORMARRAY)|| isObjType(value, OBJ_UNOWNED_UNIFORMARRAY))
 #define IS_YARGTYPE(value)     (isObjType(value, OBJ_YARGTYPE) || isObjType(value, OBJ_YARGTYPE_ARRAY) || isObjType(value, OBJ_YARGTYPE_STRUCT) || isObjType(value, OBJ_YARGTYPE_POINTER))
 #define IS_POINTER(value)      (isObjType(value, OBJ_POINTER) || isObjType(value, OBJ_UNOWNED_POINTER))
-#define IS_STRUCT(value)       isObjType(value, OBJ_STRUCT)
+#define IS_STRUCT(value)       (isObjType(value, OBJ_STRUCT) || isObjType(value, OBJ_UNOWNED_STRUCT))
 
 #define AS_BOUND_METHOD(value) ((ObjBoundMethod*)AS_OBJ(value))
 #define AS_CLASS(value)        ((ObjClass*)AS_OBJ(value))
@@ -67,6 +67,7 @@ typedef enum {
     OBJ_POINTER,
     OBJ_UNOWNED_POINTER,
     OBJ_STRUCT,
+    OBJ_UNOWNED_STRUCT,
     OBJ_AST,
     OBJ_STMT_EXPRESSION,
     OBJ_STMT_PRINT,
@@ -234,6 +235,7 @@ ObjPointer* newPointerForHeapCell(Value type, void* location);
 ObjPointer* newPointerAt(Value type, Value location);
 ObjPointer* newPointerAtCell(Value type, void* location);
 ObjUniformArray* newUniformArrayAt(Value type, Value location);
+ObjStruct* newStructAtCell(Value type, void* location);
 
 Value createPointerToObj(Value type, Obj* target);
 

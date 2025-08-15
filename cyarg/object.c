@@ -264,6 +264,17 @@ Value placeObjectAt(Value type, Value location) {
     return NIL_VAL;
 }
 
+ObjStruct* newStructAtCell(Value type, void* location) {
+    ObjStruct* object = ALLOCATE_OBJ(ObjStruct, OBJ_UNOWNED_STRUCT);
+    tempRootPush(OBJ_VAL(object));
+    object->type = AS_YARGTYPE(type);
+    ObjConcreteYargTypeStruct* ct = (ObjConcreteYargTypeStruct*)object->type;
+    object->fields = (Value*)location;
+    object->field_count = ct->field_count;
+    tempRootPop();
+    return object;
+}
+
 Value defaultStructValue(ObjConcreteYargType* type) {
     ObjStruct* object = ALLOCATE_OBJ(ObjStruct, OBJ_STRUCT);
     tempRootPush(OBJ_VAL(object));

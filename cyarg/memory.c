@@ -385,6 +385,9 @@ static void blackenObject(Obj* object) {
                 if (IS_NIL(ptr->destination_type)) {
                     Value* target = (Value*)ptr->destination;
                     markValue(*target);
+                } else if (AS_YARGTYPE(ptr->destination_type)->yt == TypeStruct) {
+                    ObjStruct* structObj = (ObjStruct*)ptr->destination;
+                    markObject((Obj*)structObj);
                 } else if (is_obj_type(AS_YARGTYPE(ptr->destination_type))) {
                     Obj** payload = (Obj**) ptr->destination;
                     markObject(*payload);
@@ -392,6 +395,8 @@ static void blackenObject(Obj* object) {
             }
             break;
         }
+        case OBJ_UNOWNED_STRUCT:
+            // fall through
         case OBJ_STRUCT: {
             ObjStruct* struct_ = (ObjStruct*)object;
             for (int i = 0; i < struct_->field_count; i++) {
@@ -560,6 +565,7 @@ static void freeObject(Obj* object) {
             FREE(ObjPointer, object); 
             break;
         }
+        case OBJ_UNOWNED_STRUCT: FREE(ObjStruct, object); break;
         case OBJ_STRUCT: {
             ObjStruct* struct_ = (ObjStruct*) object;
             FREE_ARRAY(Value, struct_->fields, struct_->field_count);
