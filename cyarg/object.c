@@ -270,7 +270,6 @@ ObjStruct* newStructAtCell(Value type, void* location) {
     object->type = AS_YARGTYPE(type);
     ObjConcreteYargTypeStruct* ct = (ObjConcreteYargTypeStruct*)object->type;
     object->fields = (StoredValue*)location;
-    object->field_count = ct->field_count;
     tempRootPop();
     return object;
 }
@@ -279,7 +278,7 @@ Value defaultStructValue(ObjConcreteYargType* type) {
     ObjStruct* object = ALLOCATE_OBJ(ObjStruct, OBJ_STRUCT);
     tempRootPush(OBJ_VAL(object));
     object->type = type;
-    ObjConcreteYargTypeStruct* ct = (ObjConcreteYargTypeStruct*)type;
+    ObjConcreteYargTypeStruct* ct = (ObjConcreteYargTypeStruct*)object->type;
 
     object->fields = reallocate(object->fields, 0, ct->storage_size);
     for (size_t i = 0; i < ct->field_count; i++) {
@@ -443,8 +442,9 @@ static void fprintStoredValue(FILE* op, StoredValue* sv) {
 }
 
 static void printStruct(FILE* op, ObjStruct* st) {
-    fprintf(op, "struct{%zu:", st->field_count);
-    for (size_t i = 0; i < st->field_count; i++) {
+    ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*)st->type;
+    fprintf(op, "struct{%zu:", structType->field_count);
+    for (size_t i = 0; i < structType->field_count; i++) {
         fprintStoredValue(op, structField(st, i));
         fprintf(op, "; ");
     }

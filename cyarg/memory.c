@@ -399,10 +399,12 @@ static void blackenObject(Obj* object) {
             // fall through
         case OBJ_STRUCT: {
             ObjStruct* struct_ = (ObjStruct*)object;
-            ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*)struct_->type;            
-            for (int i = 0; i < struct_->field_count; i++) {
-                StoredValue* field = structField(struct_, i);
-                markStoredValue(structType->field_types[i], field);
+            ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*)struct_->type; 
+            if (struct_->fields) {       
+                for (int i = 0; i < structType->field_count; i++) {
+                    StoredValue* field = structField(struct_, i);
+                    markStoredValue(structType->field_types[i], field);
+                }
             }
             markObject((Obj*)struct_->type);
             break;

@@ -202,7 +202,6 @@ typedef struct {
     Obj obj;
     ObjConcreteYargType* type;
     StoredValue* fields;
-    size_t field_count;
 } ObjStruct;
 
 #define ALLOCATE_OBJ(type, objectType) \
