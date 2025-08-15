@@ -694,7 +694,7 @@ InterpretResult run(ObjRoutine* routine) {
                     if (tableGet(&structType->field_names, name, &indexVal)) {
                         uint32_t index = AS_UINTEGER(indexVal);
 
-                        ObjPointer* element_pointer = newPointerAtCell(structType->field_types[index], &structObj->fields[index]);
+                        ObjPointer* element_pointer = newPointerAtCell(structType->field_types[index], (StoredValue*) &structObj->fields[index]);
                         result = OBJ_VAL(element_pointer);
 
                     } else {

@@ -195,7 +195,7 @@ typedef struct ObjUniformArray {
 typedef struct {
     Obj obj;
     Value destination_type;
-    void* destination;
+    StoredValue* destination;
 } ObjPointer;
 
 typedef struct {
@@ -233,7 +233,7 @@ void* createHeapCell(Value type);
 ObjPointer* newPointerForHeapCell(Value type, void* location);
 
 ObjPointer* newPointerAt(Value type, Value location);
-ObjPointer* newPointerAtCell(Value type, void* location);
+ObjPointer* newPointerAtCell(Value type, StoredValue* location);
 ObjUniformArray* newUniformArrayAt(Value type, Value location);
 ObjStruct* newStructAtCell(Value type, void* location);
 

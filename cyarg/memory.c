@@ -381,16 +381,12 @@ static void blackenObject(Obj* object) {
         case OBJ_POINTER: {
             ObjPointer* ptr = (ObjPointer*)object;
             markValue(ptr->destination_type);
+            StoredValue* packedStorage = (StoredValue*)ptr->destination;
             if (ptr->destination != NULL) {
                 if (IS_NIL(ptr->destination_type)) {
-                    Value* target = (Value*)ptr->destination;
-                    markValue(*target);
-                } else if (AS_YARGTYPE(ptr->destination_type)->yt == TypeStruct) {
-                    ObjStruct* structObj = (ObjStruct*)ptr->destination;
-                    markObject((Obj*)structObj);
+                    markValue(packedStorage->asValue);
                 } else if (is_obj_type(AS_YARGTYPE(ptr->destination_type))) {
-                    Obj** payload = (Obj**) ptr->destination;
-                    markObject(*payload);
+                    markObject(packedStorage->as.obj);
                 }
             }
             break;
