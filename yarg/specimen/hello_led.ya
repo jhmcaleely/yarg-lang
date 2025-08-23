@@ -1,0 +1,14 @@
+import("gpio");
+
+const gpio_field = 0x1 << pico_led;
+
+// gpio initialisation.
+rpoke(sio_hw.gpio_oe.clr, gpio_field);
+rpoke(sio_hw.gpio_out.clr, gpio_field);
+gpio_set_function(pico_led, GPIO_FUNC_SIO);
+
+// set direction to output.
+rpoke(sio_hw.gpio_oe.set, gpio_field);
+
+// set the gpio to 'on'.
+rpoke(sio_hw.gpio_out.set, gpio_field);

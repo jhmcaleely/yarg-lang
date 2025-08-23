@@ -12,6 +12,7 @@ fi
 ../../bin/hostyarg addfile -fs ../../build/specimen.uf2 -add machine.ya
 ../../bin/hostyarg addfile -fs ../../build/specimen.uf2 -add alarm.ya
 ../../bin/hostyarg addfile -fs ../../build/specimen.uf2 -add blinky.ya
+../../bin/hostyarg addfile -fs ../../build/specimen.uf2 -add hello_led.ya
 ../../bin/hostyarg addfile -fs ../../build/specimen.uf2 -add coffee.ya
 ../../bin/hostyarg addfile -fs ../../build/specimen.uf2 -add coroutine-flash.ya
 ../../bin/hostyarg addfile -fs ../../build/specimen.uf2 -add multicore-flash.ya
