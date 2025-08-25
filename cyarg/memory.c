@@ -164,6 +164,14 @@ static void blackenObject(Obj* object) {
             markRoutine(stack);
             break;
         }
+        case OBJ_UNOWNED_PACKEDPOINTER:
+            // fall through
+        case OBJ_PACKEDPOINTER: {
+            ObjPackedPointer* ptr = (ObjPackedPointer*)object;
+            markValue(ptr->destination_type);
+            markStoredValue(ptr->destination_type, ptr->destination);
+            break;
+        }
         case OBJ_UNOWNED_UNIFORMARRAY:
             /* fall through */
         case OBJ_PACKEDUNIFORMARRAY: {
@@ -177,8 +185,23 @@ static void blackenObject(Obj* object) {
             }
             break;
         }
-        case OBJ_YARGTYPE:
+        case OBJ_UNOWNED_PACKEDSTRUCT:
+            // fall through
+        case OBJ_PACKEDSTRUCT: {
+            ObjPackedStruct* struct_ = (ObjPackedStruct*)object;
+            if (struct_->structFields) {
+                for (int i = 0; i < struct_->type->field_count; i++) {
+                    markStoredValue(struct_->type->field_types[i], structField(struct_->type, struct_->structFields, i));
+                }
+            }
+            markObject((Obj*)struct_->type);
             break;
+        }
+        case OBJ_NATIVE: break;
+        case OBJ_BLOB: break;
+        case OBJ_CHANNEL: break;
+        case OBJ_STRING: break;
+        case OBJ_YARGTYPE: break;
         case OBJ_YARGTYPE_ARRAY: {
             ObjConcreteYargTypeArray* type = (ObjConcreteYargTypeArray*)object;
             markObject((Obj*)type->element_type);
@@ -304,7 +327,6 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)expr->rhs);
             markObject((Obj*)expr->assignment);
             break;
-
         }
         case OBJ_EXPR_GROUPING: {
             ObjExprGrouping* expr = (ObjExprGrouping*)object;
@@ -392,31 +414,6 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)expr->cardinality);
             break;
         }
-        case OBJ_UNOWNED_PACKEDPOINTER:
-            // fall through
-        case OBJ_PACKEDPOINTER: {
-            ObjPackedPointer* ptr = (ObjPackedPointer*)object;
-            markValue(ptr->destination_type);
-            markStoredValue(ptr->destination_type, ptr->destination);
-            break;
-        }
-        case OBJ_UNOWNED_PACKEDSTRUCT:
-            // fall through
-        case OBJ_PACKEDSTRUCT: {
-            ObjPackedStruct* struct_ = (ObjPackedStruct*)object;
-            if (struct_->structFields) {
-                for (int i = 0; i < struct_->type->field_count; i++) {
-                    markStoredValue(struct_->type->field_types[i], structField(struct_->type, struct_->structFields, i));
-                }
-            }
-            markObject((Obj*)struct_->type);
-            break;
-        }
-        case OBJ_NATIVE:
-        case OBJ_BLOB:
-        case OBJ_CHANNEL:
-        case OBJ_STRING:
-            break;
     }
 }
 
@@ -426,9 +423,7 @@ static void freeObject(Obj* object) {
 #endif
 
     switch (object->type) {
-        case OBJ_BOUND_METHOD:
-            FREE(ObjBoundMethod, object);
-            break;
+        case OBJ_BOUND_METHOD: FREE(ObjBoundMethod, object); break;
         case OBJ_CLASS: {
             ObjClass* klass = (ObjClass*)object;
             freeTable(&klass->methods);
@@ -453,9 +448,7 @@ static void freeObject(Obj* object) {
             FREE(ObjInstance, object);
             break;
         }
-        case OBJ_NATIVE:
-            FREE(ObjNative, object);
-            break;
+        case OBJ_NATIVE: FREE(ObjNative, object); break;
         case OBJ_BLOB: {
             ObjBlob* blob = (ObjBlob*)object;
             free(blob->blob);
@@ -471,28 +464,32 @@ static void freeObject(Obj* object) {
             FREE(ObjString, object);
             break;
         }
-        case OBJ_UPVALUE:
-            FREE(ObjUpvalue, object);
+        case OBJ_UPVALUE: FREE(ObjUpvalue, object); break;
+        case OBJ_CHANNEL: FREE(ObjChannel, object); break;
+        case OBJ_UNOWNED_PACKEDPOINTER: FREE(ObjPackedPointer, object); break;
+        case OBJ_PACKEDPOINTER: {
+            ObjPackedPointer* ptr = (ObjPackedPointer*) object;
+            ptr->destination = reallocate(ptr->destination, yt_sizeof_type_storage(ptr->destination_type), 0);
+            FREE(ObjPackedPointer, object); 
             break;
-        case OBJ_CHANNEL:
-            FREE(ObjChannel, object);
-            break;
+        }
         case OBJ_UNOWNED_UNIFORMARRAY: FREE(ObjPackedUniformArray, object); break;
         case OBJ_PACKEDUNIFORMARRAY: {
             ObjPackedUniformArray* array = (ObjPackedUniformArray*)object;
             size_t element_size = arrayElementSize(array->type);
-            array->arrayElements = reallocate(array->arrayElements, array->type->cardinality * element_size, 0);  
+            array->arrayElements = reallocate(array->arrayElements, array->type->cardinality * element_size, 0);
             FREE(ObjPackedUniformArray, object);
             break;
         }
-        case OBJ_YARGTYPE: {
-            FREE(ObjConcreteYargType, object);
-            break;
+        case OBJ_UNOWNED_PACKEDSTRUCT: FREE(ObjPackedStruct, object); break;
+        case OBJ_PACKEDSTRUCT: {
+            ObjPackedStruct* struct_ = (ObjPackedStruct*) object;
+            struct_->structFields = reallocate(struct_->structFields, struct_->type->storage_size, 0);
+            FREE(ObjPackedStruct, object);
+            break;            
         }
-        case OBJ_YARGTYPE_ARRAY: {
-            FREE(ObjConcreteYargTypeArray, object);
-            break;
-        }
+        case OBJ_YARGTYPE: FREE(ObjConcreteYargType, object); break;
+        case OBJ_YARGTYPE_ARRAY: FREE(ObjConcreteYargTypeArray, object); break;
         case OBJ_YARGTYPE_STRUCT: {
             ObjConcreteYargTypeStruct* t = (ObjConcreteYargTypeStruct*)object;
             FREE_ARRAY(Value, t->field_types, t->field_count);
@@ -564,20 +561,6 @@ static void freeObject(Obj* object) {
             break;
         }
         case OBJ_EXPR_TYPE_ARRAY: FREE(ObjExprTypeArray, object); break;
-        case OBJ_UNOWNED_PACKEDPOINTER: FREE(ObjPackedPointer, object); break;
-        case OBJ_PACKEDPOINTER: {
-            ObjPackedPointer* ptr = (ObjPackedPointer*) object;
-            ptr->destination = reallocate(ptr->destination, yt_sizeof_type_storage(ptr->destination_type), 0);
-            FREE(ObjPackedPointer, object); 
-            break;
-        }
-        case OBJ_UNOWNED_PACKEDSTRUCT: FREE(ObjPackedStruct, object); break;
-        case OBJ_PACKEDSTRUCT: {
-            ObjPackedStruct* struct_ = (ObjPackedStruct*) object;
-            struct_->structFields = reallocate(struct_->structFields, struct_->type->storage_size, 0);
-            FREE(ObjPackedStruct, object);
-            break;            
-        }
     }
 }
 
