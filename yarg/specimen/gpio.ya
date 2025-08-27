@@ -15,8 +15,6 @@ const PADS_BANK0_GPIO_IE_BITS = 0x00000040;
 const PADS_BANK0_GPIO_OD_BITS = 0x00000080;
 const PADS_BANK0_GPIO_ISO_BITS = 0x00000100;
 
-var any[2] callbacks;
-
 const REG_ALIAS_RW_BITS  = 0x0 << 0d12;
 const REG_ALIAS_XOR_BITS = 0x1 << 0d12;
 const REG_ALIAS_SET_BITS = 0x2 << 0d12;
@@ -109,45 +107,52 @@ fun gpio_acknowledge_irq(gpio, events) {
     poke io_bank0.intr[(gpio / 0d8)], events << (0d4 * (gpio % 0d8));
 }
 
-fun gpio_default_irq_handler() {
-    const core = coreNum();
-    const callback = callbacks[core];
 
-    for (var gpio = 0d0; gpio < NUM_BANK0_GPIOS; gpio= gpio + 0d8) {
-        var events8 = peek(io_bank0.proc[core].ints[gpio >> 0d3]);
-      
-        for(var i = gpio; (events8 != 0d0) and (i < (gpio + 0d8)); i = i + 0d1) {
-            var events = events8 & 0xf;
-            if (events != 0d0) {
-                gpio_acknowledge_irq(i, events);
-                if (callback) {
+fun make_core_gpio_irq_handler(callback) {
+
+    const core = coreNum();
+
+    fun gpio_irq_handler() {
+        for (var gpio = 0d0; gpio < NUM_BANK0_GPIOS; gpio= gpio + 0d8) {
+            var events8 = peek(io_bank0.proc[core].ints[gpio >> 0d3]);
+        
+            for(var i = gpio; (events8 != 0d0) and (i < (gpio + 0d8)); i = i + 0d1) {
+                var events = events8 & 0xf;
+                if (events != 0d0) {
+                    gpio_acknowledge_irq(i, events);
                     callback(i, events);
                 }
+                events8 = events8 >> 0d4;
             }
-            events8 = events8 >> 0d4;
         }
     }
+
+    return gpio_irq_handler;
 }
 
-var gpio_handler_routine;
-var pinned_gpio_handler_routine;
+var struct {
+    irq_routine;
+    pinned_routine;
+    }[2] gpio_handlers;
 
-fun gpio_set_irq_callback(callback) {
+fun gpio_set_irq_routine(callback) {
     const core = coreNum();
 
-    if (!gpio_handler_routine) {
-        gpio_handler_routine = make_routine(gpio_default_irq_handler, true);
-        pinned_gpio_handler_routine = pin(gpio_handler_routine);
-    }
-    
-    if (callbacks[core]) {
-        if (!callback) {
-            irq_remove_handler(IO_IRQ_BANK0, pinned_gpio_handler_routine);
+    fun setup_callback() {
+        if (callback) {
+            gpio_handlers[core].irq_routine = make_routine(make_core_gpio_irq_handler(callback), true);
+            gpio_handlers[core].pinned_routine = pin(gpio_handlers[core].irq_routine);
+            irq_add_shared_handler(IO_IRQ_BANK0, gpio_handlers[core].pinned_routine, GPIO_IRQ_CALLBACK_ORDER_PRIORITY);
         }
-        callbacks[core] = callback;
-    } else if (callback) {
-        callbacks[core] = callback;
-        irq_add_shared_handler(IO_IRQ_BANK0, pinned_gpio_handler_routine, GPIO_IRQ_CALLBACK_ORDER_PRIORITY);
+    }
+
+    if (!gpio_handlers[core].pinned_routine) {
+        setup_callback();
+    } else {
+        irq_remove_handler(IO_IRQ_BANK0, gpio_handlers[core].pinned_routine);
+        gpio_handlers[core].pinned_routine = nil;
+        gpio_handlers[core].irq_routine = nil;
+        setup_callback();
     }
 }
 
@@ -162,12 +167,9 @@ fun gpio_set_irq_enabled(gpio, events, enabled) {
     else {
         poke io_bank0_clr.proc[coreNum()].inte[gpio >> 0d3], events;
     }
-}
 
-fun gpio_set_irq_enabled_with_callback(gpio, events, enabled, callback) {
-    gpio_set_irq_callback(callback);
-    gpio_set_irq_enabled(gpio, events, enabled);
     if (enabled) {
         irq_set_enabled(IO_IRQ_BANK0, true);
     }
 }
+

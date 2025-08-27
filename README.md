@@ -93,11 +93,11 @@ Assumes a button is wired to GPIO 2, and a LED+Resistor are connected to GPIO 3.
 ``` 
 import("gpio");
 
-fun button_callback(gpio, chan) {
+fun button_response(gpio, chan) {
 
     const core = coreNum();
 
-    fun gpio_callback() {
+    fun gpio_response() {
         const events8 = peek(io_bank0.proc[core].ints[gpio >> 0d3]);
         const events = events8 >> (0d4 * (gpio % 0d8));
 
@@ -106,7 +106,7 @@ fun button_callback(gpio, chan) {
         share(chan, events);
     }
 
-    return gpio_callback;
+    return gpio_response;
 }
 
 // intialise a GPIO for an LED.
@@ -114,10 +114,10 @@ const led_io = 0d3;
 gpio_init(led_io);
 gpio_set_direction(led_io, GPIO_OUT);
 
-// set up the callback as an address we can install in the IRQ peripheral
+// set up the response routine as an address we can install in the IRQ peripheral
 const button_io = 0d2;
 var button_channel = make_channel();
-var button_handler_routine = make_routine(button_callback(button_io, button_channel), true);
+var button_handler_routine = make_routine(button_response(button_io, button_channel), true);
 var button_handler_address = pin(button_handler_routine);
 
 gpio_init(button_io);
