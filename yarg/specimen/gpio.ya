@@ -8,7 +8,6 @@ const GPIO_IN = false;
 const GPIO_FUNC_SIO = 0d5;
 const GPIO_IRQ_EDGE_FALL = 0x4;
 const GPIO_IRQ_EDGE_RISE = 0x8;
-const GPIO_IRQ_CALLBACK_ORDER_PRIORITY = 0d0;
 const NUM_BANK0_GPIOS = 0d30;
 
 const PADS_BANK0_GPIO_IE_BITS = 0x00000040;
@@ -107,12 +106,16 @@ fun gpio_acknowledge_irq(gpio, events) {
     poke io_bank0.intr[(gpio / 0d8)], events << (0d4 * (gpio % 0d8));
 }
 
+var struct {
+    irq_routine;
+    pinned_routine;
+    }[2] gpio_handlers;
 
-fun make_core_gpio_irq_handler(callback) {
-
+fun gpio_set_irq_routine(response) {
     const core = coreNum();
+    const GPIO_IRQ_CALLBACK_ORDER_PRIORITY = 0d0;
 
-    fun gpio_irq_handler() {
+    fun irq_response() {
         for (var gpio = 0d0; gpio < NUM_BANK0_GPIOS; gpio= gpio + 0d8) {
             var events8 = peek(io_bank0.proc[core].ints[gpio >> 0d3]);
         
@@ -120,39 +123,28 @@ fun make_core_gpio_irq_handler(callback) {
                 var events = events8 & 0xf;
                 if (events != 0d0) {
                     gpio_acknowledge_irq(i, events);
-                    callback(i, events);
+                    response(i, events);
                 }
                 events8 = events8 >> 0d4;
             }
         }
     }
 
-    return gpio_irq_handler;
-}
-
-var struct {
-    irq_routine;
-    pinned_routine;
-    }[2] gpio_handlers;
-
-fun gpio_set_irq_routine(callback) {
-    const core = coreNum();
-
-    fun setup_callback() {
-        if (callback) {
-            gpio_handlers[core].irq_routine = make_routine(make_core_gpio_irq_handler(callback), true);
+    fun setup_routine() {
+        if (response) {
+            gpio_handlers[core].irq_routine = make_routine(irq_response, true);
             gpio_handlers[core].pinned_routine = pin(gpio_handlers[core].irq_routine);
             irq_add_shared_handler(IO_IRQ_BANK0, gpio_handlers[core].pinned_routine, GPIO_IRQ_CALLBACK_ORDER_PRIORITY);
         }
     }
 
     if (!gpio_handlers[core].pinned_routine) {
-        setup_callback();
+        setup_routine();
     } else {
         irq_remove_handler(IO_IRQ_BANK0, gpio_handlers[core].pinned_routine);
         gpio_handlers[core].pinned_routine = nil;
         gpio_handlers[core].irq_routine = nil;
-        setup_callback();
+        setup_routine();
     }
 }
 
