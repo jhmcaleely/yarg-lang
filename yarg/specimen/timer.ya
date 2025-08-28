@@ -1,0 +1,40 @@
+const time64 = struct {
+    muint32 time_h;
+    muint32 time_l;
+    };
+
+place struct {
+    muint32 timehw;
+    muint32 timelw;
+    muint32 timehr;
+    muint32 timelr;
+    muint32[4] alarm;
+    muint32 armed;
+    muint32 timerawh;
+    muint32 timerawl;
+    muint32 dbgpause;
+    muint32 pause;
+    muint32 intr;
+    muint32 inte;
+    muint32 intf;
+    muint32 ints;
+    } 0x40054000 timer;
+
+fun get_time() {
+    var struct {
+        muint32 time_h;
+        muint32 time_l;
+        } current_time;
+    current_time.time_l = peek(timer.timelr);
+    current_time.time_h = peek(timer.timehr);
+    return current_time;
+}
+
+fun elapsed_time(start_time) {
+    const time_now = get_time();
+    if ((time_now.time_h != 0) or (start_time.time_h != )) {
+        print "32 timer overflow";
+        return nil;
+    }
+    return start_time.time_l - time_now.time_l;
+}
