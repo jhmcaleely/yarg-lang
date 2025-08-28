@@ -93,7 +93,7 @@ Assumes a button is wired to GPIO 2, and a LED+Resistor are connected to GPIO 3.
 ``` 
 import("gpio");
 
-fun button_response(gpio, chan) {
+fun button_routine(gpio, chan) {
 
     const core = coreNum();
 
@@ -106,7 +106,7 @@ fun button_response(gpio, chan) {
         share(chan, events);
     }
 
-    return gpio_response;
+    return make_routine(gpio_response, true);
 }
 
 // intialise a GPIO for an LED.
@@ -117,7 +117,7 @@ gpio_set_direction(led_io, GPIO_OUT);
 // set up the response routine as an address we can install in the IRQ peripheral
 const button_io = 0d2;
 var button_channel = make_channel();
-var button_handler_routine = make_routine(button_response(button_io, button_channel), true);
+var button_handler_routine = button_routine(button_io, button_channel);
 var button_handler_address = pin(button_handler_routine);
 
 gpio_init(button_io);
@@ -128,10 +128,14 @@ gpio_set_irq_enabled(button_io, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
 irq_set_enabled(IO_IRQ_BANK0, true);
 
 
-bool state;
 while (true) {
+    bool state;
     var events = receive(button_channel);
-    state = !state;
+    if (events == GPIO_IRQ_EDGE_FALL) {
+        state = false;
+    } else if (events == GPIO_IRQ_EDGE_RISE) {
+        state = true;
+    }
     gpio_put(led_io, state);
 }
 ```

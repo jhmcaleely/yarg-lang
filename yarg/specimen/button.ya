@@ -6,7 +6,9 @@ var bool[NUM_BANK0_GPIOS] states;
 var button = make_channel();
 
 fun gpio_response(num, events) {
-    share(button, num);
+    if ((events == GPIO_IRQ_EDGE_FALL) or (events == GPIO_IRQ_EDGE_RISE)) {
+        share(button, num);
+    }
 }
 
 fun setup_button_led(led_io, button_io) {
