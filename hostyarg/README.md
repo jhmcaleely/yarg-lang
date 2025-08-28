@@ -2,8 +2,16 @@
 
 Host based tooling for creating and manipulating yarg images for devices.
 
-Usage
+## Installation
+
+Install using the go package manager:
 
 ```
-./hostyarg [bootdemo|addfile|format|ls]
+$ go install github.com/jhmcaleely/yarg-lang/hostyarg@latest
+```
+
+## Usage
+
+```
+$ hostyarg [addfile|format|ls|runtests]
 ```
