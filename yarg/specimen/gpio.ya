@@ -159,9 +159,5 @@ fun gpio_set_irq_enabled(gpio, events, enabled) {
     else {
         poke io_bank0_clr.proc[coreNum()].inte[gpio >> 0d3], events;
     }
-
-    if (enabled) {
-        irq_set_enabled(IO_IRQ_BANK0, true);
-    }
 }
 
