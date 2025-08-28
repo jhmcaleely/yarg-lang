@@ -14,6 +14,13 @@ place struct {
 
     } 0xe0000000 m0plus;
 
+// We have two native functions (for now) which allow us to interop with
+// Pico C SDK users like TinyUSB.
+//
+// fun irq_add_shared_handler(number, entry_address, priority)
+//
+// fun irq_remove_handler(number, entry_address)
+
 fun irq_set_mask_n_enabled(n, mask, enabled) {
     if (enabled) {
         poke m0plus.nvic_icpr, mask;
