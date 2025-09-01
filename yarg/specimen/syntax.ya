@@ -1,1 +1,2 @@
-place muint32 @xc000000 test;
+var test = muint64(0);
+print test;

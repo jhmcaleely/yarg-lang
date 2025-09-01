@@ -349,6 +349,7 @@ static ObjExpr* builtin(bool canAssign) {
         case TOKEN_LEN: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_LEN, 1);
         case TOKEN_PIN: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_PIN, 1);
         case TOKEN_NEW: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_NEW, 1);
+        case TOKEN_MACHINE_UINT64: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_MUINT64, 1);
         default: return NULL; // Unreachable.
     } 
 }
@@ -399,22 +400,23 @@ static ObjExprTypeStruct* structExpression() {
 }
 
 static ObjExpr* type(bool canAssign) {
-    ObjExpr* expression = NULL;
 
-    switch (parser.previous.type) {
-        case TOKEN_ANY: expression = (ObjExpr*) newExprLiteral(EXPR_LITERAL_NIL); break;
-        case TOKEN_BOOL: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_BOOL); break;
-        case TOKEN_MACHINE_UINT32: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_MUINT32); break;
-        case TOKEN_INTEGER: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_INTEGER); break;
-        case TOKEN_MACHINE_FLOAT64: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_MFLOAT64); break;
-        case TOKEN_STRUCT: expression = (ObjExpr*) structExpression(); break;
-        default: expression = NULL; // Unreachable
-    }
+    if (check(TOKEN_LEFT_PAREN)) {
+        return builtin(canAssign);
+    } else {
+        ObjExpr* expression = NULL;
 
-    if (expression) {
-        ObjExpr* cursor = expression;
+        switch (parser.previous.type) {
+            case TOKEN_ANY: expression = (ObjExpr*) newExprLiteral(EXPR_LITERAL_NIL); break;
+            case TOKEN_BOOL: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_BOOL); break;
+            case TOKEN_MACHINE_UINT32: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_MUINT32); break;
+            case TOKEN_INTEGER: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_INTEGER); break;
+            case TOKEN_MACHINE_FLOAT64: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_MFLOAT64); break;
+            case TOKEN_STRUCT: expression = (ObjExpr*) structExpression(); break;
+            default: expression = NULL; // Unreachable
+        }
         pushWorkingNode((Obj*)expression);
-
+    
         if (match(TOKEN_LEFT_SQUARE_BRACKET)) {
 
             expression->nextExpr = (ObjExpr*) newExprTypeArray();
@@ -428,9 +430,10 @@ static ObjExpr* type(bool canAssign) {
         }
 
         popWorkingNode();
+
+        return expression;
     }
 
-    return expression;
 }
 
 static ObjExpr* variable(bool canAssign) {
@@ -639,6 +642,7 @@ static AstParseRule rules[] = {
     [TOKEN_LEN]                  = {builtin,   NULL,   PREC_NONE},
     [TOKEN_MACHINE_FLOAT64]      = {type,      NULL,   PREC_NONE},
     [TOKEN_MACHINE_UINT32]       = {type,      NULL,   PREC_NONE},
+    [TOKEN_MACHINE_UINT64]       = {type,      NULL,   PREC_NONE},
     [TOKEN_MAKE_CHANNEL]         = {builtin,   NULL,   PREC_NONE},
     [TOKEN_MAKE_ROUTINE]         = {builtin,   NULL,   PREC_NONE},
     [TOKEN_NEW]                  = {builtin,   NULL,   PREC_NONE},

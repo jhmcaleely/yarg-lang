@@ -64,6 +64,7 @@ static int builtinInstruction(const char* name, Chunk* chunk, int offset) {
         case BUILTIN_LEN: printf("len"); break;
         case BUILTIN_PIN: printf("pin"); break;
         case BUILTIN_NEW: printf("new"); break;
+        case BUILTIN_MUINT64: printf("muint64"); break;
         default: printf("<unknown %4d>", slot); break;
     }
     printf("\n");

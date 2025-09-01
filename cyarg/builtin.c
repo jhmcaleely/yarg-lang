@@ -349,6 +349,23 @@ bool newBuiltin(ObjRoutine* routineContext, int argCount, ValueCell* args, Value
     return false;
 }
 
+bool muint64Builtin(ObjRoutine* routineContext, int argCount, ValueCell* args, Value* result) {
+    if (IS_INTEGER(args[0].value)) {
+        *result = UI64_VAL(AS_INTEGER(args[0].value));
+        return true;
+    } else if (IS_UINTEGER(args[0].value)) {
+        *result = UI64_VAL(AS_UINTEGER(args[0].value));
+        return true;
+    } else if (IS_UI64(args[0].value)) {
+        *result = args[0].value;
+        return true;
+    } else if (IS_I64(args[0].value) && AS_I64(args[0].value) >= 0) {
+        *result = UI64_VAL(AS_I64(args[0].value));
+        return true;
+    }
+    return false;
+}
+
 Value getBuiltin(uint8_t builtin) {
     switch (builtin) {
         case BUILTIN_PEEK: return OBJ_VAL(newNative(peekBuiltin));
@@ -364,6 +381,7 @@ Value getBuiltin(uint8_t builtin) {
         case BUILTIN_LEN: return OBJ_VAL(newNative(lenBuiltin));
         case BUILTIN_PIN: return OBJ_VAL(newNative(pinBuiltin));
         case BUILTIN_NEW: return OBJ_VAL(newNative(newBuiltin));
+        case BUILTIN_MUINT64: return OBJ_VAL(newNative(muint64Builtin));
         default: return NIL_VAL;
     }
 }
