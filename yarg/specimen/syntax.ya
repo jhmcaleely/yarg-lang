@@ -1,1 +1,1 @@
-place muint32 0xc000000 test;
+place muint32 @xc000000 test;

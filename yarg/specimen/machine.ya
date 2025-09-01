@@ -1,6 +1,3 @@
-const PADS_BANK0_BASE = 0x4001c000;
-const IO_BANK0_BASE   = 0x40014000;
-
 place struct {
     muint32 cpuid;
     muint32 gpio_in;
@@ -17,7 +14,7 @@ place struct {
         muint32 clr;
         muint32 xor;
         }@0x020 gpio_oe;
-    } 0xd0000000 sio_hw;
+    } @xd0000000 sio_hw;
 
 fun coreNum() {
     return peek(sio_hw.cpuid);
