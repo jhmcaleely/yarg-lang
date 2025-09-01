@@ -161,6 +161,7 @@ static bool checkTypeToken() {
     switch (parser.current.type) {
         case TOKEN_MACHINE_FLOAT64:
         case TOKEN_MACHINE_UINT32:
+        case TOKEN_MACHINE_UINT64:
         case TOKEN_INTEGER:
         case TOKEN_BOOL:
         case TOKEN_TYPE_STRING:
