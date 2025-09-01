@@ -414,7 +414,7 @@ void printExpr(ObjExpr* expr) {
                         printf("u%u", num->val.uinteger32);
                         break;
                     case NUMBER_ADDRESS:
-                        printf("@x%p", (void*) num->val.address);
+                        printf("@x%lx", num->val.address);
                         break;
                 }
                 break;
