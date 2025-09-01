@@ -146,11 +146,11 @@ ObjPackedUniformArray* newPackedUniformArray(ObjConcreteYargTypeArray* type) {
     return array;
 }
 
-ObjPackedUniformArray* newPackedUniformArrayAt(ObjConcreteYargTypeArray* type, void* location) {
+ObjPackedUniformArray* newPackedUniformArrayAt(ObjConcreteYargTypeArray* type, StoredValue* location) {
 
     ObjPackedUniformArray* array = ALLOCATE_OBJ(ObjPackedUniformArray, OBJ_UNOWNED_UNIFORMARRAY);
     array->type = type;
-    array->arrayElements = (StoredValue*)location;
+    array->arrayElements = location;
 
     return array;
 }
@@ -186,6 +186,16 @@ ObjPackedPointer* newPointerAtHeapCell(Value type, StoredValue* location) {
         return ptr;
     } else {
         return NULL;
+    }
+}
+
+bool isAddressValue(Value val) {
+    if (IS_ADDRESS(val)) {
+        return true;
+    } else if (IS_POINTER(val)) {
+        return true;
+    } else {
+        return false;
     }
 }
 
@@ -227,9 +237,9 @@ Obj* destinationObject(Value pointer) {
 }
 
 Value placeObjectAt(Value placedType, Value location) {
-    if (is_placeable_type(placedType)) {
+    if (is_placeable_type(placedType) && IS_ADDRESS(location)) {
         ObjConcreteYargType* concrete_type = AS_YARGTYPE(placedType);
-        void* locationPtr = (void*)(uintptr_t)AS_UINTEGER(location);
+        StoredValue* locationPtr = (StoredValue*) AS_ADDRESS(location);
         switch (concrete_type->yt) {
             case TypeArray: {
                 ObjPackedUniformArray* target_array = newPackedUniformArrayAt((ObjConcreteYargTypeArray*)concrete_type, locationPtr);

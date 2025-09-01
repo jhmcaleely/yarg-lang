@@ -234,7 +234,7 @@ ObjPackedPointer* newPointerAtHeapCell(Value type, StoredValue* location);
 
 Obj* destinationObject(Value pointer);
 
-ObjPackedUniformArray* newPackedUniformArrayAt(ObjConcreteYargTypeArray* type, void* location);
+ObjPackedUniformArray* newPackedUniformArrayAt(ObjConcreteYargTypeArray* type, StoredValue* location);
 
 Value defaultArrayValue(ObjConcreteYargType* type);
 Value defaultStructValue(ObjConcreteYargType* type);
@@ -247,6 +247,8 @@ void fprintObject(FILE* op, Value value);
 static inline bool isObjType(Value value, ObjType type) {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;
 }
+
+bool isAddressValue(Value value);
 
 bool isArrayPointer(Value value);
 bool isStructPointer(Value value);
