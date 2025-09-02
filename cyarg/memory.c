@@ -400,11 +400,14 @@ static void blackenObject(Obj* object) {
         }
         case OBJ_EXPR_TYPE: {
             markExpr(object);
+            ObjExprType* type = (ObjExprType*)object;
+            markObject((Obj*)type->arrayModifier);
             break;
         }
         case OBJ_EXPR_TYPE_STRUCT: {
             markExpr(object);
             ObjExprTypeStruct* expr = (ObjExprTypeStruct*)object;
+            markObject((Obj*)expr->type.arrayModifier);
             markArray(&expr->fieldsByIndex);
             break;
         }
@@ -553,7 +556,7 @@ static void freeObject(Obj* object) {
         case OBJ_EXPR_BUILTIN: FREE(ObjExprBuiltin, object); break;
         case OBJ_EXPR_DOT: FREE(ObjExprDot, object); break;
         case OBJ_EXPR_SUPER: FREE(ObjExprSuper, object); break;
-        case OBJ_EXPR_TYPE: FREE(ObjExprTypeLiteral, object); break;
+        case OBJ_EXPR_TYPE: FREE(ObjExprType, object); break;
         case OBJ_EXPR_TYPE_STRUCT: {
             ObjExprTypeStruct* expr = (ObjExprTypeStruct*)object;
             freeValueArray(&expr->fieldsByIndex);

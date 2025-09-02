@@ -237,8 +237,8 @@ ObjExprSuper* newExprSuper(const char* name, int nameLength) {
     return expr;
 }
 
-ObjExprTypeLiteral* newExprType(ExprTypeLiteral type) {
-    ObjExprTypeLiteral* expr = ALLOCATE_OBJ(ObjExprTypeLiteral, OBJ_EXPR_TYPE);
+ObjExprType* newExprType(ExprTypeLiteral type) {
+    ObjExprType* expr = ALLOCATE_OBJ(ObjExprType, OBJ_EXPR_TYPE);
     expr->type = type;
     return expr;
 }
@@ -246,6 +246,7 @@ ObjExprTypeLiteral* newExprType(ExprTypeLiteral type) {
 ObjExprTypeStruct* newExprTypeStruct() {
     ObjExprTypeStruct* expr = ALLOCATE_OBJ(ObjExprTypeStruct, OBJ_EXPR_TYPE_STRUCT);
     tempRootPush(OBJ_VAL(expr));
+    expr->type.type = EXPR_TYPE_LITERAL_STRUCT;
     initValueArray(&expr->fieldsByIndex);
     tempRootPop();
     return expr;
@@ -355,31 +356,33 @@ void printExprBuiltin(ObjExprBuiltin* fn) {
     }
 }
 
-void printType(ObjExpr* type) {
-    if (type->obj.type == OBJ_EXPR_LITERAL) {
-        ObjExprLiteral* literal = (ObjExprLiteral*)type;
-        if (literal->literal == EXPR_LITERAL_NIL) {
-            printf("any");
-        }
-        return;
-    } else if (type->obj.type == OBJ_EXPR_TYPE) {
-        ObjExprTypeLiteral* typeObject = (ObjExprTypeLiteral*)type;
+void printType(ObjExprType* type) {
 
-        switch (typeObject->type) {
-            case EXPR_TYPE_LITERAL_MFLOAT64: printf("mfloat64"); break;
-            case EXPR_TYPE_LITERAL_MUINT32: printf("muint32"); break;
-            case EXPR_TYPE_LITERAL_INTEGER: printf("integer"); break;
-            case EXPR_TYPE_LITERAL_BOOL: printf("bool"); break;
-            case EXPR_TYPE_LITERAL_STRING: printf("string"); break;
-            case EXPR_TYPE_MODIFIER_CONST: printf("<const>"); break;
-            default: printf("<unknown>"); break;
-        }
-    } else {
-        printf("<unexpected type>");
+    if (type->isConst) {
+        printf("const ");
+    }
+
+    switch (type->type) {
+        case EXPR_TYPE_LITERAL_MFLOAT64: printf("mfloat64"); break;
+        case EXPR_TYPE_LITERAL_MUINT32: printf("muint32"); break;
+        case EXPR_TYPE_LITERAL_INTEGER: printf("integer"); break;
+        case EXPR_TYPE_LITERAL_MUINT64: printf("muint64"); break;
+        case EXPR_TYPE_LITERAL_BOOL: printf("bool"); break;
+        case EXPR_TYPE_LITERAL_STRING: printf("string"); break;
+        case EXPR_TYPE_LITERAL_ANY: printf("any"); break;
+        default: printf("<unknown>"); break;
+    }
+
+    if (type->arrayModifier) {
+        printExpr(type->arrayModifier);
     }
 }
 
 void printStructType(ObjExprTypeStruct* struct_) {
+    if (struct_->type.isConst) {
+        printf("const ");
+    }
+
     printf("struct {\n");
     for (int i = 0; i < struct_->fieldsByIndex.count; i++) {
         Value x = struct_->fieldsByIndex.values[i];
@@ -387,6 +390,10 @@ void printStructType(ObjExprTypeStruct* struct_) {
         printStmts((ObjStmt*) val);
     }
     printf("}");
+
+    if (struct_->type.arrayModifier) {
+        printExpr(struct_->type.arrayModifier);
+    }
 }
 
 void printArrayType(ObjExprTypeArray* array) {
@@ -484,7 +491,7 @@ void printExpr(ObjExpr* expr) {
             case OBJ_EXPR_BUILTIN: printExprBuiltin((ObjExprBuiltin*)cursor); break;
             case OBJ_EXPR_DOT: printExprDot((ObjExprDot*)cursor); break;
             case OBJ_EXPR_SUPER: printExprSuper((ObjExprSuper*)cursor); break;
-            case OBJ_EXPR_TYPE: printType(cursor); break;
+            case OBJ_EXPR_TYPE: printType((ObjExprType*)cursor); break;
             case OBJ_EXPR_TYPE_STRUCT: printStructType((ObjExprTypeStruct*)cursor); break;
             case OBJ_EXPR_TYPE_ARRAY: printArrayType((ObjExprTypeArray*)cursor); break;
             default: printf("<unknown>"); break;

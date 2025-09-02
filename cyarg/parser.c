@@ -402,27 +402,37 @@ static ObjExprTypeStruct* structExpression() {
 static ObjExpr* type(bool canAssign) {
 
     if (check(TOKEN_LEFT_PAREN)) {
-        return builtin(canAssign);
+        ObjExpr* result = builtin(canAssign);
+        return result;
     } else {
-        ObjExpr* expression = NULL;
+        bool isConst = false;
+        if (parser.previous.type == TOKEN_CONST) {
+            isConst = true;
+            advance();
+        }
+
+        ObjExprType* expression = NULL;
 
         switch (parser.previous.type) {
-            case TOKEN_ANY: expression = (ObjExpr*) newExprLiteral(EXPR_LITERAL_NIL); break;
-            case TOKEN_BOOL: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_BOOL); break;
-            case TOKEN_MACHINE_UINT32: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_MUINT32); break;
-            case TOKEN_INTEGER: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_INTEGER); break;
-            case TOKEN_MACHINE_FLOAT64: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_MFLOAT64); break;
-            case TOKEN_STRUCT: expression = (ObjExpr*) structExpression(); break;
-            default: expression = NULL; // Unreachable
+            case TOKEN_ANY: expression = newExprType(EXPR_TYPE_LITERAL_ANY); break;
+            case TOKEN_BOOL: expression = newExprType(EXPR_TYPE_LITERAL_BOOL); break;
+            case TOKEN_MACHINE_UINT32: expression = newExprType(EXPR_TYPE_LITERAL_MUINT32); break;
+            case TOKEN_MACHINE_UINT64: expression = newExprType(EXPR_TYPE_LITERAL_MUINT64); break;
+            case TOKEN_INTEGER: expression = newExprType(EXPR_TYPE_LITERAL_INTEGER); break;
+            case TOKEN_MACHINE_FLOAT64: expression = newExprType(EXPR_TYPE_LITERAL_MFLOAT64); break;
+            case TOKEN_STRUCT: expression = (ObjExprType*) structExpression(); break;
+            default: expression = newExprType(EXPR_TYPE_LITERAL_ANY); break;
         }
         pushWorkingNode((Obj*)expression);
+
+        expression->isConst = isConst;
     
         if (match(TOKEN_LEFT_SQUARE_BRACKET)) {
 
-            expression->nextExpr = (ObjExpr*) newExprTypeArray();
+            ObjExprTypeArray* array = newExprTypeArray();
+            expression->arrayModifier = (ObjExpr*) array;
             
             if (!check(TOKEN_RIGHT_SQUARE_BRACKET)) {
-                ObjExprTypeArray* array = (ObjExprTypeArray*)expression->nextExpr;
                 array->cardinality = parsePrecedence(PREC_ASSIGNMENT); // no assignment in this expression.
             }
 
@@ -431,7 +441,7 @@ static ObjExpr* type(bool canAssign) {
 
         popWorkingNode();
 
-        return expression;
+        return (ObjExpr*) expression;
     }
 
 }
@@ -634,7 +644,7 @@ static AstParseRule rules[] = {
     [TOKEN_ANY]                  = {type,      NULL,   PREC_NONE},
     [TOKEN_BOOL]                 = {type,      NULL,   PREC_NONE},
     [TOKEN_CLASS]                = {NULL,      NULL,   PREC_NONE},
-    [TOKEN_CONST]                = {NULL,      NULL,   PREC_NONE},
+    [TOKEN_CONST]                = {type,      NULL,   PREC_NONE},
     [TOKEN_CPEEK]                = {builtin,   NULL,   PREC_NONE},
     [TOKEN_ELSE]                 = {NULL,      NULL,   PREC_NONE},
     [TOKEN_FALSE]                = {literal,   NULL,   PREC_NONE},
@@ -785,7 +795,7 @@ static ObjExpr* typeExpression() {
         }
 
         if (isConst) {
-            cursor->nextExpr = (ObjExpr*) newExprType(EXPR_TYPE_MODIFIER_CONST);
+            cursor->nextExpr = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_MFLOAT64);
         }
 
         popWorkingNode();
@@ -796,28 +806,40 @@ static ObjExpr* typeExpression() {
 
 static ObjStmt* varDeclaration() {
 
-    ObjExpr* typeExpr = typeExpression();
-    if (typeExpr) {
-        pushWorkingNode((Obj*)typeExpr);
-    }
-    
-    consume(TOKEN_IDENTIFIER, "Expect variable name.");
-    ObjStmtVarDeclaration* decl = newStmtVarDeclaration((char*)parser.previous.start, parser.previous.length, parser.previous.line);
-    pushWorkingNode((Obj*)decl);
+    ObjStmtVarDeclaration* declaration = NULL;
 
-    decl->type = typeExpr;
+    if (check(TOKEN_IDENTIFIER)) {
+        Token name_or_expression = parser.current;
+        advance();
+        if (check(TOKEN_IDENTIFIER)) {
+            declaration = newStmtVarDeclaration((char*)parser.previous.start, parser.previous.length, parser.previous.line);
+            pushWorkingNode((Obj*)declaration);
+            declaration->type = (ObjExpr*) newExprNamedVariable(name_or_expression.start, name_or_expression.line);
+        } else {
+            declaration = newStmtVarDeclaration((char*)name_or_expression.start, name_or_expression.length, name_or_expression.line);
+            pushWorkingNode((Obj*)declaration);
+            declaration->type = (ObjExpr*) newExprLiteral(EXPR_LITERAL_NIL);
+        }
+    } else {
+        ObjExpr* typeExpr = parsePrecedence(PREC_OR);
+        pushWorkingNode((Obj*)typeExpr);
+
+//        consume(TOKEN_IDENTIFIER, "Expect identifier for variable declaration.");
+
+        declaration = newStmtVarDeclaration((char*)parser.previous.start, parser.previous.length, parser.previous.line);
+        declaration->type = typeExpr;
+        popWorkingNode();
+        pushWorkingNode((Obj*)declaration);
+    }
 
     if (match(TOKEN_EQUAL)) {
-        decl->initialiser = expression();
+        declaration->initialiser = expression();
     }
     consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration");
 
-    if (typeExpr) {
-        popWorkingNode();
-    }
     popWorkingNode();
 
-    return (ObjStmt*) decl;
+    return (ObjStmt*) declaration;
 }
 
 static ObjStmt* declaration();

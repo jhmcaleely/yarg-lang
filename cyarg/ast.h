@@ -168,13 +168,16 @@ typedef enum {
     EXPR_TYPE_LITERAL_MUINT64,
     EXPR_TYPE_LITERAL_MFLOAT64,
     EXPR_TYPE_LITERAL_STRING,
-    EXPR_TYPE_MODIFIER_CONST
+    EXPR_TYPE_LITERAL_STRUCT,
+    EXPR_TYPE_LITERAL_ANY
 } ExprTypeLiteral;
 
 typedef struct {
     ObjExpr expr;
     ExprTypeLiteral type;
-} ObjExprTypeLiteral;
+    bool isConst;
+    ObjExpr* arrayModifier;
+} ObjExprType;
 
 typedef struct {
     ObjExpr expr;
@@ -182,7 +185,7 @@ typedef struct {
 } ObjExprTypeArray;
 
 typedef struct {
-    ObjExpr expr;
+    ObjExprType type;
     ValueArray fieldsByIndex;
 } ObjExprTypeStruct;
 
@@ -282,7 +285,7 @@ ObjExprArrayElement* newExprArrayElement();
 ObjExprBuiltin* newExprBuiltin(ExprBuiltin fn, int arity);
 ObjExprDot* newExprDot(const char* name, int nameLength);
 ObjExprSuper* newExprSuper(const char* name, int nameLength);
-ObjExprTypeLiteral* newExprType(ExprTypeLiteral type);
+ObjExprType* newExprType(ExprTypeLiteral type);
 ObjExprTypeStruct* newExprTypeStruct();
 ObjExprTypeArray* newExprTypeArray();
 

@@ -548,7 +548,7 @@ static void generateExprSuper(ObjExprSuper* super) {
     tempRootPop();
 }
 
-static void generateExprType(ObjExprTypeLiteral* type) {
+static void generateExprType(ObjExprType* type) {
     switch (type->type) {
         case EXPR_TYPE_LITERAL_BOOL: emitBytes(OP_TYPE_LITERAL, TYPE_LITERAL_BOOL); return;
         case EXPR_TYPE_LITERAL_INTEGER: emitBytes(OP_TYPE_LITERAL, TYPE_LITERAL_INTEGER); return;
@@ -556,8 +556,17 @@ static void generateExprType(ObjExprTypeLiteral* type) {
         case EXPR_TYPE_LITERAL_MUINT32: emitBytes(OP_TYPE_LITERAL, TYPE_LITERAL_MACHINE_UINT32); return;
         case EXPR_TYPE_LITERAL_MUINT64: emitBytes(OP_TYPE_LITERAL, TYPE_LITERAL_MACHINE_UINT64); return;
         case EXPR_TYPE_LITERAL_STRING: emitBytes(OP_TYPE_LITERAL, TYPE_LITERAL_STRING); return;
-        case EXPR_TYPE_MODIFIER_CONST: emitBytes(OP_TYPE_MODIFIER, TYPE_MODIFIER_CONST); return;
-        default: return; // unreachable.
+        case EXPR_TYPE_LITERAL_ANY: emitByte(OP_NIL); break;
+        default: break;
+    }
+
+    if (type->arrayModifier) {
+        generateExpr(type->arrayModifier);
+    }
+
+    if (type->isConst) {
+        emitBytes(OP_TYPE_MODIFIER, TYPE_MODIFIER_CONST); return;
+
     }
 }
 
@@ -571,6 +580,15 @@ static void generateExprTypeStruct(ObjExprTypeStruct* struct_) {
         error("Can't have more than 256 fields.");
     }
     emitBytes(OP_TYPE_STRUCT, (uint8_t)fieldCount);
+
+    if (struct_->type.arrayModifier) {
+        generateExpr(struct_->type.arrayModifier);
+    }
+
+    if (struct_->type.isConst) {
+        emitBytes(OP_TYPE_MODIFIER, TYPE_MODIFIER_CONST); return;
+
+    }
 }
 
 static void generateExprTypeArray(ObjExprTypeArray* array) {
@@ -651,7 +669,7 @@ static void generateExprElt(ObjExpr* expr) {
             break;
         }
         case OBJ_EXPR_TYPE: {
-            ObjExprTypeLiteral* t = (ObjExprTypeLiteral*)expr;
+            ObjExprType* t = (ObjExprType*)expr;
             generateExprType(t);
             break;
         }
