@@ -979,6 +979,7 @@ InterpretResult run(ObjRoutine* routine) {
                     case TYPE_LITERAL_BOOL: typeObj = newYargTypeFromType(TypeBool); break;
                     case TYPE_LITERAL_INTEGER: typeObj = newYargTypeFromType(TypeInteger); break;
                     case TYPE_LITERAL_MACHINE_UINT32: typeObj = newYargTypeFromType(TypeMachineUint32); break;
+                    case TYPE_LITERAL_MACHINE_UINT64: typeObj = newYargTypeFromType(TypeMachineUint64); break;
                     case TYPE_LITERAL_MACHINE_FLOAT64: typeObj = newYargTypeFromType(TypeDouble); break;
                     case TYPE_LITERAL_STRING: typeObj = newYargTypeFromType(TypeString); break;
                 }

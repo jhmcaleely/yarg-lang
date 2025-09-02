@@ -103,6 +103,7 @@ typedef enum {
     NUMBER_DOUBLE,
     NUMBER_INTEGER,
     NUMBER_UINTEGER32,
+    NUMBER_UINTEGER64,
     NUMBER_ADDRESS
 } NumberType;
 
@@ -114,6 +115,8 @@ typedef struct {
         int integer;
         uint32_t uinteger32;
         uintptr_t address;
+        uint64_t ui64;
+        int64_t i64;
     } val;
 } ObjExprNumber;
 
@@ -162,6 +165,7 @@ typedef enum {
     EXPR_TYPE_LITERAL_BOOL,
     EXPR_TYPE_LITERAL_INTEGER,
     EXPR_TYPE_LITERAL_MUINT32,
+    EXPR_TYPE_LITERAL_MUINT64,
     EXPR_TYPE_LITERAL_MFLOAT64,
     EXPR_TYPE_LITERAL_STRING,
     EXPR_TYPE_MODIFIER_CONST
@@ -264,6 +268,7 @@ ObjAst* newObjAst();
 ObjExprNumber* newExprNumberDouble(double value);
 ObjExprNumber* newExprNumberInteger(int value);
 ObjExprNumber* newExprNumberUInteger32(uint32_t value);
+ObjExprNumber* newExprNumberUInteger64(uint64_t value);
 ObjExprNumber* newExprNumberAddress(uintptr_t value);
 ObjExprLiteral* newExprLiteral(ExprLiteral literal);
 ObjExprString* newExprString(const char* str, int strLength);

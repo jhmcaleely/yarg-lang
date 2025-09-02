@@ -302,6 +302,7 @@ static void generateNumber(ObjExprNumber* num) {
         case NUMBER_DOUBLE: emitConstant(DOUBLE_VAL(num->val.dbl)); break;
         case NUMBER_INTEGER: emitConstant(INTEGER_VAL(num->val.integer)); break;
         case NUMBER_UINTEGER32: emitConstant(UINTEGER_VAL(num->val.uinteger32)); break;
+        case NUMBER_UINTEGER64: emitConstant(UI64_VAL(num->val.ui64)); break;
         case NUMBER_ADDRESS: emitConstant(ADDRESS_VAL(num->val.address)); break;
         default:
             return; //  unreachable
@@ -553,6 +554,7 @@ static void generateExprType(ObjExprTypeLiteral* type) {
         case EXPR_TYPE_LITERAL_INTEGER: emitBytes(OP_TYPE_LITERAL, TYPE_LITERAL_INTEGER); return;
         case EXPR_TYPE_LITERAL_MFLOAT64: emitBytes(OP_TYPE_LITERAL, TYPE_LITERAL_MACHINE_FLOAT64); return;
         case EXPR_TYPE_LITERAL_MUINT32: emitBytes(OP_TYPE_LITERAL, TYPE_LITERAL_MACHINE_UINT32); return;
+        case EXPR_TYPE_LITERAL_MUINT64: emitBytes(OP_TYPE_LITERAL, TYPE_LITERAL_MACHINE_UINT64); return;
         case EXPR_TYPE_LITERAL_STRING: emitBytes(OP_TYPE_LITERAL, TYPE_LITERAL_STRING); return;
         case EXPR_TYPE_MODIFIER_CONST: emitBytes(OP_TYPE_MODIFIER, TYPE_MODIFIER_CONST); return;
         default: return; // unreachable.

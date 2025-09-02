@@ -582,8 +582,12 @@ static ObjExpr* number(bool canAssign) {
         }
     }
     else {
-        uint32_t value = strtoNum(number_start, number_len, radix);
-        val = newExprNumberUInteger32(value);
+        uint64_t value = strtoNum(number_start, number_len, radix);
+        if (value <= UINT32_MAX) {
+            val = newExprNumberUInteger32(value);
+        } else {
+            val = newExprNumberUInteger64(value);
+        }
     }
     return (ObjExpr*) val;
 }

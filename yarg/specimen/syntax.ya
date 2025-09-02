@@ -1,2 +1,2 @@
-var test = muint64(0);
+const test = muint64(0xfffffffff);
 print test;

@@ -144,6 +144,13 @@ ObjExprNumber* newExprNumberUInteger32(uint32_t value) {
     return num;
 }
 
+ObjExprNumber* newExprNumberUInteger64(uint64_t value) {
+    ObjExprNumber* num = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
+    num->type = NUMBER_UINTEGER64;
+    num->val.ui64 = value;
+    return num;
+}
+
 ObjExprNumber* newExprNumberAddress(uintptr_t value) {
     ObjExprNumber* num = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
     num->type = NUMBER_ADDRESS;
@@ -413,6 +420,9 @@ void printExpr(ObjExpr* expr) {
                         break;
                     case NUMBER_UINTEGER32:
                         printf("u%u", num->val.uinteger32);
+                        break;
+                    case NUMBER_UINTEGER64:
+                        printf("u%llu", num->val.ui64);
                         break;
                     case NUMBER_ADDRESS:
                         printf("@x%lx", num->val.address);

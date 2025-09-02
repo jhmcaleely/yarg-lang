@@ -324,6 +324,7 @@ bool newBuiltin(ObjRoutine* routineContext, int argCount, ValueCell* args, Value
             tempRootPop();
             return true;
         }
+        case TypeMachineUint64: // fall through
         case TypeMachineUint32: {
             StoredValue* heap_cell = createHeapCell(typeToCreate);
             initialisePackedStorage(typeToCreate, heap_cell);
