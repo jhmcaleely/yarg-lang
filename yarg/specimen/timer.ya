@@ -1,0 +1,29 @@
+place struct {
+    uint32 timehw;
+    uint32 timelw;
+    uint32 timehr;
+    uint32 timelr;
+    uint32[4] alarm;
+    uint32 armed;
+    uint32 timerawh;
+    uint32 timerawl;
+    uint32 dbgpause;
+    uint32 pause;
+    uint32 intr;
+    uint32 inte;
+    uint32 intf;
+    uint32 ints;
+    } @x40054000 timer;
+
+fun get_time() {
+    var uint64 current_time;
+    current_time = uint64(peek(timer.timelr));
+    current_time = current_time | uint64(peek(timer.timehr)) << uint64(32);
+    return current_time;
+}
+
+fun elapsed_time(start_time) {
+    const time_now = get_time();
+
+    return  time_now - start_time;
+}
