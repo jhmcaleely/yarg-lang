@@ -1,3 +1,8 @@
+import("machine");
+import("irq");
+
+const timer_base = @x40054000;
+
 place struct {
     uint32 timehw;
     uint32 timelw;
@@ -13,7 +18,12 @@ place struct {
     uint32 inte;
     uint32 intf;
     uint32 ints;
-    } @x40054000 timer;
+    } {
+        timer_base timer;
+        timer_base + REG_ALIAS_XOR_BITS timer_xor;
+        timer_base + REG_ALIAS_SET_BITS timer_set;
+        timer_base + REG_ALIAS_CLR_BITS timer_clr;
+    }
 
 fun get_time() {
     var uint64 current_time;
@@ -26,4 +36,30 @@ fun elapsed_time(start_time) {
     const time_now = get_time();
 
     return  time_now - start_time;
+}
+
+const alarm = 0d2;
+
+fun alarm_irq_response() {
+    poke timer_clr.intr, 0x1 << alarm;
+    print "hello";
+}
+
+const ALARM_IRQ = 0d2;
+const ALARM_CALLBACK_ORDER_PRIORITY = 0d0;
+
+var alarm_irq_routine = make_routine(alarm_irq_response, true);
+var alarm_irq_routine_pinned = pin(alarm_irq_routine);
+
+fun alarm_in_us(delay_us) {
+    poke timer_set.inte, 0x1 << alarm;
+
+    irq_add_shared_handler(ALARM_IRQ, alarm_irq_routine_pinned, ALARM_CALLBACK_ORDER_PRIORITY);
+    irq_set_enabled(ALARM_IRQ, true);
+
+    uint64 target = uint64(peek(timer.timerawl)) + uint64(delay_us);
+    print target;
+    uint32 target32 = uint32(target & uint64(0xFFFFFFFF));
+    print target32;
+    poke timer.alarm[alarm], target32;
 }
