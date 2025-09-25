@@ -48,23 +48,22 @@ fun uart_unreset(id) {
 }
 
 fun uart_clock_get_hz(id) {
-    var clock_handle = c_get_clock_handle(id);
-    return c_clock_get_hz(clock_handle);
+    return uint32(c_clock_get_hz(6));
 }
 
 fun uart_set_baudrate(id, baudrate) {
-    uint32 baud_rate_div = (8 * uart_clock_get_hz(id) / baudrate) + 1;
+    uint32 baud_rate_div = (uint32(8) * uart_clock_get_hz(id) / uint32(baudrate)) + uint32(1);
     uint32 baud_ibrd = baud_rate_div >> uint32(7);
     uint32 baud_fbrd;
 
-    if (baud_ibrd == 0) {
-        baud_ibrd = 1;
-        baud_fbrd = 0;
-    } else if (baud_ibrd >= 65535) {
-        baud_ibrd = 65535;
-        baud_fbrd = 0;
+    if (baud_ibrd == uint32(0)) {
+        baud_ibrd = uint32(1);
+        baud_fbrd = uint32(0);
+    } else if (baud_ibrd >= uint32(65535)) {
+        baud_ibrd = uint32(65535);
+        baud_fbrd = uint32(0);
     } else {
-        baud_fbrd = (baud_rate_div & 0x7f) >> 1;
+        baud_fbrd = (baud_rate_div & uint32(0x7f)) >> uint32(1);
     }
 
     poke uart[id].ibrd, baud_ibrd;
@@ -72,9 +71,9 @@ fun uart_set_baudrate(id, baudrate) {
 
     // PL011 needs a (dummy) LCR_H write to latch in the divisors.
     // We don't want to actually change LCR_H contents here.    
-    poke uart[id].lcr_h, 0;
+    poke uart[id].lcr_h, uint32(0);
 
-    return (4 * uart_clock_get_hz(id)) / (64 * baud_ibrd + baud_fbrd);
+    return (uint32(4) * uart_clock_get_hz(id)) / (uint32(64) * baud_ibrd + baud_fbrd);
 }
 
 
@@ -85,10 +84,10 @@ fun uart_init(id, baud) {
     uart_set_baudrate(id, baud);
 }
 
-const UART_UARTFR_TXFF_BITS = 0x20;
+const UART_UARTFR_TXFF_BITS = uint32(0x20);
 
 fun uart_is_writeable(id) {
-    return uart[id].fr & UART_UARTFR_TXFF_BITS != 0;
+    return (uint32(uart[id].fr) & uint32(UART_UARTFR_TXFF_BITS)) != uint32(0);
 }
 
 fun uart_putc(id, c) {
