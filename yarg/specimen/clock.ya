@@ -63,5 +63,5 @@ place struct {
         clock_base + REG_ALIAS_CLR_BITS clock_clr;
     }
 
-print clock.intf;
-print clock.ref.selected;
+// native functions (so that C libs can depend on this too)
+// c_clock_get_hz
