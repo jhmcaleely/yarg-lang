@@ -1,5 +1,6 @@
 import("machine");
 import("reset");
+import("clock");
 import("gpio");
 
 const uart0_base = @x40034000;
@@ -47,7 +48,7 @@ fun uart_unreset(id) {
 }
 
 fun uart_clock_get_hz(id) {
-    return uint32(c_clock_get_hz(6));
+    return uint32(c_clock_get_hz(clock_peri));
 }
 
 fun uart_set_baudrate(id, baudrate) {
