@@ -165,8 +165,8 @@ static TokenType identifierType() {
                     case 'n': 
                         if (scanner.current - scanner.start > 2) {
                                 switch (scanner.start[2]) {
-                                case 'd': return TOKEN_AND;                                
-                                case 'y': return TOKEN_ANY;
+                                case 'd': return checkKeyword(3, 0, "", TOKEN_AND);                                
+                                case 'y': return checkKeyword(3, 0, "", TOKEN_ANY);
                             }
                         }
                         break;
@@ -202,7 +202,7 @@ static TokenType identifierType() {
         case 'i':
             if (scanner.current - scanner.start > 1) {
                 switch (scanner.start[1]) {
-                    case 'f': return TOKEN_IF;
+                    case 'f': return checkKeyword(2, 0, "", TOKEN_IF);
                     case 'm': return checkKeyword(2, 4, "port", TOKEN_IMPORT);
                     case 'n': {
                         if (scanner.current - scanner.start > 2) {
@@ -213,7 +213,7 @@ static TokenType identifierType() {
                                             case '1': return checkKeyword(4, 1, "6", TOKEN_INT16);
                                             case '3': return checkKeyword(4, 1, "2", TOKEN_INT32);
                                             case '6': return checkKeyword(4, 1, "4", TOKEN_INT64);
-                                            case '8': return TOKEN_INT8;
+                                            case '8': return checkKeyword(4, 0, "", TOKEN_INT8);
                                             }
                                         }
                                     }
@@ -323,7 +323,7 @@ static TokenType identifierType() {
                     case '1': return checkKeyword(5, 1, "6", TOKEN_UINT16);
                     case '3': return checkKeyword(5, 1, "2", TOKEN_UINT32);
                     case '6': return checkKeyword(5, 1, "4", TOKEN_UINT64);
-                    case '8': return TOKEN_UINT8;
+                    case '8': return checkKeyword(5, 0, "", TOKEN_UINT8);
                 }
             }
             break;
