@@ -87,7 +87,7 @@ fun uart_init(id, baud) {
 const UART_UARTFR_TXFF_BITS = uint32(0x20);
 
 fun uart_is_writeable(id) {
-    return (uint32(uart[id].fr) & uint32(UART_UARTFR_TXFF_BITS)) != uint32(0);
+    return peek(uart[id].fr) & UART_UARTFR_TXFF_BITS != uint32(0);
 }
 
 fun uart_putc(id, c) {
