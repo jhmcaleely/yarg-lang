@@ -1,0 +1,105 @@
+import("machine");
+import("reset");
+import("gpio");
+
+const uart0_base = @x40034000;
+const uart1_base = @x40038000;
+
+place struct {
+    uint32 dr;
+    uint32 rsr;
+    uint32@0x18 fr;
+    uint32@0x20 ilpr;
+    uint32 ibrd;
+    uint32 fbrd;
+    uint32 lcr_h;
+    uint32 cr;
+    uint32 ifls;
+    uint32 imsc;
+    uint32 ris;
+    uint32 mis;
+    uint32 icr;
+    uint32 dmacr;
+    uint32[4]@0xfe0 periphid;
+    uint32[4]@0xff0 pcellid;
+    } {
+        uart0_base uart0;
+        uart1_base + REG_ALIAS_XOR_BITS uart0_xor;
+        uart1_base + REG_ALIAS_SET_BITS uart0_set;
+        uart1_base + REG_ALIAS_CLR_BITS uart0_clr;
+
+        uart1_base uart1;
+        uart1_base + REG_ALIAS_XOR_BITS uart1_xor;
+        uart1_base + REG_ALIAS_SET_BITS uart1_set;
+        uart1_base + REG_ALIAS_CLR_BITS uart1_clr;
+    }
+
+const any[2] uart = [ uart0, uart1 ];
+
+print uart1.pcellid[3];
+print uart1.ifls;
+
+fun uart_reset(id) {
+    reset_block(reset_uart[id]);
+}
+
+fun uart_unreset(id) {
+    reset_await(reset_uart[id]);
+}
+
+fun uart_clock_get_hz(id) {
+    var clock_handle = c_get_clock_handle(id);
+    return c_clock_get_hz(clock_handle);
+}
+
+fun uart_set_baudrate(id, baudrate) {
+    uint32 baud_rate_div = (8 * uart_clock_get_hz(id) / baudrate) + 1;
+    uint32 baud_ibrd = baud_rate_div >> uint32(7);
+    uint32 baud_fbrd;
+
+    if (baud_ibrd == 0) {
+        baud_ibrd = 1;
+        baud_fbrd = 0;
+    } else if (baud_ibrd >= 65535) {
+        baud_ibrd = 65535;
+        baud_fbrd = 0;
+    } else {
+        baud_fbrd = (baud_rate_div & 0x7f) >> 1;
+    }
+
+    poke uart[id].ibrd, baud_ibrd;
+    poke uart[id].fbrd, baud_fbrd;
+
+    // PL011 needs a (dummy) LCR_H write to latch in the divisors.
+    // We don't want to actually change LCR_H contents here.    
+    poke uart[id].lcr_h, 0;
+
+    return (4 * uart_clock_get_hz(id)) / (64 * baud_ibrd + baud_fbrd);
+}
+
+
+fun uart_init(id, baud) {
+    uart_reset(id);
+    uart_unreset(id);
+
+    uart_set_baudrate(id, baud);
+}
+
+const UART_UARTFR_TXFF_BITS = 0x20;
+
+fun uart_is_writeable(id) {
+    return uart[id].fr & UART_UARTFR_TXFF_BITS != 0;
+}
+
+fun uart_putc(id, c) {
+    while (!uart_is_writeable(id)) {
+    }
+    poke uart[id].dr, uint32(c) & 0xff;
+}
+
+uart_init(1, 115200);
+
+gpio_set_function(0d4, gpio_func_uart); // TX
+gpio_set_function(0d5, gpio_func_uart); // RX
+
+uart_putc(1, 0x4a); // 'J'.
