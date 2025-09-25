@@ -34,10 +34,8 @@ place struct {
         uart1_base + REG_ALIAS_CLR_BITS uart1_clr;
     }
 
-const any[2] uart = [ uart0, uart1 ];
-
-print uart1.pcellid[3];
-print uart1.ifls;
+const uart = [ uart0, uart1 ];
+const uart_xor = [uart0_xor, uart1_xor ];
 
 fun uart_reset(id) {
     reset_block(reset_uart[id]);
@@ -45,6 +43,7 @@ fun uart_reset(id) {
 
 fun uart_unreset(id) {
     reset_await(reset_uart[id]);
+    unreset_block(reset_uart[id]);
 }
 
 fun uart_clock_get_hz(id) {
@@ -71,26 +70,42 @@ fun uart_set_baudrate(id, baudrate) {
 
     // PL011 needs a (dummy) LCR_H write to latch in the divisors.
     // We don't want to actually change LCR_H contents here.    
-    poke uart[id].lcr_h, uint32(0);
+    write_masked(uart[id].lcr_h, uart_xor[id].lcr_h, 0, 0);
 
     return (uint32(4) * uart_clock_get_hz(id)) / (uint32(64) * baud_ibrd + baud_fbrd);
 }
 
+const uint32 UART_PARITY_NONE = uint32(0);
 
 fun uart_init(id, baud) {
     uart_reset(id);
     uart_unreset(id);
 
-    uart_set_baudrate(id, baud);
+    var set_baud = uart_set_baudrate(id, baud);
+    print set_baud;
+
+    uint32 data_bits = uint32(8);
+    uint32 stop_bits = uint32(1);
+    uint32 parity = UART_PARITY_NONE;
+
+    write_masked(uart[id].lcr_h, uart_xor[id].lcr_h,
+                ((data_bits - uint32(5)) << uint32(5)) |
+                ((stop_bits - uint32(1)) << uint32(3)) |
+                0x0|
+                0x00000010,
+                0x00000060 | 0x00000008 | 0x00000002 | 0x00000004 | 0x00000010
+                );
+    
+    poke uart[id].cr, 0x00000001 | 0x00000100 | 0x00000200;
 }
 
 const UART_UARTFR_TXFF_BITS = uint32(0x20);
 
 fun uart_is_writeable(id) {
-    return peek(uart[id].fr) & UART_UARTFR_TXFF_BITS != uint32(0);
+    return peek(uart[id].fr) & UART_UARTFR_TXFF_BITS != UART_UARTFR_TXFF_BITS;
 }
 
-fun uart_putc(id, c) {
+fun uart_put_byte(id, c) {
     while (!uart_is_writeable(id)) {
     }
     poke uart[id].dr, uint32(c) & 0xff;
@@ -98,7 +113,16 @@ fun uart_putc(id, c) {
 
 uart_init(1, 115200);
 
-gpio_set_function(0d4, gpio_func_uart); // TX
-gpio_set_function(0d5, gpio_func_uart); // RX
+gpio_set_function(0d8, gpio_func_uart); // TX
+gpio_set_function(0d9, gpio_func_uart); // RX
 
-uart_putc(1, 0x4a); // 'J'.
+uart_put_byte(1, 0x4a); // 'J'.
+uart_put_byte(1, 0x6f); // 'o'.
+uart_put_byte(1, 0x68); // 'h'.
+uart_put_byte(1, 0x6e); // 'n'.
+uart_put_byte(1, 0x0d); // 'cr'.
+uart_put_byte(1, 0x59); // 'Y'.
+uart_put_byte(1, 0x61); // 'a'.
+uart_put_byte(1, 0x72); // 'Y'.
+uart_put_byte(1, 0x67); // 'Y'.
+uart_put_byte(1, 0x0d); // 'cr'.

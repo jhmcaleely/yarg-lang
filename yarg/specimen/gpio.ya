@@ -6,6 +6,7 @@ const pico_led = 0d25;
 const GPIO_OUT = true;
 const GPIO_IN = false;
 
+const gpio_func_ixp = 0d0;
 const gpio_func_spi = 0d1;
 const gpio_func_uart = 0d2;
 const gpio_func_i2c = 0d3;
@@ -63,11 +64,6 @@ place struct {
         pads_bank0_base + REG_ALIAS_SET_BITS pads_bank0_set;
         pads_bank0_base + REG_ALIAS_CLR_BITS pads_bank0_clr;
     }
-
-fun write_masked(rw, xor, val, mask) { 
-    const uint32 reg = peek(rw);
-    poke xor, (reg ^ val) & mask;
-}
 
 fun gpio_set_direction(gpio, dir) {
 

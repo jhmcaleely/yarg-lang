@@ -16,7 +16,7 @@ place struct {
 const reset_usbctrl = 24;
 const reset_uart1 = 23;
 const reset_uart0 = 22;
-const reset_uart = [ 22, 23 ];
+const reset_uart = [ reset_uart0, reset_uart1 ];
 const reset_timer = 21;
 const reset_tbman = 20;
 const reset_sysinfo = 19;
@@ -44,11 +44,11 @@ const reset_busctrl = 1;
 const reset_adc = 0;
 
 fun reset_block(id) {
-    poke reset_set, uint32(1) << uint32(id);
+    poke reset_set.reset, uint32(1) << uint32(id);
 }
 
 fun unreset_block(id) {
-    poke reset_clr, uint32(1) << uint32(id);
+    poke reset_clr.reset, uint32(1) << uint32(id);
 }
 
 fun reset_await(id) {
