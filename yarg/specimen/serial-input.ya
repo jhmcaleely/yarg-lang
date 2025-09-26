@@ -1,0 +1,44 @@
+import("uart");
+
+const device = 1;
+var input_channel = make_channel();
+
+fun input_routine() {
+
+    fun irq_response() {
+        const input = peek(uart[device].dr) & 0xff; 
+        share(input_channel, input);
+    }
+
+    return make_routine(irq_response, true);
+}
+
+var input_handler_routine = input_routine();
+var input_handler_address = pin(input_handler_routine);
+
+uart_init(device, 115200, true);
+
+irq_add_shared_handler(uart_irq[device], input_handler_address, 0d0);
+irq_set_enabled(uart_irq[device], true);
+
+write_masked(uart[device].ifls, uart_xor[device].ifls,
+             0,
+             0b111000
+             );
+
+write_masked(uart[device].imsc, uart_xor[device].imsc,
+             0b1010000,
+             0b1010000
+             );
+
+gpio_set_function(0d8, gpio_func_uart); // TX
+gpio_set_function(0d9, gpio_func_uart); // RX
+
+while (true) {
+    const uint32 input = receive(input_channel);
+    if (input == 0d27) {
+        print "esc";
+    } else {
+        uart_put_byte(device, input);
+    }
+}
