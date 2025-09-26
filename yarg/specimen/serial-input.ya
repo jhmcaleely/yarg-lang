@@ -1,41 +1,44 @@
 import("uart");
 
 const device = 1;
+var input_channel = make_channel();
 
-fun irq_uart_init(id, baud, fifo_enable) {
-    uart_reset(id);
-    uart_unreset(id);
+fun input_routine() {
 
-    var set_baud = uart_set_baudrate(id, baud);
-    print set_baud;
+    fun irq_response() {
+        var input = uint8(peek(uart[device].dr) & 0xff);
+        print input;
 
-    uint32 data_bits = uint32(8);
-    uint32 stop_bits = uint32(1);
-    uint32 parity = UART_PARITY_NONE;
-
-    var FEN = 0x0;
-    if (fifo_enable) {
-        FEN = 0x10;
+        share(input_channel, input);
     }
 
-    write_masked(uart[id].lcr_h, uart_xor[id].lcr_h,
-                ((data_bits - uint32(5)) << uint32(5)) |
-                ((stop_bits - uint32(1)) << uint32(3)) |
-                0x0|
-                FEN,
-                0x00000060 | 0x00000008 | 0x00000002 | 0x00000004 | 0x00000010
-                );
-    
-    poke uart[id].cr, 0x00000001 | 0x00000100 | 0x00000200;
+    return make_routine(irq_response, true);
 }
 
-irq_uart_init(device, 115200, true);
+var input_handler_routine = input_routine();
+var input_handler_address = pin(input_handler_routine);
+
+uart_init(device, 115200, true);
+
+irq_add_shared_handler(uart_irq[device], input_handler_address, 0d0);
+irq_set_enabled(uart_irq[device], true);
+
+
+
+write_masked(uart[device].ifls, uart_xor[device].ifls,
+            0,
+            0b111000
+            );
+
+write_masked(uart[device].imsc, uart_xor[device].imsc,
+            0b1010000,
+            0b1010000
+            );
 
 gpio_set_function(0d8, gpio_func_uart); // TX
 gpio_set_function(0d9, gpio_func_uart); // RX
 
 while (true) {
-    var input = uart_get_byte(device);
-    print input;
+    var input = receive(input_channel);
     uart_put_byte(device, input);
 }
