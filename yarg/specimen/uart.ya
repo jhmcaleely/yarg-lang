@@ -78,7 +78,7 @@ fun uart_set_baudrate(id, baudrate) {
 
 const uint32 UART_PARITY_NONE = uint32(0);
 
-fun uart_init(id, baud) {
+fun uart_init(id, baud, fifo_enable) {
     uart_reset(id);
     uart_unreset(id);
 
@@ -89,21 +89,31 @@ fun uart_init(id, baud) {
     uint32 stop_bits = uint32(1);
     uint32 parity = UART_PARITY_NONE;
 
+    var FEN = 0x0;
+    if (fifo_enable) {
+        FEN = 0x10;
+    }
+
     write_masked(uart[id].lcr_h, uart_xor[id].lcr_h,
                 ((data_bits - uint32(5)) << uint32(5)) |
                 ((stop_bits - uint32(1)) << uint32(3)) |
                 0x0|
-                0x00000010,
+                FEN,
                 0x00000060 | 0x00000008 | 0x00000002 | 0x00000004 | 0x00000010
                 );
     
     poke uart[id].cr, 0x00000001 | 0x00000100 | 0x00000200;
 }
 
-const UART_UARTFR_TXFF_BITS = uint32(0x20);
+const UART_UARTFR_TXFF_BITS = 0x20;
+const UART_UARTFR_RXFF_BITS = 0x40;
 
 fun uart_is_writeable(id) {
     return peek(uart[id].fr) & UART_UARTFR_TXFF_BITS != UART_UARTFR_TXFF_BITS;
+}
+
+fun uart_is_readable(id) {
+    return peek(uart[id].fr) & UART_UARTFR_RXFF_BITS == UART_UARTFR_RXFF_BITS;
 }
 
 fun uart_put_byte(id, c) {
@@ -112,18 +122,8 @@ fun uart_put_byte(id, c) {
     poke uart[id].dr, uint32(c) & 0xff;
 }
 
-uart_init(1, 115200);
-
-gpio_set_function(0d8, gpio_func_uart); // TX
-gpio_set_function(0d9, gpio_func_uart); // RX
-
-uart_put_byte(1, 0x4a); // 'J'.
-uart_put_byte(1, 0x6f); // 'o'.
-uart_put_byte(1, 0x68); // 'h'.
-uart_put_byte(1, 0x6e); // 'n'.
-uart_put_byte(1, 0x0d); // 'cr'.
-uart_put_byte(1, 0x59); // 'Y'.
-uart_put_byte(1, 0x61); // 'a'.
-uart_put_byte(1, 0x72); // 'Y'.
-uart_put_byte(1, 0x67); // 'Y'.
-uart_put_byte(1, 0x0d); // 'cr'.
+fun uart_get_byte(id) {
+    while (!uart_is_readable(id)) {
+    }
+    return uint8(peek(uart[id].dr) & 0xff);
+}
