@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "memory.h"
 #include "object.h"
@@ -8,13 +9,64 @@
 
 #define TABLE_MAX_LOAD 0.75
 
+static bool isTombstone(Entry* entry) {
+    return entry->key == NULL
+           && IS_BOOL(entry->value)
+           && AS_BOOL(entry->value) == true;
+}
+
+static void tableDump(ValueTable* table) {
+    PRINTERR("Table: %p, capacity %d, count %d, entries %p\n", table, table->capacity, table->count, table->entries);
+    int validEntries = 0;
+    int tombStones = 0;
+    for (int i = 0; i < table->capacity; i++) {
+        Entry* entry = &table->entries[i];
+        PRINTERR("  [%d]%p key %p\n", i, &table->entries[i], entry->key);
+        if ((&table->entries[i])->key != NULL) {
+            validEntries++;
+        }
+        if (isTombstone(entry)) {
+            tombStones++;
+        }
+    }
+    PRINTERR(" Entries counted: %d Tombstones: %d \n", validEntries, tombStones);
+}
+
+static bool tableInvariant(ValueTable* table) {
+    if (table->capacity > 0) {
+        if (table->entries == NULL) {
+            tableDump(table);
+            return false;
+        }
+        int validEntries = 0;
+        for (int i = 0; i < table->capacity; i++) {
+            Entry* entry = &table->entries[i];
+            if (entry->key != NULL) {
+                validEntries++;
+            }
+            if (isTombstone(entry)) {
+                validEntries++;
+            }
+        }
+        if (validEntries != table->count) {
+            tableDump(table);
+            return false;
+        }
+    }
+    return true;
+}
+
 void initTable(ValueTable* table) {
     table->count = 0;
     table->capacity = 0;
     table->entries = NULL;
+
+    assert(tableInvariant(table));
 }
 
 void freeTable(ValueTable* table) {
+    assert(tableInvariant(table));
+
     FREE_ARRAY(Entry, table->entries, table->capacity);
     initTable(table);
 }
@@ -43,16 +95,22 @@ static Entry* findEntry(Entry* entries, int capacity, ObjString* key) {
 }
 
 bool tableGet(ValueTable* table, ObjString* key, Value* value) {
+    assert(tableInvariant(table));
+
     if (table->count == 0) return false;
 
     Entry* entry = findEntry(table->entries, table->capacity, key);
     if (entry->key == NULL) return false;
 
     *value = entry->value;
+
+    assert(tableInvariant(table));
     return true;
 }
 
 static void adjustCapacity(ValueTable* table, int capacity) {
+    assert(tableInvariant(table));
+
     Entry* entries = ALLOCATE(Entry, capacity);
     for (int i = 0; i < capacity; i++) {
         entries[i].key = NULL;
@@ -73,9 +131,13 @@ static void adjustCapacity(ValueTable* table, int capacity) {
     FREE_ARRAY(Entry, table->entries, table->capacity);
     table->entries = entries;
     table->capacity = capacity;
+
+    assert(tableInvariant(table));
 }
 
 bool tableSet(ValueTable* table, ObjString* key, Value value) {
+    assert(tableInvariant(table));
+
     if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
         int capacity = GROW_CAPACITY(table->capacity);
         adjustCapacity(table, capacity);
@@ -87,10 +149,14 @@ bool tableSet(ValueTable* table, ObjString* key, Value value) {
 
     entry->key = key;
     entry->value = value;
+
+    assert(tableInvariant(table));
     return isNewKey;
 }
 
 bool tableDelete(ValueTable* table, ObjString* key) {
+    assert(tableInvariant(table));
+
     if (table->count == 0) return false;
 
     // Find the entry.
@@ -100,19 +166,29 @@ bool tableDelete(ValueTable* table, ObjString* key) {
     // Place a tombstone in the entry.
     entry->key = NULL;
     entry->value = BOOL_VAL(true);
+
+    assert(tableInvariant(table));
     return true;
 }
 
 void tableAddAll(ValueTable* from, ValueTable* to) {
+    assert(tableInvariant(from));
+    assert(tableInvariant(to));
+
     for (int i = 0; i < from->capacity; i++) {
         Entry* entry = &from->entries[i];
         if (entry->key != NULL) {
             tableSet(to, entry->key, entry->value);
         }
     }
+
+    assert(tableInvariant(from));
+    assert(tableInvariant(to));
 }
 
 ObjString* tableFindString(ValueTable* table, const char* chars, int length, uint32_t hash) {
+    assert(tableInvariant(table));
+
     if (table->count == 0) return NULL;
 
     uint32_t index = hash & (table->capacity - 1);
@@ -133,15 +209,21 @@ ObjString* tableFindString(ValueTable* table, const char* chars, int length, uin
 }
 
 void tableRemoveWhite(ValueTable* table) {
+    assert(tableInvariant(table));
+
     for (int i = 0; i < table->capacity; i++) {
         Entry* entry = &table->entries[i];
         if (entry->key != NULL && !entry->key->obj.isMarked) {
             tableDelete(table, entry->key);
         }
     }
+
+    assert(tableInvariant(table));
 }
 
 void markTable(ValueTable* table) {
+    assert(tableInvariant(table));
+
     for (int i = 0; i < table->capacity; i++) {
         Entry* entry = &table->entries[i];
         if (entry->key != NULL) {
@@ -149,6 +231,8 @@ void markTable(ValueTable* table) {
             markValue(entry->value);
         }
     }
+    
+    assert(tableInvariant(table));
 }
 
 void initCellTable(ValueCellTable* table) {
