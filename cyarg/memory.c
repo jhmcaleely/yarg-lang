@@ -56,11 +56,11 @@ void markObject(Obj* object) {
     if (object == NULL) return;
     if (object->isMarked) return;
 
-#ifdef DEBUG_LOG_GC
-    PRINTERR("%p mark ", (void*)object);
-    printValue(OBJ_VAL(object));
-    PRINTERR("\n");
-#endif
+    if (vm.surveying) {
+        PRINTERR("%p mark ", (void*)object);
+        printValue(OBJ_VAL(object));
+        PRINTERR("\n");
+    }
 
     object->isMarked = true;
 
@@ -164,11 +164,12 @@ void markDynamicObjArray(DynamicObjArray* array) {
 }
 
 static void blackenObject(Obj* object) {
-#ifdef DEBUG_LOG_GC
-    PRINTERR("%p blacken ", (void*)object);
-    printValue(OBJ_VAL(object));
-    PRINTERR("\n");
-#endif
+
+    if (vm.surveying) {
+        PRINTERR("%p blacken ", (void*)object);
+        printValue(OBJ_VAL(object));
+        PRINTERR("\n");
+    }
 
     switch (object->type) {
         case OBJ_BOUND_METHOD: {
@@ -214,9 +215,12 @@ static void blackenObject(Obj* object) {
         case OBJ_UNOWNED_PACKEDPOINTER:
             // fall through
         case OBJ_PACKEDPOINTER: {
+            bool surveying = vm.surveying;
+            vm.surveying = true;
             ObjPackedPointer* ptr = (ObjPackedPointer*)object;
             markValue(ptr->destination_type);
             markStoredValue(ptr->destination_type, ptr->destination);
+            vm.surveying = surveying;
             break;
         }
         case OBJ_UNOWNED_UNIFORMARRAY:
@@ -230,9 +234,13 @@ static void blackenObject(Obj* object) {
         case OBJ_UNOWNED_PACKEDSTRUCT:
             // fall through
         case OBJ_PACKEDSTRUCT: {
+            bool surveying = vm.surveying;
+            vm.surveying = true;
+
             ObjPackedStruct* struct_ = (ObjPackedStruct*)object;
             markObject((Obj*)struct_->type);
             markStoredStructFields(struct_->type, struct_->structFields);
+            vm.surveying = surveying;
             break;
         }
         case OBJ_NATIVE: break;
@@ -638,6 +646,23 @@ static void sweep() {
     }
 }
 
+void surveyObjects() {
+    size_t count = 0;
+    size_t marked = 0;
+    Obj** next = &vm.objects;
+    while (*next != NULL) {
+        Obj* cursor = *next;
+        count++;
+        marked += cursor->isMarked ? 1 : 0;
+        next = &cursor->next;
+    }
+    if (vm.objects) {
+        printObject(OBJ_VAL(vm.objects));
+        PRINTERR("\n");
+    }
+    PRINTERR("Objects: %zu, marked: %zu\n", count, marked);
+}
+
 void collectGarbage() {
 
     platform_mutex_enter(&vm.heap);
@@ -648,6 +673,9 @@ void collectGarbage() {
 #endif
 
     markRoots();
+    if (vm.surveying) {
+        surveyObjects();
+    }
     traceReferences();
     tableRemoveWhite(&vm.strings);
     sweep();

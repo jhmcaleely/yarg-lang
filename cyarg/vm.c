@@ -73,6 +73,8 @@ static void defineNative(const char* name, NativeFn function) {
 }
 
 void initVM() {
+
+    vm.surveying = false;
     
     // We have an Obj here not on the heap. hack up its init.
     vm.core0.obj.type = OBJ_ROUTINE;
