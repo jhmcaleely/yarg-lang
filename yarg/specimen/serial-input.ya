@@ -2,15 +2,13 @@ import("uart");
 
 const device = 1;
 var input_channel = make_channel();
+var overflow = false;
 
 fun input_routine() {
 
     fun irq_response() {
         var input = peek(uart[device].dr) & 0xff; 
-        var overflow = share(input_channel, input);
-        if (overflow) {
-            print "overflow";
-        }
+        overflow = share(input_channel, input);
     }
 
     return make_routine(irq_response, true);
@@ -39,6 +37,9 @@ gpio_set_function(0d9, gpio_func_uart); // RX
 
 while (true) {
     const uint32 input = receive(input_channel);
+    if (overflow) {
+        print "overflow";
+    }
     if (input == 0d27) {
         print "esc";
     } else {
