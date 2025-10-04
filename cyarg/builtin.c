@@ -106,6 +106,7 @@ bool makeRoutineBuiltin(ObjRoutine* routineContext, int argCount, Value* result)
     ObjRoutine* routine = newRoutine(isISR ? ROUTINE_ISR : ROUTINE_THREAD);
 
     if (bindEntryFn(routine, closure)) {
+        routine->traceExecution = true;
         *result = OBJ_VAL(routine);
         return true;
     }
