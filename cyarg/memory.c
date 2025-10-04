@@ -237,7 +237,15 @@ static void blackenObject(Obj* object) {
         }
         case OBJ_NATIVE: break;
         case OBJ_BLOB: break;
-        case OBJ_CHANNEL: break;
+        case OBJ_CHANNEL: {
+            ObjChannel* channel = (ObjChannel*)object;
+            for (int i = 0; i < channel->bufferSize; i++) {
+                if (channel->occupied[i]) {
+                    markValue(channel->buffer[i]);
+                }
+            }
+            break;
+        }
         case OBJ_STRING: break;
         case OBJ_YARGTYPE: break;
         case OBJ_YARGTYPE_ARRAY: {
@@ -504,7 +512,13 @@ static void freeObject(Obj* object) {
             break;
         }
         case OBJ_UPVALUE: FREE(ObjUpvalue, object); break;
-        case OBJ_CHANNEL: FREE(ObjChannel, object); break;
+        case OBJ_CHANNEL: {
+            ObjChannel* channel = (ObjChannel*)object;
+            FREE_ARRAY(Value, channel->buffer, channel->bufferSize);
+            FREE_ARRAY(bool, (bool*) channel->occupied, channel->bufferSize);
+            FREE(ObjChannel, object); 
+            break;
+        }
         case OBJ_UNOWNED_PACKEDPOINTER: FREE(ObjPackedPointer, object); break;
         case OBJ_PACKEDPOINTER: {
             ObjPackedPointer* ptr = (ObjPackedPointer*) object;

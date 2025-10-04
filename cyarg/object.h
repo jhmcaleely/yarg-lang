@@ -178,9 +178,10 @@ typedef struct {
 
 typedef struct {
     Obj obj;
-    volatile bool present;
     bool overflow;
-    Value data;
+    Value* buffer;
+    volatile bool* occupied;
+    size_t bufferSize;
 } ObjChannel;
 
 typedef struct {

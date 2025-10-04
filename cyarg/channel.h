@@ -4,7 +4,7 @@
 #include "value.h"
 #include "object.h"
 
-ObjChannel* newChannel();
+ObjChannel* newChannel(size_t capacity);
 
 bool makeChannelBuiltin(ObjRoutine* routine, int argCount, Value* result);
 bool sendChannelBuiltin(ObjRoutine* routine, int argCount, Value* result);

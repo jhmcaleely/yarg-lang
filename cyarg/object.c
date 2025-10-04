@@ -381,8 +381,8 @@ static void printRoutine(FILE* op, ObjRoutine* routine) {
 
 static void printChannel(FILE* op, ObjChannel* channel) {
     FPRINTMSG(op, "<ch ");
-    if (channel->present) {
-        fprintValue(op, channel->data);
+    if (channel->occupied[0]) {
+        fprintValue(op, channel->buffer[0]);
     }
     else {
         FPRINTMSG(op, " NIL");

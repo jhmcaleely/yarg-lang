@@ -7,11 +7,20 @@
 #include "vm.h"
 #include "debug.h"
 
-ObjChannel* newChannel() {
+ObjChannel* newChannel(size_t capacity) {
     ObjChannel* channel = ALLOCATE_OBJ(ObjChannel, OBJ_CHANNEL);
-    channel->data = NIL_VAL;
-    channel->present = false;
+    tempRootPush(OBJ_VAL(channel));
     channel->overflow = false;
+
+    channel->buffer = ALLOCATE(Value, capacity);
+    channel->occupied = ALLOCATE(bool, capacity);
+    channel->bufferSize = capacity;
+
+    for (int i = 0; i < capacity; i++) {
+        channel->buffer[i] = NIL_VAL;
+        channel->occupied[i] = false;
+    }
+
     return channel;
 }
 
@@ -21,7 +30,7 @@ bool makeChannelBuiltin(ObjRoutine* routine, int argCount, Value* result) {
         return false;
     }
 
-    ObjChannel* channel = newChannel();
+    ObjChannel* channel = newChannel(1);
 
     *result = OBJ_VAL(channel);
     return true;
@@ -42,14 +51,14 @@ bool sendChannelBuiltin(ObjRoutine* routine, int argCount, Value* result) {
 
     ObjChannel* channel = AS_CHANNEL(channelVal);
 #ifdef CYARG_PICO_TARGET
-    while (channel->present) {
+    while (channel->occupied[0]) {
         // stall/block until space
         tight_loop_contents();
     }
 #endif
 
-    channel->data = nativeArgument(routine, argCount, 1);
-    channel->present = true;
+    channel->buffer[0] = nativeArgument(routine, argCount, 1);
+    channel->occupied[0] = true;
     channel->overflow = false;
     *result = BOOL_VAL(channel->overflow);
 
@@ -72,13 +81,13 @@ bool receiveChannelBuiltin(ObjRoutine* routine, int argCount, Value* result) {
     if (IS_CHANNEL(channelVal)) {
         ObjChannel* channel = AS_CHANNEL(channelVal);
 #ifdef CYARG_PICO_TARGET
-        while (!channel->present) {
+        while (!channel->occupied[0]) {
             // stall/block until space
             tight_loop_contents();
         }
 #endif
-        *result = channel->data;
-        channel->present = false;
+        *result = channel->buffer[0];
+        channel->occupied[0] = false;
         channel->overflow = false;
 
     } 
@@ -115,11 +124,11 @@ bool shareChannelBuiltin(ObjRoutine* routine, int argCount, Value* result) {
     }
 
     ObjChannel* channel = AS_CHANNEL(channelVal);
-    if (channel->present) {
+    if (channel->occupied[0]) {
         channel->overflow = true;
     }
-    channel->data = nativeArgument(routine, argCount, 1);
-    channel->present = true;
+    channel->buffer[0] = nativeArgument(routine, argCount, 1);
+    channel->occupied[0] = true;
     *result = BOOL_VAL(channel->overflow);
 
     return true;
@@ -139,8 +148,8 @@ bool peekChannelBuiltin(ObjRoutine* routine, int argCount, Value* result) {
     }
 
     ObjChannel* channel = AS_CHANNEL(channelVal);
-    if (channel->present) {
-        *result = channel->data;
+    if (channel->occupied[0]) {
+        *result = channel->buffer[0];
     }
     else {
         *result = NIL_VAL;
