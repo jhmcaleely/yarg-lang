@@ -6,8 +6,11 @@ var input_channel = make_channel();
 fun input_routine() {
 
     fun irq_response() {
-        const input = peek(uart[device].dr) & 0xff; 
-        share(input_channel, input);
+        var input = peek(uart[device].dr) & 0xff; 
+        var overflow = share(input_channel, input);
+        if (overflow) {
+            print "overflow";
+        }
     }
 
     return make_routine(irq_response, true);
