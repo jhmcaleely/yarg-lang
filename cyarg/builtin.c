@@ -439,10 +439,10 @@ bool newBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
         case TypeDouble:
         case TypeStruct:
         case TypeAny: {
-            StoredValue* heap_cell = createHeapCell(typeToCreate);
-            initialisePackedStorage(typeToCreate, heap_cell);
-            tempRootPush(heap_cell->asValue);
-            *result = OBJ_VAL(newPointerForHeapCell(typeToCreate, heap_cell));
+            StoredValueTarget heap_cell = createValueHeapCell(typeToCreate);
+            initialisePackedStorage(typeToCreate, heap_cell.storedValue);
+            tempRootPush(heap_cell.storedValue->asValue);
+            *result = OBJ_VAL(newPointerForHeapCell(typeToCreate, heap_cell.storedValue));
             tempRootPop();
             return true;
         }
@@ -454,9 +454,9 @@ bool newBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
         case TypeUint32:
         case TypeInt64:
         case TypeUint64: {
-            StoredValue* heap_cell = createHeapCell(typeToCreate);
-            initialisePackedStorage(typeToCreate, heap_cell);
-            *result = OBJ_VAL(newPointerForHeapCell(typeToCreate, heap_cell));
+            StoredValueTarget heap_cell = createValueHeapCell(typeToCreate);
+            initialisePackedStorage(typeToCreate, heap_cell.storedValue);
+            *result = OBJ_VAL(newPointerForHeapCell(typeToCreate, heap_cell.storedValue));
             return true;
         }
         case TypeArray: {

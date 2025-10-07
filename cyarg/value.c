@@ -6,9 +6,12 @@
 #include "value.h"
 #include "yargtype.h"
 
-void* createHeapCell(Value type) {
+StoredValueTarget createValueHeapCell(Value type) {
     void* dest = reallocate(NULL, 0, yt_sizeof_type_storage(type));
-    return dest;
+
+    ObjConcreteYargType* ct = IS_NIL(type) ? NULL : AS_YARGTYPE(type);
+    StoredValueTarget value = { .storedType = ct, .storedValue = dest };
+    return value;
 }
 
 void markStoredValue(Value type, StoredValue* stored) {
