@@ -103,6 +103,7 @@ void initialisePackedStorage(Value type, StoredValue* storage);
 Value unpackStoredValue(Value type, StoredValue* packedStorage);
 void packValueStorage(StoredValueTarget packedStorageTarget, Value value);
 void* createHeapCell(Value type);
+void markStoredValue(Value type, StoredValue* stored);
 
 typedef struct {
     Value value;

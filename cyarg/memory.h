@@ -36,6 +36,7 @@ void markObject(Obj* object);
 void markDynamicObjArray(DynamicObjArray* array);
 void markValue(Value value);
 void markValueCell(ValueCell* value);
+void markStoredContainerElements(ObjConcreteYargType* type, StoredValue* stored);
 void collectGarbage();
 void freeObjects();
 void printObjects();

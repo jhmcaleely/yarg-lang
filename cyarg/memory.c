@@ -85,8 +85,6 @@ void markValueCell(ValueCell* cell) {
     markValue(cell->type);
 }
 
-static void markStoredValue(Value type, StoredValue* stored);
-
 static void markStoredStructFields(ObjConcreteYargTypeStruct* type, StoredValue* fields) {
     if (fields) {
         for (int i = 0; i < type->field_count; i++) {
@@ -104,7 +102,7 @@ static void markStoredArrayElements(ObjConcreteYargTypeArray* type, StoredValue*
     }
 }
 
-static void markStoredContainerElements(ObjConcreteYargType* type, StoredValue* stored) {
+void markStoredContainerElements(ObjConcreteYargType* type, StoredValue* stored) {
     switch (type->yt) {
         case TypeStruct: {
             ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*) type;
@@ -126,20 +124,6 @@ static void markStoredContainerElements(ObjConcreteYargType* type, StoredValue* 
         default:
             break; // nothing to do.
 
-    }
-}
-
-static void markStoredValue(Value type, StoredValue* stored) {
-    if (stored == NULL) return;
-    if (IS_NIL(type)) {
-        markValue(stored->asValue);
-        return;
-    } else if (type_packs_as_container(AS_YARGTYPE(type))) {
-        markStoredContainerElements(AS_YARGTYPE(type), stored);
-        return;
-    } else if (type_packs_as_obj(AS_YARGTYPE(type))) {
-        markObject(stored->as.obj);
-        return;
     }
 }
 
