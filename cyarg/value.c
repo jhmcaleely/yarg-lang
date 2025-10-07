@@ -16,10 +16,11 @@ StoredValueTarget createValueHeapCell(Value type) {
 
 static void markStoredStructFields(ObjConcreteYargTypeStruct* type, StoredValue* fields) {
     if (fields) {
+        StoredValueTarget s;
+        s.storedType = (ObjConcreteYargType*)type;
+        s.storedValue = fields;
         for (int i = 0; i < type->field_count; i++) {
-            StoredValueTarget f;
-            f.storedType = IS_NIL(type->field_types[i]) ? NULL : AS_YARGTYPE(type->field_types[i]);
-            f.storedValue = structField(type, fields, i);
+            StoredValueTarget f = structField(s, i);
             markStoredValue(f);
         }
     }
@@ -110,9 +111,7 @@ void initialisePackedStorage(StoredValueTarget packedValue) {
             case TypeStruct: {
                 ObjConcreteYargTypeStruct* st = (ObjConcreteYargTypeStruct*)packedValue.storedType;
                 for (size_t i = 0; i < st->field_count; i++) {
-                    StoredValueTarget f;
-                    f.storedType = IS_NIL(st->field_types[i]) ? NULL : AS_YARGTYPE(st->field_types[i]);
-                    f.storedValue = structField(st, packedValue.storedValue, i);
+                    StoredValueTarget f = structField(packedValue, i);
                     initialisePackedStorage(f);
                 }
                 break;

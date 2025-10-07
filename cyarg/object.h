@@ -218,7 +218,7 @@ ObjUpvalue* newUpvalue(ValueCell* slot, size_t stackOffset);
 
 StoredValueTarget arrayElement(StoredValueTarget array, size_t index);
 
-StoredValue* structField(ObjConcreteYargTypeStruct* structType, StoredValue* structStart, size_t index);
+StoredValueTarget structField(StoredValueTarget struct_, size_t index);
 bool structFieldIndex(ObjConcreteYargTypeStruct* structType, ObjString* name, size_t* index);
 ObjPackedStruct* newPackedStructAt(StoredValueTarget location);
 
