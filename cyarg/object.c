@@ -123,9 +123,13 @@ ObjBlob* newBlob(size_t count) {
     return blob;
 }
 
-StoredValue* arrayElement(ObjConcreteYargTypeArray* arrayType, StoredValue* arrayStart, size_t index) {
-    StoredValue* element = (StoredValue*)(((uint8_t*)arrayStart) + arrayElementOffset(arrayType, index));
-    return element;
+StoredValueTarget arrayElement(StoredValueTarget array, size_t index) {\
+    ObjConcreteYargTypeArray* array_type = (ObjConcreteYargTypeArray*) array.storedType;
+    StoredValueTarget el;
+    el.storedType = array_type->element_type;
+    el.storedValue = (StoredValue*)(((uint8_t*)array.storedValue) + arrayElementOffset(array_type, index));
+
+    return el;
 }
 
 ObjPackedUniformArray* newPackedUniformArray(ObjConcreteYargTypeArray* type) {
@@ -134,14 +138,16 @@ ObjPackedUniformArray* newPackedUniformArray(ObjConcreteYargTypeArray* type) {
 
     tempRootPush(OBJ_VAL(array));
 
-    StoredValue* storage = reallocate(NULL, 0, arrayElementSize(type) * type->cardinality);
+    StoredValueTarget arrayStore;
+    arrayStore.storedValue = reallocate(NULL, 0, arrayElementSize(type) * type->cardinality);
+    arrayStore.storedType = (ObjConcreteYargType*) array->type;
 
     for (size_t i = 0; i < array->type->cardinality; i++) {
-        StoredValue* element = arrayElement(array->type, storage, i);
-        initialisePackedStorage(arrayElementType(array->type), element);
+        StoredValueTarget el = arrayElement(arrayStore, i);
+        initialisePackedStorage(el);
     }
 
-    array->arrayElements = storage;
+    array->arrayElements = arrayStore.storedValue;
 
     tempRootPop();
     return array;
@@ -166,23 +172,19 @@ Value defaultArrayValue(ObjConcreteYargType* type) {
     return OBJ_VAL(newPackedUniformArray(arrayType));
 }
 
-ObjPackedPointer* newPointerForHeapCell(Value target_type, StoredValue* location) {
+ObjPackedPointer* newPointerForHeapCell(StoredValueTarget location) {
 
     ObjPackedPointer* ptr = ALLOCATE_OBJ(ObjPackedPointer, OBJ_PACKEDPOINTER);
-    ptr->destination_type = target_type;
-    ptr->destination = location;
+    ptr->destination_type = OBJ_VAL(location.storedType);
+    ptr->destination = location.storedValue;
     return ptr;
 }
 
-ObjPackedPointer* newPointerAtHeapCell(Value type, StoredValue* location) {
-    if (IS_NIL(type) || IS_YARGTYPE(type)) {
-        ObjPackedPointer* ptr = ALLOCATE_OBJ(ObjPackedPointer, OBJ_UNOWNED_PACKEDPOINTER);
-        ptr->destination_type = type;
-        ptr->destination = location;
-        return ptr;
-    } else {
-        return NULL;
-    }
+ObjPackedPointer* newPointerAtHeapCell(StoredValueTarget location) {
+    ObjPackedPointer* ptr = ALLOCATE_OBJ(ObjPackedPointer, OBJ_UNOWNED_PACKEDPOINTER);
+    ptr->destination_type = OBJ_VAL(location.storedType);
+    ptr->destination = location.storedValue;
+    return ptr;
 }
 
 bool isAddressValue(Value val) {
@@ -224,7 +226,10 @@ bool isStructPointer(Value value) {
 Obj* destinationObject(Value pointer) {
     if (IS_POINTER(pointer)) {
         ObjPackedPointer* p = AS_POINTER(pointer);
-        Value target = unpackStoredValue(p->destination_type, p->destination);
+        StoredValueTarget dest;
+        dest.storedType = IS_NIL(p->destination_type) ? NULL : AS_YARGTYPE(p->destination_type);
+        dest.storedValue = p->destination;
+        Value target = unpackStoredValue(dest);
         if (IS_OBJ(target)) {
             return AS_OBJ(target);
         }
@@ -234,9 +239,10 @@ Obj* destinationObject(Value pointer) {
 
 Value placeObjectAt(Value placedType, Value location) {
     if (is_placeable_type(placedType) && IS_ADDRESS(location)) {
-        ObjConcreteYargType* concrete_type = AS_YARGTYPE(placedType);
-        StoredValue* locationPtr = (StoredValue*) AS_ADDRESS(location);
-        switch (concrete_type->yt) {
+        StoredValueTarget loc;
+        loc.storedType = IS_NIL(placedType) ? NULL : AS_YARGTYPE(placedType);
+        loc.storedValue = (StoredValue*) AS_ADDRESS(location);
+        switch (loc.storedType->yt) {
             case TypeArray:  // fall through
             case TypeStruct:
             case TypeInt8:
@@ -247,7 +253,7 @@ Value placeObjectAt(Value placedType, Value location) {
             case TypeUint32:
             case TypeInt64:
             case TypeUint64: {
-                ObjPackedPointer* result = newPointerAtHeapCell(placedType, locationPtr);
+                ObjPackedPointer* result = newPointerAtHeapCell(loc);
                 return OBJ_VAL(result);
             }
             default:
@@ -265,8 +271,11 @@ ObjPackedStruct* newPackedStruct(ObjConcreteYargTypeStruct* type) {
     StoredValue* storage = reallocate(object->structFields, 0, type->storage_size);
 
     for (size_t i = 0; i < type->field_count; i++) {
-        StoredValue* field = structField(object->type, storage, i);
-        initialisePackedStorage(type->field_types[i], field);
+        Value fieldType = type->field_types[i];
+        StoredValueTarget f;
+        f.storedType = IS_NIL(fieldType) ? NULL : AS_YARGTYPE(fieldType);
+        f.storedValue = structField(object->type, storage, i);
+        initialisePackedStorage(f);
     }
 
     object->structFields = storage;
@@ -376,11 +385,14 @@ static void printRoutine(FILE* op, ObjRoutine* routine) {
 }
 
 static void printArray(FILE* op, ObjPackedUniformArray* array) {
+    StoredValueTarget arr;
+    arr.storedType = (ObjConcreteYargType*) array->type;
+    arr.storedValue = array->arrayElements;
     printType(op, (ObjConcreteYargType*) array->type);
     FPRINTMSG(op, ":[");
     for (int i = 0; i < array->type->cardinality; i++) {
-        StoredValue* element = arrayElement(array->type, array->arrayElements, i);
-        Value unpackedValue = unpackStoredValue(arrayElementType(array->type), element);
+        StoredValueTarget element = arrayElement(arr, i);
+        Value unpackedValue = unpackStoredValue(element);
         fprintValue(op, unpackedValue);
         if (i < array->type->cardinality - 1) {
             FPRINTMSG(op, ", ");
@@ -470,8 +482,10 @@ static void printPointer(FILE* op, ObjPackedPointer* ptr) {
 static void printStruct(FILE* op, ObjPackedStruct* st) {
     FPRINTMSG(op, "struct{|%zu:%zu|", st->type->field_count, st->type->storage_size);
     for (size_t i = 0; i < st->type->field_count; i++) {
-        StoredValue* field = structField(st->type, st->structFields, i);
-        Value logValue = unpackStoredValue(st->type->field_types[i], field);
+        StoredValueTarget f;
+        f.storedType = IS_NIL(st->type->field_types[i]) ? NULL : AS_YARGTYPE(st->type->field_types[i]);
+        f.storedValue = structField(st->type, st->structFields, i);
+        Value logValue = unpackStoredValue(f);
         fprintValue(op, logValue);
         FPRINTMSG(op, "; ");
     }

@@ -321,8 +321,9 @@ static bool derefElement(ObjRoutine* routine) {
             runtimeError(routine, "Array index %d out of bounds.", index);
             return false;
         }
-        StoredValue* element = arrayElement(array->type, array->arrayElements, index);
-        result = unpackStoredValue(arrayElementType(array->type), element);
+        StoredValueTarget arrayTrg = { .storedType = (ObjConcreteYargType*) array->type, .storedValue = array->arrayElements };
+        StoredValueTarget element = arrayElement(arrayTrg, index);
+        result = unpackStoredValue(element);
 
     } else {
         ObjPackedUniformArray* arrayObj = (ObjPackedUniformArray*)destinationObject(peek(routine, 1));
@@ -332,8 +333,9 @@ static bool derefElement(ObjRoutine* routine) {
         }
         tempRootPush(OBJ_VAL(arrayObj));
 
-        StoredValue* element = arrayElement(arrayObj->type, arrayObj->arrayElements, index);
-        result = OBJ_VAL(newPointerAtHeapCell(arrayElementType(arrayObj->type), element));
+        StoredValueTarget arrayTrg = { .storedType = (ObjConcreteYargType*) arrayObj->type, .storedValue = arrayObj->arrayElements };
+        StoredValueTarget element = arrayElement(arrayTrg, index);
+        result = OBJ_VAL(newPointerAtHeapCell(element));
         tempRootPop();
     }
 
@@ -363,11 +365,8 @@ static bool setArrayElement(ObjRoutine* routine) {
             runtimeError(routine, "Cannot set array element to incompatible type.");
             return false;
         }
-
-        StoredValue* element = arrayElement(array->type, array->arrayElements, index);
-        Value elementType = arrayElementType(array->type);
-        ObjConcreteYargType* storageType = IS_NIL(elementType) ? NULL : AS_YARGTYPE(elementType);
-        StoredValueTarget trg = { .storedValue = element, .storedType = storageType };
+        StoredValueTarget arrayTrg = { .storedType = (ObjConcreteYargType*) array->type, .storedValue = array->arrayElements };
+        StoredValueTarget trg = arrayElement(arrayTrg, index);
         packValueStorage(trg, new_value);
     }
 
@@ -381,7 +380,10 @@ static bool derefPtr(ObjRoutine* routine) {
     tempRootPush(pointerVal);
 
     ObjPackedPointer* pointer = AS_POINTER(pointerVal);
-    Value result = unpackStoredValue(pointer->destination_type, pointer->destination);
+    StoredValueTarget dest;
+    dest.storedType = IS_NIL(pointer->destination_type) ? NULL : AS_YARGTYPE(pointer->destination_type);
+    dest.storedValue = pointer->destination;
+    Value result = unpackStoredValue(dest);
     push(routine, result);
 
     tempRootPop();
@@ -788,8 +790,10 @@ InterpretResult run(ObjRoutine* routine) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    StoredValue* field = structField(object->type, object->structFields, index);
-                    Value result = unpackStoredValue(object->type->field_types[index], field);
+                    StoredValueTarget f;
+                    f.storedType = IS_NIL(object->type->field_types[index]) ? NULL : AS_YARGTYPE(object->type->field_types[index]);
+                    f.storedValue = structField(object->type, object->structFields, index);
+                    Value result = unpackStoredValue(f);
 
                     pop(routine);
                     push(routine, result);
@@ -803,8 +807,10 @@ InterpretResult run(ObjRoutine* routine) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    StoredValue* field = structField(object->type, object->structFields, index);
-                    Value result = OBJ_VAL(newPointerAtHeapCell(object->type->field_types[index], field));
+                    StoredValueTarget f;
+                    f.storedType = IS_NIL(object->type->field_types[index]) ? NULL : AS_YARGTYPE(object->type->field_types[index]);
+                    f.storedValue = structField(object->type, object->structFields, index);
+                    Value result = OBJ_VAL(newPointerAtHeapCell(f));
                     tempRootPop();
 
                     pop(routine);

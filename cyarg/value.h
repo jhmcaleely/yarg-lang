@@ -99,11 +99,11 @@ typedef struct {
     ObjConcreteYargType* storedType;
 } StoredValueTarget;
 
-void initialisePackedStorage(Value type, StoredValue* storage);
-Value unpackStoredValue(Value type, StoredValue* packedStorage);
+void initialisePackedStorage(StoredValueTarget packedValue);
+Value unpackStoredValue(StoredValueTarget packedValue);
 void packValueStorage(StoredValueTarget packedStorageTarget, Value value);
 StoredValueTarget createValueHeapCell(Value type);
-void markStoredValue(Value type, StoredValue* stored);
+void markStoredValue(StoredValueTarget packedValue);
 
 typedef struct {
     Value value;

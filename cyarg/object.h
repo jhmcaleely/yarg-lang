@@ -216,14 +216,14 @@ ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);
 ObjUpvalue* newUpvalue(ValueCell* slot, size_t stackOffset);
 
-StoredValue* arrayElement(ObjConcreteYargTypeArray* arrayType, StoredValue* arrayStart, size_t index);
+StoredValueTarget arrayElement(StoredValueTarget array, size_t index);
 
 StoredValue* structField(ObjConcreteYargTypeStruct* structType, StoredValue* structStart, size_t index);
 bool structFieldIndex(ObjConcreteYargTypeStruct* structType, ObjString* name, size_t* index);
 ObjPackedStruct* newPackedStructAt(ObjConcreteYargTypeStruct* type, StoredValue* packedStorage);
 
-ObjPackedPointer* newPointerForHeapCell(Value type, StoredValue* location);
-ObjPackedPointer* newPointerAtHeapCell(Value type, StoredValue* location);
+ObjPackedPointer* newPointerForHeapCell(StoredValueTarget location);
+ObjPackedPointer* newPointerAtHeapCell(StoredValueTarget location);
 
 Obj* destinationObject(Value pointer);
 

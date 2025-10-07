@@ -88,16 +88,20 @@ void markValueCell(ValueCell* cell) {
 static void markStoredStructFields(ObjConcreteYargTypeStruct* type, StoredValue* fields) {
     if (fields) {
         for (int i = 0; i < type->field_count; i++) {
-            markStoredValue(type->field_types[i], structField(type, fields, i));
+            StoredValueTarget f;
+            f.storedType = IS_NIL(type->field_types[i]) ? NULL : AS_YARGTYPE(type->field_types[i]);
+            f.storedValue = structField(type, fields, i);
+            markStoredValue(f);
         }
     }
 }
 
 static void markStoredArrayElements(ObjConcreteYargTypeArray* type, StoredValue* elements) {
     if (elements) {
+        StoredValueTarget array = { .storedType = (ObjConcreteYargType*)type, .storedValue = elements };
         for (size_t i = 0; i < type->cardinality; i++) {
-            StoredValue* element = arrayElement(type, elements, i);
-            markStoredValue(arrayElementType(type), element);
+            StoredValueTarget el = arrayElement(array, i);
+            markStoredValue(el);
         }
     }
 }
@@ -116,8 +120,9 @@ void markStoredContainerElements(ObjConcreteYargType* type, StoredValue* stored)
         }
         case TypePointer: {
             ObjConcreteYargTypePointer* pointerType = (ObjConcreteYargTypePointer*)type;
+            StoredValueTarget dest = { .storedType = pointerType->target_type, .storedValue = stored };
             if (stored && pointerType->target_type) {
-                markStoredValue(OBJ_VAL(pointerType->target_type), stored);
+                markStoredValue(dest);
             }
             break;
         }
@@ -201,7 +206,9 @@ static void blackenObject(Obj* object) {
         case OBJ_PACKEDPOINTER: {
             ObjPackedPointer* ptr = (ObjPackedPointer*)object;
             markValue(ptr->destination_type);
-            markStoredValue(ptr->destination_type, ptr->destination);
+            StoredValueTarget dest;
+            dest.storedType = IS_NIL(ptr->destination_type) ? NULL : AS_YARGTYPE(ptr->destination_type);
+            dest.storedValue = ptr->destination;
             break;
         }
         case OBJ_UNOWNED_UNIFORMARRAY:
