@@ -166,11 +166,6 @@ Value defaultArrayValue(ObjConcreteYargType* type) {
     return OBJ_VAL(newPackedUniformArray(arrayType));
 }
 
-void* createHeapCell(Value type) {
-    void* dest = reallocate(NULL, 0, yt_sizeof_type_storage(type));
-    return dest;
-}
-
 ObjPackedPointer* newPointerForHeapCell(Value target_type, StoredValue* location) {
 
     ObjPackedPointer* ptr = ALLOCATE_OBJ(ObjPackedPointer, OBJ_PACKEDPOINTER);

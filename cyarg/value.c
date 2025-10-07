@@ -6,6 +6,11 @@
 #include "value.h"
 #include "yargtype.h"
 
+void* createHeapCell(Value type) {
+    void* dest = reallocate(NULL, 0, yt_sizeof_type_storage(type));
+    return dest;
+}
+
 void initialisePackedStorage(Value type, StoredValue* packedStorage) {
 
     if (IS_NIL(type)) {

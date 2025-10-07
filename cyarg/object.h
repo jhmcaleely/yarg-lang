@@ -222,7 +222,6 @@ StoredValue* structField(ObjConcreteYargTypeStruct* structType, StoredValue* str
 bool structFieldIndex(ObjConcreteYargTypeStruct* structType, ObjString* name, size_t* index);
 ObjPackedStruct* newPackedStructAt(ObjConcreteYargTypeStruct* type, StoredValue* packedStorage);
 
-void* createHeapCell(Value type);
 ObjPackedPointer* newPointerForHeapCell(Value type, StoredValue* location);
 ObjPackedPointer* newPointerAtHeapCell(Value type, StoredValue* location);
 
