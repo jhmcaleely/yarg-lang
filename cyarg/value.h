@@ -10,6 +10,7 @@ typedef struct Obj Obj;
 typedef struct ObjString ObjString;
 typedef struct ObjRoutine ObjRoutine;
 typedef struct ObjValArray ObjValArray;
+typedef struct ObjConcreteYargType ObjConcreteYargType;
 
 typedef union {
     bool boolean;
@@ -122,7 +123,7 @@ typedef struct {
 
 typedef struct {
     StoredValue* storedValue;
-    Value* type;
-} StoredValueCellTarget;
+    ObjConcreteYargType* storedType;
+} StoredValueTarget;
 
 #endif

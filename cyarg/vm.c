@@ -366,7 +366,8 @@ static bool setArrayElement(ObjRoutine* routine) {
 
         StoredValue* element = arrayElement(array->type, array->arrayElements, index);
         Value elementType = arrayElementType(array->type);
-        StoredValueCellTarget trg = { .storedValue = element, .type = &elementType };
+        ObjConcreteYargType* storageType = IS_NIL(elementType) ? NULL : AS_YARGTYPE(elementType);
+        StoredValueTarget trg = { .storedValue = element, .storedType = storageType };
         packValueStorage(&trg, new_value);
     }
 
@@ -407,12 +408,14 @@ static void concatenate(ObjRoutine* routine) {
     push(routine, OBJ_VAL(result));
 }
 
-static bool assignToStorage(StoredValueCellTarget* lhs, Value rhsValue) {
-    if (IS_NIL(*lhs->type)) {
+static bool assignToStorage(StoredValueTarget* lhs, Value rhsValue) {
+    Value storedType = lhs->storedType == NULL ? NIL_VAL : OBJ_VAL(lhs->storedType);
+
+    if (IS_NIL(storedType)) {
         lhs->storedValue->asValue = rhsValue;
         return true;
     } else {
-        ObjConcreteYargType* lhsType = (ObjConcreteYargType*) AS_OBJ(*lhs->type);
+        ObjConcreteYargType* lhsType = lhs->storedType;
         if (isCompatibleType(lhsType, rhsValue)) {
             packValueStorage(lhs, rhsValue);
             return true;
@@ -829,7 +832,9 @@ InterpretResult run(ObjRoutine* routine) {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     StoredValue* field = structField(object->type, object->structFields, index);
-                    StoredValueCellTarget trg = { .type = &object->type->field_types[index], .storedValue = field };
+                    Value fieldType = object->type->field_types[index];
+                    ObjConcreteYargType* storageType = IS_NIL(fieldType) ? NULL : AS_YARGTYPE(fieldType);
+                    StoredValueTarget trg = { .storedType = storageType, .storedValue = field };
                     if (!assignToStorage(&trg, peek(routine, 0))) {
                         runtimeError(routine, "cannot assign to field type.");
                         return INTERPRET_RUNTIME_ERROR;
@@ -1221,7 +1226,9 @@ InterpretResult run(ObjRoutine* routine) {
                 Value rhs = peek(routine, 0);
                 Value lhs = peek(routine, 1);
                 ObjPackedPointer* pLhs = AS_POINTER(lhs);
-                StoredValueCellTarget trg = { .type = &pLhs->destination_type, .storedValue = pLhs->destination };
+                Value destinationType = pLhs->destination_type;
+                ObjConcreteYargType* storageType = IS_NIL(destinationType) ? NULL : AS_YARGTYPE(destinationType);
+                StoredValueTarget trg = { .storedType = storageType, .storedValue = pLhs->destination };
                 if (assignToStorage(&trg, rhs)) {
                     pop(routine);
                     pop(routine);
