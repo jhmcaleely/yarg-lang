@@ -115,8 +115,8 @@ size_t addFieldType(ObjConcreteYargTypeStruct* st, size_t index, size_t fieldOff
 
 bool isUint32Pointer(Value val) {
     if (IS_POINTER(val)) {
-        Value destination = AS_POINTER(val)->destination_type;
-        ObjConcreteYargType* dest = IS_NIL(destination) ? NULL : AS_YARGTYPE(destination);
+        ObjConcreteYargTypePointer* pointer = AS_POINTER(val)->type;
+        ObjConcreteYargType* dest = pointer->target_type;
         if (dest) {
             return dest->yt == TypeUint32;
         }
@@ -174,7 +174,7 @@ Value concrete_typeof(Value a) {
     } else if (IS_YARGTYPE(a)) {
         return OBJ_VAL(newYargTypeFromType(TypeYargType));
     } else if (IS_POINTER(a)) {
-        return OBJ_VAL(newYargPointerType(AS_POINTER(a)->destination_type));
+        return OBJ_VAL(AS_POINTER(a)->type);
     }
     fatalVMError("Unexpected object type");
     return NIL_VAL;

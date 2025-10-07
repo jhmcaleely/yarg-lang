@@ -9,6 +9,7 @@
 typedef struct ObjConcreteYargType ObjConcreteYargType;
 typedef struct ObjConcreteYargTypeArray ObjConcreteYargTypeArray;
 typedef struct ObjConcreteYargTypeStruct ObjConcreteYargTypeStruct;
+typedef struct ObjConcreteYargTypePointer ObjConcreteYargTypePointer;
 
 
 #define OBJ_TYPE(value)     (AS_OBJ(value)->type)
@@ -182,7 +183,7 @@ typedef struct {
 
 typedef struct {
     Obj obj;
-    Value destination_type;
+    ObjConcreteYargTypePointer* type;
     PackedValueStore* destination;
 } ObjPackedPointer;
 

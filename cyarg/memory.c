@@ -158,9 +158,9 @@ static void blackenObject(Obj* object) {
             // fall through
         case OBJ_PACKEDPOINTER: {
             ObjPackedPointer* ptr = (ObjPackedPointer*)object;
-            markValue(ptr->destination_type);
+            markObject((Obj*)ptr->type);
             PackedValue dest;
-            dest.storedType = IS_NIL(ptr->destination_type) ? NULL : AS_YARGTYPE(ptr->destination_type);
+            dest.storedType = ptr->type->target_type;
             dest.storedValue = ptr->destination;
             markStoredValue(dest);
             break;
@@ -460,7 +460,8 @@ static void freeObject(Obj* object) {
         case OBJ_UNOWNED_PACKEDPOINTER: FREE(ObjPackedPointer, object); break;
         case OBJ_PACKEDPOINTER: {
             ObjPackedPointer* ptr = (ObjPackedPointer*) object;
-            ptr->destination = reallocate(ptr->destination, yt_sizeof_type_storage(ptr->destination_type), 0);
+            Value targetType = ptr->type->target_type == NULL ? NIL_VAL : OBJ_VAL(ptr->type->target_type);
+            ptr->destination = reallocate(ptr->destination, yt_sizeof_type_storage(targetType), 0);
             FREE(ObjPackedPointer, object); 
             break;
         }

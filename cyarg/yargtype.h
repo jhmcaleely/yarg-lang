@@ -49,7 +49,7 @@ typedef struct ObjConcreteYargTypeStruct {
     size_t storage_size;
 } ObjConcreteYargTypeStruct;
 
-typedef struct {
+typedef struct ObjConcreteYargTypePointer {
     ObjConcreteYargType core;
     ObjConcreteYargType* target_type;
 } ObjConcreteYargTypePointer;

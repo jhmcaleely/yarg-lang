@@ -176,15 +176,21 @@ Value defaultArrayValue(ObjConcreteYargType* type) {
 ObjPackedPointer* newPointerForHeapCell(PackedValue location) {
 
     ObjPackedPointer* ptr = ALLOCATE_OBJ(ObjPackedPointer, OBJ_PACKEDPOINTER);
-    ptr->destination_type = OBJ_VAL(location.storedType);
+    tempRootPush(OBJ_VAL(ptr));
+    ptr->type = (ObjConcreteYargTypePointer*) newYargTypeFromType(TypePointer);
+    ptr->type->target_type = location.storedType;
     ptr->destination = location.storedValue;
+    tempRootPop();
     return ptr;
 }
 
 ObjPackedPointer* newPointerAtHeapCell(PackedValue location) {
     ObjPackedPointer* ptr = ALLOCATE_OBJ(ObjPackedPointer, OBJ_UNOWNED_PACKEDPOINTER);
-    ptr->destination_type = OBJ_VAL(location.storedType);
+    tempRootPush(OBJ_VAL(ptr));
+    ptr->type = (ObjConcreteYargTypePointer*) newYargTypeFromType(TypePointer);
+    ptr->type->target_type = location.storedType;
     ptr->destination = location.storedValue;
+    tempRootPop();
     return ptr;
 }
 
@@ -201,10 +207,9 @@ bool isAddressValue(Value val) {
 bool isArrayPointer(Value value) {
     ObjPackedPointer* pointer = AS_POINTER(value);
     if (IS_POINTER(value)) {
-        if (IS_NIL(pointer->destination_type)) {
+        if (pointer->type->target_type == NULL) {
             return IS_UNIFORMARRAY(pointer->destination->asValue);
-        } else if (   IS_YARGTYPE(pointer->destination_type)
-                   && AS_YARGTYPE(pointer->destination_type)->yt == TypeArray) {
+        } else if (pointer->type->target_type->yt == TypeArray) {
             return true;
         }
     }
@@ -214,10 +219,9 @@ bool isArrayPointer(Value value) {
 bool isStructPointer(Value value) {
     ObjPackedPointer* pointer = AS_POINTER(value);
     if (IS_POINTER(value)) {
-        if (IS_NIL(pointer->destination_type)) {
+        if (pointer->type->target_type == NULL) {
             return IS_STRUCT(pointer->destination->asValue);
-        } else if (   IS_YARGTYPE(pointer->destination_type)
-                   && AS_YARGTYPE(pointer->destination_type)->yt == TypeStruct) {
+        } else if (pointer->type->target_type->yt == TypeStruct) {
             return true;
         }
     }
@@ -228,7 +232,7 @@ Obj* destinationObject(Value pointer) {
     if (IS_POINTER(pointer)) {
         ObjPackedPointer* p = AS_POINTER(pointer);
         PackedValue dest;
-        dest.storedType = IS_NIL(p->destination_type) ? NULL : AS_YARGTYPE(p->destination_type);
+        dest.storedType = p->type->target_type;
         dest.storedValue = p->destination;
         Value target = unpackStoredValue(dest);
         if (IS_OBJ(target)) {
@@ -477,7 +481,8 @@ static void printType(FILE* op, ObjConcreteYargType* type) {
 
 static void printPointer(FILE* op, ObjPackedPointer* ptr) {
     FPRINTMSG(op, "<*");
-    fprintValue(op, ptr->destination_type);
+    Value targetType = ptr->type->target_type == NULL ? NIL_VAL : OBJ_VAL(ptr->type->target_type);
+    fprintValue(op, targetType);
     FPRINTMSG(op, ":%p>", (void*) ptr->destination);
 }
 

@@ -393,7 +393,7 @@ static bool derefPtr(ObjRoutine* routine) {
 
     ObjPackedPointer* pointer = AS_POINTER(pointerVal);
     PackedValue dest;
-    dest.storedType = IS_NIL(pointer->destination_type) ? NULL : AS_YARGTYPE(pointer->destination_type);
+    dest.storedType = pointer->type->target_type;
     dest.storedValue = pointer->destination;
     Value result = unpackStoredValue(dest);
     push(routine, result);
@@ -1232,8 +1232,7 @@ InterpretResult run(ObjRoutine* routine) {
                 Value rhs = peek(routine, 0);
                 Value lhs = peek(routine, 1);
                 ObjPackedPointer* pLhs = AS_POINTER(lhs);
-                Value destinationType = pLhs->destination_type;
-                ObjConcreteYargType* storageType = IS_NIL(destinationType) ? NULL : AS_YARGTYPE(destinationType);
+                ObjConcreteYargType* storageType = pLhs->type->target_type;
                 PackedValue trg = { .storedType = storageType, .storedValue = pLhs->destination };
                 if (assignToStorage(trg, rhs)) {
                     pop(routine);
