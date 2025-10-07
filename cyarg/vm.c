@@ -321,7 +321,7 @@ static bool derefElement(ObjRoutine* routine) {
             runtimeError(routine, "Array index %d out of bounds.", index);
             return false;
         }
-        StoredValueTarget element = arrayElement(array->store, index);
+        PackedValue element = arrayElement(array->store, index);
         result = unpackStoredValue(element);
 
     } else {
@@ -332,7 +332,7 @@ static bool derefElement(ObjRoutine* routine) {
         }
         tempRootPush(OBJ_VAL(arrayObj));
 
-        StoredValueTarget element = arrayElement(arrayObj->store, index);
+        PackedValue element = arrayElement(arrayObj->store, index);
         result = OBJ_VAL(newPointerAtHeapCell(element));
         tempRootPop();
     }
@@ -343,7 +343,7 @@ static bool derefElement(ObjRoutine* routine) {
     return true;
 }
 
-static bool assignToStorage(StoredValueTarget lhs, Value rhsValue) {
+static bool assignToStorage(PackedValue lhs, Value rhsValue) {
 
     if (lhs.storedType == NULL) {
         lhs.storedValue->asValue = rhsValue;
@@ -375,7 +375,7 @@ static bool setArrayElement(ObjRoutine* routine) {
             return false;
         }
 
-        StoredValueTarget trg = arrayElement(array->store, index);
+        PackedValue trg = arrayElement(array->store, index);
         if (!assignToStorage(trg, new_value)) {
             runtimeError(routine, "Cannot set array element to incompatible type.");
             return false;
@@ -392,7 +392,7 @@ static bool derefPtr(ObjRoutine* routine) {
     tempRootPush(pointerVal);
 
     ObjPackedPointer* pointer = AS_POINTER(pointerVal);
-    StoredValueTarget dest;
+    PackedValue dest;
     dest.storedType = IS_NIL(pointer->destination_type) ? NULL : AS_YARGTYPE(pointer->destination_type);
     dest.storedValue = pointer->destination;
     Value result = unpackStoredValue(dest);
@@ -781,7 +781,7 @@ InterpretResult run(ObjRoutine* routine) {
                 } else if (IS_STRUCT(peek(routine, 0))) {
                     ObjPackedStruct* object = AS_STRUCT(peek(routine, 0));
                     ObjString* name = READ_STRING();
-                    StoredValueTarget str;
+                    PackedValue str;
                     str.storedType = (ObjConcreteYargType*) object->type;
                     str.storedValue = object->structFields;
 
@@ -790,7 +790,7 @@ InterpretResult run(ObjRoutine* routine) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    StoredValueTarget f = structField(str, index);
+                    PackedValue f = structField(str, index);
                     Value result = unpackStoredValue(f);
 
                     pop(routine);
@@ -799,7 +799,7 @@ InterpretResult run(ObjRoutine* routine) {
                     ObjPackedStruct* object = (ObjPackedStruct*) destinationObject(peek(routine, 0));
                     tempRootPush(OBJ_VAL(object));
                     ObjString* name = READ_STRING();
-                    StoredValueTarget str;
+                    PackedValue str;
                     str.storedType = (ObjConcreteYargType*) object->type;
                     str.storedValue = object->structFields;
 
@@ -808,7 +808,7 @@ InterpretResult run(ObjRoutine* routine) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    StoredValueTarget f = structField(str, index);
+                    PackedValue f = structField(str, index);
                     Value result = OBJ_VAL(newPointerAtHeapCell(f));
                     tempRootPop();
 
@@ -831,7 +831,7 @@ InterpretResult run(ObjRoutine* routine) {
                 } else if (IS_STRUCT(peek(routine, 1))) {
                     ObjPackedStruct* object = AS_STRUCT(peek(routine, 1));
                     ObjString* name = READ_STRING();
-                    StoredValueTarget str;
+                    PackedValue str;
                     str.storedType = (ObjConcreteYargType*)object->type;
                     str.storedValue = object->structFields;
 
@@ -840,7 +840,7 @@ InterpretResult run(ObjRoutine* routine) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    StoredValueTarget trg = structField(str, index);
+                    PackedValue trg = structField(str, index);
                     if (!assignToStorage(trg, peek(routine, 0))) {
                         runtimeError(routine, "cannot assign to field type.");
                         return INTERPRET_RUNTIME_ERROR;
@@ -1234,7 +1234,7 @@ InterpretResult run(ObjRoutine* routine) {
                 ObjPackedPointer* pLhs = AS_POINTER(lhs);
                 Value destinationType = pLhs->destination_type;
                 ObjConcreteYargType* storageType = IS_NIL(destinationType) ? NULL : AS_YARGTYPE(destinationType);
-                StoredValueTarget trg = { .storedType = storageType, .storedValue = pLhs->destination };
+                PackedValue trg = { .storedType = storageType, .storedValue = pLhs->destination };
                 if (assignToStorage(trg, rhs)) {
                     pop(routine);
                     pop(routine);

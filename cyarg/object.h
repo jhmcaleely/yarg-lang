@@ -177,19 +177,19 @@ typedef struct {
 
 typedef struct {
     Obj obj;
-    StoredValueTarget store;
+    PackedValue store;
 } ObjPackedUniformArray;
 
 typedef struct {
     Obj obj;
     Value destination_type;
-    StoredValue* destination;
+    PackedValueStore* destination;
 } ObjPackedPointer;
 
 typedef struct {
     Obj obj;
     ObjConcreteYargTypeStruct* type;
-    StoredValue* structFields;
+    PackedValueStore* structFields;
 } ObjPackedStruct;
 
 #define ALLOCATE_OBJ(type, objectType) \
@@ -215,19 +215,19 @@ ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);
 ObjUpvalue* newUpvalue(ValueCell* slot, size_t stackOffset);
 
-StoredValueTarget arrayElement(StoredValueTarget array, size_t index);
-size_t arrayCardinality(StoredValueTarget array);
+PackedValue arrayElement(PackedValue array, size_t index);
+size_t arrayCardinality(PackedValue array);
 
-StoredValueTarget structField(StoredValueTarget struct_, size_t index);
+PackedValue structField(PackedValue struct_, size_t index);
 bool structFieldIndex(ObjConcreteYargTypeStruct* structType, ObjString* name, size_t* index);
-ObjPackedStruct* newPackedStructAt(StoredValueTarget location);
+ObjPackedStruct* newPackedStructAt(PackedValue location);
 
-ObjPackedPointer* newPointerForHeapCell(StoredValueTarget location);
-ObjPackedPointer* newPointerAtHeapCell(StoredValueTarget location);
+ObjPackedPointer* newPointerForHeapCell(PackedValue location);
+ObjPackedPointer* newPointerAtHeapCell(PackedValue location);
 
 Obj* destinationObject(Value pointer);
 
-ObjPackedUniformArray* newPackedUniformArrayAt(StoredValueTarget location);
+ObjPackedUniformArray* newPackedUniformArrayAt(PackedValue location);
 
 Value defaultArrayValue(ObjConcreteYargType* type);
 Value defaultStructValue(ObjConcreteYargType* type);

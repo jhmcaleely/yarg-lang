@@ -159,7 +159,7 @@ static void blackenObject(Obj* object) {
         case OBJ_PACKEDPOINTER: {
             ObjPackedPointer* ptr = (ObjPackedPointer*)object;
             markValue(ptr->destination_type);
-            StoredValueTarget dest;
+            PackedValue dest;
             dest.storedType = IS_NIL(ptr->destination_type) ? NULL : AS_YARGTYPE(ptr->destination_type);
             dest.storedValue = ptr->destination;
             markStoredValue(dest);
@@ -177,7 +177,7 @@ static void blackenObject(Obj* object) {
         case OBJ_PACKEDSTRUCT: {
             ObjPackedStruct* struct_ = (ObjPackedStruct*)object;
             markObject((Obj*)struct_->type);
-            StoredValueTarget s;
+            PackedValue s;
             s.storedType = (ObjConcreteYargType*) struct_->type;
             s.storedValue = struct_->structFields;
             markStoredContainerElements(s);

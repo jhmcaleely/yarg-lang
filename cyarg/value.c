@@ -6,37 +6,37 @@
 #include "value.h"
 #include "yargtype.h"
 
-StoredValueTarget createValueHeapCell(Value type) {
+PackedValue createValueHeapCell(Value type) {
     void* dest = reallocate(NULL, 0, yt_sizeof_type_storage(type));
 
     ObjConcreteYargType* ct = IS_NIL(type) ? NULL : AS_YARGTYPE(type);
-    StoredValueTarget value = { .storedType = ct, .storedValue = dest };
+    PackedValue value = { .storedType = ct, .storedValue = dest };
     return value;
 }
 
-static void markStoredStructFields(ObjConcreteYargTypeStruct* type, StoredValue* fields) {
+static void markStoredStructFields(ObjConcreteYargTypeStruct* type, PackedValueStore* fields) {
     if (fields) {
-        StoredValueTarget s;
+        PackedValue s;
         s.storedType = (ObjConcreteYargType*)type;
         s.storedValue = fields;
         for (int i = 0; i < type->field_count; i++) {
-            StoredValueTarget f = structField(s, i);
+            PackedValue f = structField(s, i);
             markStoredValue(f);
         }
     }
 }
 
-static void markStoredArrayElements(ObjConcreteYargTypeArray* type, StoredValue* elements) {
+static void markStoredArrayElements(ObjConcreteYargTypeArray* type, PackedValueStore* elements) {
     if (elements) {
-        StoredValueTarget array = { .storedType = (ObjConcreteYargType*)type, .storedValue = elements };
+        PackedValue array = { .storedType = (ObjConcreteYargType*)type, .storedValue = elements };
         for (size_t i = 0; i < type->cardinality; i++) {
-            StoredValueTarget el = arrayElement(array, i);
+            PackedValue el = arrayElement(array, i);
             markStoredValue(el);
         }
     }
 }
 
-void markStoredContainerElements(StoredValueTarget packedContainer) {
+void markStoredContainerElements(PackedValue packedContainer) {
     if (packedContainer.storedType) {
         markObject((Obj*)packedContainer.storedType);
 
@@ -53,7 +53,7 @@ void markStoredContainerElements(StoredValueTarget packedContainer) {
             }
             case TypePointer: {
                 ObjConcreteYargTypePointer* pointerType = (ObjConcreteYargTypePointer*)packedContainer.storedType;
-                StoredValueTarget dest = { .storedType = pointerType->target_type, .storedValue = packedContainer.storedValue };
+                PackedValue dest = { .storedType = pointerType->target_type, .storedValue = packedContainer.storedValue };
                 if (packedContainer.storedValue && pointerType->target_type) {
                     markStoredValue(dest);
                 }
@@ -66,7 +66,7 @@ void markStoredContainerElements(StoredValueTarget packedContainer) {
     }
 }
 
-void markStoredValue(StoredValueTarget value) {
+void markStoredValue(PackedValue value) {
     if (value.storedValue == NULL) return;
     if (value.storedType == NULL) {
         markValue(value.storedValue->asValue);
@@ -81,7 +81,7 @@ void markStoredValue(StoredValueTarget value) {
     }
 }
 
-void initialisePackedStorage(StoredValueTarget packedValue) {
+void initialisePackedStorage(PackedValue packedValue) {
 
     if (packedValue.storedType == NULL) {
         packedValue.storedValue->asValue = NIL_VAL;
@@ -104,7 +104,7 @@ void initialisePackedStorage(StoredValueTarget packedValue) {
                 ObjConcreteYargType* elementType = IS_NIL(elementTypeVal) ? NULL : AS_YARGTYPE(elementTypeVal);
                 if (at->cardinality > 0) {
                     for (size_t i = 0; i < at->cardinality; i++) {
-                        StoredValueTarget el = arrayElement(packedValue, i);
+                        PackedValue el = arrayElement(packedValue, i);
                         initialisePackedStorage(el);
                     }
                 }
@@ -113,7 +113,7 @@ void initialisePackedStorage(StoredValueTarget packedValue) {
             case TypeStruct: {
                 ObjConcreteYargTypeStruct* st = (ObjConcreteYargTypeStruct*)packedValue.storedType;
                 for (size_t i = 0; i < st->field_count; i++) {
-                    StoredValueTarget f = structField(packedValue, i);
+                    PackedValue f = structField(packedValue, i);
                     initialisePackedStorage(f);
                 }
                 break;
@@ -134,7 +134,7 @@ void initialisePackedStorage(StoredValueTarget packedValue) {
     }
 }
 
-Value unpackStoredValue(StoredValueTarget packedValue) {
+Value unpackStoredValue(PackedValue packedValue) {
     if (packedValue.storedType == NULL) {
         return packedValue.storedValue->asValue;
     } else {
@@ -175,7 +175,7 @@ Value unpackStoredValue(StoredValueTarget packedValue) {
     }
 }
 
-void packValueStorage(StoredValueTarget packedStorageTarget, Value value) {
+void packValueStorage(PackedValue packedStorageTarget, Value value) {
     if (packedStorageTarget.storedType == NULL) {
         packedStorageTarget.storedValue->asValue = value;
     } else {

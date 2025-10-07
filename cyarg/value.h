@@ -89,22 +89,22 @@ typedef struct {
 #define ADDRESS_VAL(value)  ((Value){VAL_ADDRESS, { .address = value}})
 #define OBJ_VAL(object)     ((Value){VAL_OBJ, {.obj = (Obj*)object}})
 
-typedef union {
+typedef union PackedValueStore {
     AnyValue as;
     Value asValue;
-} StoredValue;
+} PackedValueStore;
 
 typedef struct {
-    StoredValue* storedValue;
+    PackedValueStore* storedValue;
     ObjConcreteYargType* storedType;
-} StoredValueTarget;
+} PackedValue;
 
-void initialisePackedStorage(StoredValueTarget packedValue);
-Value unpackStoredValue(StoredValueTarget packedValue);
-void packValueStorage(StoredValueTarget packedStorageTarget, Value value);
-StoredValueTarget createValueHeapCell(Value type);
-void markStoredContainerElements(StoredValueTarget packedContainer);
-void markStoredValue(StoredValueTarget packedValue);
+void initialisePackedStorage(PackedValue packedValue);
+Value unpackStoredValue(PackedValue packedValue);
+void packValueStorage(PackedValue packedStorageTarget, Value value);
+PackedValue createValueHeapCell(Value type);
+void markStoredContainerElements(PackedValue packedContainer);
+void markStoredValue(PackedValue packedValue);
 
 typedef struct {
     Value value;
