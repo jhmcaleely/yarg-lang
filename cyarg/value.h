@@ -118,7 +118,7 @@ uint32_t as_positive_integer(Value a);
 
 typedef struct {
     Value* value;
-    Value* type;
+    ObjConcreteYargType* cellType;
 } ValueCellTarget;
 
 typedef struct {

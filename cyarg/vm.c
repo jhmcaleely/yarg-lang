@@ -426,12 +426,11 @@ static bool assignToStorage(StoredValueTarget* lhs, Value rhsValue) {
 }
 
 static bool assignTo(ValueCellTarget lhs, Value rhsValue) {
-    if (IS_NIL(*lhs.type)) {
+    if (lhs.cellType == NULL) {
         *lhs.value = rhsValue;
         return true;
     } else {
-        ObjConcreteYargType* lhsType = (ObjConcreteYargType*) AS_OBJ(*lhs.type);
-        if (isCompatibleType(lhsType, rhsValue)) {
+        if (isCompatibleType(lhs.cellType, rhsValue)) {
             *(lhs.value) = rhsValue;
             return true;
         } else {
@@ -441,12 +440,11 @@ static bool assignTo(ValueCellTarget lhs, Value rhsValue) {
 }
 
 static bool initialiseTo(ValueCellTarget lhs, Value rhsValue) {
-    if (IS_NIL(*lhs.type)) {
+    if (lhs.cellType == NULL) {
         *lhs.value = rhsValue;
         return true;
     } else {
-        ObjConcreteYargType* lhsType = (ObjConcreteYargType*) AS_OBJ(*lhs.type);
-        if (isInitialisableType(lhsType, rhsValue)) {
+        if (isInitialisableType(lhs.cellType, rhsValue)) {
             *(lhs.value) = rhsValue;
             return true;
         } else {
@@ -683,7 +681,8 @@ InterpretResult run(ObjRoutine* routine) {
                 uint8_t slot = READ_BYTE();
                 ValueCell* rhs = peekCell(routine, 0);
                 ValueCell* lhs = frameSlot(routine, frame, slot);
-                ValueCellTarget trg = { .type = &lhs->type, .value = &lhs->value };
+                ObjConcreteYargType* lhsType = IS_NIL(lhs->type) ? NULL : AS_YARGTYPE(lhs->type);
+                ValueCellTarget trg = { .cellType = lhsType, .value = &lhs->value };
 
                 if (!assignTo(trg, rhs->value)) {
                     runtimeError(routine, "Cannot set local variable to incompatible type.");
@@ -717,7 +716,8 @@ InterpretResult run(ObjRoutine* routine) {
                 ValueCell* lhs = NULL;
                 if (tableCellGetPlace(&vm.globals, name, &lhs)) {
                     ValueCell* rhs = peekCell(routine, 0);
-                    ValueCellTarget trg = { .type = &lhs->type, .value = &lhs->value };
+                    ObjConcreteYargType* lhsType = IS_NIL(lhs->type) ? NULL : AS_YARGTYPE(lhs->type);
+                    ValueCellTarget trg = { .cellType = lhsType, .value = &lhs->value };
 
                     if (!assignTo(trg, rhs->value)) {
                         runtimeError(routine, "Cannot set global variable to incompatible type.");
@@ -732,7 +732,8 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_INITIALISE: {
                 ValueCell* lhs = peekCell(routine, 1);
                 ValueCell* rhs = peekCell(routine, 0);
-                ValueCellTarget trg = { .type = &lhs->type, .value = &lhs->value };
+                ObjConcreteYargType* lhsType = IS_NIL(lhs->type) ? NULL : AS_YARGTYPE(lhs->type);
+                ValueCellTarget trg = { .cellType = lhsType, .value = &lhs->value };
                 if (!initialiseTo(trg, rhs->value)) {
                     runtimeError(routine, "Cannot initialise variable with this value.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -748,8 +749,10 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_SET_UPVALUE: {
                 uint8_t slot = READ_BYTE();
                 ValueCell* rhs = peekCell(routine, 0);
+                Value lhsTypeVal = frame->closure->upvalues[slot]->contents->type;
+                ObjConcreteYargType* lhsType = IS_NIL(lhsTypeVal) ? NULL : AS_YARGTYPE(lhsTypeVal);
                 ValueCellTarget trg = { 
-                    .type = &frame->closure->upvalues[slot]->contents->type, 
+                    .cellType = lhsType, 
                     .value = &frame->closure->upvalues[slot]->contents->value 
                 };
 
