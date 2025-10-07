@@ -169,7 +169,7 @@ static void blackenObject(Obj* object) {
             /* fall through */
         case OBJ_PACKEDUNIFORMARRAY: {
             ObjPackedUniformArray* array = (ObjPackedUniformArray*)object;
-            markStoredContainerElements(array->store);
+            markStoredValue(array->store);
             break;
         }
         case OBJ_UNOWNED_PACKEDSTRUCT:
