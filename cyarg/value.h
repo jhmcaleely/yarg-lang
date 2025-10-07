@@ -89,6 +89,20 @@ typedef struct {
 #define ADDRESS_VAL(value)  ((Value){VAL_ADDRESS, { .address = value}})
 #define OBJ_VAL(object)     ((Value){VAL_OBJ, {.obj = (Obj*)object}})
 
+typedef union {
+    AnyValue as;
+    Value asValue;
+} StoredValue;
+
+typedef struct {
+    StoredValue* storedValue;
+    ObjConcreteYargType* storedType;
+} StoredValueTarget;
+
+void initialisePackedStorage(Value type, StoredValue* storage);
+Value unpackStoredValue(Value type, StoredValue* packedStorage);
+void packValueStorage(StoredValueTarget packedStorageTarget, Value value);
+
 typedef struct {
     Value value;
     Value type;
@@ -105,11 +119,6 @@ void initValueArray(ValueArray* array);
 void appendToValueArray(ValueArray* array, Value value);
 void freeValueArray(ValueArray* array);
 
-typedef union {
-    AnyValue as;
-    Value asValue;
-} StoredValue;
-
 void printValue(Value value);
 void fprintValue(FILE* op, Value value);
 
@@ -120,10 +129,5 @@ typedef struct {
     Value* value;
     ObjConcreteYargType* cellType;
 } ValueCellTarget;
-
-typedef struct {
-    StoredValue* storedValue;
-    ObjConcreteYargType* storedType;
-} StoredValueTarget;
 
 #endif
