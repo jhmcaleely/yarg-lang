@@ -220,14 +220,14 @@ StoredValueTarget arrayElement(StoredValueTarget array, size_t index);
 
 StoredValue* structField(ObjConcreteYargTypeStruct* structType, StoredValue* structStart, size_t index);
 bool structFieldIndex(ObjConcreteYargTypeStruct* structType, ObjString* name, size_t* index);
-ObjPackedStruct* newPackedStructAt(ObjConcreteYargTypeStruct* type, StoredValue* packedStorage);
+ObjPackedStruct* newPackedStructAt(StoredValueTarget location);
 
 ObjPackedPointer* newPointerForHeapCell(StoredValueTarget location);
 ObjPackedPointer* newPointerAtHeapCell(StoredValueTarget location);
 
 Obj* destinationObject(Value pointer);
 
-ObjPackedUniformArray* newPackedUniformArrayAt(ObjConcreteYargTypeArray* type, StoredValue* location);
+ObjPackedUniformArray* newPackedUniformArrayAt(StoredValueTarget location);
 
 Value defaultArrayValue(ObjConcreteYargType* type);
 Value defaultStructValue(ObjConcreteYargType* type);

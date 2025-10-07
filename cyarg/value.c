@@ -102,10 +102,10 @@ Value unpackStoredValue(StoredValueTarget packedValue) {
             case TypeInt64: return I64_VAL(packedValue.storedValue->as.i64);
             case TypeUint64: return UI64_VAL(packedValue.storedValue->as.ui64);
             case TypeStruct: {
-                return OBJ_VAL(newPackedStructAt((ObjConcreteYargTypeStruct*)packedValue.storedType, packedValue.storedValue));
+                return OBJ_VAL(newPackedStructAt(packedValue));
             }
             case TypeArray: {
-                return OBJ_VAL(newPackedUniformArrayAt((ObjConcreteYargTypeArray*)packedValue.storedType, packedValue.storedValue));
+                return OBJ_VAL(newPackedUniformArrayAt(packedValue));
             }
             case TypePointer:
             case TypeString:

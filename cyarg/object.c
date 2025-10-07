@@ -153,11 +153,11 @@ ObjPackedUniformArray* newPackedUniformArray(ObjConcreteYargTypeArray* type) {
     return array;
 }
 
-ObjPackedUniformArray* newPackedUniformArrayAt(ObjConcreteYargTypeArray* type, StoredValue* location) {
+ObjPackedUniformArray* newPackedUniformArrayAt(StoredValueTarget location) {
 
     ObjPackedUniformArray* array = ALLOCATE_OBJ(ObjPackedUniformArray, OBJ_UNOWNED_UNIFORMARRAY);
-    array->type = type;
-    array->arrayElements = location;
+    array->type = (ObjConcreteYargTypeArray*) location.storedType;
+    array->arrayElements = location.storedValue;
 
     return array;
 }
@@ -284,10 +284,10 @@ ObjPackedStruct* newPackedStruct(ObjConcreteYargTypeStruct* type) {
     return object;
 }
 
-ObjPackedStruct* newPackedStructAt(ObjConcreteYargTypeStruct* type, StoredValue* packedStorage) {
+ObjPackedStruct* newPackedStructAt(StoredValueTarget location) {
     ObjPackedStruct* object = ALLOCATE_OBJ(ObjPackedStruct, OBJ_UNOWNED_PACKEDSTRUCT);
-    object->type = type;
-    object->structFields = packedStorage;
+    object->type = (ObjConcreteYargTypeStruct*) location.storedType;
+    object->structFields = location.storedValue;
 
     return object;
 }
