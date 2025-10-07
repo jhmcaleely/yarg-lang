@@ -2,7 +2,6 @@
 #define cyarg_routine_h
 
 #include "value.h"
-#include "value_cell.h"
 #include "object.h"
 
 #define FRAMES_MAX 20

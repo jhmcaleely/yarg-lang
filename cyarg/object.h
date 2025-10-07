@@ -5,7 +5,6 @@
 #include "chunk.h"
 #include "table.h"
 #include "value.h"
-#include "value_cell.h"
 
 typedef struct ObjConcreteYargType ObjConcreteYargType;
 typedef struct ObjConcreteYargTypeArray ObjConcreteYargTypeArray;

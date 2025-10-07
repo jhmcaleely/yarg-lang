@@ -2,7 +2,6 @@
 #define cyarg_native_h
 
 #include "value.h"
-#include "value_cell.h"
 
 bool clockNative(ObjRoutine* routine, int argCount, Value* result);
 bool sleepNative(ObjRoutine* routine, int argCount, Value* result);

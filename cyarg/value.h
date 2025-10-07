@@ -89,6 +89,11 @@ typedef struct {
 #define OBJ_VAL(object)     ((Value){VAL_OBJ, {.obj = (Obj*)object}})
 
 typedef struct {
+    Value value;
+    Value type;
+} ValueCell;
+
+typedef struct {
     int capacity;
     int count;
     Value* values;
@@ -109,5 +114,15 @@ void fprintValue(FILE* op, Value value);
 
 bool is_positive_integer(Value a);
 uint32_t as_positive_integer(Value a);
+
+typedef struct {
+    Value* value;
+    Value* type;
+} ValueCellTarget;
+
+typedef struct {
+    StoredValue* storedValue;
+    Value* type;
+} StoredValueCellTarget;
 
 #endif
