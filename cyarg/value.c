@@ -14,14 +14,62 @@ StoredValueTarget createValueHeapCell(Value type) {
     return value;
 }
 
+static void markStoredStructFields(ObjConcreteYargTypeStruct* type, StoredValue* fields) {
+    if (fields) {
+        for (int i = 0; i < type->field_count; i++) {
+            StoredValueTarget f;
+            f.storedType = IS_NIL(type->field_types[i]) ? NULL : AS_YARGTYPE(type->field_types[i]);
+            f.storedValue = structField(type, fields, i);
+            markStoredValue(f);
+        }
+    }
+}
+
+static void markStoredArrayElements(ObjConcreteYargTypeArray* type, StoredValue* elements) {
+    if (elements) {
+        StoredValueTarget array = { .storedType = (ObjConcreteYargType*)type, .storedValue = elements };
+        for (size_t i = 0; i < type->cardinality; i++) {
+            StoredValueTarget el = arrayElement(array, i);
+            markStoredValue(el);
+        }
+    }
+}
+
+void markStoredContainerElements(StoredValueTarget packedContainer) {
+    markObject((Obj*)packedContainer.storedType);
+
+    switch (packedContainer.storedType->yt) {
+        case TypeStruct: {
+            ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*) packedContainer.storedType;
+            markStoredStructFields(structType, packedContainer.storedValue);
+            break;
+        }
+        case TypeArray: {
+            ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) packedContainer.storedType;
+            markStoredArrayElements(arrayType, packedContainer.storedValue);
+            break;
+        }
+        case TypePointer: {
+            ObjConcreteYargTypePointer* pointerType = (ObjConcreteYargTypePointer*)packedContainer.storedType;
+            StoredValueTarget dest = { .storedType = pointerType->target_type, .storedValue = packedContainer.storedValue };
+            if (packedContainer.storedValue && pointerType->target_type) {
+                markStoredValue(dest);
+            }
+            break;
+        }
+        default:
+            break; // nothing to do.
+
+    }
+}
+
 void markStoredValue(StoredValueTarget value) {
     if (value.storedValue == NULL) return;
     if (value.storedType == NULL) {
         markValue(value.storedValue->asValue);
         return;
     } else if (type_packs_as_container(value.storedType)) {
-        markObject((Obj*)value.storedType);
-        markStoredContainerElements(value.storedType, value.storedValue);
+        markStoredContainerElements(value);
         return;
     } else if (type_packs_as_obj(value.storedType)) {
         markObject((Obj*)value.storedType);

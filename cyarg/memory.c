@@ -85,53 +85,6 @@ void markValueCell(ValueCell* cell) {
     markValue(cell->type);
 }
 
-static void markStoredStructFields(ObjConcreteYargTypeStruct* type, StoredValue* fields) {
-    if (fields) {
-        for (int i = 0; i < type->field_count; i++) {
-            StoredValueTarget f;
-            f.storedType = IS_NIL(type->field_types[i]) ? NULL : AS_YARGTYPE(type->field_types[i]);
-            f.storedValue = structField(type, fields, i);
-            markStoredValue(f);
-        }
-    }
-}
-
-static void markStoredArrayElements(ObjConcreteYargTypeArray* type, StoredValue* elements) {
-    if (elements) {
-        StoredValueTarget array = { .storedType = (ObjConcreteYargType*)type, .storedValue = elements };
-        for (size_t i = 0; i < type->cardinality; i++) {
-            StoredValueTarget el = arrayElement(array, i);
-            markStoredValue(el);
-        }
-    }
-}
-
-void markStoredContainerElements(ObjConcreteYargType* type, StoredValue* stored) {
-    switch (type->yt) {
-        case TypeStruct: {
-            ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*) type;
-            markStoredStructFields(structType, stored);
-            break;
-        }
-        case TypeArray: {
-            ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) type;
-            markStoredArrayElements(arrayType, stored);
-            break;
-        }
-        case TypePointer: {
-            ObjConcreteYargTypePointer* pointerType = (ObjConcreteYargTypePointer*)type;
-            StoredValueTarget dest = { .storedType = pointerType->target_type, .storedValue = stored };
-            if (stored && pointerType->target_type) {
-                markStoredValue(dest);
-            }
-            break;
-        }
-        default:
-            break; // nothing to do.
-
-    }
-}
-
 static void markArray(ValueArray* array) {
     for (int i = 0; i < array->count; i++) {
         markValue(array->values[i]);
@@ -209,6 +162,7 @@ static void blackenObject(Obj* object) {
             StoredValueTarget dest;
             dest.storedType = IS_NIL(ptr->destination_type) ? NULL : AS_YARGTYPE(ptr->destination_type);
             dest.storedValue = ptr->destination;
+            markStoredValue(dest);
             break;
         }
         case OBJ_UNOWNED_UNIFORMARRAY:
@@ -216,7 +170,10 @@ static void blackenObject(Obj* object) {
         case OBJ_PACKEDUNIFORMARRAY: {
             ObjPackedUniformArray* array = (ObjPackedUniformArray*)object;
             markObject((Obj*)array->type);
-            markStoredArrayElements(array->type, array->arrayElements);
+            StoredValueTarget a;
+            a.storedType = (ObjConcreteYargType*)array->type;
+            a.storedValue = array->arrayElements;
+            markStoredContainerElements(a);
             break;
         }
         case OBJ_UNOWNED_PACKEDSTRUCT:
@@ -224,7 +181,10 @@ static void blackenObject(Obj* object) {
         case OBJ_PACKEDSTRUCT: {
             ObjPackedStruct* struct_ = (ObjPackedStruct*)object;
             markObject((Obj*)struct_->type);
-            markStoredStructFields(struct_->type, struct_->structFields);
+            StoredValueTarget s;
+            s.storedType = (ObjConcreteYargType*) struct_->type;
+            s.storedValue = struct_->structFields;
+            markStoredContainerElements(s);
             break;
         }
         case OBJ_NATIVE: break;
