@@ -368,7 +368,7 @@ static bool setArrayElement(ObjRoutine* routine) {
         Value elementType = arrayElementType(array->type);
         ObjConcreteYargType* storageType = IS_NIL(elementType) ? NULL : AS_YARGTYPE(elementType);
         StoredValueTarget trg = { .storedValue = element, .storedType = storageType };
-        packValueStorage(&trg, new_value);
+        packValueStorage(trg, new_value);
     }
 
     pop(routine);
@@ -408,15 +408,13 @@ static void concatenate(ObjRoutine* routine) {
     push(routine, OBJ_VAL(result));
 }
 
-static bool assignToStorage(StoredValueTarget* lhs, Value rhsValue) {
-    Value storedType = lhs->storedType == NULL ? NIL_VAL : OBJ_VAL(lhs->storedType);
+static bool assignToStorage(StoredValueTarget lhs, Value rhsValue) {
 
-    if (IS_NIL(storedType)) {
-        lhs->storedValue->asValue = rhsValue;
+    if (lhs.storedType == NULL) {
+        lhs.storedValue->asValue = rhsValue;
         return true;
     } else {
-        ObjConcreteYargType* lhsType = lhs->storedType;
-        if (isCompatibleType(lhsType, rhsValue)) {
+        if (isCompatibleType(lhs.storedType, rhsValue)) {
             packValueStorage(lhs, rhsValue);
             return true;
         } else {
@@ -838,7 +836,7 @@ InterpretResult run(ObjRoutine* routine) {
                     Value fieldType = object->type->field_types[index];
                     ObjConcreteYargType* storageType = IS_NIL(fieldType) ? NULL : AS_YARGTYPE(fieldType);
                     StoredValueTarget trg = { .storedType = storageType, .storedValue = field };
-                    if (!assignToStorage(&trg, peek(routine, 0))) {
+                    if (!assignToStorage(trg, peek(routine, 0))) {
                         runtimeError(routine, "cannot assign to field type.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
@@ -1232,7 +1230,7 @@ InterpretResult run(ObjRoutine* routine) {
                 Value destinationType = pLhs->destination_type;
                 ObjConcreteYargType* storageType = IS_NIL(destinationType) ? NULL : AS_YARGTYPE(destinationType);
                 StoredValueTarget trg = { .storedType = storageType, .storedValue = pLhs->destination };
-                if (assignToStorage(&trg, rhs)) {
+                if (assignToStorage(trg, rhs)) {
                     pop(routine);
                     pop(routine);
                     push(routine, rhs);

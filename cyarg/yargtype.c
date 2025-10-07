@@ -446,22 +446,22 @@ Value unpackStoredValue(Value type, StoredValue* packedStorage) {
     }
 }
 
-void packValueStorage(StoredValueTarget* packedStorageTarget, Value value) {
-    if (packedStorageTarget->storedType == NULL) {
-        packedStorageTarget->storedValue->asValue = value;
+void packValueStorage(StoredValueTarget packedStorageTarget, Value value) {
+    if (packedStorageTarget.storedType == NULL) {
+        packedStorageTarget.storedValue->asValue = value;
     } else {
-        switch (packedStorageTarget->storedType->yt) {
-            case TypeAny: packedStorageTarget->storedValue->asValue = value; break;
-            case TypeBool: packedStorageTarget->storedValue->asValue = value; break;
-            case TypeDouble: packedStorageTarget->storedValue->asValue = value; break;
-            case TypeInt8: packedStorageTarget->storedValue->as.i8 = AS_I8(value); break;
-            case TypeUint8: packedStorageTarget->storedValue->as.ui8 = AS_UI8(value); break;
-            case TypeInt16: packedStorageTarget->storedValue->as.i16 = AS_I16(value); break;
-            case TypeUint16: packedStorageTarget->storedValue->as.ui16 = AS_UI16(value); break;
-            case TypeInt32: packedStorageTarget->storedValue->as.i32 = AS_I32(value); break;
-            case TypeUint32: packedStorageTarget->storedValue->as.ui32 = AS_UI32(value); break;
-            case TypeInt64: packedStorageTarget->storedValue->as.i64 = AS_I64(value); break;
-            case TypeUint64: packedStorageTarget->storedValue->as.ui64 = AS_UI64(value); break;
+        switch (packedStorageTarget.storedType->yt) {
+            case TypeAny: packedStorageTarget.storedValue->asValue = value; break;
+            case TypeBool: packedStorageTarget.storedValue->asValue = value; break;
+            case TypeDouble: packedStorageTarget.storedValue->asValue = value; break;
+            case TypeInt8: packedStorageTarget.storedValue->as.i8 = AS_I8(value); break;
+            case TypeUint8: packedStorageTarget.storedValue->as.ui8 = AS_UI8(value); break;
+            case TypeInt16: packedStorageTarget.storedValue->as.i16 = AS_I16(value); break;
+            case TypeUint16: packedStorageTarget.storedValue->as.ui16 = AS_UI16(value); break;
+            case TypeInt32: packedStorageTarget.storedValue->as.i32 = AS_I32(value); break;
+            case TypeUint32: packedStorageTarget.storedValue->as.ui32 = AS_UI32(value); break;
+            case TypeInt64: packedStorageTarget.storedValue->as.i64 = AS_I64(value); break;
+            case TypeUint64: packedStorageTarget.storedValue->as.ui64 = AS_UI64(value); break;
             case TypePointer:
             case TypeString:
             case TypeClass:
@@ -471,7 +471,7 @@ void packValueStorage(StoredValueTarget* packedStorageTarget, Value value) {
             case TypeRoutine:
             case TypeChannel:
             case TypeYargType: {
-                packedStorageTarget->storedValue->as.obj = AS_OBJ(value);
+                packedStorageTarget.storedValue->as.obj = AS_OBJ(value);
                 break;
             }
             case TypeStruct:

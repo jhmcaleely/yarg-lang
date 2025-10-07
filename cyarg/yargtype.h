@@ -79,7 +79,7 @@ Value defaultValue(Value type);
 
 void initialisePackedStorage(Value type, StoredValue* storage);
 Value unpackStoredValue(Value type, StoredValue* packedStorage);
-void packValueStorage(StoredValueTarget* packedStorageTarget, Value value);
+void packValueStorage(StoredValueTarget packedStorageTarget, Value value);
 
 bool isInitialisableType(ObjConcreteYargType* lhsType, Value rhsValue);
 bool isCompatibleType(ObjConcreteYargType* lhsType, Value rhsValue);
