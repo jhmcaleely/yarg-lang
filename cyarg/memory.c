@@ -169,11 +169,7 @@ static void blackenObject(Obj* object) {
             /* fall through */
         case OBJ_PACKEDUNIFORMARRAY: {
             ObjPackedUniformArray* array = (ObjPackedUniformArray*)object;
-            markObject((Obj*)array->type);
-            StoredValueTarget a;
-            a.storedType = (ObjConcreteYargType*)array->type;
-            a.storedValue = array->arrayElements;
-            markStoredContainerElements(a);
+            markStoredContainerElements(array->store);
             break;
         }
         case OBJ_UNOWNED_PACKEDSTRUCT:
@@ -471,8 +467,9 @@ static void freeObject(Obj* object) {
         case OBJ_UNOWNED_UNIFORMARRAY: FREE(ObjPackedUniformArray, object); break;
         case OBJ_PACKEDUNIFORMARRAY: {
             ObjPackedUniformArray* array = (ObjPackedUniformArray*)object;
-            size_t element_size = arrayElementSize(array->type);
-            array->arrayElements = reallocate(array->arrayElements, array->type->cardinality * element_size, 0);
+            ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*)array->store.storedType;
+            size_t element_size = arrayElementSize(arrayType);
+            array->store.storedValue = reallocate(array->store.storedValue, arrayType->cardinality * element_size, 0);
             FREE(ObjPackedUniformArray, object);
             break;
         }

@@ -37,30 +37,32 @@ static void markStoredArrayElements(ObjConcreteYargTypeArray* type, StoredValue*
 }
 
 void markStoredContainerElements(StoredValueTarget packedContainer) {
-    markObject((Obj*)packedContainer.storedType);
+    if (packedContainer.storedType) {
+        markObject((Obj*)packedContainer.storedType);
 
-    switch (packedContainer.storedType->yt) {
-        case TypeStruct: {
-            ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*) packedContainer.storedType;
-            markStoredStructFields(structType, packedContainer.storedValue);
-            break;
-        }
-        case TypeArray: {
-            ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) packedContainer.storedType;
-            markStoredArrayElements(arrayType, packedContainer.storedValue);
-            break;
-        }
-        case TypePointer: {
-            ObjConcreteYargTypePointer* pointerType = (ObjConcreteYargTypePointer*)packedContainer.storedType;
-            StoredValueTarget dest = { .storedType = pointerType->target_type, .storedValue = packedContainer.storedValue };
-            if (packedContainer.storedValue && pointerType->target_type) {
-                markStoredValue(dest);
+        switch (packedContainer.storedType->yt) {
+            case TypeStruct: {
+                ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*) packedContainer.storedType;
+                markStoredStructFields(structType, packedContainer.storedValue);
+                break;
             }
-            break;
-        }
-        default:
-            break; // nothing to do.
+            case TypeArray: {
+                ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) packedContainer.storedType;
+                markStoredArrayElements(arrayType, packedContainer.storedValue);
+                break;
+            }
+            case TypePointer: {
+                ObjConcreteYargTypePointer* pointerType = (ObjConcreteYargTypePointer*)packedContainer.storedType;
+                StoredValueTarget dest = { .storedType = pointerType->target_type, .storedValue = packedContainer.storedValue };
+                if (packedContainer.storedValue && pointerType->target_type) {
+                    markStoredValue(dest);
+                }
+                break;
+            }
+            default:
+                break; // nothing to do.
 
+        }
     }
 }
 

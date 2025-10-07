@@ -317,24 +317,22 @@ static bool derefElement(ObjRoutine* routine) {
 
     if (IS_UNIFORMARRAY(peek(routine, 1))) {
         ObjPackedUniformArray* array = AS_UNIFORMARRAY(peek(routine, 1));
-        if (index >= array->type->cardinality) {
+        if (index >= arrayCardinality(array->store)) {
             runtimeError(routine, "Array index %d out of bounds.", index);
             return false;
         }
-        StoredValueTarget arrayTrg = { .storedType = (ObjConcreteYargType*) array->type, .storedValue = array->arrayElements };
-        StoredValueTarget element = arrayElement(arrayTrg, index);
+        StoredValueTarget element = arrayElement(array->store, index);
         result = unpackStoredValue(element);
 
     } else {
         ObjPackedUniformArray* arrayObj = (ObjPackedUniformArray*)destinationObject(peek(routine, 1));
-        if (index >= arrayObj->type->cardinality) {
-            runtimeError(routine, "Array index %d out of bounds (0:%zu)", index, arrayObj->type->cardinality - 1);
+        if (index >= arrayCardinality(arrayObj->store)) {
+            runtimeError(routine, "Array index %d out of bounds (0:%zu)", index, arrayCardinality(arrayObj->store) - 1);
             return false;
         }
         tempRootPush(OBJ_VAL(arrayObj));
 
-        StoredValueTarget arrayTrg = { .storedType = (ObjConcreteYargType*) arrayObj->type, .storedValue = arrayObj->arrayElements };
-        StoredValueTarget element = arrayElement(arrayTrg, index);
+        StoredValueTarget element = arrayElement(arrayObj->store, index);
         result = OBJ_VAL(newPointerAtHeapCell(element));
         tempRootPop();
     }
@@ -343,6 +341,21 @@ static bool derefElement(ObjRoutine* routine) {
     pop(routine);
     push(routine, result);
     return true;
+}
+
+static bool assignToStorage(StoredValueTarget lhs, Value rhsValue) {
+
+    if (lhs.storedType == NULL) {
+        lhs.storedValue->asValue = rhsValue;
+        return true;
+    } else {
+        if (isCompatibleType(lhs.storedType, rhsValue)) {
+            packValueStorage(lhs, rhsValue);
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
 
 static bool setArrayElement(ObjRoutine* routine) {
@@ -357,17 +370,16 @@ static bool setArrayElement(ObjRoutine* routine) {
 
     if (IS_UNIFORMARRAY(boxed_array)) {
         ObjPackedUniformArray* array = AS_UNIFORMARRAY(boxed_array);
-        if (index >= array->type->cardinality) {
-            runtimeError(routine, "Array index %d out of bounds (0:%d)", index, array->type->cardinality - 1);
+        if (index >= arrayCardinality(array->store)) {
+            runtimeError(routine, "Array index %d out of bounds (0:%d)", index, arrayCardinality(array->store) - 1);
             return false;
         }
-        if (array->type->element_type && !isCompatibleType(array->type->element_type, new_value)) {
+
+        StoredValueTarget trg = arrayElement(array->store, index);
+        if (!assignToStorage(trg, new_value)) {
             runtimeError(routine, "Cannot set array element to incompatible type.");
             return false;
         }
-        StoredValueTarget arrayTrg = { .storedType = (ObjConcreteYargType*) array->type, .storedValue = array->arrayElements };
-        StoredValueTarget trg = arrayElement(arrayTrg, index);
-        packValueStorage(trg, new_value);
     }
 
     pop(routine);
@@ -408,21 +420,6 @@ static void concatenate(ObjRoutine* routine) {
     pop(routine);
     pop(routine);
     push(routine, OBJ_VAL(result));
-}
-
-static bool assignToStorage(StoredValueTarget lhs, Value rhsValue) {
-
-    if (lhs.storedType == NULL) {
-        lhs.storedValue->asValue = rhsValue;
-        return true;
-    } else {
-        if (isCompatibleType(lhs.storedType, rhsValue)) {
-            packValueStorage(lhs, rhsValue);
-            return true;
-        } else {
-            return false;
-        }
-    }
 }
 
 static bool assignTo(ValueCellTarget lhs, Value rhsValue) {

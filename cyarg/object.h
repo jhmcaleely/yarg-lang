@@ -177,8 +177,7 @@ typedef struct {
 
 typedef struct {
     Obj obj;
-    ObjConcreteYargTypeArray* type;
-    StoredValue* arrayElements;
+    StoredValueTarget store;
 } ObjPackedUniformArray;
 
 typedef struct {
@@ -217,6 +216,7 @@ ObjString* copyString(const char* chars, int length);
 ObjUpvalue* newUpvalue(ValueCell* slot, size_t stackOffset);
 
 StoredValueTarget arrayElement(StoredValueTarget array, size_t index);
+size_t arrayCardinality(StoredValueTarget array);
 
 StoredValueTarget structField(StoredValueTarget struct_, size_t index);
 bool structFieldIndex(ObjConcreteYargTypeStruct* structType, ObjString* name, size_t* index);

@@ -168,7 +168,7 @@ Value concrete_typeof(Value a) {
     } else if (IS_STRING(a)) {
         return OBJ_VAL(newYargTypeFromType(TypeString));
     } else if (IS_UNIFORMARRAY(a)) {
-        return OBJ_VAL(AS_UNIFORMARRAY(a)->type);
+        return OBJ_VAL(AS_UNIFORMARRAY(a)->store.storedType);
     } else if (IS_STRUCT(a)) {
         return OBJ_VAL(AS_STRUCT(a)->type);
     } else if (IS_YARGTYPE(a)) {

@@ -123,32 +123,34 @@ ObjBlob* newBlob(size_t count) {
     return blob;
 }
 
-StoredValueTarget arrayElement(StoredValueTarget array, size_t index) {\
+StoredValueTarget arrayElement(StoredValueTarget array, size_t index) {
     ObjConcreteYargTypeArray* array_type = (ObjConcreteYargTypeArray*) array.storedType;
+    
     StoredValueTarget el;
     el.storedType = array_type->element_type;
     el.storedValue = (StoredValue*)(((uint8_t*)array.storedValue) + arrayElementOffset(array_type, index));
-
     return el;
+}
+
+size_t arrayCardinality(StoredValueTarget array) {
+    ObjConcreteYargTypeArray* array_type = (ObjConcreteYargTypeArray*) array.storedType;
+    return array_type->cardinality;
 }
 
 ObjPackedUniformArray* newPackedUniformArray(ObjConcreteYargTypeArray* type) {
     ObjPackedUniformArray* array = ALLOCATE_OBJ(ObjPackedUniformArray, OBJ_PACKEDUNIFORMARRAY);
-    array->type = type;    
-
     tempRootPush(OBJ_VAL(array));
 
-    StoredValueTarget arrayStore;
-    arrayStore.storedValue = reallocate(NULL, 0, arrayElementSize(type) * type->cardinality);
-    arrayStore.storedType = (ObjConcreteYargType*) array->type;
+    StoredValueTarget new_array;
+    new_array.storedType = (ObjConcreteYargType*) type;
+    new_array.storedValue = reallocate(NULL, 0, arrayElementSize(type) * type->cardinality);
 
-    for (size_t i = 0; i < array->type->cardinality; i++) {
-        StoredValueTarget el = arrayElement(arrayStore, i);
+    for (size_t i = 0; i < type->cardinality; i++) {
+        StoredValueTarget el = arrayElement(new_array, i);
         initialisePackedStorage(el);
     }
 
-    array->arrayElements = arrayStore.storedValue;
-
+    array->store = new_array;
     tempRootPop();
     return array;
 }
@@ -156,8 +158,7 @@ ObjPackedUniformArray* newPackedUniformArray(ObjConcreteYargTypeArray* type) {
 ObjPackedUniformArray* newPackedUniformArrayAt(StoredValueTarget location) {
 
     ObjPackedUniformArray* array = ALLOCATE_OBJ(ObjPackedUniformArray, OBJ_UNOWNED_UNIFORMARRAY);
-    array->type = (ObjConcreteYargTypeArray*) location.storedType;
-    array->arrayElements = location.storedValue;
+    array->store = location;
 
     return array;
 }
@@ -388,16 +389,14 @@ static void printRoutine(FILE* op, ObjRoutine* routine) {
 }
 
 static void printArray(FILE* op, ObjPackedUniformArray* array) {
-    StoredValueTarget arr;
-    arr.storedType = (ObjConcreteYargType*) array->type;
-    arr.storedValue = array->arrayElements;
-    printType(op, (ObjConcreteYargType*) array->type);
+    ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*)array->store.storedType;
+    printType(op, array->store.storedType);
     FPRINTMSG(op, ":[");
-    for (int i = 0; i < array->type->cardinality; i++) {
-        StoredValueTarget element = arrayElement(arr, i);
+    for (int i = 0; i < arrayType->cardinality; i++) {
+        StoredValueTarget element = arrayElement(array->store, i);
         Value unpackedValue = unpackStoredValue(element);
         fprintValue(op, unpackedValue);
-        if (i < array->type->cardinality - 1) {
+        if (i < arrayType->cardinality - 1) {
             FPRINTMSG(op, ", ");
         }
     }
