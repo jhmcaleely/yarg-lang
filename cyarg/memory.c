@@ -201,8 +201,8 @@ static void blackenObject(Obj* object) {
             ObjConcreteYargTypeStruct* type = (ObjConcreteYargTypeStruct*)object;
             markTable(&type->field_names);
             for (int i = 0; i < type->field_count; i++) {
-                Value field_type = type->field_types[i];
-                markValue(field_type);
+                ObjConcreteYargType* field_type = type->field_types[i];
+                markObject((Obj*)field_type);
             }
             break;
         }
@@ -485,7 +485,7 @@ static void freeObject(Obj* object) {
         case OBJ_YARGTYPE_ARRAY: FREE(ObjConcreteYargTypeArray, object); break;
         case OBJ_YARGTYPE_STRUCT: {
             ObjConcreteYargTypeStruct* t = (ObjConcreteYargTypeStruct*)object;
-            FREE_ARRAY(Value, t->field_types, t->field_count);
+            FREE_ARRAY(ObjConcreteYargType*, t->field_types, t->field_count);
             FREE_ARRAY(size_t, t->field_indexes, t->field_count);
             freeTable(&t->field_names);
             FREE(ObjConcreteYargTypeStruct, object);

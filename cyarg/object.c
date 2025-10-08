@@ -278,7 +278,6 @@ ObjPackedStruct* newPackedStruct(ObjConcreteYargTypeStruct* type) {
     structStore.storedValue = reallocate(object->structFields, 0, type->storage_size);
 
     for (size_t i = 0; i < type->field_count; i++) {
-        Value fieldType = type->field_types[i];
         PackedValue f = structField(structStore, i);
         initialisePackedStorage(f);
     }
@@ -310,7 +309,7 @@ PackedValue structField(PackedValue struct_, size_t index) {
     ObjConcreteYargTypeStruct* typeStruct = (ObjConcreteYargTypeStruct*)struct_.storedType;
 
     PackedValue f;
-    f.storedType = IS_NIL(typeStruct->field_types[index]) ? NULL : AS_YARGTYPE(typeStruct->field_types[index]);
+    f.storedType = typeStruct->field_types[index];
     f.storedValue = (PackedValueStore*)((uint8_t*)struct_.storedValue + typeStruct->field_indexes[index]);
     return f;
 }
@@ -450,8 +449,7 @@ static void printTypeLiteral(FILE* op, ObjConcreteYargType* type) {
             ObjConcreteYargTypeStruct* st = (ObjConcreteYargTypeStruct*) type;
             FPRINTMSG(op, "struct{|%zu:%zu| ", st->field_count, st->storage_size);
             for (size_t i = 0; i < st->field_count; i++) {
-                ObjConcreteYargType* field_type = AS_YARGTYPE(st->field_types[i]);
-                printTypeLiteral(op, field_type);
+                printTypeLiteral(op, st->field_types[i]);
                 FPRINTMSG(op, "; ");
             }
             FPRINTMSG(op, "}");

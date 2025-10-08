@@ -44,7 +44,7 @@ typedef struct ObjConcreteYargTypeStruct {
     ObjConcreteYargType core;
     ValueTable field_names;
     size_t* field_indexes;
-    Value* field_types;
+    ObjConcreteYargType** field_types;
     size_t field_count;
     size_t storage_size;
 } ObjConcreteYargTypeStruct;

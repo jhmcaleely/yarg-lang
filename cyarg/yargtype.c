@@ -74,9 +74,9 @@ ObjConcreteYargType* newYargStructType(size_t fieldCount) {
     ObjConcreteYargTypeStruct* t = (ObjConcreteYargTypeStruct*) newYargTypeFromType(TypeStruct);
     tempRootPush(OBJ_VAL(t));
 
-    Value* fieldTypes = ALLOCATE(Value, fieldCount);
+    ObjConcreteYargType** fieldTypes = ALLOCATE(ObjConcreteYargType*, fieldCount);
     for (size_t i = 0; i < fieldCount; i++) {
-        fieldTypes[i] = NIL_VAL;
+        fieldTypes[i] = NULL;
     }
 
     size_t* fieldIndexes = ALLOCATE(size_t, fieldCount);
@@ -101,7 +101,7 @@ ObjConcreteYargType* newYargPointerType(Value targetType) {
 }
 
 size_t addFieldType(ObjConcreteYargTypeStruct* st, size_t index, size_t fieldOffset, Value type, Value offset, Value name) {
-    st->field_types[index] = type;
+    st->field_types[index] = IS_NIL(type) ? NULL : AS_YARGTYPE(type);
     tableSet(&st->field_names, AS_STRING(name), UI32_VAL(index));
     if (IS_NIL(offset)) {
         st->field_indexes[index] = fieldOffset;
@@ -294,7 +294,8 @@ bool is_placeable_type(Value typeVal) {
                 ObjConcreteYargTypeStruct* ct = (ObjConcreteYargTypeStruct*)AS_YARGTYPE(typeVal);
                 bool is_placeable = true;
                 for (size_t i = 0; i < ct->field_count; i++) {
-                    is_placeable &= is_placeable_type(ct->field_types[i]);
+                    Value fieldType = ct->field_types[i] == NULL ? NIL_VAL : OBJ_VAL(ct->field_types[i]);
+                    is_placeable &= is_placeable_type(fieldType);
                 }
                 return is_placeable;
             }
