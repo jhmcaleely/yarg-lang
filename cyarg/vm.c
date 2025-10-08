@@ -322,7 +322,7 @@ static bool derefElement(ObjRoutine* routine) {
             return false;
         }
         PackedValue element = arrayElement(array->store, index);
-        result = unpackStoredValue(element);
+        result = unpackValue(element);
 
     } else {
         ObjPackedUniformArray* arrayObj = (ObjPackedUniformArray*)destinationObject(peek(routine, 1));
@@ -361,7 +361,7 @@ static bool setArrayElement(ObjRoutine* routine) {
         }
 
         PackedValue trg = arrayElement(array->store, index);
-        if (!assignToStorage(trg, new_value)) {
+        if (!assignToPackedValue(trg, new_value)) {
             runtimeError(routine, "Cannot set array element to incompatible type.");
             return false;
         }
@@ -380,7 +380,7 @@ static bool derefPtr(ObjRoutine* routine) {
     PackedValue dest;
     dest.storedType = pointer->type->target_type;
     dest.storedValue = pointer->destination;
-    Value result = unpackStoredValue(dest);
+    Value result = unpackValue(dest);
     push(routine, result);
 
     tempRootPop();
@@ -637,7 +637,7 @@ InterpretResult run(ObjRoutine* routine) {
                 ValueCell* lhs = frameSlot(routine, frame, slot);
                 ValueCellTarget lhsTrg = { .cellType = lhs->cellType, .value = &lhs->value };
 
-                if (!assignTo(lhsTrg, rhs->value)) {
+                if (!assignToValueCellTarget(lhsTrg, rhs->value)) {
                     runtimeError(routine, "Cannot set local variable to incompatible type.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -671,7 +671,7 @@ InterpretResult run(ObjRoutine* routine) {
                     ValueCell* rhs = peekCell(routine, 0);
                     ValueCellTarget lhsTrg = { .cellType = lhs->cellType, .value = &lhs->value };
 
-                    if (!assignTo(lhsTrg, rhs->value)) {
+                    if (!assignToValueCellTarget(lhsTrg, rhs->value)) {
                         runtimeError(routine, "Cannot set global variable to incompatible type.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
@@ -684,7 +684,7 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_INITIALISE: {
                 ValueCellTarget lhsTrg = peekCellTarget(routine, 1);
                 ValueCell* rhs = peekCell(routine, 0);
-                if (!initialiseTo(lhsTrg, rhs->value)) {
+                if (!initialiseValueCellTarget(lhsTrg, rhs->value)) {
                     runtimeError(routine, "Cannot initialise variable with this value.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -704,7 +704,7 @@ InterpretResult run(ObjRoutine* routine) {
                     .value = &frame->closure->upvalues[slot]->contents->value 
                 };
 
-                if (!assignTo(lhsTrg, rhs->value)) {
+                if (!assignToValueCellTarget(lhsTrg, rhs->value)) {
                     runtimeError(routine, "Cannot set local variable to incompatible type.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -738,7 +738,7 @@ InterpretResult run(ObjRoutine* routine) {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     PackedValue f = structField(object->store, index);
-                    Value result = unpackStoredValue(f);
+                    Value result = unpackValue(f);
 
                     pop(routine);
                     push(routine, result);
@@ -780,7 +780,7 @@ InterpretResult run(ObjRoutine* routine) {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     PackedValue trg = structField(object->store, index);
-                    if (!assignToStorage(trg, peek(routine, 0))) {
+                    if (!assignToPackedValue(trg, peek(routine, 0))) {
                         runtimeError(routine, "cannot assign to field type.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
@@ -1173,7 +1173,7 @@ InterpretResult run(ObjRoutine* routine) {
                 ObjPackedPointer* pLhs = AS_POINTER(lhs);
                 ObjConcreteYargType* storageType = pLhs->type->target_type;
                 PackedValue trg = { .storedType = storageType, .storedValue = pLhs->destination };
-                if (assignToStorage(trg, rhs)) {
+                if (assignToPackedValue(trg, rhs)) {
                     pop(routine);
                     pop(routine);
                     push(routine, rhs);

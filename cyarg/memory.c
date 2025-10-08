@@ -162,21 +162,21 @@ static void blackenObject(Obj* object) {
             PackedValue dest;
             dest.storedType = ptr->type->target_type;
             dest.storedValue = ptr->destination;
-            markStoredValue(dest);
+            markPackedValue(dest);
             break;
         }
         case OBJ_UNOWNED_UNIFORMARRAY:
             /* fall through */
         case OBJ_PACKEDUNIFORMARRAY: {
             ObjPackedUniformArray* array = (ObjPackedUniformArray*)object;
-            markStoredValue(array->store);
+            markPackedValue(array->store);
             break;
         }
         case OBJ_UNOWNED_PACKEDSTRUCT:
             // fall through
         case OBJ_PACKEDSTRUCT: {
             ObjPackedStruct* struct_ = (ObjPackedStruct*)object;
-            markStoredValue(struct_->store);
+            markPackedValue(struct_->store);
             break;
         }
         case OBJ_NATIVE: break;

@@ -146,7 +146,7 @@ ObjPackedUniformArray* newPackedUniformArray(ObjConcreteYargTypeArray* type) {
 
     for (size_t i = 0; i < type->cardinality; i++) {
         PackedValue el = arrayElement(new_array, i);
-        initialisePackedStorage(el);
+        initialisePackedValue(el);
     }
 
     array->store = new_array;
@@ -233,7 +233,7 @@ Obj* destinationObject(Value pointer) {
         PackedValue dest;
         dest.storedType = p->type->target_type;
         dest.storedValue = p->destination;
-        Value target = unpackStoredValue(dest);
+        Value target = unpackValue(dest);
         if (IS_OBJ(target)) {
             return AS_OBJ(target);
         }
@@ -276,7 +276,7 @@ ObjPackedStruct* newPackedStruct(ObjConcreteYargTypeStruct* type) {
 
     for (size_t i = 0; i < type->field_count; i++) {
         PackedValue f = structField(new_struct, i);
-        initialisePackedStorage(f);
+        initialisePackedValue(f);
     }
 
     object->store = new_struct;
@@ -392,7 +392,7 @@ static void printArray(FILE* op, ObjPackedUniformArray* array) {
     FPRINTMSG(op, ":[");
     for (int i = 0; i < arrayType->cardinality; i++) {
         PackedValue element = arrayElement(array->store, i);
-        Value unpackedValue = unpackStoredValue(element);
+        Value unpackedValue = unpackValue(element);
         fprintValue(op, unpackedValue);
         if (i < arrayType->cardinality - 1) {
             FPRINTMSG(op, ", ");
@@ -413,7 +413,7 @@ static void printStruct(FILE* op, ObjPackedStruct* st) {
     FPRINTMSG(op, "struct{|%zu:%zu|", structType->field_count, structType->storage_size);
     for (size_t i = 0; i < structType->field_count; i++) {
         PackedValue f = structField(st->store, i);
-        Value logValue = unpackStoredValue(f);
+        Value logValue = unpackValue(f);
         fprintValue(op, logValue);
         FPRINTMSG(op, "; ");
     }

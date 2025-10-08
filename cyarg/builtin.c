@@ -446,14 +446,14 @@ bool newBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
         case TypeUint32:
         case TypeInt64:
         case TypeUint64: {
-            PackedValue heapValue = createValueHeapCell(typeToCreate);
-            initialisePackedStorage(heapValue);
+            PackedValue heapValue = allocPackedValue(typeToCreate);
+            initialisePackedValue(heapValue);
             *result = OBJ_VAL(newPointerForHeapCell(heapValue));
             return true;
         }
         case TypeStruct: {
-            PackedValue heapValue = createValueHeapCell(typeToCreate);
-            initialisePackedStorage(heapValue);
+            PackedValue heapValue = allocPackedValue(typeToCreate);
+            initialisePackedValue(heapValue);
             *result = OBJ_VAL(newPointerForHeapCell(heapValue));
             return true;
         }

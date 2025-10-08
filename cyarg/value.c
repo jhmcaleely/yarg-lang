@@ -11,7 +11,9 @@ typedef union PackedValueStore {
     Value asValue;
 } PackedValueStore;
 
-PackedValue createValueHeapCell(Value type) {
+static void packValue(PackedValue packedStorageTarget, Value value);
+
+PackedValue allocPackedValue(Value type) {
     void* dest = reallocate(NULL, 0, yt_sizeof_type_storage(type));
 
     ObjConcreteYargType* ct = IS_NIL(type) ? NULL : AS_YARGTYPE(type);
@@ -19,48 +21,48 @@ PackedValue createValueHeapCell(Value type) {
     return value;
 }
 
-static void markStoredStructFields(ObjConcreteYargTypeStruct* type, PackedValueStore* fields) {
+static void markPackedStruct(ObjConcreteYargTypeStruct* type, PackedValueStore* fields) {
     if (fields) {
         PackedValue s;
         s.storedType = (ObjConcreteYargType*)type;
         s.storedValue = fields;
         for (int i = 0; i < type->field_count; i++) {
             PackedValue f = structField(s, i);
-            markStoredValue(f);
+            markPackedValue(f);
         }
     }
 }
 
-static void markStoredArrayElements(ObjConcreteYargTypeArray* type, PackedValueStore* elements) {
+static void markPackedArray(ObjConcreteYargTypeArray* type, PackedValueStore* elements) {
     if (elements) {
         PackedValue array = { .storedType = (ObjConcreteYargType*)type, .storedValue = elements };
         for (size_t i = 0; i < type->cardinality; i++) {
             PackedValue el = arrayElement(array, i);
-            markStoredValue(el);
+            markPackedValue(el);
         }
     }
 }
 
-void markStoredContainerElements(PackedValue packedContainer) {
+void markPackedContainer(PackedValue packedContainer) {
     if (packedContainer.storedType) {
         markObject((Obj*)packedContainer.storedType);
 
         switch (packedContainer.storedType->yt) {
             case TypeStruct: {
                 ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*) packedContainer.storedType;
-                markStoredStructFields(structType, packedContainer.storedValue);
+                markPackedStruct(structType, packedContainer.storedValue);
                 break;
             }
             case TypeArray: {
                 ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) packedContainer.storedType;
-                markStoredArrayElements(arrayType, packedContainer.storedValue);
+                markPackedArray(arrayType, packedContainer.storedValue);
                 break;
             }
             case TypePointer: {
                 ObjConcreteYargTypePointer* pointerType = (ObjConcreteYargTypePointer*)packedContainer.storedType;
                 PackedValue dest = { .storedType = pointerType->target_type, .storedValue = packedContainer.storedValue };
                 if (packedContainer.storedValue && pointerType->target_type) {
-                    markStoredValue(dest);
+                    markPackedValue(dest);
                 }
                 break;
             }
@@ -71,13 +73,13 @@ void markStoredContainerElements(PackedValue packedContainer) {
     }
 }
 
-void markStoredValue(PackedValue value) {
+void markPackedValue(PackedValue value) {
     if (value.storedValue == NULL) return;
     if (value.storedType == NULL) {
         markValue(value.storedValue->asValue);
         return;
     } else if (type_packs_as_container(value.storedType)) {
-        markStoredContainerElements(value);
+        markPackedContainer(value);
         return;
     } else if (type_packs_as_obj(value.storedType)) {
         markObject((Obj*)value.storedType);
@@ -86,7 +88,7 @@ void markStoredValue(PackedValue value) {
     }
 }
 
-void initialisePackedStorage(PackedValue packedValue) {
+void initialisePackedValue(PackedValue packedValue) {
 
     if (packedValue.storedType == NULL) {
         packedValue.storedValue->asValue = NIL_VAL;
@@ -110,7 +112,7 @@ void initialisePackedStorage(PackedValue packedValue) {
                 if (at->cardinality > 0) {
                     for (size_t i = 0; i < at->cardinality; i++) {
                         PackedValue el = arrayElement(packedValue, i);
-                        initialisePackedStorage(el);
+                        initialisePackedValue(el);
                     }
                 }
                 break;
@@ -119,7 +121,7 @@ void initialisePackedStorage(PackedValue packedValue) {
                 ObjConcreteYargTypeStruct* st = (ObjConcreteYargTypeStruct*)packedValue.storedType;
                 for (size_t i = 0; i < st->field_count; i++) {
                     PackedValue f = structField(packedValue, i);
-                    initialisePackedStorage(f);
+                    initialisePackedValue(f);
                 }
                 break;
             }
@@ -139,7 +141,7 @@ void initialisePackedStorage(PackedValue packedValue) {
     }
 }
 
-Value unpackStoredValue(PackedValue packedValue) {
+Value unpackValue(PackedValue packedValue) {
     if (packedValue.storedType == NULL) {
         return packedValue.storedValue->asValue;
     } else {
@@ -180,7 +182,7 @@ Value unpackStoredValue(PackedValue packedValue) {
     }
 }
 
-void packValueStorage(PackedValue packedStorageTarget, Value value) {
+static void packValue(PackedValue packedStorageTarget, Value value) {
     if (packedStorageTarget.storedType == NULL) {
         packedStorageTarget.storedValue->asValue = value;
     } else {
@@ -215,14 +217,14 @@ void packValueStorage(PackedValue packedStorageTarget, Value value) {
     }
 }
 
-bool assignToStorage(PackedValue lhs, Value rhsValue) {
+bool assignToPackedValue(PackedValue lhs, Value rhsValue) {
 
     if (lhs.storedType == NULL) {
         lhs.storedValue->asValue = rhsValue;
         return true;
     } else {
         if (isCompatibleType(lhs.storedType, rhsValue)) {
-            packValueStorage(lhs, rhsValue);
+            packValue(lhs, rhsValue);
             return true;
         } else {
             return false;
@@ -230,7 +232,7 @@ bool assignToStorage(PackedValue lhs, Value rhsValue) {
     }
 }
 
-bool assignTo(ValueCellTarget lhs, Value rhsValue) {
+bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
     if (lhs.cellType == NULL) {
         *lhs.value = rhsValue;
         return true;
@@ -244,7 +246,7 @@ bool assignTo(ValueCellTarget lhs, Value rhsValue) {
     }
 }
 
-bool initialiseTo(ValueCellTarget lhs, Value rhsValue) {
+bool initialiseValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
     if (lhs.cellType == NULL) {
         *lhs.value = rhsValue;
         return true;

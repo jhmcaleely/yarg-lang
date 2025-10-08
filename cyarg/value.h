@@ -96,14 +96,12 @@ typedef struct {
     ObjConcreteYargType* storedType;
 } PackedValue;
 
-void initialisePackedStorage(PackedValue packedValue);
-Value unpackStoredValue(PackedValue packedValue);
-void packValueStorage(PackedValue packedStorageTarget, Value value);
-PackedValue createValueHeapCell(Value type);
-void markStoredContainerElements(PackedValue packedContainer);
-void markStoredValue(PackedValue packedValue);
+void initialisePackedValue(PackedValue packedValue);
+Value unpackValue(PackedValue packedValue);
+PackedValue allocPackedValue(Value type);
+void markPackedValue(PackedValue packedValue);
 
-bool assignToStorage(PackedValue lhs, Value rhsValue);
+bool assignToPackedValue(PackedValue lhs, Value rhsValue);
 
 bool is_uniformarray(PackedValue val);
 bool is_struct(PackedValue val);
@@ -118,8 +116,8 @@ typedef struct {
     ObjConcreteYargType* cellType;
 } ValueCellTarget;
 
-bool assignTo(ValueCellTarget lhs, Value rhsValue);
-bool initialiseTo(ValueCellTarget lhs, Value rhsValue);
+bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue);
+bool initialiseValueCellTarget(ValueCellTarget lhs, Value rhsValue);
 
 typedef struct {
     int capacity;
