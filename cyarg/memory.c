@@ -82,7 +82,7 @@ void markValue(Value value) {
 void markValueCell(ValueCell* cell) {
     if (cell == NULL) return;
     markValue(cell->value);
-    markValue(cell->type);
+    markObject((Obj*)cell->cellType);
 }
 
 static void markArray(ValueArray* array) {

@@ -67,7 +67,7 @@ static void defineNative(const char* name, NativeFn function) {
     tempRootPush(OBJ_VAL(newNative(function)));
     ValueCell cell;
     cell.value = vm.tempRoots[1];
-    cell.type = NIL_VAL;
+    cell.cellType = NULL;
     tableCellSet(&vm.globals, AS_STRING(vm.tempRoots[0]), cell);
     tempRootPop();
     tempRootPop();
@@ -180,14 +180,14 @@ static bool callValue(ObjRoutine* routine, Value callee, int argCount) {
                 ObjBoundMethod* bound = AS_BOUND_METHOD(callee);
                 ValueCell* target = peekCell(routine, argCount);
                 target->value = bound->reciever;
-                target->type = NIL_VAL;
+                target->cellType = NULL;
                 return callfn(routine, bound->method, argCount);
             }
             case OBJ_CLASS: {
                 ObjClass* klass = AS_CLASS(callee);
                 ValueCell* target = peekCell(routine, argCount);
                 target->value = OBJ_VAL(newInstance(klass));
-                target->type = NIL_VAL;
+                target->cellType = NULL;
                 Value initializer;
                 if (tableGet(&klass->methods, vm.initString, &initializer)) {
                     return callfn(routine, AS_CLOSURE(initializer), argCount);
@@ -247,7 +247,7 @@ static bool invoke(ObjRoutine* routine, ObjString* name, int argCount) {
         ValueCell* target = peekCell(routine, argCount);
 
         target->value = value;
-        target->type = NIL_VAL;
+        target->cellType = NULL;
         return callValue(routine, value, argCount);
     }
 
@@ -405,34 +405,6 @@ static void concatenate(ObjRoutine* routine) {
     pop(routine);
     pop(routine);
     push(routine, OBJ_VAL(result));
-}
-
-static bool assignTo(ValueCellTarget lhs, Value rhsValue) {
-    if (lhs.cellType == NULL) {
-        *lhs.value = rhsValue;
-        return true;
-    } else {
-        if (isCompatibleType(lhs.cellType, rhsValue)) {
-            *(lhs.value) = rhsValue;
-            return true;
-        } else {
-            return false;
-        }
-    }
-}
-
-static bool initialiseTo(ValueCellTarget lhs, Value rhsValue) {
-    if (lhs.cellType == NULL) {
-        *lhs.value = rhsValue;
-        return true;
-    } else {
-        if (isInitialisableType(lhs.cellType, rhsValue)) {
-            *(lhs.value) = rhsValue;
-            return true;
-        } else {
-            return false;
-        }
-    }
 }
 
 static void makeConcreteTypeConst(ObjRoutine* routine) {
@@ -663,10 +635,9 @@ InterpretResult run(ObjRoutine* routine) {
                 uint8_t slot = READ_BYTE();
                 ValueCell* rhs = peekCell(routine, 0);
                 ValueCell* lhs = frameSlot(routine, frame, slot);
-                ObjConcreteYargType* lhsType = IS_NIL(lhs->type) ? NULL : AS_YARGTYPE(lhs->type);
-                ValueCellTarget trg = { .cellType = lhsType, .value = &lhs->value };
+                ValueCellTarget lhsTrg = { .cellType = lhs->cellType, .value = &lhs->value };
 
-                if (!assignTo(trg, rhs->value)) {
+                if (!assignTo(lhsTrg, rhs->value)) {
                     runtimeError(routine, "Cannot set local variable to incompatible type.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -698,10 +669,9 @@ InterpretResult run(ObjRoutine* routine) {
                 ValueCell* lhs = NULL;
                 if (tableCellGetPlace(&vm.globals, name, &lhs)) {
                     ValueCell* rhs = peekCell(routine, 0);
-                    ObjConcreteYargType* lhsType = IS_NIL(lhs->type) ? NULL : AS_YARGTYPE(lhs->type);
-                    ValueCellTarget trg = { .cellType = lhsType, .value = &lhs->value };
+                    ValueCellTarget lhsTrg = { .cellType = lhs->cellType, .value = &lhs->value };
 
-                    if (!assignTo(trg, rhs->value)) {
+                    if (!assignTo(lhsTrg, rhs->value)) {
                         runtimeError(routine, "Cannot set global variable to incompatible type.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
@@ -712,11 +682,9 @@ InterpretResult run(ObjRoutine* routine) {
                 break;
             }
             case OP_INITIALISE: {
-                ValueCell* lhs = peekCell(routine, 1);
+                ValueCellTarget lhsTrg = peekCellTarget(routine, 1);
                 ValueCell* rhs = peekCell(routine, 0);
-                ObjConcreteYargType* lhsType = IS_NIL(lhs->type) ? NULL : AS_YARGTYPE(lhs->type);
-                ValueCellTarget trg = { .cellType = lhsType, .value = &lhs->value };
-                if (!initialiseTo(trg, rhs->value)) {
+                if (!initialiseTo(lhsTrg, rhs->value)) {
                     runtimeError(routine, "Cannot initialise variable with this value.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -731,14 +699,12 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_SET_UPVALUE: {
                 uint8_t slot = READ_BYTE();
                 ValueCell* rhs = peekCell(routine, 0);
-                Value lhsTypeVal = frame->closure->upvalues[slot]->contents->type;
-                ObjConcreteYargType* lhsType = IS_NIL(lhsTypeVal) ? NULL : AS_YARGTYPE(lhsTypeVal);
-                ValueCellTarget trg = { 
-                    .cellType = lhsType, 
+                ValueCellTarget lhsTrg = { 
+                    .cellType = frame->closure->upvalues[slot]->contents->cellType, 
                     .value = &frame->closure->upvalues[slot]->contents->value 
                 };
 
-                if (!assignTo(trg, rhs->value)) {
+                if (!assignTo(lhsTrg, rhs->value)) {
                     runtimeError(routine, "Cannot set local variable to incompatible type.");
                     return INTERPRET_RUNTIME_ERROR;
                 }

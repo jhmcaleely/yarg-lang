@@ -3,6 +3,7 @@
 #include "debug.h"
 #include "object.h"
 #include "value.h"
+#include "yargtype.h"
 #include "routine.h"
 
 void disassembleChunk(Chunk* chunk, const char* name) {
@@ -271,7 +272,7 @@ void printValueStack(ObjRoutine* routine, const char* message) {
         printf("[ ");
         printValue(slot->value);
         printf(" | ");
-        printValue(slot->type);
+        printType(stdout, slot->cellType);
         printf(" ]");
     }
     printf("\n");

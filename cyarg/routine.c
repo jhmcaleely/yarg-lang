@@ -179,7 +179,7 @@ void push(ObjRoutine* routine, Value value) {
     ValueCell* nextSlot = slot(routine, routine->stackTopIndex);
 
     nextSlot->value = value;
-    nextSlot->type = NIL_VAL;
+    nextSlot->cellType = NULL;
     routine->stackTopIndex++;
 
     if (((routine->stackTopIndex / SLICE_MAX) + 1) > routine->sliceCount) {
@@ -196,7 +196,7 @@ void push(ObjRoutine* routine, Value value) {
 void pushTyped(ObjRoutine* routine, Value value, Value type) {
     push(routine, value);
     ValueCell* top = peekCell(routine, 0);
-    top->type = type;
+    top->cellType = IS_NIL(type) ? NULL : AS_YARGTYPE(type);
 }
 
 Value pop(ObjRoutine* routine) {
@@ -226,4 +226,10 @@ ValueCell* peekCell(ObjRoutine* routine, int distance) {
     ValueCell* targetCell = slot(routine, routine->stackTopIndex - 1 - distance);
 
     return targetCell;
+}
+
+ValueCellTarget peekCellTarget(ObjRoutine* routine, int distance) {
+    ValueCell* target = peekCell(routine, distance);
+    ValueCellTarget result = { .value = &target->value, .cellType = target->cellType};
+    return result;
 }

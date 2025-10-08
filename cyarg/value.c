@@ -230,6 +230,34 @@ bool assignToStorage(PackedValue lhs, Value rhsValue) {
     }
 }
 
+bool assignTo(ValueCellTarget lhs, Value rhsValue) {
+    if (lhs.cellType == NULL) {
+        *lhs.value = rhsValue;
+        return true;
+    } else {
+        if (isCompatibleType(lhs.cellType, rhsValue)) {
+            *(lhs.value) = rhsValue;
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+bool initialiseTo(ValueCellTarget lhs, Value rhsValue) {
+    if (lhs.cellType == NULL) {
+        *lhs.value = rhsValue;
+        return true;
+    } else {
+        if (isInitialisableType(lhs.cellType, rhsValue)) {
+            *(lhs.value) = rhsValue;
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
 bool is_uniformarray(PackedValue val) {
     if (val.storedType == NULL) {
         return IS_UNIFORMARRAY(val.storedValue->asValue);

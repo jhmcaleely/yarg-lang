@@ -102,6 +102,7 @@ void packValueStorage(PackedValue packedStorageTarget, Value value);
 PackedValue createValueHeapCell(Value type);
 void markStoredContainerElements(PackedValue packedContainer);
 void markStoredValue(PackedValue packedValue);
+
 bool assignToStorage(PackedValue lhs, Value rhsValue);
 
 bool is_uniformarray(PackedValue val);
@@ -109,8 +110,16 @@ bool is_struct(PackedValue val);
 
 typedef struct {
     Value value;
-    Value type;
+    ObjConcreteYargType* cellType;
 } ValueCell;
+
+typedef struct {
+    Value* value;
+    ObjConcreteYargType* cellType;
+} ValueCellTarget;
+
+bool assignTo(ValueCellTarget lhs, Value rhsValue);
+bool initialiseTo(ValueCellTarget lhs, Value rhsValue);
 
 typedef struct {
     int capacity;
@@ -128,10 +137,5 @@ void fprintValue(FILE* op, Value value);
 
 bool is_positive_integer(Value a);
 uint32_t as_positive_integer(Value a);
-
-typedef struct {
-    Value* value;
-    ObjConcreteYargType* cellType;
-} ValueCellTarget;
 
 #endif

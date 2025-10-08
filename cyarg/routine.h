@@ -85,6 +85,7 @@ void popN(ObjRoutine* routine, size_t count);
 void popFrame(ObjRoutine* routine, CallFrame* frame);
 Value peek(ObjRoutine* routine, int distance);
 ValueCell* peekCell(ObjRoutine* routine, int distance);
+ValueCellTarget peekCellTarget(ObjRoutine* routine, int distance);
 
 void runtimeError(ObjRoutine* routine, const char* format, ...);
 

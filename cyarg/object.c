@@ -365,14 +365,12 @@ ObjString* copyString(const char* chars, int length) {
 ObjUpvalue* newUpvalue(ValueCell* slot, size_t stackOffset) {
     ObjUpvalue* upvalue = ALLOCATE_OBJ(ObjUpvalue, OBJ_UPVALUE);
     upvalue->closed.value = NIL_VAL;
-    upvalue->closed.type = NIL_VAL;
+    upvalue->closed.cellType = NULL;
     upvalue->contents = slot;
     upvalue->stackOffset = stackOffset;
     upvalue->next = NULL;
     return upvalue;
 }
-
-static void printType(FILE* op, ObjConcreteYargType* type);
 
 static void printFunction(FILE* op, ObjFunction* function) {
     if (function->name == NULL) {
@@ -401,82 +399,6 @@ static void printArray(FILE* op, ObjPackedUniformArray* array) {
         }
     }
     FPRINTMSG(op, "]");
-}
-
-static void printTypeLiteral(FILE* op, ObjConcreteYargType* type) {
-    if (type == NULL) {
-        FPRINTMSG(op, "any");
-        return;
-    }
-
-    if (type->isConst) {
-        FPRINTMSG(op, "const ");
-    }
-    switch (type->yt) {
-        case TypeAny: FPRINTMSG(op, "any"); break;
-        case TypeBool: FPRINTMSG(op, "bool"); break;
-        case TypeDouble: FPRINTMSG(op, "mfloat64"); break;
-        case TypeInt8: FPRINTMSG(op, "int8"); break;
-        case TypeUint8: FPRINTMSG(op, "uint8"); break;
-        case TypeInt16: FPRINTMSG(op, "int16"); break;
-        case TypeUint16: FPRINTMSG(op, "uint16"); break;
-        case TypeInt32: FPRINTMSG(op, "int32"); break;
-        case TypeUint32: FPRINTMSG(op, "uint32"); break;
-        case TypeInt64: FPRINTMSG(op, "int64"); break;
-        case TypeUint64: FPRINTMSG(op, "uint64"); break;
-        case TypeString: FPRINTMSG(op, "string"); break;
-        case TypeClass: FPRINTMSG(op, "Class"); break;
-        case TypeInstance: FPRINTMSG(op, "Instance"); break;
-        case TypeFunction: FPRINTMSG(op, "Function"); break;
-        case TypeNativeBlob: FPRINTMSG(op, "NativeBlob"); break;
-        case TypeRoutine: FPRINTMSG(op, "Routine"); break;
-        case TypeChannel: FPRINTMSG(op, "Channel"); break;  
-        case TypeYargType: FPRINTMSG(op, "Type"); break;
-        case TypeArray: {
-            ObjConcreteYargTypeArray* array = (ObjConcreteYargTypeArray*) type;
-            Value type = arrayElementType(array);
-            if (IS_NIL(type)) {
-                FPRINTMSG(op, "any");
-            } else {
-                printTypeLiteral(op, array->element_type);
-            }
-            FPRINTMSG(op, "[");
-            if (array->cardinality > 0) {
-                FPRINTMSG(op, "%zu", array->cardinality);
-            }
-            FPRINTMSG(op, "]");
-            break;
-        }
-        case TypeStruct: {
-            ObjConcreteYargTypeStruct* st = (ObjConcreteYargTypeStruct*) type;
-            FPRINTMSG(op, "struct{|%zu:%zu| ", st->field_count, st->storage_size);
-            for (size_t i = 0; i < st->field_count; i++) {
-                printTypeLiteral(op, st->field_types[i]);
-                FPRINTMSG(op, "; ");
-            }
-            FPRINTMSG(op, "}");
-            break;
-        }
-        case TypePointer: {
-            ObjConcreteYargTypePointer* st = (ObjConcreteYargTypePointer*) type;
-            if (type->isConst) {
-                FPRINTMSG(op, "const ");
-            }
-            FPRINTMSG(op, "*");
-            if (st->target_type) {
-                printTypeLiteral(op, st->target_type);
-            } else {
-                FPRINTMSG(op, "any");
-            }
-            break;
-        }
-        default: FPRINTMSG(op, "Unknown"); break;
-    }
-}
-
-static void printType(FILE* op, ObjConcreteYargType* type) {
-    FPRINTMSG(op, "Type:");
-    printTypeLiteral(op, type);
 }
 
 static void printPointer(FILE* op, ObjPackedPointer* ptr) {
