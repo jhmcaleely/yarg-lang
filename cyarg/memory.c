@@ -85,7 +85,7 @@ void markValueCell(ValueCell* cell) {
     markObject((Obj*)cell->cellType);
 }
 
-static void markArray(ValueArray* array) {
+static void markArray(DynamicValueArray* array) {
     for (int i = 0; i < array->count; i++) {
         markValue(array->values[i]);
     }
@@ -546,7 +546,7 @@ static void freeObject(Obj* object) {
         case OBJ_EXPR_TYPE: FREE(ObjExprTypeLiteral, object); break;
         case OBJ_EXPR_TYPE_STRUCT: {
             ObjExprTypeStruct* expr = (ObjExprTypeStruct*)object;
-            freeValueArray(&expr->fieldsByIndex);
+            freeDynamicValueArray(&expr->fieldsByIndex);
             FREE(ObjExprTypeStruct, object);
             break;
         }

@@ -280,13 +280,13 @@ bool is_struct(PackedValue val) {
     }
 }
 
-void initValueArray(ValueArray* array) {
+void initDynamicValueArray(DynamicValueArray* array) {
     array->values = NULL;
     array->capacity = 0;
     array->count = 0;
 }
 
-void appendToValueArray(ValueArray* array, Value value) {
+void appendToDynamicValueArray(DynamicValueArray* array, Value value) {
     if (array->capacity < array->count + 1) {
         int oldCapacity = array->capacity;
         array->capacity = GROW_CAPACITY(oldCapacity);
@@ -297,9 +297,9 @@ void appendToValueArray(ValueArray* array, Value value) {
     array->count++;
 }
 
-void freeValueArray(ValueArray* array) {
+void freeDynamicValueArray(DynamicValueArray* array) {
     FREE_ARRAY(Value, array->values, array->capacity);
-    initValueArray(array);
+    initDynamicValueArray(array);
 }
 
 void printValue(Value value) {

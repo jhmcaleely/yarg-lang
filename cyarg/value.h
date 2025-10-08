@@ -131,10 +131,10 @@ typedef struct {
     int capacity;
     int count;
     Value* values;
-} ValueArray;
+} DynamicValueArray;
 
-void initValueArray(ValueArray* array);
-void appendToValueArray(ValueArray* array, Value value);
-void freeValueArray(ValueArray* array);
+void initDynamicValueArray(DynamicValueArray* array);
+void appendToDynamicValueArray(DynamicValueArray* array, Value value);
+void freeDynamicValueArray(DynamicValueArray* array);
 
 #endif

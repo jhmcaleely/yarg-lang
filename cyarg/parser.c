@@ -402,7 +402,7 @@ static ObjExprTypeStruct* structExpression() {
     while (!check(TOKEN_RIGHT_BRACE)) {
         ObjStmtFieldDeclaration* field = fieldStmt();
         pushWorkingNode((Obj*)field);
-        appendToValueArray(&struct_declaration->fieldsByIndex, OBJ_VAL(field));
+        appendToDynamicValueArray(&struct_declaration->fieldsByIndex, OBJ_VAL(field));
         popWorkingNode();
     }
     
