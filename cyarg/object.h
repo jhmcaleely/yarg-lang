@@ -189,8 +189,7 @@ typedef struct {
 
 typedef struct {
     Obj obj;
-    ObjConcreteYargTypeStruct* type;
-    PackedValueStore* structFields;
+    PackedValue store;
 } ObjPackedStruct;
 
 #define ALLOCATE_OBJ(type, objectType) \
@@ -220,7 +219,7 @@ PackedValue arrayElement(PackedValue array, size_t index);
 size_t arrayCardinality(PackedValue array);
 
 PackedValue structField(PackedValue struct_, size_t index);
-bool structFieldIndex(ObjConcreteYargTypeStruct* structType, ObjString* name, size_t* index);
+bool structFieldIndex(ObjConcreteYargType* type, ObjString* name, size_t* index);
 ObjPackedStruct* newPackedStructAt(PackedValue location);
 
 ObjPackedPointer* newPointerForHeapCell(PackedValue location);

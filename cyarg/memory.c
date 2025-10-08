@@ -176,11 +176,7 @@ static void blackenObject(Obj* object) {
             // fall through
         case OBJ_PACKEDSTRUCT: {
             ObjPackedStruct* struct_ = (ObjPackedStruct*)object;
-            markObject((Obj*)struct_->type);
-            PackedValue s;
-            s.storedType = (ObjConcreteYargType*) struct_->type;
-            s.storedValue = struct_->structFields;
-            markStoredContainerElements(s);
+            markStoredValue(struct_->store);
             break;
         }
         case OBJ_NATIVE: break;
@@ -477,7 +473,7 @@ static void freeObject(Obj* object) {
         case OBJ_UNOWNED_PACKEDSTRUCT: FREE(ObjPackedStruct, object); break;
         case OBJ_PACKEDSTRUCT: {
             ObjPackedStruct* struct_ = (ObjPackedStruct*) object;
-            struct_->structFields = reallocate(struct_->structFields, struct_->type->storage_size, 0);
+            struct_->store.storedValue = reallocate(struct_->store.storedValue, ((ObjConcreteYargTypeStruct*)(struct_->store.storedType))->storage_size, 0);
             FREE(ObjPackedStruct, object);
             break;            
         }

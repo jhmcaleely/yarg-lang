@@ -781,16 +781,12 @@ InterpretResult run(ObjRoutine* routine) {
                 } else if (IS_STRUCT(peek(routine, 0))) {
                     ObjPackedStruct* object = AS_STRUCT(peek(routine, 0));
                     ObjString* name = READ_STRING();
-                    PackedValue str;
-                    str.storedType = (ObjConcreteYargType*) object->type;
-                    str.storedValue = object->structFields;
-
                     size_t index;
-                    if (!structFieldIndex(object->type, name, &index)) {
+                    if (!structFieldIndex(object->store.storedType, name, &index)) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    PackedValue f = structField(str, index);
+                    PackedValue f = structField(object->store, index);
                     Value result = unpackStoredValue(f);
 
                     pop(routine);
@@ -799,16 +795,12 @@ InterpretResult run(ObjRoutine* routine) {
                     ObjPackedStruct* object = (ObjPackedStruct*) destinationObject(peek(routine, 0));
                     tempRootPush(OBJ_VAL(object));
                     ObjString* name = READ_STRING();
-                    PackedValue str;
-                    str.storedType = (ObjConcreteYargType*) object->type;
-                    str.storedValue = object->structFields;
-
                     size_t index;
-                    if (!structFieldIndex(object->type, name, &index)) {
+                    if (!structFieldIndex(object->store.storedType, name, &index)) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    PackedValue f = structField(str, index);
+                    PackedValue f = structField(object->store, index);
                     Value result = OBJ_VAL(newPointerAtHeapCell(f));
                     tempRootPop();
 
@@ -831,16 +823,12 @@ InterpretResult run(ObjRoutine* routine) {
                 } else if (IS_STRUCT(peek(routine, 1))) {
                     ObjPackedStruct* object = AS_STRUCT(peek(routine, 1));
                     ObjString* name = READ_STRING();
-                    PackedValue str;
-                    str.storedType = (ObjConcreteYargType*)object->type;
-                    str.storedValue = object->structFields;
-
                     size_t index;
-                    if (!structFieldIndex(object->type, name, &index)) {
+                    if (!structFieldIndex(object->store.storedType, name, &index)) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    PackedValue trg = structField(str, index);
+                    PackedValue trg = structField(object->store, index);
                     if (!assignToStorage(trg, peek(routine, 0))) {
                         runtimeError(routine, "cannot assign to field type.");
                         return INTERPRET_RUNTIME_ERROR;

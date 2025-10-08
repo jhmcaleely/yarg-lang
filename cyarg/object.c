@@ -269,19 +269,17 @@ Value placeObjectAt(Value placedType, Value location) {
 
 ObjPackedStruct* newPackedStruct(ObjConcreteYargTypeStruct* type) {
     ObjPackedStruct* object = ALLOCATE_OBJ(ObjPackedStruct, OBJ_PACKEDSTRUCT);
-    object->type = type;
     tempRootPush(OBJ_VAL(object));
 
-    PackedValue structStore;
-    structStore.storedType = (ObjConcreteYargType*) object->type;
-    structStore.storedValue = reallocate(object->structFields, 0, type->storage_size);
+    PackedValue new_struct = { .storedType = (ObjConcreteYargType*) type, .storedValue = NULL };
+    new_struct.storedValue = reallocate(new_struct.storedValue, 0, type->storage_size);
 
     for (size_t i = 0; i < type->field_count; i++) {
-        PackedValue f = structField(structStore, i);
+        PackedValue f = structField(new_struct, i);
         initialisePackedStorage(f);
     }
 
-    object->structFields = structStore.storedValue;
+    object->store = new_struct;
 
     tempRootPop();
     return object;
@@ -289,13 +287,13 @@ ObjPackedStruct* newPackedStruct(ObjConcreteYargTypeStruct* type) {
 
 ObjPackedStruct* newPackedStructAt(PackedValue location) {
     ObjPackedStruct* object = ALLOCATE_OBJ(ObjPackedStruct, OBJ_UNOWNED_PACKEDSTRUCT);
-    object->type = (ObjConcreteYargTypeStruct*) location.storedType;
-    object->structFields = location.storedValue;
+    object->store = location;
 
     return object;
 }
 
-bool structFieldIndex(ObjConcreteYargTypeStruct* structType, ObjString* name, size_t* index) {
+bool structFieldIndex(ObjConcreteYargType* type, ObjString* name, size_t* index) {
+    ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*)type;
     Value indexVal;
     if (tableGet(&structType->field_names, name, &indexVal)) {
         *index = AS_UI32(indexVal);
@@ -489,12 +487,10 @@ static void printPointer(FILE* op, ObjPackedPointer* ptr) {
 }
 
 static void printStruct(FILE* op, ObjPackedStruct* st) {
-    FPRINTMSG(op, "struct{|%zu:%zu|", st->type->field_count, st->type->storage_size);
-    PackedValue s;
-    s.storedType = (ObjConcreteYargType*)st->type;
-    s.storedValue = st->structFields;
-    for (size_t i = 0; i < st->type->field_count; i++) {
-        PackedValue f = structField(s, i);
+    ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*)st->store.storedType;
+    FPRINTMSG(op, "struct{|%zu:%zu|", structType->field_count, structType->storage_size);
+    for (size_t i = 0; i < structType->field_count; i++) {
+        PackedValue f = structField(st->store, i);
         Value logValue = unpackStoredValue(f);
         fprintValue(op, logValue);
         FPRINTMSG(op, "; ");

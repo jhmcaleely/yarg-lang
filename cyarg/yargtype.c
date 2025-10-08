@@ -170,7 +170,7 @@ Value concrete_typeof(Value a) {
     } else if (IS_UNIFORMARRAY(a)) {
         return OBJ_VAL(AS_UNIFORMARRAY(a)->store.storedType);
     } else if (IS_STRUCT(a)) {
-        return OBJ_VAL(AS_STRUCT(a)->type);
+        return OBJ_VAL(AS_STRUCT(a)->store.storedType);
     } else if (IS_YARGTYPE(a)) {
         return OBJ_VAL(newYargTypeFromType(TypeYargType));
     } else if (IS_POINTER(a)) {
