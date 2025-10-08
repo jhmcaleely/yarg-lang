@@ -141,8 +141,7 @@ ObjPackedUniformArray* newPackedUniformArray(ObjConcreteYargTypeArray* type) {
     ObjPackedUniformArray* array = ALLOCATE_OBJ(ObjPackedUniformArray, OBJ_PACKEDUNIFORMARRAY);
     tempRootPush(OBJ_VAL(array));
 
-    PackedValue new_array;
-    new_array.storedType = (ObjConcreteYargType*) type;
+    PackedValue new_array = { .storedType = (ObjConcreteYargType*) type, .storedValue = NULL };
     new_array.storedValue = reallocate(NULL, 0, arrayElementSize(type) * type->cardinality);
 
     for (size_t i = 0; i < type->cardinality; i++) {
