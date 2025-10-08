@@ -407,6 +407,11 @@ static void printArray(FILE* op, ObjPackedUniformArray* array) {
 }
 
 static void printTypeLiteral(FILE* op, ObjConcreteYargType* type) {
+    if (type == NULL) {
+        FPRINTMSG(op, "any");
+        return;
+    }
+
     if (type->isConst) {
         FPRINTMSG(op, "const ");
     }
