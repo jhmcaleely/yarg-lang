@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
+#ifdef CYARG_PICO_TARGET
+#include <pico/multicore.h>
+#endif
 
 #include "common.h"
 
@@ -12,8 +16,7 @@
 
 bool addSlice(ObjRoutine* routine);
 
-void initRoutine(ObjRoutine* routine, RoutineKind type) {
-    routine->type = type;
+void initRoutine(ObjRoutine* routine) {
     routine->entryFunction = NULL;
     routine->entryArg = NIL_VAL;
     routine->state = EXEC_UNBOUND;
@@ -25,12 +28,7 @@ void initRoutine(ObjRoutine* routine, RoutineKind type) {
 
     routine->stackSlices[0] = &routine->stk;
     routine->sliceCount = 1;
-
-    if (routine->type != ROUTINE_ISR) {
-        routine->addSlice = addSlice;
-    } else {
-        routine->addSlice = NULL;
-    }
+    routine->addSlice = addSlice;
 
 #ifdef DEBUG_TRACE_EXECUTION
     routine->traceExecution = true;
@@ -42,6 +40,8 @@ void initRoutine(ObjRoutine* routine, RoutineKind type) {
 }
 
 void resetRoutine(ObjRoutine* routine) {
+
+    routine->result = NIL_VAL;
 
     routine->stackTopIndex = 0;
     routine->frameCount = 0;
@@ -72,12 +72,36 @@ bool addSlice(ObjRoutine* routine) {
     return (routine->stackSlices != NULL);
 }
 
-ObjRoutine* newRoutine(RoutineKind type) {
+ObjRoutine* newRoutine() {
     ObjRoutine* routine = ALLOCATE_OBJ(ObjRoutine, OBJ_ROUTINE);
     tempRootPush(OBJ_VAL(routine));
-    initRoutine(routine, type);
+    initRoutine(routine);
     tempRootPop();
     return routine;
+}
+
+void runAndPrepare(ObjRoutine* routine) {
+    run(routine);
+    routine->result = pop(routine);
+    callfn(routine, routine->entryFunction, routine->entryFunction->function->arity);
+}
+
+bool pinRoutine(ObjRoutine* routine, uintptr_t* address) {
+
+    assert(routine->entryFunction);
+    assert(IS_NIL(routine->entryArg));
+    assert(routine->entryFunction->function->arity == 0);
+
+    for (size_t i = 0; i < MAX_PINNED_ROUTINES; i++) {
+        if (vm.pinnedRoutines[i] == NULL) {
+            vm.pinnedRoutines[i] = routine;
+            prepareRoutineStack(routine);
+            routine->addSlice = NULL;
+            *address = (uintptr_t)vm.pinnedRoutineHandlers[i];
+            return true;
+        }
+    }
+    return false;
 }
 
 bool bindEntryFn(ObjRoutine* routine, ObjClosure* closure) {
@@ -106,6 +130,117 @@ void prepareRoutineStack(ObjRoutine* routine) {
     }
     
     callfn(routine, routine->entryFunction, routine->entryFunction->function->arity);
+}
+
+bool resumeRoutine(ObjRoutine* context, ObjRoutine* target, size_t argCount, Value argument, Value* result) {
+    if (target->state == EXEC_UNBOUND) {
+        push(target, OBJ_VAL(target->entryFunction));
+    }
+
+    if (argCount == 1) {
+        bindEntryArgs(target, argument);
+        push(target, argument);
+    } else {
+        assert(argCount == 0);
+    }
+
+    callfn(target, target->entryFunction, target->entryFunction->function->arity);
+
+    InterpretResult execResult = run(target);
+    if (execResult == INTERPRET_OK) {
+        target->result = pop(target);
+        *result = target->result;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void yieldFromRoutine(ObjRoutine* context) {
+    context->result = peek(context, 0);
+    context->state = EXEC_SUSPENDED;
+}
+
+void returnFromRoutine(ObjRoutine* context, Value result) {
+    assert(context->frameCount == 0);
+    pop(context);
+    context->result = result;
+    push(context, result);
+    context->state = EXEC_CLOSED;
+}
+
+// cyarg: use ascii 'y' 'a' 'r' 'g'
+#define FLAG_VALUE 0x79617267
+
+void nativeCore1Entry() {
+#ifdef CYARG_PICO_TARGET
+    multicore_fifo_push_blocking(FLAG_VALUE);
+    uint32_t g = multicore_fifo_pop_blocking();
+
+    if (g != FLAG_VALUE) {
+        fatalVMError("Core1 entry and sync failed.");
+    }
+#endif
+
+    ObjRoutine* core = vm.core1;
+
+    InterpretResult execResult = run(core);
+    core->result = pop(core);
+    vm.core1 = NULL;
+}
+
+bool startRoutine(ObjRoutine* context, ObjRoutine* target, size_t argCount, Value argument) {
+
+    if (target->state != EXEC_UNBOUND) {
+        return false;
+    }
+
+    if (vm.core1 != NULL) {
+        return false;
+    }
+
+    if (argCount == 1) {
+        bindEntryArgs(target, argument);
+    }
+
+    prepareRoutineStack(target);
+
+#ifdef CYARG_PICO_TARGET
+    vm.core1 = target;
+    vm.core1->state = EXEC_RUNNING;
+
+    multicore_reset_core1();
+    multicore_launch_core1(nativeCore1Entry);
+
+    // Wait for it to start up
+    uint32_t g = multicore_fifo_pop_blocking();
+    if (g != FLAG_VALUE) {
+        fatalVMError("Core1 startup failure.");
+        return false;
+    }
+    multicore_fifo_push_blocking(FLAG_VALUE);
+
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool receiveFromRoutine(ObjRoutine* routine, Value* result) {
+
+#ifdef CYARG_PICO_TARGET
+    while (routine->state == EXEC_RUNNING) {
+        tight_loop_contents();
+    }
+#endif    
+        
+    if (routine->state == EXEC_CLOSED || routine->state == EXEC_SUSPENDED) {
+        *result = routine->result;
+        return true;
+    } 
+    else {
+        return false;
+    }
 }
 
 ValueCell* frameSlot(ObjRoutine* routine, CallFrame* frame, size_t index) {
@@ -143,6 +278,7 @@ void markRoutine(ObjRoutine* routine) {
 
     markObject((Obj*)routine->entryFunction);
     markValue(routine->entryArg);
+    markValue(routine->result);
 }
 
 void runtimeError(ObjRoutine* routine, const char* format, ...) {

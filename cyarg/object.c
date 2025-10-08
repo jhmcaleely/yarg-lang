@@ -381,9 +381,7 @@ static void printFunction(FILE* op, ObjFunction* function) {
 }
 
 static void printRoutine(FILE* op, ObjRoutine* routine) {
-    FPRINTMSG(op, "<R%s %p>"
-          , routine->type == ROUTINE_ISR ? "i" : "n"
-          , routine);
+    FPRINTMSG(op, "<R%p>", routine);
 }
 
 static void printArray(FILE* op, ObjPackedUniformArray* array) {

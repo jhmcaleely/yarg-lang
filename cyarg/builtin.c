@@ -1,10 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifdef CYARG_PICO_TARGET
-#include <pico/multicore.h>
-#endif
-
 #include "common.h"
 #include "object.h"
 #include "value.h"
@@ -187,7 +183,7 @@ bool makeRoutineBuiltin(ObjRoutine* routineContext, int argCount, Value* result)
     ObjClosure* closure = AS_CLOSURE(nativeArgument(routineContext, argCount, 0));
     bool isISR = AS_BOOL(nativeArgument(routineContext, argCount, 1));
 
-    ObjRoutine* routine = newRoutine(isISR ? ROUTINE_ISR : ROUTINE_THREAD);
+    ObjRoutine* routine = newRoutine();
 
     if (bindEntryFn(routine, closure)) {
         *result = OBJ_VAL(routine);
@@ -217,102 +213,35 @@ bool resumeBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
         return false;
     }
 
-    if (argCount > 1) {
-        bindEntryArgs(target, nativeArgument(routineContext, argCount, 1));
+    Value arg = NIL_VAL;
+    if (argCount == 2) {
+        arg = nativeArgument(routineContext, argCount, 1);
     }
 
-    if (target->state == EXEC_UNBOUND) {
-        prepareRoutineStack(target);
-        target->state = EXEC_SUSPENDED;
-    }
-    else if (target->state == EXEC_SUSPENDED) {
-        push(target, target->entryArg);
-    }
-
-    InterpretResult execResult = run(target);
-    if (execResult != INTERPRET_OK) {
-        return false;
-    }
-
-    Value coroResult = pop(target);
-
-    *result = coroResult;
-    return true;
+    return resumeRoutine(routineContext, target, argCount == 2 ? 1 : 0, arg, result);
 }
-
-// cyarg: use ascii 'y' 'a' 'r' 'g'
-#define FLAG_VALUE 0x79617267
-
-#ifdef CYARG_PICO_TARGET
-void nativeCore1Entry() {
-    multicore_fifo_push_blocking(FLAG_VALUE);
-    uint32_t g = multicore_fifo_pop_blocking();
-
-    if (g != FLAG_VALUE) {
-        fatalVMError("Core1 entry and sync failed.");
-    }
-
-    ObjRoutine* core = vm.core1;
-
-    InterpretResult execResult = run(core);
-
-    if (core->state != EXEC_ERROR) {
-        core->state = EXEC_CLOSED;
-    }
-
-    vm.core1 = NULL;
-}
-#endif
 
 bool startBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
-#ifdef CYARG_PICO_TARGET
     if (argCount < 1 || argCount > 2) {
         runtimeError(routineContext, "Expected one or two arguments to start.");
         return false;
     }
 
-    Value routineVal = nativeArgument(routineContext, argCount, 0);
+    Value targetRoutineVal = nativeArgument(routineContext, argCount, 0);
 
-    if (!IS_ROUTINE(routineVal)) {
+    if (!IS_ROUTINE(targetRoutineVal)) {
         runtimeError(routineContext, "Argument to start must be a routine.");
         return false;
     }
 
-    ObjRoutine* target = AS_ROUTINE(routineVal);
+    ObjRoutine* target = AS_ROUTINE(targetRoutineVal);
 
-    if (target->state != EXEC_UNBOUND) {
-        runtimeError(routineContext, "routine must be unbound to start.");
-        return false;
+    Value arg = NIL_VAL;
+    if (argCount == 2) {
+        arg = nativeArgument(routineContext, argCount, 1);
     }
 
-    if (vm.core1 != NULL) {
-        runtimeError(routineContext, "Core1 already occupied.");
-        return false;
-    }
-
-    if (argCount > 1) {
-        bindEntryArgs(target, nativeArgument(routineContext, argCount, 1));
-    }
-
-    prepareRoutineStack(target);
-
-    vm.core1 = target;
-    vm.core1->state = EXEC_RUNNING;
-
-    multicore_reset_core1();
-    multicore_launch_core1(nativeCore1Entry);
-
-    // Wait for it to start up
-    uint32_t g = multicore_fifo_pop_blocking();
-    if (g != FLAG_VALUE) {
-        fatalVMError("Core1 startup failure.");
-        return false;
-    }
-    multicore_fifo_push_blocking(FLAG_VALUE);
-
-#endif
-    *result = NIL_VAL;
-    return true;
+    return startRoutine(routineContext, target, argCount == 2 ? 1 : 0, arg);
 }
 
 bool receiveBuiltin(ObjRoutine* routine, int argCount, Value* result) {
@@ -321,31 +250,18 @@ bool receiveBuiltin(ObjRoutine* routine, int argCount, Value* result) {
         return false;
     }
 
-    Value channelVal = nativeArgument(routine, argCount, 0);
+    Value targetVal = nativeArgument(routine, argCount, 0);
 
-    if (!IS_CHANNEL(channelVal) && !IS_ROUTINE(channelVal)) {
+    if (!IS_CHANNEL(targetVal) && !IS_ROUTINE(targetVal)) {
         runtimeError(routine, "Argument must be a channel or a routine.");
         return false;
     }
 
-    if (IS_CHANNEL(channelVal)) {
-        *result = receiveChannel(AS_CHANNEL(channelVal));
+    if (IS_CHANNEL(targetVal)) {
+        *result = receiveChannel(AS_CHANNEL(targetVal));
     } 
-    else if (IS_ROUTINE(channelVal)) {
-        ObjRoutine* routineParam = AS_ROUTINE(channelVal);
-
-#ifdef CYARG_PICO_TARGET
-        while (routineParam->state == EXEC_RUNNING) {
-            tight_loop_contents();
-        }
-#endif    
-        
-        if (routineParam->state == EXEC_CLOSED || routineParam->state == EXEC_SUSPENDED) {
-            *result = peek(routineParam, -1);
-        } 
-        else {
-            *result = NIL_VAL;
-        }
+    else if (IS_ROUTINE(targetVal)) {
+        return receiveFromRoutine(AS_ROUTINE(targetVal), result);
     }
     return true;
 }
@@ -411,18 +327,20 @@ bool pinBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
         runtimeError(routineContext, "Argument to pin must be a routine.");
         return false;
     }
-
-    for (size_t i = 0; i < MAX_PINNED_ROUTINES; i++) {
-        if (vm.pinnedRoutines[i] == NULL) {
-            vm.pinnedRoutines[i] = AS_ROUTINE(arg);
-            *result = ADDRESS_VAL((uintptr_t)vm.pinnedRoutineHandlers[i]);
-            return true;
-        }
+    ObjRoutine* isrRoutine = AS_ROUTINE(arg);
+    if (isrRoutine->entryFunction->function->arity != 0) {
+        runtimeError(routineContext, "Can only pin routines with 0 argument entry functions.");
+        return false;        
     }
 
-    runtimeError(routineContext, "No more pinned routines available.");
-    *result = NIL_VAL;
-    return false;
+    uintptr_t addr;
+    if (pinRoutine(isrRoutine, &addr)) {
+        *result = ADDRESS_VAL(addr);
+        return true;
+    } else {
+        runtimeError(routineContext, "No more pinned routines available.");
+        return false;
+    }
 }
 
 bool newBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {

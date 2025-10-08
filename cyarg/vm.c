@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
+#include <assert.h>
 
 #include "common.h"
 #include "compiler.h"
@@ -19,18 +21,10 @@
 VM vm;
 
 void vmPinnedRoutineHandler(size_t handler) {
-
     ObjRoutine* routine = vm.pinnedRoutines[handler];
-
-    run(routine);
-
-    Value result = pop(routine); // unused.
-    pop(routine);
-
-    prepareRoutineStack(routine);
-
-    return;
+    runAndPrepare(routine);
 }
+
 
 void pinnedRoutine0(void) { vmPinnedRoutineHandler(0); }
 void pinnedRoutine1(void) { vmPinnedRoutineHandler(1); }
@@ -43,13 +37,24 @@ void pinnedRoutine7(void) { vmPinnedRoutineHandler(7); }
 void pinnedRoutine8(void) { vmPinnedRoutineHandler(8); }
 void pinnedRoutine9(void) { vmPinnedRoutineHandler(9); }
 
-size_t pinnedRoutineIndex(uintptr_t handler) {
+bool installPinnedRoutine(ObjRoutine* pinnedRoutine, uintptr_t* address) {
     for (size_t i = 0; i < MAX_PINNED_ROUTINES; i++) {
-        if (vm.pinnedRoutineHandlers[i] == (PinnedRoutineHandler)handler) {
-            return i;
+        if (vm.pinnedRoutines[i] == NULL) {
+            vm.pinnedRoutines[i] = pinnedRoutine;
+            *address = (uintptr_t)vm.pinnedRoutineHandlers[i];
+            return true;
         }
     }
-    return MAX_PINNED_ROUTINES;
+    return false;
+}
+
+void removePinnedRoutine(uintptr_t address) {
+    for (size_t i = 0; i < MAX_PINNED_ROUTINES; i++) {
+        if (vm.pinnedRoutineHandlers[i] == (PinnedRoutineHandler)address) {
+            vm.pinnedRoutineHandlers[i] = NULL;
+        }
+    }
+    assert(false);
 }
 
 void fatalVMError(const char* format, ...) {
@@ -79,7 +84,7 @@ void initVM() {
     vm.core0.obj.type = OBJ_ROUTINE;
     vm.core0.obj.isMarked = false;
     vm.core0.obj.next = NULL;
-    initRoutine(&vm.core0, ROUTINE_THREAD);
+    initRoutine(&vm.core0);
 
     vm.core1 = NULL;
     for (int i = 0; i < MAX_PINNED_ROUTINES; i++) {
@@ -1046,7 +1051,7 @@ InterpretResult run(ObjRoutine* routine) {
                     runtimeError(routine, "Cannot yield from initial routine.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                routine->state = EXEC_SUSPENDED;
+                yieldFromRoutine(routine);
                 return INTERPRET_OK;
             }
             case OP_RETURN: {
@@ -1054,9 +1059,7 @@ InterpretResult run(ObjRoutine* routine) {
                 closeUpvalues(routine, frame->stackEntryIndex);
                 routine->frameCount--;
                 if (routine->frameCount == 0) {
-                    pop(routine);
-                    push(routine, result);
-                    routine->state = EXEC_CLOSED;
+                    returnFromRoutine(routine, result);
                     return INTERPRET_OK;
                 }
                 

@@ -24,18 +24,18 @@ bool irq_add_shared_handlerNative(ObjRoutine* routine, int argCount, Value* resu
         runtimeError(routine, "Expected an address.");
         return false;
     }
+    if (!is_positive_integer(numVal)) {
+        runtimeError(routine, "Expected an a positive integer.");
+        return false;
+    }
+    if (!is_positive_integer(prioVal)) {
+        runtimeError(routine, "Expected an a positive integer for priority.");
+        return false;
+    }        
 
-    *result = NIL_VAL;
     unsigned int num = as_positive_integer(numVal);
-
     uintptr_t isrRoutine = AS_ADDRESS(address);
-
     unsigned int prio = as_positive_integer(prioVal);
-
-    size_t handlerIndex = pinnedRoutineIndex(isrRoutine);
-
-    prepareRoutineStack(vm.pinnedRoutines[handlerIndex]);
-    vm.pinnedRoutines[handlerIndex]->state = EXEC_RUNNING;
 
 #ifdef CYARG_PICO_TARGET
     irq_add_shared_handler(num, (irq_handler_t) isrRoutine, prio);
@@ -53,19 +53,18 @@ bool irq_remove_handlerNative(ObjRoutine* routine, int argCount, Value* result) 
         runtimeError(routine, "Expected an address.");
         return false;
     }
+    if (!is_positive_integer(numVal)) {
+        runtimeError(routine, "Expected an a positive integer.");
+        return false;
+    }
 
-    *result = NIL_VAL;
     unsigned int num = as_positive_integer(numVal);
-
     uintptr_t isrRoutine = AS_ADDRESS(address);
 
 #ifdef CYARG_PICO_TARGET
     irq_remove_handler(num, (irq_handler_t) isrRoutine);
 #endif
-
-    size_t handlerIndex = pinnedRoutineIndex(isrRoutine);
-    vm.pinnedRoutines[handlerIndex] = NULL;
-
+    removePinnedRoutine(isrRoutine);
     return true;
 }
 
