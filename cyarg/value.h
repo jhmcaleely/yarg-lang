@@ -89,6 +89,14 @@ typedef struct {
 #define ADDRESS_VAL(value)  ((Value){VAL_ADDRESS, { .address = value}})
 #define OBJ_VAL(object)     ((Value){VAL_OBJ, {.obj = (Obj*)object}})
 
+bool is_positive_integer(Value a);
+uint32_t as_positive_integer(Value a);
+
+bool valuesEqual(Value a, Value b);
+
+void printValue(Value value);
+void fprintValue(FILE* op, Value value);
+
 typedef union PackedValueStore PackedValueStore;
 
 typedef struct {
@@ -125,15 +133,8 @@ typedef struct {
     Value* values;
 } ValueArray;
 
-bool valuesEqual(Value a, Value b);
 void initValueArray(ValueArray* array);
 void appendToValueArray(ValueArray* array, Value value);
 void freeValueArray(ValueArray* array);
-
-void printValue(Value value);
-void fprintValue(FILE* op, Value value);
-
-bool is_positive_integer(Value a);
-uint32_t as_positive_integer(Value a);
 
 #endif
