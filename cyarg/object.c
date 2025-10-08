@@ -206,11 +206,11 @@ bool isAddressValue(Value val) {
 bool isArrayPointer(Value value) {
     ObjPackedPointer* pointer = AS_POINTER(value);
     if (IS_POINTER(value)) {
-        if (pointer->type->target_type == NULL) {
-            return IS_UNIFORMARRAY(pointer->destination->asValue);
-        } else if (pointer->type->target_type->yt == TypeArray) {
-            return true;
-        }
+        PackedValue target = { 
+            .storedType = pointer->type->target_type,
+            .storedValue = pointer->destination
+        };
+        return is_uniformarray(target);
     }
     return false;
 }
@@ -218,11 +218,11 @@ bool isArrayPointer(Value value) {
 bool isStructPointer(Value value) {
     ObjPackedPointer* pointer = AS_POINTER(value);
     if (IS_POINTER(value)) {
-        if (pointer->type->target_type == NULL) {
-            return IS_STRUCT(pointer->destination->asValue);
-        } else if (pointer->type->target_type->yt == TypeStruct) {
-            return true;
-        }
+        PackedValue target = { 
+            .storedType = pointer->type->target_type,
+            .storedValue = pointer->destination
+        };
+        return is_struct(target);
     }
     return false;
 }

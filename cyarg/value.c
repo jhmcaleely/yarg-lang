@@ -6,6 +6,11 @@
 #include "value.h"
 #include "yargtype.h"
 
+typedef union PackedValueStore {
+    AnyValue as;
+    Value asValue;
+} PackedValueStore;
+
 PackedValue createValueHeapCell(Value type) {
     void* dest = reallocate(NULL, 0, yt_sizeof_type_storage(type));
 
@@ -207,6 +212,41 @@ void packValueStorage(PackedValue packedStorageTarget, Value value) {
             case TypeArray:
                 break;
         }
+    }
+}
+
+bool assignToStorage(PackedValue lhs, Value rhsValue) {
+
+    if (lhs.storedType == NULL) {
+        lhs.storedValue->asValue = rhsValue;
+        return true;
+    } else {
+        if (isCompatibleType(lhs.storedType, rhsValue)) {
+            packValueStorage(lhs, rhsValue);
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+bool is_uniformarray(PackedValue val) {
+    if (val.storedType == NULL) {
+        return IS_UNIFORMARRAY(val.storedValue->asValue);
+    } else if (val.storedType->yt == TypeArray) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool is_struct(PackedValue val) {
+    if (val.storedType == NULL) {
+        return IS_STRUCT(val.storedValue->asValue);
+    } else if (val.storedType->yt == TypeStruct) {
+        return true;
+    } else {
+        return false;
     }
 }
 

@@ -343,21 +343,6 @@ static bool derefElement(ObjRoutine* routine) {
     return true;
 }
 
-static bool assignToStorage(PackedValue lhs, Value rhsValue) {
-
-    if (lhs.storedType == NULL) {
-        lhs.storedValue->asValue = rhsValue;
-        return true;
-    } else {
-        if (isCompatibleType(lhs.storedType, rhsValue)) {
-            packValueStorage(lhs, rhsValue);
-            return true;
-        } else {
-            return false;
-        }
-    }
-}
-
 static bool setArrayElement(ObjRoutine* routine) {
     if (!IS_UNIFORMARRAY(peek(routine, 2)) || !is_positive_integer(peek(routine, 1))) {
         runtimeError(routine, "Expected an array and a positive or unsigned integer.");

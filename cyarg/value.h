@@ -89,10 +89,7 @@ typedef struct {
 #define ADDRESS_VAL(value)  ((Value){VAL_ADDRESS, { .address = value}})
 #define OBJ_VAL(object)     ((Value){VAL_OBJ, {.obj = (Obj*)object}})
 
-typedef union PackedValueStore {
-    AnyValue as;
-    Value asValue;
-} PackedValueStore;
+typedef union PackedValueStore PackedValueStore;
 
 typedef struct {
     PackedValueStore* storedValue;
@@ -105,6 +102,10 @@ void packValueStorage(PackedValue packedStorageTarget, Value value);
 PackedValue createValueHeapCell(Value type);
 void markStoredContainerElements(PackedValue packedContainer);
 void markStoredValue(PackedValue packedValue);
+bool assignToStorage(PackedValue lhs, Value rhsValue);
+
+bool is_uniformarray(PackedValue val);
+bool is_struct(PackedValue val);
 
 typedef struct {
     Value value;

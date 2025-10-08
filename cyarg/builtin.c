@@ -435,18 +435,10 @@ bool newBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
 
     ConcreteYargType typeRequested = IS_NIL(typeToCreate) ? TypeAny : AS_YARGTYPE(typeToCreate)->yt;
     switch (typeRequested) {
+        case TypeAny:    // fall through
         case TypeBool:
         case TypeDouble:
-        case TypeStruct:
-        case TypeAny: {
-            PackedValue heapValue = createValueHeapCell(typeToCreate);
-            initialisePackedStorage(heapValue);
-            tempRootPush(heapValue.storedValue->asValue);
-            *result = OBJ_VAL(newPointerForHeapCell(heapValue));
-            tempRootPop();
-            return true;
-        }
-        case TypeInt8:  // fall through
+        case TypeInt8:
         case TypeUint8:
         case TypeInt16:
         case TypeUint16:
@@ -454,6 +446,12 @@ bool newBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
         case TypeUint32:
         case TypeInt64:
         case TypeUint64: {
+            PackedValue heapValue = createValueHeapCell(typeToCreate);
+            initialisePackedStorage(heapValue);
+            *result = OBJ_VAL(newPointerForHeapCell(heapValue));
+            return true;
+        }
+        case TypeStruct: {
             PackedValue heapValue = createValueHeapCell(typeToCreate);
             initialisePackedStorage(heapValue);
             *result = OBJ_VAL(newPointerForHeapCell(heapValue));
