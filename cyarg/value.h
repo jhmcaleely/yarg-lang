@@ -9,7 +9,6 @@
 typedef struct Obj Obj;
 typedef struct ObjString ObjString;
 typedef struct ObjRoutine ObjRoutine;
-typedef struct ObjValArray ObjValArray;
 typedef struct ObjConcreteYargType ObjConcreteYargType;
 
 typedef union {
