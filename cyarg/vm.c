@@ -1235,8 +1235,7 @@ InterpretResult interpret(const char* source) {
 
     bindEntryFn(&vm.core0, closure);
 
-    push(&vm.core0, OBJ_VAL(closure));
-    callfn(&vm.core0, closure, 0);
+    prepareRoutineStack(&vm.core0);
 
     InterpretResult result = run(&vm.core0);
     if (result == INTERPRET_OK) {
