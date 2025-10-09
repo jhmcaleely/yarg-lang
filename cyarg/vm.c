@@ -4,6 +4,9 @@
 #include <string.h>
 #include <assert.h>
 #include <assert.h>
+#ifdef CYARG_PICO_TARGET
+#include <pico/multicore.h>
+#endif
 
 #include "common.h"
 #include "compiler.h"
@@ -55,6 +58,46 @@ void removePinnedRoutine(uintptr_t address) {
         }
     }
     assert(false);
+}
+
+// cyarg: use ascii 'y' 'a' 'r' 'g'
+#define FLAG_VALUE 0x79617267
+
+void vmCore1Entry() {
+#ifdef CYARG_PICO_TARGET
+    multicore_fifo_push_blocking(FLAG_VALUE);
+    uint32_t g = multicore_fifo_pop_blocking();
+
+    if (g != FLAG_VALUE) {
+        fatalVMError("Core1 entry and sync failed.");
+    }
+#endif
+
+    ObjRoutine* core = vm.core1;
+
+    InterpretResult execResult = run(core);
+    core->result = pop(core);
+    vm.core1 = NULL;
+    assert(core->state != EXEC_RUNNING);
+}
+
+void runOnCore1(ObjRoutine* routine) {
+#ifdef CYARG_PICO_TARGET
+    vm.core1 = routine;
+
+    vm.core1->state = EXEC_RUNNING;
+    multicore_reset_core1();
+    multicore_launch_core1(vmCore1Entry);
+
+    // Wait for it to start up
+    uint32_t g = multicore_fifo_pop_blocking();
+    if (g != FLAG_VALUE) {
+        fatalVMError("Core1 startup failure.");
+        return;
+    }
+    multicore_fifo_push_blocking(FLAG_VALUE);
+#else
+#endif
 }
 
 void fatalVMError(const char* format, ...) {

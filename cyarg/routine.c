@@ -3,9 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#ifdef CYARG_PICO_TARGET
-#include <pico/multicore.h>
-#endif
 
 #include "common.h"
 
@@ -169,26 +166,6 @@ void returnFromRoutine(ObjRoutine* context, Value result) {
     context->state = EXEC_CLOSED;
 }
 
-// cyarg: use ascii 'y' 'a' 'r' 'g'
-#define FLAG_VALUE 0x79617267
-
-void nativeCore1Entry() {
-#ifdef CYARG_PICO_TARGET
-    multicore_fifo_push_blocking(FLAG_VALUE);
-    uint32_t g = multicore_fifo_pop_blocking();
-
-    if (g != FLAG_VALUE) {
-        fatalVMError("Core1 entry and sync failed.");
-    }
-#endif
-
-    ObjRoutine* core = vm.core1;
-
-    InterpretResult execResult = run(core);
-    core->result = pop(core);
-    vm.core1 = NULL;
-}
-
 bool startRoutine(ObjRoutine* context, ObjRoutine* target, size_t argCount, Value argument) {
 
     if (target->state != EXEC_UNBOUND) {
@@ -205,25 +182,8 @@ bool startRoutine(ObjRoutine* context, ObjRoutine* target, size_t argCount, Valu
 
     prepareRoutineStack(target);
 
-#ifdef CYARG_PICO_TARGET
-    vm.core1 = target;
-    vm.core1->state = EXEC_RUNNING;
-
-    multicore_reset_core1();
-    multicore_launch_core1(nativeCore1Entry);
-
-    // Wait for it to start up
-    uint32_t g = multicore_fifo_pop_blocking();
-    if (g != FLAG_VALUE) {
-        fatalVMError("Core1 startup failure.");
-        return false;
-    }
-    multicore_fifo_push_blocking(FLAG_VALUE);
-
+    runOnCore1(target);
     return true;
-#else
-    return false;
-#endif
 }
 
 bool receiveFromRoutine(ObjRoutine* routine, Value* result) {
