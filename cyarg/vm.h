@@ -17,7 +17,7 @@ typedef struct {
     ObjRoutine core0;
     ObjRoutine* core1;
 
-    ObjRoutine*   pinnedRoutines[MAX_PINNED_ROUTINES];
+    ObjRoutine* pinnedRoutines[MAX_PINNED_ROUTINES];
     PinnedRoutineHandler pinnedRoutineHandlers[MAX_PINNED_ROUTINES];
     
     ValueCellTable globals;
