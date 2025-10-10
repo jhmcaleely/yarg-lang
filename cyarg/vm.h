@@ -57,7 +57,7 @@ void fatalVMError(const char* format, ...);
 
 size_t pinnedRoutineIndex(uintptr_t handler);
 bool installPinnedRoutine(ObjRoutine* pinnedRoutine, uintptr_t* address);
-void removePinnedRoutine(uintptr_t address);
+bool removePinnedRoutine(uintptr_t address);
 
 void runOnCore1(ObjRoutine* routine);
 

@@ -79,7 +79,7 @@ ObjRoutine* newRoutine() {
 
 void runAndPrepare(ObjRoutine* routine) {
     run(routine);
-    routine->result = pop(routine);
+    pop(routine);
     callfn(routine, routine->entryFunction, routine->entryFunction->function->arity);
 }
 

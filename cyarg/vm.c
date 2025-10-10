@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
-#include <assert.h>
 #ifdef CYARG_PICO_TARGET
 #include <pico/multicore.h>
 #endif
@@ -51,13 +49,14 @@ bool installPinnedRoutine(ObjRoutine* pinnedRoutine, uintptr_t* address) {
     return false;
 }
 
-void removePinnedRoutine(uintptr_t address) {
+bool removePinnedRoutine(uintptr_t address) {
     for (size_t i = 0; i < MAX_PINNED_ROUTINES; i++) {
         if (vm.pinnedRoutineHandlers[i] == (PinnedRoutineHandler)address) {
             vm.pinnedRoutineHandlers[i] = NULL;
+            return true;
         }
     }
-    assert(false);
+    return false;
 }
 
 // cyarg: use ascii 'y' 'a' 'r' 'g'
@@ -74,11 +73,8 @@ void vmCore1Entry() {
 #endif
 
     ObjRoutine* core = vm.core1;
-
-    InterpretResult execResult = run(core);
-    core->result = pop(core);
+    runAndPrepare(core);
     vm.core1 = NULL;
-    assert(core->state != EXEC_RUNNING);
 }
 
 void runOnCore1(ObjRoutine* routine) {
