@@ -420,19 +420,17 @@ static bool setArrayElement(ObjRoutine* routine) {
     return true;
 }
 
-static bool derefPtr(ObjRoutine* routine) {
-    Value pointerVal = pop(routine);
-    tempRootPush(pointerVal);
+static void derefPtr(ObjRoutine* routine) {
+    Value pointerVal = peek(routine, 0);
 
     ObjPackedPointer* pointer = AS_POINTER(pointerVal);
     PackedValue dest;
     dest.storedType = pointer->type->target_type;
     dest.storedValue = pointer->destination;
     Value result = unpackValue(dest);
-    push(routine, result);
 
-    tempRootPop();
-    return true;
+    pop(routine);
+    push(routine, result);
 }
 
 static bool isFalsey(Value value) {
@@ -1217,9 +1215,11 @@ InterpretResult run(ObjRoutine* routine) {
                 Value rhs = peek(routine, 0);
                 Value lhs = peek(routine, 1);
                 ObjPackedPointer* pLhs = AS_POINTER(lhs);
-                ObjConcreteYargType* storageType = pLhs->type->target_type;
-                PackedValue trg = { .storedType = storageType, .storedValue = pLhs->destination };
-                if (assignToPackedValue(trg, rhs)) {
+                PackedValue trgLhs = { 
+                    .storedType = pLhs->type->target_type, 
+                    .storedValue = pLhs->destination 
+                };
+                if (assignToPackedValue(trgLhs, rhs)) {
                     pop(routine);
                     pop(routine);
                     push(routine, rhs);
