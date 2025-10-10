@@ -21,8 +21,6 @@ typedef enum {
     EXEC_ERROR
 } ExecState;
 
-typedef struct StackSlice StackSlice;
-typedef struct ObjStackSlice ObjStackSlice;
 typedef bool (*AddSliceFn)(ObjRoutine* routine);
 
 typedef struct StackSlice {
