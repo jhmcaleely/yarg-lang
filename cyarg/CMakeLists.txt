@@ -81,6 +81,7 @@ if (PICO_BOARD)
 set(PICO_USE_FASTEST_SUPPORTED_CLOCK 1)
 
 add_compile_definitions(CYARG_PICO_TARGET)
+add_compile_definitions(PICO_STACK_SIZE=0x1000)
 endif()
 
 
@@ -98,6 +99,7 @@ pico_enable_stdio_usb(cyarg 1)
 # Add the standard library to the build
 target_link_libraries(cyarg
         hardware_pio
+        hardware_flash
         pico_stdlib
         pico_multicore
         pico_sync)
@@ -106,6 +108,8 @@ target_link_libraries(cyarg
 target_include_directories(cyarg PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
 )
+
+pico_set_linker_script(cyarg ${CMAKE_SOURCE_DIR}/memmap_custom.ld)
 
 pico_add_extra_outputs(cyarg)
 endif()
