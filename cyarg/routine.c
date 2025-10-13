@@ -80,7 +80,7 @@ ObjRoutine* newRoutine() {
 void runAndPrepare(ObjRoutine* routine) {
     run(routine);
     pop(routine);
-    callfn(routine, routine->entryFunction, routine->entryFunction->function->arity);
+    prepareRoutineStack(routine);
 }
 
 bool pinRoutine(ObjRoutine* routine, uintptr_t* address) {
