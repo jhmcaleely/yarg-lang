@@ -37,6 +37,19 @@ pushd yarg/specimen
 ../../bin/hostyarg addfile -fs ../../build/yarg-lang.uf2 -add timer.ya
 popd
 
+cp cyarg/build/pico-debug/cyarg.uf2 build/yarg-lang-debug.uf2
+
+./bin/hostyarg format -fs build/yarg-lang-debug.uf2
+
+pushd yarg/specimen
+../../bin/hostyarg addfile -fs ../../build/yarg-lang-debug.uf2 -add machine.ya
+../../bin/hostyarg addfile -fs ../../build/yarg-lang-debug.uf2 -add gpio.ya
+../../bin/hostyarg addfile -fs ../../build/yarg-lang-debug.uf2 -add irq.ya
+../../bin/hostyarg addfile -fs ../../build/yarg-lang-debug.uf2 -add timer.ya
+popd
+
+./tools/build-specimen.sh
+
 pushd vscode-yarg
 vsce package
 mv yarg-lang-0.1.0.vsix ../build/

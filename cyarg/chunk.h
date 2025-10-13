@@ -77,7 +77,7 @@ typedef struct {
     int capacity;
     uint8_t* code;
     int* lines;
-    ValueArray constants;
+    DynamicValueArray constants;
 } Chunk;
 
 typedef enum {

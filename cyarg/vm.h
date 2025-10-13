@@ -17,7 +17,7 @@ typedef struct {
     ObjRoutine core0;
     ObjRoutine* core1;
 
-    ObjRoutine*   pinnedRoutines[MAX_PINNED_ROUTINES];
+    ObjRoutine* pinnedRoutines[MAX_PINNED_ROUTINES];
     PinnedRoutineHandler pinnedRoutineHandlers[MAX_PINNED_ROUTINES];
     
     ValueCellTable globals;
@@ -56,5 +56,9 @@ bool callfn(ObjRoutine* routine, ObjClosure* closure, int argCount);
 void fatalVMError(const char* format, ...);
 
 size_t pinnedRoutineIndex(uintptr_t handler);
+bool installPinnedRoutine(ObjRoutine* pinnedRoutine, uintptr_t* address);
+bool removePinnedRoutine(uintptr_t address);
+
+void runOnCore1(ObjRoutine* routine);
 
 #endif

@@ -5,6 +5,7 @@
 #include "object.h"
 #include "table.h"
 #include "value.h"
+#include "yargtype.h"
 
 #define TABLE_MAX_LOAD 0.75
 
@@ -210,7 +211,7 @@ static void adjustCellCapacity(ValueCellTable* table, int capacity) {
     for (int i = 0; i < capacity; i++) {
         entries[i].key = NULL;
         entries[i].cell.value = NIL_VAL;
-        entries[i].cell.type = NIL_VAL;
+        entries[i].cell.cellType = NULL;
     }
 
     table->count = 0;
@@ -220,8 +221,7 @@ static void adjustCellCapacity(ValueCellTable* table, int capacity) {
 
         EntryCell* dest = findCellEntry(entries, capacity, entry->key);
         dest->key = entry->key;
-        dest->cell.value = entry->cell.value;
-        dest->cell.type = entry->cell.type;
+        dest->cell= entry->cell;
         table->count++;
     }
 
@@ -241,8 +241,7 @@ bool tableCellSet(ValueCellTable* table, ObjString* key, ValueCell cell) {
     if (isNewKey && IS_NIL(entry->cell.value)) table->count++;
 
     entry->key = key;
-    entry->cell.value = cell.value;
-    entry->cell.type = cell.type;
+    entry->cell = cell;
     return isNewKey;
 }
 
@@ -256,7 +255,7 @@ bool tableCellDelete(ValueCellTable* table, ObjString* key) {
     // Place a tombstone in the entry.
     entry->key = NULL;
     entry->cell.value = BOOL_VAL(true);
-    entry->cell.type = NIL_VAL;
+    entry->cell.cellType = NULL;
     return true;
 }
 
@@ -316,7 +315,7 @@ void printCellTable(ValueCellTable* table) {
             FPRINTMSG(stderr, ":::");
             printValue(entry->cell.value);
             FPRINTMSG(stderr, ":::");
-            printValue(entry->cell.type);
+            printType(stderr, entry->cell.cellType);
             FPRINTMSG(stderr, "\n");
         }
     }

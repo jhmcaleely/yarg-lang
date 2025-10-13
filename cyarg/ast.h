@@ -194,7 +194,7 @@ typedef struct {
 
 typedef struct {
     ObjExpr expr;
-    ValueArray fieldsByIndex;
+    DynamicValueArray fieldsByIndex;
 } ObjExprTypeStruct;
 
 typedef struct {

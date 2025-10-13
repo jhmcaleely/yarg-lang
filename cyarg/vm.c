@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef CYARG_PICO_TARGET
+#include <pico/multicore.h>
+#endif
 
 #include "common.h"
 #include "compiler.h"
@@ -19,18 +22,10 @@
 VM vm;
 
 void vmPinnedRoutineHandler(size_t handler) {
-
     ObjRoutine* routine = vm.pinnedRoutines[handler];
-
-    run(routine);
-
-    Value result = pop(routine); // unused.
-    pop(routine);
-
-    prepareRoutineStack(routine);
-
-    return;
+    runAndPrepare(routine);
 }
+
 
 void pinnedRoutine0(void) { vmPinnedRoutineHandler(0); }
 void pinnedRoutine1(void) { vmPinnedRoutineHandler(1); }
@@ -43,13 +38,62 @@ void pinnedRoutine7(void) { vmPinnedRoutineHandler(7); }
 void pinnedRoutine8(void) { vmPinnedRoutineHandler(8); }
 void pinnedRoutine9(void) { vmPinnedRoutineHandler(9); }
 
-size_t pinnedRoutineIndex(uintptr_t handler) {
+bool installPinnedRoutine(ObjRoutine* pinnedRoutine, uintptr_t* address) {
     for (size_t i = 0; i < MAX_PINNED_ROUTINES; i++) {
-        if (vm.pinnedRoutineHandlers[i] == (PinnedRoutineHandler)handler) {
-            return i;
+        if (vm.pinnedRoutines[i] == NULL) {
+            vm.pinnedRoutines[i] = pinnedRoutine;
+            *address = (uintptr_t)vm.pinnedRoutineHandlers[i];
+            return true;
         }
     }
-    return MAX_PINNED_ROUTINES;
+    return false;
+}
+
+bool removePinnedRoutine(uintptr_t address) {
+    for (size_t i = 0; i < MAX_PINNED_ROUTINES; i++) {
+        if (vm.pinnedRoutineHandlers[i] == (PinnedRoutineHandler)address) {
+            vm.pinnedRoutineHandlers[i] = NULL;
+            return true;
+        }
+    }
+    return false;
+}
+
+// cyarg: use ascii 'y' 'a' 'r' 'g'
+#define FLAG_VALUE 0x79617267
+
+void vmCore1Entry() {
+#ifdef CYARG_PICO_TARGET
+    multicore_fifo_push_blocking(FLAG_VALUE);
+    uint32_t g = multicore_fifo_pop_blocking();
+
+    if (g != FLAG_VALUE) {
+        fatalVMError("Core1 entry and sync failed.");
+    }
+#endif
+
+    ObjRoutine* core = vm.core1;
+    runAndPrepare(core);
+    vm.core1 = NULL;
+}
+
+void runOnCore1(ObjRoutine* routine) {
+#ifdef CYARG_PICO_TARGET
+    vm.core1 = routine;
+
+    vm.core1->state = EXEC_RUNNING;
+    multicore_reset_core1();
+    multicore_launch_core1(vmCore1Entry);
+
+    // Wait for it to start up
+    uint32_t g = multicore_fifo_pop_blocking();
+    if (g != FLAG_VALUE) {
+        fatalVMError("Core1 startup failure.");
+        return;
+    }
+    multicore_fifo_push_blocking(FLAG_VALUE);
+#else
+#endif
 }
 
 void fatalVMError(const char* format, ...) {
@@ -67,7 +111,7 @@ static void defineNative(const char* name, NativeFn function) {
     tempRootPush(OBJ_VAL(newNative(function)));
     ValueCell cell;
     cell.value = vm.tempRoots[1];
-    cell.type = NIL_VAL;
+    cell.cellType = NULL;
     tableCellSet(&vm.globals, AS_STRING(vm.tempRoots[0]), cell);
     tempRootPop();
     tempRootPop();
@@ -79,7 +123,7 @@ void initVM() {
     vm.core0.obj.type = OBJ_ROUTINE;
     vm.core0.obj.isMarked = false;
     vm.core0.obj.next = NULL;
-    initRoutine(&vm.core0, ROUTINE_THREAD);
+    initRoutine(&vm.core0);
 
     vm.core1 = NULL;
     for (int i = 0; i < MAX_PINNED_ROUTINES; i++) {
@@ -180,14 +224,14 @@ static bool callValue(ObjRoutine* routine, Value callee, int argCount) {
                 ObjBoundMethod* bound = AS_BOUND_METHOD(callee);
                 ValueCell* target = peekCell(routine, argCount);
                 target->value = bound->reciever;
-                target->type = NIL_VAL;
+                target->cellType = NULL;
                 return callfn(routine, bound->method, argCount);
             }
             case OBJ_CLASS: {
                 ObjClass* klass = AS_CLASS(callee);
                 ValueCell* target = peekCell(routine, argCount);
                 target->value = OBJ_VAL(newInstance(klass));
-                target->type = NIL_VAL;
+                target->cellType = NULL;
                 Value initializer;
                 if (tableGet(&klass->methods, vm.initString, &initializer)) {
                     return callfn(routine, AS_CLOSURE(initializer), argCount);
@@ -247,7 +291,7 @@ static bool invoke(ObjRoutine* routine, ObjString* name, int argCount) {
         ValueCell* target = peekCell(routine, argCount);
 
         target->value = value;
-        target->type = NIL_VAL;
+        target->cellType = NULL;
         return callValue(routine, value, argCount);
     }
 
@@ -317,23 +361,23 @@ static bool derefElement(ObjRoutine* routine) {
 
     if (IS_UNIFORMARRAY(peek(routine, 1))) {
         ObjPackedUniformArray* array = AS_UNIFORMARRAY(peek(routine, 1));
-        if (index >= array->type->cardinality) {
+        if (index >= arrayCardinality(array->store)) {
             runtimeError(routine, "Array index %d out of bounds.", index);
             return false;
         }
-        StoredValue* element = arrayElement(array->type, array->arrayElements, index);
-        result = unpackStoredValue(arrayElementType(array->type), element);
+        PackedValue element = arrayElement(array->store, index);
+        result = unpackValue(element);
 
     } else {
         ObjPackedUniformArray* arrayObj = (ObjPackedUniformArray*)destinationObject(peek(routine, 1));
-        if (index >= arrayObj->type->cardinality) {
-            runtimeError(routine, "Array index %d out of bounds (0:%zu)", index, arrayObj->type->cardinality - 1);
+        if (index >= arrayCardinality(arrayObj->store)) {
+            runtimeError(routine, "Array index %d out of bounds (0:%zu)", index, arrayCardinality(arrayObj->store) - 1);
             return false;
         }
         tempRootPush(OBJ_VAL(arrayObj));
 
-        StoredValue* element = arrayElement(arrayObj->type, arrayObj->arrayElements, index);
-        result = OBJ_VAL(newPointerAtHeapCell(arrayElementType(arrayObj->type), element));
+        PackedValue element = arrayElement(arrayObj->store, index);
+        result = OBJ_VAL(newPointerAtHeapCell(element));
         tempRootPop();
     }
 
@@ -355,20 +399,16 @@ static bool setArrayElement(ObjRoutine* routine) {
 
     if (IS_UNIFORMARRAY(boxed_array)) {
         ObjPackedUniformArray* array = AS_UNIFORMARRAY(boxed_array);
-        if (index >= array->type->cardinality) {
-            runtimeError(routine, "Array index %d out of bounds (0:%d)", index, array->type->cardinality - 1);
-            return false;
-        }
-        if (array->type->element_type && !isCompatibleType(array->type->element_type, new_value)) {
-            runtimeError(routine, "Cannot set array element to incompatible type.");
+        if (index >= arrayCardinality(array->store)) {
+            runtimeError(routine, "Array index %d out of bounds (0:%d)", index, arrayCardinality(array->store) - 1);
             return false;
         }
 
-        StoredValue* element = arrayElement(array->type, array->arrayElements, index);
-        Value elementType = arrayElementType(array->type);
-        ObjConcreteYargType* storageType = IS_NIL(elementType) ? NULL : AS_YARGTYPE(elementType);
-        StoredValueTarget trg = { .storedValue = element, .storedType = storageType };
-        packValueStorage(trg, new_value);
+        PackedValue trg = arrayElement(array->store, index);
+        if (!assignToPackedValue(trg, new_value)) {
+            runtimeError(routine, "Cannot set array element to incompatible type.");
+            return false;
+        }
     }
 
     pop(routine);
@@ -376,16 +416,17 @@ static bool setArrayElement(ObjRoutine* routine) {
     return true;
 }
 
-static bool derefPtr(ObjRoutine* routine) {
-    Value pointerVal = pop(routine);
-    tempRootPush(pointerVal);
+static void derefPtr(ObjRoutine* routine) {
+    Value pointerVal = peek(routine, 0);
 
     ObjPackedPointer* pointer = AS_POINTER(pointerVal);
-    Value result = unpackStoredValue(pointer->destination_type, pointer->destination);
-    push(routine, result);
+    PackedValue dest;
+    dest.storedType = pointer->type->target_type;
+    dest.storedValue = pointer->destination;
+    Value result = unpackValue(dest);
 
-    tempRootPop();
-    return true;
+    pop(routine);
+    push(routine, result);
 }
 
 static bool isFalsey(Value value) {
@@ -406,49 +447,6 @@ static void concatenate(ObjRoutine* routine) {
     pop(routine);
     pop(routine);
     push(routine, OBJ_VAL(result));
-}
-
-static bool assignToStorage(StoredValueTarget lhs, Value rhsValue) {
-
-    if (lhs.storedType == NULL) {
-        lhs.storedValue->asValue = rhsValue;
-        return true;
-    } else {
-        if (isCompatibleType(lhs.storedType, rhsValue)) {
-            packValueStorage(lhs, rhsValue);
-            return true;
-        } else {
-            return false;
-        }
-    }
-}
-
-static bool assignTo(ValueCellTarget lhs, Value rhsValue) {
-    if (lhs.cellType == NULL) {
-        *lhs.value = rhsValue;
-        return true;
-    } else {
-        if (isCompatibleType(lhs.cellType, rhsValue)) {
-            *(lhs.value) = rhsValue;
-            return true;
-        } else {
-            return false;
-        }
-    }
-}
-
-static bool initialiseTo(ValueCellTarget lhs, Value rhsValue) {
-    if (lhs.cellType == NULL) {
-        *lhs.value = rhsValue;
-        return true;
-    } else {
-        if (isInitialisableType(lhs.cellType, rhsValue)) {
-            *(lhs.value) = rhsValue;
-            return true;
-        } else {
-            return false;
-        }
-    }
 }
 
 static void makeConcreteTypeConst(ObjRoutine* routine) {
@@ -679,10 +677,9 @@ InterpretResult run(ObjRoutine* routine) {
                 uint8_t slot = READ_BYTE();
                 ValueCell* rhs = peekCell(routine, 0);
                 ValueCell* lhs = frameSlot(routine, frame, slot);
-                ObjConcreteYargType* lhsType = IS_NIL(lhs->type) ? NULL : AS_YARGTYPE(lhs->type);
-                ValueCellTarget trg = { .cellType = lhsType, .value = &lhs->value };
+                ValueCellTarget lhsTrg = { .cellType = lhs->cellType, .value = &lhs->value };
 
-                if (!assignTo(trg, rhs->value)) {
+                if (!assignToValueCellTarget(lhsTrg, rhs->value)) {
                     runtimeError(routine, "Cannot set local variable to incompatible type.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -714,10 +711,9 @@ InterpretResult run(ObjRoutine* routine) {
                 ValueCell* lhs = NULL;
                 if (tableCellGetPlace(&vm.globals, name, &lhs)) {
                     ValueCell* rhs = peekCell(routine, 0);
-                    ObjConcreteYargType* lhsType = IS_NIL(lhs->type) ? NULL : AS_YARGTYPE(lhs->type);
-                    ValueCellTarget trg = { .cellType = lhsType, .value = &lhs->value };
+                    ValueCellTarget lhsTrg = { .cellType = lhs->cellType, .value = &lhs->value };
 
-                    if (!assignTo(trg, rhs->value)) {
+                    if (!assignToValueCellTarget(lhsTrg, rhs->value)) {
                         runtimeError(routine, "Cannot set global variable to incompatible type.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
@@ -728,11 +724,9 @@ InterpretResult run(ObjRoutine* routine) {
                 break;
             }
             case OP_INITIALISE: {
-                ValueCell* lhs = peekCell(routine, 1);
+                ValueCellTarget lhsTrg = peekCellTarget(routine, 1);
                 ValueCell* rhs = peekCell(routine, 0);
-                ObjConcreteYargType* lhsType = IS_NIL(lhs->type) ? NULL : AS_YARGTYPE(lhs->type);
-                ValueCellTarget trg = { .cellType = lhsType, .value = &lhs->value };
-                if (!initialiseTo(trg, rhs->value)) {
+                if (!initialiseValueCellTarget(lhsTrg, rhs->value)) {
                     runtimeError(routine, "Cannot initialise variable with this value.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -747,14 +741,12 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_SET_UPVALUE: {
                 uint8_t slot = READ_BYTE();
                 ValueCell* rhs = peekCell(routine, 0);
-                Value lhsTypeVal = frame->closure->upvalues[slot]->contents->type;
-                ObjConcreteYargType* lhsType = IS_NIL(lhsTypeVal) ? NULL : AS_YARGTYPE(lhsTypeVal);
-                ValueCellTarget trg = { 
-                    .cellType = lhsType, 
+                ValueCellTarget lhsTrg = { 
+                    .cellType = frame->closure->upvalues[slot]->contents->cellType, 
                     .value = &frame->closure->upvalues[slot]->contents->value 
                 };
 
-                if (!assignTo(trg, rhs->value)) {
+                if (!assignToValueCellTarget(lhsTrg, rhs->value)) {
                     runtimeError(routine, "Cannot set local variable to incompatible type.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -782,14 +774,13 @@ InterpretResult run(ObjRoutine* routine) {
                 } else if (IS_STRUCT(peek(routine, 0))) {
                     ObjPackedStruct* object = AS_STRUCT(peek(routine, 0));
                     ObjString* name = READ_STRING();
-
                     size_t index;
-                    if (!structFieldIndex(object->type, name, &index)) {
+                    if (!structFieldIndex(object->store.storedType, name, &index)) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    StoredValue* field = structField(object->type, object->structFields, index);
-                    Value result = unpackStoredValue(object->type->field_types[index], field);
+                    PackedValue f = structField(object->store, index);
+                    Value result = unpackValue(f);
 
                     pop(routine);
                     push(routine, result);
@@ -797,14 +788,13 @@ InterpretResult run(ObjRoutine* routine) {
                     ObjPackedStruct* object = (ObjPackedStruct*) destinationObject(peek(routine, 0));
                     tempRootPush(OBJ_VAL(object));
                     ObjString* name = READ_STRING();
-
                     size_t index;
-                    if (!structFieldIndex(object->type, name, &index)) {
+                    if (!structFieldIndex(object->store.storedType, name, &index)) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    StoredValue* field = structField(object->type, object->structFields, index);
-                    Value result = OBJ_VAL(newPointerAtHeapCell(object->type->field_types[index], field));
+                    PackedValue f = structField(object->store, index);
+                    Value result = OBJ_VAL(newPointerAtHeapCell(f));
                     tempRootPop();
 
                     pop(routine);
@@ -826,17 +816,13 @@ InterpretResult run(ObjRoutine* routine) {
                 } else if (IS_STRUCT(peek(routine, 1))) {
                     ObjPackedStruct* object = AS_STRUCT(peek(routine, 1));
                     ObjString* name = READ_STRING();
-
                     size_t index;
-                    if (!structFieldIndex(object->type, name, &index)) {
+                    if (!structFieldIndex(object->store.storedType, name, &index)) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    StoredValue* field = structField(object->type, object->structFields, index);
-                    Value fieldType = object->type->field_types[index];
-                    ObjConcreteYargType* storageType = IS_NIL(fieldType) ? NULL : AS_YARGTYPE(fieldType);
-                    StoredValueTarget trg = { .storedType = storageType, .storedValue = field };
-                    if (!assignToStorage(trg, peek(routine, 0))) {
+                    PackedValue trg = structField(object->store, index);
+                    if (!assignToPackedValue(trg, peek(routine, 0))) {
                         runtimeError(routine, "cannot assign to field type.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
@@ -1102,7 +1088,7 @@ InterpretResult run(ObjRoutine* routine) {
                     runtimeError(routine, "Cannot yield from initial routine.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                routine->state = EXEC_SUSPENDED;
+                yieldFromRoutine(routine);
                 return INTERPRET_OK;
             }
             case OP_RETURN: {
@@ -1110,9 +1096,7 @@ InterpretResult run(ObjRoutine* routine) {
                 closeUpvalues(routine, frame->stackEntryIndex);
                 routine->frameCount--;
                 if (routine->frameCount == 0) {
-                    pop(routine);
-                    push(routine, result);
-                    routine->state = EXEC_CLOSED;
+                    returnFromRoutine(routine, result);
                     return INTERPRET_OK;
                 }
                 
@@ -1227,10 +1211,11 @@ InterpretResult run(ObjRoutine* routine) {
                 Value rhs = peek(routine, 0);
                 Value lhs = peek(routine, 1);
                 ObjPackedPointer* pLhs = AS_POINTER(lhs);
-                Value destinationType = pLhs->destination_type;
-                ObjConcreteYargType* storageType = IS_NIL(destinationType) ? NULL : AS_YARGTYPE(destinationType);
-                StoredValueTarget trg = { .storedType = storageType, .storedValue = pLhs->destination };
-                if (assignToStorage(trg, rhs)) {
+                PackedValue trgLhs = { 
+                    .storedType = pLhs->type->target_type, 
+                    .storedValue = pLhs->destination 
+                };
+                if (assignToPackedValue(trgLhs, rhs)) {
                     pop(routine);
                     pop(routine);
                     push(routine, rhs);
@@ -1289,8 +1274,7 @@ InterpretResult interpret(const char* source) {
 
     bindEntryFn(&vm.core0, closure);
 
-    push(&vm.core0, OBJ_VAL(closure));
-    callfn(&vm.core0, closure, 0);
+    prepareRoutineStack(&vm.core0);
 
     InterpretResult result = run(&vm.core0);
     if (result == INTERPRET_OK) {

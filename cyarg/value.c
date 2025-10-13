@@ -4,14 +4,289 @@
 #include "object.h"
 #include "memory.h"
 #include "value.h"
+#include "yargtype.h"
 
-void initValueArray(ValueArray* array) {
+typedef union PackedValueStore {
+    AnyValue as;
+    Value asValue;
+} PackedValueStore;
+
+static void packValue(PackedValue packedStorageTarget, Value value);
+
+PackedValue allocPackedValue(Value type) {
+    void* dest = reallocate(NULL, 0, yt_sizeof_type_storage(type));
+
+    ObjConcreteYargType* ct = IS_NIL(type) ? NULL : AS_YARGTYPE(type);
+    PackedValue value = { .storedType = ct, .storedValue = dest };
+    return value;
+}
+
+static void markPackedStruct(ObjConcreteYargTypeStruct* type, PackedValueStore* fields) {
+    if (fields) {
+        PackedValue s;
+        s.storedType = (ObjConcreteYargType*)type;
+        s.storedValue = fields;
+        for (int i = 0; i < type->field_count; i++) {
+            PackedValue f = structField(s, i);
+            markPackedValue(f);
+        }
+    }
+}
+
+static void markPackedArray(ObjConcreteYargTypeArray* type, PackedValueStore* elements) {
+    if (elements) {
+        PackedValue array = { .storedType = (ObjConcreteYargType*)type, .storedValue = elements };
+        for (size_t i = 0; i < type->cardinality; i++) {
+            PackedValue el = arrayElement(array, i);
+            markPackedValue(el);
+        }
+    }
+}
+
+void markPackedContainer(PackedValue packedContainer) {
+    if (packedContainer.storedType) {
+        markObject((Obj*)packedContainer.storedType);
+
+        switch (packedContainer.storedType->yt) {
+            case TypeStruct: {
+                ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*) packedContainer.storedType;
+                markPackedStruct(structType, packedContainer.storedValue);
+                break;
+            }
+            case TypeArray: {
+                ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) packedContainer.storedType;
+                markPackedArray(arrayType, packedContainer.storedValue);
+                break;
+            }
+            case TypePointer: {
+                ObjConcreteYargTypePointer* pointerType = (ObjConcreteYargTypePointer*)packedContainer.storedType;
+                PackedValue dest = { .storedType = pointerType->target_type, .storedValue = packedContainer.storedValue };
+                if (packedContainer.storedValue && pointerType->target_type) {
+                    markPackedValue(dest);
+                }
+                break;
+            }
+            default:
+                break; // nothing to do.
+
+        }
+    }
+}
+
+void markPackedValue(PackedValue value) {
+    if (value.storedValue == NULL) return;
+    if (value.storedType == NULL) {
+        markValue(value.storedValue->asValue);
+        return;
+    } else if (type_packs_as_container(value.storedType)) {
+        markPackedContainer(value);
+        return;
+    } else if (type_packs_as_obj(value.storedType)) {
+        markObject((Obj*)value.storedType);
+        markObject(value.storedValue->as.obj);
+        return;
+    }
+}
+
+void initialisePackedValue(PackedValue packedValue) {
+
+    if (packedValue.storedType == NULL) {
+        packedValue.storedValue->asValue = NIL_VAL;
+    } else {
+        switch (packedValue.storedType->yt) {
+            case TypeAny: packedValue.storedValue->asValue = NIL_VAL; break;
+            case TypeBool: packedValue.storedValue->asValue = BOOL_VAL(false); break;
+            case TypeDouble: packedValue.storedValue->asValue = DOUBLE_VAL(0); break;
+            case TypeInt8: packedValue.storedValue->as.i8 = 0; break;
+            case TypeUint8: packedValue.storedValue->as.ui8 = 0; break;
+            case TypeInt16: packedValue.storedValue->as.i16 = 0; break;
+            case TypeUint16: packedValue.storedValue->as.ui16 = 0; break;
+            case TypeInt32: packedValue.storedValue->as.i32 = 0; break;
+            case TypeUint32: packedValue.storedValue->as.ui32 = 0; break;
+            case TypeInt64: packedValue.storedValue->as.i64 = 0; break;
+            case TypeUint64: packedValue.storedValue->as.ui64 = 0; break;
+            case TypeArray: {
+                ObjConcreteYargTypeArray* at = (ObjConcreteYargTypeArray*)packedValue.storedType;
+                Value elementTypeVal = arrayElementType(at);
+                ObjConcreteYargType* elementType = IS_NIL(elementTypeVal) ? NULL : AS_YARGTYPE(elementTypeVal);
+                if (at->cardinality > 0) {
+                    for (size_t i = 0; i < at->cardinality; i++) {
+                        PackedValue el = arrayElement(packedValue, i);
+                        initialisePackedValue(el);
+                    }
+                }
+                break;
+            }
+            case TypeStruct: {
+                ObjConcreteYargTypeStruct* st = (ObjConcreteYargTypeStruct*)packedValue.storedType;
+                for (size_t i = 0; i < st->field_count; i++) {
+                    PackedValue f = structField(packedValue, i);
+                    initialisePackedValue(f);
+                }
+                break;
+            }
+            case TypePointer:
+            case TypeString:
+            case TypeClass:
+            case TypeInstance:
+            case TypeFunction:
+            case TypeNativeBlob:
+            case TypeRoutine:
+            case TypeChannel:
+            case TypeYargType: {
+                packedValue.storedValue->as.obj = NULL;
+                break;
+            }
+        }
+    }
+}
+
+Value unpackValue(PackedValue packedValue) {
+    if (packedValue.storedType == NULL) {
+        return packedValue.storedValue->asValue;
+    } else {
+        switch (packedValue.storedType->yt) {
+            case TypeAny: return packedValue.storedValue->asValue;
+            case TypeBool: return packedValue.storedValue->asValue;
+            case TypeDouble: return packedValue.storedValue->asValue;
+            case TypeInt8: return I8_VAL(packedValue.storedValue->as.i8);
+            case TypeUint8: return UI8_VAL(packedValue.storedValue->as.ui8);
+            case TypeInt16: return I16_VAL(packedValue.storedValue->as.i16);
+            case TypeUint16: return UI16_VAL(packedValue.storedValue->as.ui16);
+            case TypeInt32: return I32_VAL(packedValue.storedValue->as.i32);
+            case TypeUint32: return UI32_VAL(packedValue.storedValue->as.ui32);
+            case TypeInt64: return I64_VAL(packedValue.storedValue->as.i64);
+            case TypeUint64: return UI64_VAL(packedValue.storedValue->as.ui64);
+            case TypeStruct: {
+                return OBJ_VAL(newPackedStructAt(packedValue));
+            }
+            case TypeArray: {
+                return OBJ_VAL(newPackedUniformArrayAt(packedValue));
+            }
+            case TypePointer:
+            case TypeString:
+            case TypeClass:
+            case TypeInstance:
+            case TypeFunction:
+            case TypeNativeBlob:
+            case TypeRoutine:
+            case TypeChannel:
+            case TypeYargType: {
+                if (packedValue.storedValue->as.obj) {
+                    return OBJ_VAL(packedValue.storedValue->as.obj);
+                } else {
+                    return NIL_VAL;
+                }
+            }
+        }
+    }
+}
+
+static void packValue(PackedValue packedStorageTarget, Value value) {
+    if (packedStorageTarget.storedType == NULL) {
+        packedStorageTarget.storedValue->asValue = value;
+    } else {
+        switch (packedStorageTarget.storedType->yt) {
+            case TypeAny: packedStorageTarget.storedValue->asValue = value; break;
+            case TypeBool: packedStorageTarget.storedValue->asValue = value; break;
+            case TypeDouble: packedStorageTarget.storedValue->asValue = value; break;
+            case TypeInt8: packedStorageTarget.storedValue->as.i8 = AS_I8(value); break;
+            case TypeUint8: packedStorageTarget.storedValue->as.ui8 = AS_UI8(value); break;
+            case TypeInt16: packedStorageTarget.storedValue->as.i16 = AS_I16(value); break;
+            case TypeUint16: packedStorageTarget.storedValue->as.ui16 = AS_UI16(value); break;
+            case TypeInt32: packedStorageTarget.storedValue->as.i32 = AS_I32(value); break;
+            case TypeUint32: packedStorageTarget.storedValue->as.ui32 = AS_UI32(value); break;
+            case TypeInt64: packedStorageTarget.storedValue->as.i64 = AS_I64(value); break;
+            case TypeUint64: packedStorageTarget.storedValue->as.ui64 = AS_UI64(value); break;
+            case TypePointer:
+            case TypeString:
+            case TypeClass:
+            case TypeInstance:
+            case TypeFunction:
+            case TypeNativeBlob:
+            case TypeRoutine:
+            case TypeChannel:
+            case TypeYargType: {
+                packedStorageTarget.storedValue->as.obj = AS_OBJ(value);
+                break;
+            }
+            case TypeStruct:
+            case TypeArray:
+                break;
+        }
+    }
+}
+
+bool assignToPackedValue(PackedValue lhs, Value rhsValue) {
+
+    if (lhs.storedType == NULL) {
+        lhs.storedValue->asValue = rhsValue;
+        return true;
+    } else {
+        if (isCompatibleType(lhs.storedType, rhsValue)) {
+            packValue(lhs, rhsValue);
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
+    if (lhs.cellType == NULL) {
+        *lhs.value = rhsValue;
+        return true;
+    } else {
+        if (isCompatibleType(lhs.cellType, rhsValue)) {
+            *(lhs.value) = rhsValue;
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+bool initialiseValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
+    if (lhs.cellType == NULL) {
+        *lhs.value = rhsValue;
+        return true;
+    } else {
+        if (isInitialisableType(lhs.cellType, rhsValue)) {
+            *(lhs.value) = rhsValue;
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+bool is_uniformarray(PackedValue val) {
+    if (val.storedType == NULL) {
+        return IS_UNIFORMARRAY(val.storedValue->asValue);
+    } else if (val.storedType->yt == TypeArray) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool is_struct(PackedValue val) {
+    if (val.storedType == NULL) {
+        return IS_STRUCT(val.storedValue->asValue);
+    } else if (val.storedType->yt == TypeStruct) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void initDynamicValueArray(DynamicValueArray* array) {
     array->values = NULL;
     array->capacity = 0;
     array->count = 0;
 }
 
-void appendToValueArray(ValueArray* array, Value value) {
+void appendToDynamicValueArray(DynamicValueArray* array, Value value) {
     if (array->capacity < array->count + 1) {
         int oldCapacity = array->capacity;
         array->capacity = GROW_CAPACITY(oldCapacity);
@@ -22,9 +297,9 @@ void appendToValueArray(ValueArray* array, Value value) {
     array->count++;
 }
 
-void freeValueArray(ValueArray* array) {
+void freeDynamicValueArray(DynamicValueArray* array) {
     FREE_ARRAY(Value, array->values, array->capacity);
-    initValueArray(array);
+    initDynamicValueArray(array);
 }
 
 void printValue(Value value) {

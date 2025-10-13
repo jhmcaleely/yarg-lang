@@ -10,8 +10,8 @@ fun foo() {
   var a9;
   var a10;
   var a11;
-  var a12;
-  var a13; // expect runtime error: Fixed Value stack size exceeded.
+  var a12;  // expect runtime error: Fixed Value stack size exceeded.
+  var a13;
   var a14;
   var a15;
   var a16;

@@ -246,7 +246,7 @@ ObjExprTypeLiteral* newExprType(ExprTypeLiteral type) {
 ObjExprTypeStruct* newExprTypeStruct() {
     ObjExprTypeStruct* expr = ALLOCATE_OBJ(ObjExprTypeStruct, OBJ_EXPR_TYPE_STRUCT);
     tempRootPush(OBJ_VAL(expr));
-    initValueArray(&expr->fieldsByIndex);
+    initDynamicValueArray(&expr->fieldsByIndex);
     tempRootPop();
     return expr;
 }
@@ -362,7 +362,7 @@ void printExprBuiltin(ObjExprBuiltin* fn) {
     }
 }
 
-void printType(ObjExpr* type) {
+static void printExprType(ObjExpr* type) {
     if (type->obj.type == OBJ_EXPR_LITERAL) {
         ObjExprLiteral* literal = (ObjExprLiteral*)type;
         if (literal->literal == EXPR_LITERAL_NIL) {
@@ -497,7 +497,7 @@ void printExpr(ObjExpr* expr) {
             case OBJ_EXPR_BUILTIN: printExprBuiltin((ObjExprBuiltin*)cursor); break;
             case OBJ_EXPR_DOT: printExprDot((ObjExprDot*)cursor); break;
             case OBJ_EXPR_SUPER: printExprSuper((ObjExprSuper*)cursor); break;
-            case OBJ_EXPR_TYPE: printType(cursor); break;
+            case OBJ_EXPR_TYPE: printExprType(cursor); break;
             case OBJ_EXPR_TYPE_STRUCT: printStructType((ObjExprTypeStruct*)cursor); break;
             case OBJ_EXPR_TYPE_ARRAY: printArrayType((ObjExprTypeArray*)cursor); break;
             default: printf("<unknown>"); break;

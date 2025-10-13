@@ -9,6 +9,7 @@
 typedef struct ObjConcreteYargType ObjConcreteYargType;
 typedef struct ObjConcreteYargTypeArray ObjConcreteYargTypeArray;
 typedef struct ObjConcreteYargTypeStruct ObjConcreteYargTypeStruct;
+typedef struct ObjConcreteYargTypePointer ObjConcreteYargTypePointer;
 
 
 #define OBJ_TYPE(value)     (AS_OBJ(value)->type)
@@ -177,20 +178,18 @@ typedef struct {
 
 typedef struct {
     Obj obj;
-    ObjConcreteYargTypeArray* type;
-    StoredValue* arrayElements;
+    PackedValue store;
 } ObjPackedUniformArray;
 
 typedef struct {
     Obj obj;
-    Value destination_type;
-    StoredValue* destination;
+    ObjConcreteYargTypePointer* type;
+    PackedValueStore* destination;
 } ObjPackedPointer;
 
 typedef struct {
     Obj obj;
-    ObjConcreteYargTypeStruct* type;
-    StoredValue* structFields;
+    PackedValue store;
 } ObjPackedStruct;
 
 #define ALLOCATE_OBJ(type, objectType) \
@@ -216,19 +215,19 @@ ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);
 ObjUpvalue* newUpvalue(ValueCell* slot, size_t stackOffset);
 
-StoredValue* arrayElement(ObjConcreteYargTypeArray* arrayType, StoredValue* arrayStart, size_t index);
+PackedValue arrayElement(PackedValue array, size_t index);
+size_t arrayCardinality(PackedValue array);
 
-StoredValue* structField(ObjConcreteYargTypeStruct* structType, StoredValue* structStart, size_t index);
-bool structFieldIndex(ObjConcreteYargTypeStruct* structType, ObjString* name, size_t* index);
-ObjPackedStruct* newPackedStructAt(ObjConcreteYargTypeStruct* type, StoredValue* packedStorage);
+PackedValue structField(PackedValue struct_, size_t index);
+bool structFieldIndex(ObjConcreteYargType* type, ObjString* name, size_t* index);
+ObjPackedStruct* newPackedStructAt(PackedValue location);
 
-void* createHeapCell(Value type);
-ObjPackedPointer* newPointerForHeapCell(Value type, StoredValue* location);
-ObjPackedPointer* newPointerAtHeapCell(Value type, StoredValue* location);
+ObjPackedPointer* newPointerForHeapCell(PackedValue location);
+ObjPackedPointer* newPointerAtHeapCell(PackedValue location);
 
 Obj* destinationObject(Value pointer);
 
-ObjPackedUniformArray* newPackedUniformArrayAt(ObjConcreteYargTypeArray* type, StoredValue* location);
+ObjPackedUniformArray* newPackedUniformArrayAt(PackedValue location);
 
 Value defaultArrayValue(ObjConcreteYargType* type);
 Value defaultStructValue(ObjConcreteYargType* type);

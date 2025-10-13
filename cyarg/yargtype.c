@@ -74,9 +74,9 @@ ObjConcreteYargType* newYargStructType(size_t fieldCount) {
     ObjConcreteYargTypeStruct* t = (ObjConcreteYargTypeStruct*) newYargTypeFromType(TypeStruct);
     tempRootPush(OBJ_VAL(t));
 
-    Value* fieldTypes = ALLOCATE(Value, fieldCount);
+    ObjConcreteYargType** fieldTypes = ALLOCATE(ObjConcreteYargType*, fieldCount);
     for (size_t i = 0; i < fieldCount; i++) {
-        fieldTypes[i] = NIL_VAL;
+        fieldTypes[i] = NULL;
     }
 
     size_t* fieldIndexes = ALLOCATE(size_t, fieldCount);
@@ -101,7 +101,7 @@ ObjConcreteYargType* newYargPointerType(Value targetType) {
 }
 
 size_t addFieldType(ObjConcreteYargTypeStruct* st, size_t index, size_t fieldOffset, Value type, Value offset, Value name) {
-    st->field_types[index] = type;
+    st->field_types[index] = IS_NIL(type) ? NULL : AS_YARGTYPE(type);
     tableSet(&st->field_names, AS_STRING(name), UI32_VAL(index));
     if (IS_NIL(offset)) {
         st->field_indexes[index] = fieldOffset;
@@ -115,8 +115,8 @@ size_t addFieldType(ObjConcreteYargTypeStruct* st, size_t index, size_t fieldOff
 
 bool isUint32Pointer(Value val) {
     if (IS_POINTER(val)) {
-        Value destination = AS_POINTER(val)->destination_type;
-        ObjConcreteYargType* dest = IS_NIL(destination) ? NULL : AS_YARGTYPE(destination);
+        ObjConcreteYargTypePointer* pointer = AS_POINTER(val)->type;
+        ObjConcreteYargType* dest = pointer->target_type;
         if (dest) {
             return dest->yt == TypeUint32;
         }
@@ -168,13 +168,13 @@ Value concrete_typeof(Value a) {
     } else if (IS_STRING(a)) {
         return OBJ_VAL(newYargTypeFromType(TypeString));
     } else if (IS_UNIFORMARRAY(a)) {
-        return OBJ_VAL(AS_UNIFORMARRAY(a)->type);
+        return OBJ_VAL(AS_UNIFORMARRAY(a)->store.storedType);
     } else if (IS_STRUCT(a)) {
-        return OBJ_VAL(AS_STRUCT(a)->type);
+        return OBJ_VAL(AS_STRUCT(a)->store.storedType);
     } else if (IS_YARGTYPE(a)) {
         return OBJ_VAL(newYargTypeFromType(TypeYargType));
     } else if (IS_POINTER(a)) {
-        return OBJ_VAL(newYargPointerType(AS_POINTER(a)->destination_type));
+        return OBJ_VAL(AS_POINTER(a)->type);
     }
     fatalVMError("Unexpected object type");
     return NIL_VAL;
@@ -294,7 +294,8 @@ bool is_placeable_type(Value typeVal) {
                 ObjConcreteYargTypeStruct* ct = (ObjConcreteYargTypeStruct*)AS_YARGTYPE(typeVal);
                 bool is_placeable = true;
                 for (size_t i = 0; i < ct->field_count; i++) {
-                    is_placeable &= is_placeable_type(ct->field_types[i]);
+                    Value fieldType = ct->field_types[i] == NULL ? NIL_VAL : OBJ_VAL(ct->field_types[i]);
+                    is_placeable &= is_placeable_type(fieldType);
                 }
                 return is_placeable;
             }
@@ -348,135 +349,6 @@ size_t yt_sizeof_type_storage(Value type) {
         case TypePointer:
         case TypeYargType:
             return sizeof(Obj*);
-        }
-    }
-}
-
-void initialisePackedStorage(Value type, StoredValue* packedStorage) {
-
-    if (IS_NIL(type)) {
-        packedStorage->asValue = NIL_VAL;
-    } else {
-        ObjConcreteYargType* ct = AS_YARGTYPE(type);
-        switch (ct->yt) {
-            case TypeAny: packedStorage->asValue = NIL_VAL; break;
-            case TypeBool: packedStorage->asValue = BOOL_VAL(false); break;
-            case TypeDouble: packedStorage->asValue = DOUBLE_VAL(0); break;
-            case TypeInt8: packedStorage->as.i8 = 0; break;
-            case TypeUint8: packedStorage->as.ui8 = 0; break;
-            case TypeInt16: packedStorage->as.i16 = 0; break;
-            case TypeUint16: packedStorage->as.ui16 = 0; break;
-            case TypeInt32: packedStorage->as.i32 = 0; break;
-            case TypeUint32: packedStorage->as.ui32 = 0; break;
-            case TypeInt64: packedStorage->as.i64 = 0; break;
-            case TypeUint64: packedStorage->as.ui64 = 0; break;
-            case TypeArray: {
-                ObjConcreteYargTypeArray* at = (ObjConcreteYargTypeArray*)ct;
-                Value elementType = arrayElementType(at);
-                if (at->cardinality > 0) {
-                    for (size_t i = 0; i < at->cardinality; i++) {
-                        initialisePackedStorage(elementType, arrayElement(at, packedStorage, i));
-                    }
-                }
-                break;
-            }
-            case TypeStruct: {
-                ObjConcreteYargTypeStruct* st = (ObjConcreteYargTypeStruct*)ct;
-                for (size_t i = 0; i < st->field_count; i++) {
-                    StoredValue* field = structField(st, packedStorage, i);
-                    initialisePackedStorage(st->field_types[i], field);
-                }
-                break;
-            }
-            case TypePointer:
-            case TypeString:
-            case TypeClass:
-            case TypeInstance:
-            case TypeFunction:
-            case TypeNativeBlob:
-            case TypeRoutine:
-            case TypeChannel:
-            case TypeYargType: {
-                packedStorage->as.obj = NULL;
-                break;
-            }
-        }
-    }
-}
-
-Value unpackStoredValue(Value type, StoredValue* packedStorage) {
-    if (IS_NIL(type)) {
-        return packedStorage->asValue;
-    } else {
-        ObjConcreteYargType* ct = AS_YARGTYPE(type);
-        switch (ct->yt) {
-            case TypeAny: return packedStorage->asValue;
-            case TypeBool: return packedStorage->asValue;
-            case TypeDouble: return packedStorage->asValue;
-            case TypeInt8: return I8_VAL(packedStorage->as.i8);
-            case TypeUint8: return UI8_VAL(packedStorage->as.ui8);
-            case TypeInt16: return I16_VAL(packedStorage->as.i16);
-            case TypeUint16: return UI16_VAL(packedStorage->as.ui16);
-            case TypeInt32: return I32_VAL(packedStorage->as.i32);
-            case TypeUint32: return UI32_VAL(packedStorage->as.ui32);
-            case TypeInt64: return I64_VAL(packedStorage->as.i64);
-            case TypeUint64: return UI64_VAL(packedStorage->as.ui64);
-            case TypeStruct: {
-                return OBJ_VAL(newPackedStructAt((ObjConcreteYargTypeStruct*)ct, packedStorage));
-            }
-            case TypeArray: {
-                return OBJ_VAL(newPackedUniformArrayAt((ObjConcreteYargTypeArray*)ct, packedStorage));
-            }
-            case TypePointer:
-            case TypeString:
-            case TypeClass:
-            case TypeInstance:
-            case TypeFunction:
-            case TypeNativeBlob:
-            case TypeRoutine:
-            case TypeChannel:
-            case TypeYargType: {
-                if (packedStorage->as.obj) {
-                    return OBJ_VAL(packedStorage->as.obj);
-                } else {
-                    return NIL_VAL;
-                }
-            }
-        }
-    }
-}
-
-void packValueStorage(StoredValueTarget packedStorageTarget, Value value) {
-    if (packedStorageTarget.storedType == NULL) {
-        packedStorageTarget.storedValue->asValue = value;
-    } else {
-        switch (packedStorageTarget.storedType->yt) {
-            case TypeAny: packedStorageTarget.storedValue->asValue = value; break;
-            case TypeBool: packedStorageTarget.storedValue->asValue = value; break;
-            case TypeDouble: packedStorageTarget.storedValue->asValue = value; break;
-            case TypeInt8: packedStorageTarget.storedValue->as.i8 = AS_I8(value); break;
-            case TypeUint8: packedStorageTarget.storedValue->as.ui8 = AS_UI8(value); break;
-            case TypeInt16: packedStorageTarget.storedValue->as.i16 = AS_I16(value); break;
-            case TypeUint16: packedStorageTarget.storedValue->as.ui16 = AS_UI16(value); break;
-            case TypeInt32: packedStorageTarget.storedValue->as.i32 = AS_I32(value); break;
-            case TypeUint32: packedStorageTarget.storedValue->as.ui32 = AS_UI32(value); break;
-            case TypeInt64: packedStorageTarget.storedValue->as.i64 = AS_I64(value); break;
-            case TypeUint64: packedStorageTarget.storedValue->as.ui64 = AS_UI64(value); break;
-            case TypePointer:
-            case TypeString:
-            case TypeClass:
-            case TypeInstance:
-            case TypeFunction:
-            case TypeNativeBlob:
-            case TypeRoutine:
-            case TypeChannel:
-            case TypeYargType: {
-                packedStorageTarget.storedValue->as.obj = AS_OBJ(value);
-                break;
-            }
-            case TypeStruct:
-            case TypeArray:
-                break;
         }
     }
 }
@@ -564,4 +436,80 @@ bool isCompatibleType(ObjConcreteYargType* lhsType, Value rhsValue) {
     } else {
         return isInitialisableType(lhsType, rhsValue);
     }
+}
+
+static void printTypeLiteral(FILE* op, ObjConcreteYargType* type) {
+    if (type == NULL) {
+        FPRINTMSG(op, "any");
+        return;
+    }
+
+    if (type->isConst) {
+        FPRINTMSG(op, "const ");
+    }
+    switch (type->yt) {
+        case TypeAny: FPRINTMSG(op, "any"); break;
+        case TypeBool: FPRINTMSG(op, "bool"); break;
+        case TypeDouble: FPRINTMSG(op, "mfloat64"); break;
+        case TypeInt8: FPRINTMSG(op, "int8"); break;
+        case TypeUint8: FPRINTMSG(op, "uint8"); break;
+        case TypeInt16: FPRINTMSG(op, "int16"); break;
+        case TypeUint16: FPRINTMSG(op, "uint16"); break;
+        case TypeInt32: FPRINTMSG(op, "int32"); break;
+        case TypeUint32: FPRINTMSG(op, "uint32"); break;
+        case TypeInt64: FPRINTMSG(op, "int64"); break;
+        case TypeUint64: FPRINTMSG(op, "uint64"); break;
+        case TypeString: FPRINTMSG(op, "string"); break;
+        case TypeClass: FPRINTMSG(op, "Class"); break;
+        case TypeInstance: FPRINTMSG(op, "Instance"); break;
+        case TypeFunction: FPRINTMSG(op, "Function"); break;
+        case TypeNativeBlob: FPRINTMSG(op, "NativeBlob"); break;
+        case TypeRoutine: FPRINTMSG(op, "Routine"); break;
+        case TypeChannel: FPRINTMSG(op, "Channel"); break;  
+        case TypeYargType: FPRINTMSG(op, "Type"); break;
+        case TypeArray: {
+            ObjConcreteYargTypeArray* array = (ObjConcreteYargTypeArray*) type;
+            Value type = arrayElementType(array);
+            if (IS_NIL(type)) {
+                FPRINTMSG(op, "any");
+            } else {
+                printTypeLiteral(op, array->element_type);
+            }
+            FPRINTMSG(op, "[");
+            if (array->cardinality > 0) {
+                FPRINTMSG(op, "%zu", array->cardinality);
+            }
+            FPRINTMSG(op, "]");
+            break;
+        }
+        case TypeStruct: {
+            ObjConcreteYargTypeStruct* st = (ObjConcreteYargTypeStruct*) type;
+            FPRINTMSG(op, "struct{|%zu:%zu| ", st->field_count, st->storage_size);
+            for (size_t i = 0; i < st->field_count; i++) {
+                printTypeLiteral(op, st->field_types[i]);
+                FPRINTMSG(op, "; ");
+            }
+            FPRINTMSG(op, "}");
+            break;
+        }
+        case TypePointer: {
+            ObjConcreteYargTypePointer* st = (ObjConcreteYargTypePointer*) type;
+            if (type->isConst) {
+                FPRINTMSG(op, "const ");
+            }
+            FPRINTMSG(op, "*");
+            if (st->target_type) {
+                printTypeLiteral(op, st->target_type);
+            } else {
+                FPRINTMSG(op, "any");
+            }
+            break;
+        }
+        default: FPRINTMSG(op, "Unknown"); break;
+    }
+}
+
+void printType(FILE* op, ObjConcreteYargType* type) {
+    FPRINTMSG(op, "Type:");
+    printTypeLiteral(op, type);
 }

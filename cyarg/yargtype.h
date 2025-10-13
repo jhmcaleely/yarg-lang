@@ -2,6 +2,7 @@
 #define cyarg_yargtype_h
 
 #include "object.h"
+#include "stdio.h"
 
 typedef enum {
    TypeAny,
@@ -44,12 +45,12 @@ typedef struct ObjConcreteYargTypeStruct {
     ObjConcreteYargType core;
     ValueTable field_names;
     size_t* field_indexes;
-    Value* field_types;
+    ObjConcreteYargType** field_types;
     size_t field_count;
     size_t storage_size;
 } ObjConcreteYargTypeStruct;
 
-typedef struct {
+typedef struct ObjConcreteYargTypePointer {
     ObjConcreteYargType core;
     ObjConcreteYargType* target_type;
 } ObjConcreteYargTypePointer;
@@ -77,11 +78,9 @@ size_t yt_sizeof_type_storage(Value type);
 
 Value defaultValue(Value type);
 
-void initialisePackedStorage(Value type, StoredValue* storage);
-Value unpackStoredValue(Value type, StoredValue* packedStorage);
-void packValueStorage(StoredValueTarget packedStorageTarget, Value value);
-
 bool isInitialisableType(ObjConcreteYargType* lhsType, Value rhsValue);
 bool isCompatibleType(ObjConcreteYargType* lhsType, Value rhsValue);
+
+void printType(FILE* op, ObjConcreteYargType* type);
 
 #endif

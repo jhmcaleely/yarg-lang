@@ -123,35 +123,41 @@ ObjBlob* newBlob(size_t count) {
     return blob;
 }
 
-StoredValue* arrayElement(ObjConcreteYargTypeArray* arrayType, StoredValue* arrayStart, size_t index) {
-    StoredValue* element = (StoredValue*)(((uint8_t*)arrayStart) + arrayElementOffset(arrayType, index));
-    return element;
+PackedValue arrayElement(PackedValue array, size_t index) {
+    ObjConcreteYargTypeArray* array_type = (ObjConcreteYargTypeArray*) array.storedType;
+    
+    PackedValue el;
+    el.storedType = array_type->element_type;
+    el.storedValue = (PackedValueStore*)(((uint8_t*)array.storedValue) + arrayElementOffset(array_type, index));
+    return el;
+}
+
+size_t arrayCardinality(PackedValue array) {
+    ObjConcreteYargTypeArray* array_type = (ObjConcreteYargTypeArray*) array.storedType;
+    return array_type->cardinality;
 }
 
 ObjPackedUniformArray* newPackedUniformArray(ObjConcreteYargTypeArray* type) {
     ObjPackedUniformArray* array = ALLOCATE_OBJ(ObjPackedUniformArray, OBJ_PACKEDUNIFORMARRAY);
-    array->type = type;    
-
     tempRootPush(OBJ_VAL(array));
 
-    StoredValue* storage = reallocate(NULL, 0, arrayElementSize(type) * type->cardinality);
+    PackedValue new_array = { .storedType = (ObjConcreteYargType*) type, .storedValue = NULL };
+    new_array.storedValue = reallocate(NULL, 0, arrayElementSize(type) * type->cardinality);
 
-    for (size_t i = 0; i < array->type->cardinality; i++) {
-        StoredValue* element = arrayElement(array->type, storage, i);
-        initialisePackedStorage(arrayElementType(array->type), element);
+    for (size_t i = 0; i < type->cardinality; i++) {
+        PackedValue el = arrayElement(new_array, i);
+        initialisePackedValue(el);
     }
 
-    array->arrayElements = storage;
-
+    array->store = new_array;
     tempRootPop();
     return array;
 }
 
-ObjPackedUniformArray* newPackedUniformArrayAt(ObjConcreteYargTypeArray* type, StoredValue* location) {
+ObjPackedUniformArray* newPackedUniformArrayAt(PackedValue location) {
 
     ObjPackedUniformArray* array = ALLOCATE_OBJ(ObjPackedUniformArray, OBJ_UNOWNED_UNIFORMARRAY);
-    array->type = type;
-    array->arrayElements = location;
+    array->store = location;
 
     return array;
 }
@@ -166,28 +172,25 @@ Value defaultArrayValue(ObjConcreteYargType* type) {
     return OBJ_VAL(newPackedUniformArray(arrayType));
 }
 
-void* createHeapCell(Value type) {
-    void* dest = reallocate(NULL, 0, yt_sizeof_type_storage(type));
-    return dest;
-}
-
-ObjPackedPointer* newPointerForHeapCell(Value target_type, StoredValue* location) {
+ObjPackedPointer* newPointerForHeapCell(PackedValue location) {
 
     ObjPackedPointer* ptr = ALLOCATE_OBJ(ObjPackedPointer, OBJ_PACKEDPOINTER);
-    ptr->destination_type = target_type;
-    ptr->destination = location;
+    tempRootPush(OBJ_VAL(ptr));
+    ptr->type = (ObjConcreteYargTypePointer*) newYargTypeFromType(TypePointer);
+    ptr->type->target_type = location.storedType;
+    ptr->destination = location.storedValue;
+    tempRootPop();
     return ptr;
 }
 
-ObjPackedPointer* newPointerAtHeapCell(Value type, StoredValue* location) {
-    if (IS_NIL(type) || IS_YARGTYPE(type)) {
-        ObjPackedPointer* ptr = ALLOCATE_OBJ(ObjPackedPointer, OBJ_UNOWNED_PACKEDPOINTER);
-        ptr->destination_type = type;
-        ptr->destination = location;
-        return ptr;
-    } else {
-        return NULL;
-    }
+ObjPackedPointer* newPointerAtHeapCell(PackedValue location) {
+    ObjPackedPointer* ptr = ALLOCATE_OBJ(ObjPackedPointer, OBJ_UNOWNED_PACKEDPOINTER);
+    tempRootPush(OBJ_VAL(ptr));
+    ptr->type = (ObjConcreteYargTypePointer*) newYargTypeFromType(TypePointer);
+    ptr->type->target_type = location.storedType;
+    ptr->destination = location.storedValue;
+    tempRootPop();
+    return ptr;
 }
 
 bool isAddressValue(Value val) {
@@ -203,12 +206,11 @@ bool isAddressValue(Value val) {
 bool isArrayPointer(Value value) {
     ObjPackedPointer* pointer = AS_POINTER(value);
     if (IS_POINTER(value)) {
-        if (IS_NIL(pointer->destination_type)) {
-            return IS_UNIFORMARRAY(pointer->destination->asValue);
-        } else if (   IS_YARGTYPE(pointer->destination_type)
-                   && AS_YARGTYPE(pointer->destination_type)->yt == TypeArray) {
-            return true;
-        }
+        PackedValue target = { 
+            .storedType = pointer->type->target_type,
+            .storedValue = pointer->destination
+        };
+        return is_uniformarray(target);
     }
     return false;
 }
@@ -216,12 +218,11 @@ bool isArrayPointer(Value value) {
 bool isStructPointer(Value value) {
     ObjPackedPointer* pointer = AS_POINTER(value);
     if (IS_POINTER(value)) {
-        if (IS_NIL(pointer->destination_type)) {
-            return IS_STRUCT(pointer->destination->asValue);
-        } else if (   IS_YARGTYPE(pointer->destination_type)
-                   && AS_YARGTYPE(pointer->destination_type)->yt == TypeStruct) {
-            return true;
-        }
+        PackedValue target = { 
+            .storedType = pointer->type->target_type,
+            .storedValue = pointer->destination
+        };
+        return is_struct(target);
     }
     return false;
 }
@@ -229,7 +230,10 @@ bool isStructPointer(Value value) {
 Obj* destinationObject(Value pointer) {
     if (IS_POINTER(pointer)) {
         ObjPackedPointer* p = AS_POINTER(pointer);
-        Value target = unpackStoredValue(p->destination_type, p->destination);
+        PackedValue dest;
+        dest.storedType = p->type->target_type;
+        dest.storedValue = p->destination;
+        Value target = unpackValue(dest);
         if (IS_OBJ(target)) {
             return AS_OBJ(target);
         }
@@ -239,9 +243,10 @@ Obj* destinationObject(Value pointer) {
 
 Value placeObjectAt(Value placedType, Value location) {
     if (is_placeable_type(placedType) && IS_ADDRESS(location)) {
-        ObjConcreteYargType* concrete_type = AS_YARGTYPE(placedType);
-        StoredValue* locationPtr = (StoredValue*) AS_ADDRESS(location);
-        switch (concrete_type->yt) {
+        PackedValue loc;
+        loc.storedType = IS_NIL(placedType) ? NULL : AS_YARGTYPE(placedType);
+        loc.storedValue = (PackedValueStore*) AS_ADDRESS(location);
+        switch (loc.storedType->yt) {
             case TypeArray:  // fall through
             case TypeStruct:
             case TypeInt8:
@@ -252,7 +257,7 @@ Value placeObjectAt(Value placedType, Value location) {
             case TypeUint32:
             case TypeInt64:
             case TypeUint64: {
-                ObjPackedPointer* result = newPointerAtHeapCell(placedType, locationPtr);
+                ObjPackedPointer* result = newPointerAtHeapCell(loc);
                 return OBJ_VAL(result);
             }
             default:
@@ -264,31 +269,31 @@ Value placeObjectAt(Value placedType, Value location) {
 
 ObjPackedStruct* newPackedStruct(ObjConcreteYargTypeStruct* type) {
     ObjPackedStruct* object = ALLOCATE_OBJ(ObjPackedStruct, OBJ_PACKEDSTRUCT);
-    object->type = type;
     tempRootPush(OBJ_VAL(object));
 
-    StoredValue* storage = reallocate(object->structFields, 0, type->storage_size);
+    PackedValue new_struct = { .storedType = (ObjConcreteYargType*) type, .storedValue = NULL };
+    new_struct.storedValue = reallocate(new_struct.storedValue, 0, type->storage_size);
 
     for (size_t i = 0; i < type->field_count; i++) {
-        StoredValue* field = structField(object->type, storage, i);
-        initialisePackedStorage(type->field_types[i], field);
+        PackedValue f = structField(new_struct, i);
+        initialisePackedValue(f);
     }
 
-    object->structFields = storage;
+    object->store = new_struct;
 
     tempRootPop();
     return object;
 }
 
-ObjPackedStruct* newPackedStructAt(ObjConcreteYargTypeStruct* type, StoredValue* packedStorage) {
+ObjPackedStruct* newPackedStructAt(PackedValue location) {
     ObjPackedStruct* object = ALLOCATE_OBJ(ObjPackedStruct, OBJ_UNOWNED_PACKEDSTRUCT);
-    object->type = type;
-    object->structFields = packedStorage;
+    object->store = location;
 
     return object;
 }
 
-bool structFieldIndex(ObjConcreteYargTypeStruct* structType, ObjString* name, size_t* index) {
+bool structFieldIndex(ObjConcreteYargType* type, ObjString* name, size_t* index) {
+    ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*)type;
     Value indexVal;
     if (tableGet(&structType->field_names, name, &indexVal)) {
         *index = AS_UI32(indexVal);
@@ -297,10 +302,13 @@ bool structFieldIndex(ObjConcreteYargTypeStruct* structType, ObjString* name, si
     return false;
 }
 
-StoredValue* structField(ObjConcreteYargTypeStruct* structType, StoredValue* structStart, size_t index) {
+PackedValue structField(PackedValue struct_, size_t index) {
+    ObjConcreteYargTypeStruct* typeStruct = (ObjConcreteYargTypeStruct*)struct_.storedType;
 
-    StoredValue* field = (StoredValue*)((uint8_t*)structStart + structType->field_indexes[index]);
-    return field;
+    PackedValue f;
+    f.storedType = typeStruct->field_types[index];
+    f.storedValue = (PackedValueStore*)((uint8_t*)struct_.storedValue + typeStruct->field_indexes[index]);
+    return f;
 }
 
 Value defaultStructValue(ObjConcreteYargType* type) {
@@ -357,14 +365,12 @@ ObjString* copyString(const char* chars, int length) {
 ObjUpvalue* newUpvalue(ValueCell* slot, size_t stackOffset) {
     ObjUpvalue* upvalue = ALLOCATE_OBJ(ObjUpvalue, OBJ_UPVALUE);
     upvalue->closed.value = NIL_VAL;
-    upvalue->closed.type = NIL_VAL;
+    upvalue->closed.cellType = NULL;
     upvalue->contents = slot;
     upvalue->stackOffset = stackOffset;
     upvalue->next = NULL;
     return upvalue;
 }
-
-static void printType(FILE* op, ObjConcreteYargType* type);
 
 static void printFunction(FILE* op, ObjFunction* function) {
     if (function->name == NULL) {
@@ -375,108 +381,37 @@ static void printFunction(FILE* op, ObjFunction* function) {
 }
 
 static void printRoutine(FILE* op, ObjRoutine* routine) {
-    FPRINTMSG(op, "<R%s %p>"
-          , routine->type == ROUTINE_ISR ? "i" : "n"
-          , routine);
+    FPRINTMSG(op, "<R%p>", routine);
 }
 
 static void printArray(FILE* op, ObjPackedUniformArray* array) {
-    printType(op, (ObjConcreteYargType*) array->type);
+    ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*)array->store.storedType;
+    printType(op, array->store.storedType);
     FPRINTMSG(op, ":[");
-    for (int i = 0; i < array->type->cardinality; i++) {
-        StoredValue* element = arrayElement(array->type, array->arrayElements, i);
-        Value unpackedValue = unpackStoredValue(arrayElementType(array->type), element);
+    for (int i = 0; i < arrayType->cardinality; i++) {
+        PackedValue element = arrayElement(array->store, i);
+        Value unpackedValue = unpackValue(element);
         fprintValue(op, unpackedValue);
-        if (i < array->type->cardinality - 1) {
+        if (i < arrayType->cardinality - 1) {
             FPRINTMSG(op, ", ");
         }
     }
     FPRINTMSG(op, "]");
 }
 
-static void printTypeLiteral(FILE* op, ObjConcreteYargType* type) {
-    if (type->isConst) {
-        FPRINTMSG(op, "const ");
-    }
-    switch (type->yt) {
-        case TypeAny: FPRINTMSG(op, "any"); break;
-        case TypeBool: FPRINTMSG(op, "bool"); break;
-        case TypeDouble: FPRINTMSG(op, "mfloat64"); break;
-        case TypeInt8: FPRINTMSG(op, "int8"); break;
-        case TypeUint8: FPRINTMSG(op, "uint8"); break;
-        case TypeInt16: FPRINTMSG(op, "int16"); break;
-        case TypeUint16: FPRINTMSG(op, "uint16"); break;
-        case TypeInt32: FPRINTMSG(op, "int32"); break;
-        case TypeUint32: FPRINTMSG(op, "uint32"); break;
-        case TypeInt64: FPRINTMSG(op, "int64"); break;
-        case TypeUint64: FPRINTMSG(op, "uint64"); break;
-        case TypeString: FPRINTMSG(op, "string"); break;
-        case TypeClass: FPRINTMSG(op, "Class"); break;
-        case TypeInstance: FPRINTMSG(op, "Instance"); break;
-        case TypeFunction: FPRINTMSG(op, "Function"); break;
-        case TypeNativeBlob: FPRINTMSG(op, "NativeBlob"); break;
-        case TypeRoutine: FPRINTMSG(op, "Routine"); break;
-        case TypeChannel: FPRINTMSG(op, "Channel"); break;  
-        case TypeYargType: FPRINTMSG(op, "Type"); break;
-        case TypeArray: {
-            ObjConcreteYargTypeArray* array = (ObjConcreteYargTypeArray*) type;
-            Value type = arrayElementType(array);
-            if (IS_NIL(type)) {
-                FPRINTMSG(op, "any");
-            } else {
-                printTypeLiteral(op, array->element_type);
-            }
-            FPRINTMSG(op, "[");
-            if (array->cardinality > 0) {
-                FPRINTMSG(op, "%zu", array->cardinality);
-            }
-            FPRINTMSG(op, "]");
-            break;
-        }
-        case TypeStruct: {
-            ObjConcreteYargTypeStruct* st = (ObjConcreteYargTypeStruct*) type;
-            FPRINTMSG(op, "struct{|%zu:%zu| ", st->field_count, st->storage_size);
-            for (size_t i = 0; i < st->field_count; i++) {
-                ObjConcreteYargType* field_type = AS_YARGTYPE(st->field_types[i]);
-                printTypeLiteral(op, field_type);
-                FPRINTMSG(op, "; ");
-            }
-            FPRINTMSG(op, "}");
-            break;
-        }
-        case TypePointer: {
-            ObjConcreteYargTypePointer* st = (ObjConcreteYargTypePointer*) type;
-            if (type->isConst) {
-                FPRINTMSG(op, "const ");
-            }
-            FPRINTMSG(op, "*");
-            if (st->target_type) {
-                printTypeLiteral(op, st->target_type);
-            } else {
-                FPRINTMSG(op, "any");
-            }
-            break;
-        }
-        default: FPRINTMSG(op, "Unknown"); break;
-    }
-}
-
-static void printType(FILE* op, ObjConcreteYargType* type) {
-    FPRINTMSG(op, "Type:");
-    printTypeLiteral(op, type);
-}
-
 static void printPointer(FILE* op, ObjPackedPointer* ptr) {
     FPRINTMSG(op, "<*");
-    fprintValue(op, ptr->destination_type);
+    Value targetType = ptr->type->target_type == NULL ? NIL_VAL : OBJ_VAL(ptr->type->target_type);
+    fprintValue(op, targetType);
     FPRINTMSG(op, ":%p>", (void*) ptr->destination);
 }
 
 static void printStruct(FILE* op, ObjPackedStruct* st) {
-    FPRINTMSG(op, "struct{|%zu:%zu|", st->type->field_count, st->type->storage_size);
-    for (size_t i = 0; i < st->type->field_count; i++) {
-        StoredValue* field = structField(st->type, st->structFields, i);
-        Value logValue = unpackStoredValue(st->type->field_types[i], field);
+    ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*)st->store.storedType;
+    FPRINTMSG(op, "struct{|%zu:%zu|", structType->field_count, structType->storage_size);
+    for (size_t i = 0; i < structType->field_count; i++) {
+        PackedValue f = structField(st->store, i);
+        Value logValue = unpackValue(f);
         fprintValue(op, logValue);
         FPRINTMSG(op, "; ");
     }

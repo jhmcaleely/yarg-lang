@@ -82,68 +82,10 @@ void markValue(Value value) {
 void markValueCell(ValueCell* cell) {
     if (cell == NULL) return;
     markValue(cell->value);
-    markValue(cell->type);
+    markObject((Obj*)cell->cellType);
 }
 
-static void markStoredValue(Value type, StoredValue* stored);
-
-static void markStoredStructFields(ObjConcreteYargTypeStruct* type, StoredValue* fields) {
-    if (fields) {
-        for (int i = 0; i < type->field_count; i++) {
-            markStoredValue(type->field_types[i], structField(type, fields, i));
-        }
-    }
-}
-
-static void markStoredArrayElements(ObjConcreteYargTypeArray* type, StoredValue* elements) {
-    if (elements) {
-        for (size_t i = 0; i < type->cardinality; i++) {
-            StoredValue* element = arrayElement(type, elements, i);
-            markStoredValue(arrayElementType(type), element);
-        }
-    }
-}
-
-static void markStoredContainerElements(ObjConcreteYargType* type, StoredValue* stored) {
-    switch (type->yt) {
-        case TypeStruct: {
-            ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*) type;
-            markStoredStructFields(structType, stored);
-            break;
-        }
-        case TypeArray: {
-            ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) type;
-            markStoredArrayElements(arrayType, stored);
-            break;
-        }
-        case TypePointer: {
-            ObjConcreteYargTypePointer* pointerType = (ObjConcreteYargTypePointer*)type;
-            if (stored && pointerType->target_type) {
-                markStoredValue(OBJ_VAL(pointerType->target_type), stored);
-            }
-            break;
-        }
-        default:
-            break; // nothing to do.
-
-    }
-}
-
-static void markStoredValue(Value type, StoredValue* stored) {
-    if (stored == NULL) return;
-    if (IS_NIL(type)) {
-        markValue(stored->asValue);
-        return;
-    } else if (type_packs_as_container(AS_YARGTYPE(type))) {
-        markStoredContainerElements(AS_YARGTYPE(type), stored);
-        return;
-    } else if (type_packs_as_obj(AS_YARGTYPE(type))) {
-        markObject(stored->as.obj);
-        return;
-    }
-}
-
-static void markArray(ValueArray* array) {
+static void markArray(DynamicValueArray* array) {
     for (int i = 0; i < array->count; i++) {
         markValue(array->values[i]);
     }
@@ -216,24 +158,25 @@ static void blackenObject(Obj* object) {
             // fall through
         case OBJ_PACKEDPOINTER: {
             ObjPackedPointer* ptr = (ObjPackedPointer*)object;
-            markValue(ptr->destination_type);
-            markStoredValue(ptr->destination_type, ptr->destination);
+            markObject((Obj*)ptr->type);
+            PackedValue dest;
+            dest.storedType = ptr->type->target_type;
+            dest.storedValue = ptr->destination;
+            markPackedValue(dest);
             break;
         }
         case OBJ_UNOWNED_UNIFORMARRAY:
             /* fall through */
         case OBJ_PACKEDUNIFORMARRAY: {
             ObjPackedUniformArray* array = (ObjPackedUniformArray*)object;
-            markObject((Obj*)array->type);
-            markStoredArrayElements(array->type, array->arrayElements);
+            markPackedValue(array->store);
             break;
         }
         case OBJ_UNOWNED_PACKEDSTRUCT:
             // fall through
         case OBJ_PACKEDSTRUCT: {
             ObjPackedStruct* struct_ = (ObjPackedStruct*)object;
-            markObject((Obj*)struct_->type);
-            markStoredStructFields(struct_->type, struct_->structFields);
+            markPackedValue(struct_->store);
             break;
         }
         case OBJ_NATIVE: break;
@@ -254,8 +197,8 @@ static void blackenObject(Obj* object) {
             ObjConcreteYargTypeStruct* type = (ObjConcreteYargTypeStruct*)object;
             markTable(&type->field_names);
             for (int i = 0; i < type->field_count; i++) {
-                Value field_type = type->field_types[i];
-                markValue(field_type);
+                ObjConcreteYargType* field_type = type->field_types[i];
+                markObject((Obj*)field_type);
             }
             break;
         }
@@ -513,22 +456,24 @@ static void freeObject(Obj* object) {
         case OBJ_UNOWNED_PACKEDPOINTER: FREE(ObjPackedPointer, object); break;
         case OBJ_PACKEDPOINTER: {
             ObjPackedPointer* ptr = (ObjPackedPointer*) object;
-            ptr->destination = reallocate(ptr->destination, yt_sizeof_type_storage(ptr->destination_type), 0);
+            Value targetType = ptr->type->target_type == NULL ? NIL_VAL : OBJ_VAL(ptr->type->target_type);
+            ptr->destination = reallocate(ptr->destination, yt_sizeof_type_storage(targetType), 0);
             FREE(ObjPackedPointer, object); 
             break;
         }
         case OBJ_UNOWNED_UNIFORMARRAY: FREE(ObjPackedUniformArray, object); break;
         case OBJ_PACKEDUNIFORMARRAY: {
             ObjPackedUniformArray* array = (ObjPackedUniformArray*)object;
-            size_t element_size = arrayElementSize(array->type);
-            array->arrayElements = reallocate(array->arrayElements, array->type->cardinality * element_size, 0);
+            ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*)array->store.storedType;
+            size_t element_size = arrayElementSize(arrayType);
+            array->store.storedValue = reallocate(array->store.storedValue, arrayType->cardinality * element_size, 0);
             FREE(ObjPackedUniformArray, object);
             break;
         }
         case OBJ_UNOWNED_PACKEDSTRUCT: FREE(ObjPackedStruct, object); break;
         case OBJ_PACKEDSTRUCT: {
             ObjPackedStruct* struct_ = (ObjPackedStruct*) object;
-            struct_->structFields = reallocate(struct_->structFields, struct_->type->storage_size, 0);
+            struct_->store.storedValue = reallocate(struct_->store.storedValue, ((ObjConcreteYargTypeStruct*)(struct_->store.storedType))->storage_size, 0);
             FREE(ObjPackedStruct, object);
             break;            
         }
@@ -536,7 +481,7 @@ static void freeObject(Obj* object) {
         case OBJ_YARGTYPE_ARRAY: FREE(ObjConcreteYargTypeArray, object); break;
         case OBJ_YARGTYPE_STRUCT: {
             ObjConcreteYargTypeStruct* t = (ObjConcreteYargTypeStruct*)object;
-            FREE_ARRAY(Value, t->field_types, t->field_count);
+            FREE_ARRAY(ObjConcreteYargType*, t->field_types, t->field_count);
             FREE_ARRAY(size_t, t->field_indexes, t->field_count);
             freeTable(&t->field_names);
             FREE(ObjConcreteYargTypeStruct, object);
@@ -601,7 +546,7 @@ static void freeObject(Obj* object) {
         case OBJ_EXPR_TYPE: FREE(ObjExprTypeLiteral, object); break;
         case OBJ_EXPR_TYPE_STRUCT: {
             ObjExprTypeStruct* expr = (ObjExprTypeStruct*)object;
-            freeValueArray(&expr->fieldsByIndex);
+            freeDynamicValueArray(&expr->fieldsByIndex);
             FREE(ObjExprTypeStruct, object);
             break;
         }

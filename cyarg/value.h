@@ -9,7 +9,6 @@
 typedef struct Obj Obj;
 typedef struct ObjString ObjString;
 typedef struct ObjRoutine ObjRoutine;
-typedef struct ObjValArray ObjValArray;
 typedef struct ObjConcreteYargType ObjConcreteYargType;
 
 typedef union {
@@ -89,41 +88,52 @@ typedef struct {
 #define ADDRESS_VAL(value)  ((Value){VAL_ADDRESS, { .address = value}})
 #define OBJ_VAL(object)     ((Value){VAL_OBJ, {.obj = (Obj*)object}})
 
-typedef struct {
-    Value value;
-    Value type;
-} ValueCell;
-
-typedef struct {
-    int capacity;
-    int count;
-    Value* values;
-} ValueArray;
+bool is_positive_integer(Value a);
+uint32_t as_positive_integer(Value a);
 
 bool valuesEqual(Value a, Value b);
-void initValueArray(ValueArray* array);
-void appendToValueArray(ValueArray* array, Value value);
-void freeValueArray(ValueArray* array);
-
-typedef union {
-    AnyValue as;
-    Value asValue;
-} StoredValue;
 
 void printValue(Value value);
 void fprintValue(FILE* op, Value value);
 
-bool is_positive_integer(Value a);
-uint32_t as_positive_integer(Value a);
+typedef union PackedValueStore PackedValueStore;
+
+typedef struct {
+    PackedValueStore* storedValue;
+    ObjConcreteYargType* storedType;
+} PackedValue;
+
+void initialisePackedValue(PackedValue packedValue);
+Value unpackValue(PackedValue packedValue);
+PackedValue allocPackedValue(Value type);
+void markPackedValue(PackedValue packedValue);
+
+bool assignToPackedValue(PackedValue lhs, Value rhsValue);
+
+bool is_uniformarray(PackedValue val);
+bool is_struct(PackedValue val);
+
+typedef struct {
+    Value value;
+    ObjConcreteYargType* cellType;
+} ValueCell;
 
 typedef struct {
     Value* value;
     ObjConcreteYargType* cellType;
 } ValueCellTarget;
 
+bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue);
+bool initialiseValueCellTarget(ValueCellTarget lhs, Value rhsValue);
+
 typedef struct {
-    StoredValue* storedValue;
-    ObjConcreteYargType* storedType;
-} StoredValueTarget;
+    int capacity;
+    int count;
+    Value* values;
+} DynamicValueArray;
+
+void initDynamicValueArray(DynamicValueArray* array);
+void appendToDynamicValueArray(DynamicValueArray* array, Value value);
+void freeDynamicValueArray(DynamicValueArray* array);
 
 #endif
