@@ -79,26 +79,6 @@ bool clockNative(ObjRoutine* routine, int argCount, Value* result) {
     return true;
 }
 
-bool sleepNative(ObjRoutine* routine, int argCount, Value* result) {
-    if (argCount != 1) {
-        runtimeError(routine, "Expected 1 arguments but got %d.", argCount);
-        return false;
-    }
-    Value numVal = nativeArgument(routine, argCount, 0);
-
-    if (!is_positive_integer(numVal)) {
-        runtimeError(routine, "Argument must be a positive integer");
-        return false;
-    }
-
-#ifdef CYARG_PICO_TARGET
-    sleep_ms(as_positive_integer(numVal));
-#endif
-
-    *result = NIL_VAL;
-    return true;
-}
-
 bool clock_get_hzNative(ObjRoutine* routine, int argCount, Value* result) {
     if (argCount != 1) {
         runtimeError(routine, "Expected 1 arguments but got %d.", argCount);
