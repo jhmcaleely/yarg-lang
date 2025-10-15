@@ -14,6 +14,8 @@ fi
 ../../bin/hostyarg addfile -fs ../../build/specimen-fs.uf2 -add uart.ya
 ../../bin/hostyarg addfile -fs ../../build/specimen-fs.uf2 -add reset.ya
 ../../bin/hostyarg addfile -fs ../../build/specimen-fs.uf2 -add clock.ya
+../../bin/hostyarg addfile -fs ../../build/specimen-fs.uf2 -add pio.ya
+../../bin/hostyarg addfile -fs ../../build/specimen-fs.uf2 -add pio-instructions.ya
 
 ../../bin/hostyarg addfile -fs ../../build/specimen-fs.uf2 -add alarm.ya
 ../../bin/hostyarg addfile -fs ../../build/specimen-fs.uf2 -add blinky.ya
