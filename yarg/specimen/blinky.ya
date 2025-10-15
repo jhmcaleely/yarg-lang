@@ -5,11 +5,9 @@ gpio_init(pico_led);
 gpio_set_direction(pico_led, GPIO_OUT);
 
 var n = 6;
-bool state = false;
 
 while (n > 0) {
-    state = !state;
-    gpio_put(pico_led, state);
+    gpio_put(pico_led, !gpio_get(pico_led));
     sleep_ms(500);
     n = n - 1;
 }
