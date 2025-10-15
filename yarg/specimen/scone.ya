@@ -5,4 +5,4 @@ class Scone {
 }
 
 var scone = Scone();
-scone.topping("berries", "cream");
+scone.topping("butter", "cheese");
