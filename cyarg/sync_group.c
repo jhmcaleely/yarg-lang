@@ -28,7 +28,7 @@ typedef struct ObjSyncGroup {
 
 ObjSyncGroup* newSyncGroup(ObjRoutine* routine, ObjPackedUniformArray* items) {
     ObjSyncGroup* group = ALLOCATE_OBJ(ObjSyncGroup, OBJ_SYNCGROUP);
-    tempRootPush(OBJ_VAL(group));
+    push(routine, OBJ_VAL(group));
 #ifdef CYARG_PICO_TARGET
     critical_section_init(&group->group_lock);
 #else
@@ -40,11 +40,11 @@ ObjSyncGroup* newSyncGroup(ObjRoutine* routine, ObjPackedUniformArray* items) {
 #endif
     group->channel_array = items;
     ObjConcreteYargTypeArray* t = (ObjConcreteYargTypeArray*)newYargArrayTypeFromType(NIL_VAL);
-    tempRootPush(OBJ_VAL(t));
+    push(routine, OBJ_VAL(t));
     t->cardinality = arrayCardinality(items->store);
     group->result_array = newPackedUniformArray(t);
-    tempRootPop();
-    tempRootPop();
+    pop(routine);
+    pop(routine);
     return group;
 }
 
