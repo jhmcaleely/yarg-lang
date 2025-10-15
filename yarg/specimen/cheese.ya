@@ -1,0 +1,14 @@
+class CheeseMaker {
+    init(cheese) {
+        this.cheese = cheese;
+    }
+
+    ripen() {
+        print "Enjoy ripened " + this.cheese;
+
+        this.cheese = nil;
+    }
+}
+
+var maker = CheeseMaker("cheddar");
+maker.ripen();
