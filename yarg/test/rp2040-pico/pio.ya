@@ -1,0 +1,37 @@
+import("pio");
+
+for (var i = 0; i < 2; i = i + 1) {
+    print pio[i].ctrl;                  // expect: <*Type:uint32:0x5020000>
+    print pio[i].fstat;                 // expect: <*Type:uint32:0x5020004>
+    print pio[i].fdebug;                // expect: <*Type:uint32:0x5020008>
+    print pio[i].flevel;                // expect: <*Type:uint32:0x502000c>
+    for (var x = 0; x < 4; x = x + 1) {
+        print pio[i].txf[x];
+    }
+    for (var x = 0; x < 4; x = x + 1) {
+        print pio[i].rxf[x];
+    }
+    print pio[i].sm_irq;
+    print pio[i].irq_force;
+    print pio[i].input_sync_bypass;
+    print pio[i].dbg_padout;
+    print pio[i].dbg_padoe;
+    print pio[i].dbg_cfginfo;
+    for (var x = 0; x < 32; x = x + 1) {
+        print pio[i].instr_mem[x];
+    }
+    for (var s = 0; s < 4; s = s + 1) {
+        print pio[i].sm[s].clkdiv;
+        print pio[i].sm[s].execctrl;
+        print pio[i].sm[s].shiftctrl;
+        print pio[i].sm[s].addr;
+        print pio[i].sm[s].instr;
+        print pio[i].sm[s].pinctrl;
+    }
+    print pio[i].intr;
+    for (var x = 0; x < 2; x = x + 1) {
+        print pio[i].irq[x].inte;
+        print pio[i].irq[x].intf;
+        print pio[i].irq[x].ints;
+    }
+}
