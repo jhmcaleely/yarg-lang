@@ -8,6 +8,7 @@
 #include "ast.h"
 #include "channel.h"
 #include "sync_group.h"
+#include "platform_hal.h"
 
 #ifdef DEBUG_LOG_GC
 #include "debug.h"
@@ -16,6 +17,8 @@
 #define GC_HEAP_GROW_FACTOR 2
 
 void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
+    platform_mutex_enter(&vm.heap);
+
     vm.bytesAllocated += newSize - oldSize;
     if (newSize > oldSize) {
 #ifdef DEBUG_STRESS_GC
@@ -26,6 +29,8 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
             collectGarbage();
         }
     }
+
+    platform_mutex_leave(&vm.heap);
 
     if (newSize == 0) {
         free(pointer);
@@ -41,17 +46,25 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
 }
 
 void tempRootPush(Value value) {
+
+    platform_mutex_enter(&vm.heap);
+
     *vm.tempRootsTop = value;
     vm.tempRootsTop++;
 
     if (vm.tempRootsTop - &vm.tempRoots[0] >= TEMP_ROOTS_MAX) {
         fatalVMError("Allocation Stash Max Exeeded.");
     }
+
+    platform_mutex_leave(&vm.heap);
 }
 
 Value tempRootPop() {
+    platform_mutex_enter(&vm.heap);
     vm.tempRootsTop--;
-    return *vm.tempRootsTop;
+    Value result = *vm.tempRootsTop;
+    platform_mutex_leave(&vm.heap);
+    return result;
 }
 
 void markObject(Obj* object) {
