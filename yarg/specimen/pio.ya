@@ -1,0 +1,34 @@
+place struct {
+    uint32 ctrl;
+    uint32 fstat;
+    uint32 fdebug;
+    uint32 flevel;
+    uint32[4] txf;
+    uint32[4] rxf;
+    uint32 sm_irq;
+    uint32 irq_force;
+    uint32 input_sync_bypass;
+    uint32 dbg_padout;
+    uint32 dbg_padoe;
+    uint32 dbg_cfginfo;
+    uint32[32] instr_mem;
+    struct {
+        uint32 clkdiv;
+        uint32 execctrl;
+        uint32 shiftctrl;
+        uint32 addr;
+        uint32 instr;
+        uint32 pinctrl;
+        }[4] sm;
+    uint32 intr;
+    struct {
+        uint32 inte;
+        uint32 intf;
+        uint32 ints;
+        }[2] irq;
+} {
+    @x5020000 pio0;
+    @x5030000 pio1;
+}
+
+const any[2] pio = [pio0, pio1];
