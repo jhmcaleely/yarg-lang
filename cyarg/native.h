@@ -4,7 +4,6 @@
 #include "value.h"
 
 bool clockNative(ObjRoutine* routine, int argCount, Value* result);
-bool sleepNative(ObjRoutine* routine, int argCount, Value* result);
 bool clock_get_hzNative(ObjRoutine* routine, int argCount, Value* result);
 
 bool irq_add_shared_handlerNative(ObjRoutine* routine, int argCount, Value* result);
