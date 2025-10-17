@@ -1,8 +1,70 @@
 import("pio");
+import("pio-instructions");
+import("clock");
+import("gpio");
 
-fun ws2812_init() {
+const uint16[4] ws2812_program;
+const ws2812_wrap_target = 0d0;
+ws2812_program[0] = uint16(0x6321); // out    x, 1            side 0 [3]
+ws2812_program[1] = uint16(0x1223); // jmp    !x, 3           side 1 [2]
+ws2812_program[2] = uint16(0x1200); // jmp    0               side 1 [2]
+ws2812_program[3] = uint16(0xa242); // nop                    side 0 [2]
+const ws2812_wrap = 0d3;
 
+const ws2812_T1 = 0d3;
+const ws2812_T2 = 0d3;
+const ws2812_T3 = 0d4;
+
+const ws2812freq = 0d800000;
+const rgbw = false;
+
+fun local_write_masked(variable, val, mask) {
+    uint32 reg = uint32(variable) ^ ((uint32(variable) ^ uint32(val)) & uint32(mask));
+    return reg;
 }
+
+fun ws2812_init(gpio_pin, pio_num, sm_num, offset) {
+
+    pio_add_program_at_offset(pio_num, ws2812_program, 0d0);
+    gpio_set_function(gpio_pin, gpio_func_pio[pio_num]);
+
+    poke pio_clr[pio_num].sm[sm_num].execctrl,  0x1 << PIO_EXECCTRL_OUT_STICKY_LSB;
+
+    poke pio[pio_num].sm[sm_num].pinctrl, (0d1 << PIO_PINCTRL_SET_COUNT_LSB) | (gpio_pin << PIO_PINCTRL_SET_BASE_LSB);
+    uint16 instruction = pio_encode_instr_and_args(pio_instr_bits_set, pio_pindirs, 0x1);
+    poke pio[pio_num].sm[sm_num].instr, uint32(instruction);
+
+    uint32 shiftctrl = (0d1 << PIO_SHIFTCTRL_IN_SHIFTDIR_LSB) |
+                   (0d0 << PIO_SHIFTCTRL_AUTOPUSH_LSB) |
+                   ((0d32 & 0x1) << PIO_SHIFTCTRL_PUSH_THRESH_LSB);
+
+    uint32 execctrl = (offset + ws2812_wrap_target << PIO_SM_EXECCTRL_WRAP_BOTTOM_LSB) |
+                 (offset + ws2812_wrap << PIO_SM_EXECCTRL_WRAP_TOP_LSB);
+
+    uint32 pinctrl = (0d1 << PIO_SM_PINCTRL_SIDESET_COUNT_LSB);
+
+    execctrl = local_write_masked(execctrl, 0x0 << PIO_SM0_EXECCTRL_SIDE_EN_LSB | 0x0 << PIO_SM0_EXECCTRL_SIDE_PINDIR_LSB
+                                , PIO_SM0_EXECCTRL_SIDE_EN_BITS | PIO_SM0_EXECCTRL_SIDE_PINDIR_BITS);
+
+    pinctrl = local_write_masked(pinctrl, gpio_pin << PIO_SM0_PINCTRL_SIDESET_BASE_LSB
+                                , PIO_SM0_PINCTRL_SIDESET_BASE_BITS);
+
+    uint32 rgbval = 0d32;
+    if (!rgbw) {
+        rgbval = 0d24;
+    }
+    
+    shiftctrl = local_write_masked(shiftctrl, (0x0 << PIO_SM0_SHIFTCTRL_OUT_SHIFTDIR_LSB) |
+                (0x1 << PIO_SM0_SHIFTCTRL_AUTOPULL_LSB) |
+                ((rgbval & 0x1) << PIO_SM0_SHIFTCTRL_PULL_THRESH_LSB),
+                PIO_SM0_SHIFTCTRL_OUT_SHIFTDIR_BITS |
+                    PIO_SM0_SHIFTCTRL_AUTOPULL_BITS |
+                    PIO_SM0_SHIFTCTRL_PULL_THRESH_BITS);
+    
+    shiftctrl = local_write_masked(shiftctrl, PIO_FIFO_JOIN_TX << PIO_SM0_SHIFTCTRL_FJOIN_TX_LSB, PIO_SM0_SHIFTCTRL_FJOIN_TX_BITS | PIO_SM0_SHIFTCTRL_FJOIN_RX_BITS);
+}
+
+var leds = ws2812_init(0d18, 0d0, 0d0, 0d0);
 
 var any[64] pixels;
 for (var i = 0d0; i < len(pixels); i = i + 0d1) {

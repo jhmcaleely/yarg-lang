@@ -1,3 +1,8 @@
+import("machine");
+
+const pio0_base = @x5020000;
+const pio1_base = @x5030000;
+
 place struct {
     uint32 ctrl;
     uint32 fstat;
@@ -27,8 +32,34 @@ place struct {
         uint32 ints;
         }[2] irq;
 } {
-    @x5020000 pio0;
-    @x5030000 pio1;
+    pio0_base pio0;
+    pio0_base + REG_ALIAS_XOR_BITS pio0_xor;
+    pio0_base + REG_ALIAS_SET_BITS pio0_set;
+    pio0_base + REG_ALIAS_CLR_BITS pio0_clr;
+
+    pio1_base pio1;
+    pio1_base + REG_ALIAS_XOR_BITS pio1_xor;
+    pio1_base + REG_ALIAS_SET_BITS pio1_set;
+    pio1_base + REG_ALIAS_CLR_BITS pio1_clr;
 }
 
 const any[2] pio = [pio0, pio1];
+const any[2] pio_xor = [pio0_xor, pio1_xor];
+const any[2] pio_set = [pio0_set, pio1_set];
+const any[2] pio_clr = [pio0_clr, pio1_clr];
+
+fun pio_add_program_at_offset(pio_num, program, offset) {
+    for (var i = 0d0; i < len(program); i = i + 0d1) {
+        poke pio[pio_num].instr_mem[offset + i], uint32(program[i]);
+    }
+}
+
+const PIO_EXECCTRL_OUT_STICKY_LSB = 0d17;
+const PIO_PINCTRL_SET_COUNT_LSB = 0d26;
+const PIO_PINCTRL_SET_BASE_LSB = 0d5;
+const PIO_SHIFTCTRL_IN_SHIFTDIR_LSB = 0d18;
+const PIO_SHIFTCTRL_AUTOPUSH_LSB = 0d16;
+const PIO_SHIFTCTRL_PUSH_THRESH_LSB = 0d20;
+const PIO_SM_EXECCTRL_WRAP_BOTTOM_LSB = 0d7;
+const PIO_SM_EXECCTRL_WRAP_TOP_LSB  = 0d12;
+const PIO_SM_PINCTRL_SIDESET_COUNT_LSB = 0d29;
