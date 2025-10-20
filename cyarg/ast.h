@@ -190,6 +190,12 @@ typedef struct {
 
 typedef struct {
     ObjExpr expr;
+    ExprTypeLiteral type;
+    ObjExpr* offset;
+} ObjExprTypeBitField;
+
+typedef struct {
+    ObjExpr expr;
     ObjExpr* cardinality;
 } ObjExprTypeArray;
 
@@ -295,6 +301,7 @@ ObjExprBuiltin* newExprBuiltin(ExprBuiltin fn, int arity);
 ObjExprDot* newExprDot(const char* name, int nameLength);
 ObjExprSuper* newExprSuper(const char* name, int nameLength);
 ObjExprTypeLiteral* newExprType(ExprTypeLiteral type);
+ObjExprTypeBitField* newExprTypeBitField(ExprTypeLiteral, ObjExpr* offset);
 ObjExprTypeStruct* newExprTypeStruct();
 ObjExprTypeArray* newExprTypeArray();
 

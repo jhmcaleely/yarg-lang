@@ -391,6 +391,7 @@ bool newBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
         case TypeAny:    // fall through
         case TypeBool:
         case TypeDouble:
+        case TypeBitfield:
         case TypeInt8:
         case TypeUint8:
         case TypeInt16:

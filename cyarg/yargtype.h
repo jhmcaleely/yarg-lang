@@ -26,6 +26,7 @@ typedef enum {
    TypeArray,
    TypeStruct,
    TypePointer,
+   TypeBitfield,
    TypeYargType
 } ConcreteYargType;
 
@@ -40,6 +41,12 @@ typedef struct ObjConcreteYargTypeArray {
     size_t cardinality;
     ObjConcreteYargType* element_type;
 } ObjConcreteYargTypeArray;
+
+typedef struct ObjConcreteYargTypeBitfield {
+    ObjConcreteYargType core;
+    ObjConcreteYargType* base_type;
+    size_t offset;
+} ObjConcreteYargTypeBitfield;
 
 typedef struct ObjConcreteYargTypeStruct {
     ObjConcreteYargType core;

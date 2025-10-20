@@ -157,6 +157,22 @@ void consume(TokenType type, const char* message) {
     errorAtCurrent(message);
 }
 
+static bool checkBitTypeToken() {
+    switch (parser.current.type) {
+        case TOKEN_INT8:
+        case TOKEN_UINT8:
+        case TOKEN_INT16:
+        case TOKEN_UINT16:
+        case TOKEN_INT32:
+        case TOKEN_UINT32:
+        case TOKEN_INT64:
+        case TOKEN_UINT64:
+            return true;
+        default:
+            return false;
+    }
+}
+
 static bool checkTypeToken() {
     switch (parser.current.type) {
         case TOKEN_MACHINE_FLOAT64:
@@ -769,32 +785,63 @@ static ObjStmtExpression* expressionStatement() {
     return expressionStatement;
 }
 
+static ObjExpr* bitTypeExpression(bool isConst) {
+    ExprTypeLiteral typeLiteral = EXPR_TYPE_LITERAL_INTEGER;
+
+    switch (parser.previous.type) {
+        case TOKEN_INT8: typeLiteral = EXPR_TYPE_LITERAL_INT8; break;
+        case TOKEN_UINT8: typeLiteral = EXPR_TYPE_LITERAL_UINT8; break;
+        case TOKEN_INT16: typeLiteral = EXPR_TYPE_LITERAL_INT16; break;
+        case TOKEN_UINT16: typeLiteral = EXPR_TYPE_LITERAL_UINT16; break;
+        case TOKEN_INT32: typeLiteral = EXPR_TYPE_LITERAL_INTEGER; break;
+        case TOKEN_UINT32: typeLiteral = EXPR_TYPE_LITERAL_UINT32; break;
+        case TOKEN_INT64: typeLiteral = EXPR_TYPE_LITERAL_INT64; break;
+        case TOKEN_UINT64: typeLiteral = EXPR_TYPE_LITERAL_UINT64; break;
+        default:
+            error("Invalid type in expression.");
+    }
+
+    if (check(TOKEN_COLON)) {
+        ObjExpr* param = number(false);
+        return (ObjExpr*) newExprTypeBitField(typeLiteral, param);
+    } else {
+        return (ObjExpr*) newExprType(typeLiteral);
+    }
+
+
+
+}
+
+static ObjExpr* regularTypeExpression(bool isConst) {
+    ObjExpr* expression = NULL;
+    switch (parser.previous.type) {
+        case TOKEN_MACHINE_FLOAT64: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_MFLOAT64); break;
+        case TOKEN_BOOL: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_BOOL); break;
+        case TOKEN_TYPE_STRING: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_STRING); break;
+        case TOKEN_ANY: expression = (ObjExpr*) newExprLiteral(EXPR_LITERAL_NIL); break;
+        case TOKEN_STRUCT: expression = (ObjExpr*) structExpression(); break;
+        default:
+            error("Invalid type in expression.");
+    }
+    if (check(TOKEN_COLON)) {
+        error("Bit selector not permitted for this type.");
+    }
+    return expression;
+}
+
 static ObjExpr* typeExpression() {
     ObjExpr* expression = NULL;
 
     bool isConst = match(TOKEN_CONST);
 
-    if (checkTypeToken()) {
+    if (checkBitTypeToken()) {
         advance();
-        switch (parser.previous.type) {
-            case TOKEN_MACHINE_FLOAT64: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_MFLOAT64); break;
-            case TOKEN_INT8: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_INT8); break;
-            case TOKEN_UINT8: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_UINT8); break;
-            case TOKEN_INT16: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_INT16); break;
-            case TOKEN_UINT16: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_UINT16); break;
-            case TOKEN_INT32: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_INTEGER); break;
-            case TOKEN_UINT32: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_UINT32); break;
-            case TOKEN_INT64: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_INT64); break;
-            case TOKEN_UINT64: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_UINT64); break;
-            case TOKEN_BOOL: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_BOOL); break;
-            case TOKEN_TYPE_STRING: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_STRING); break;
-            case TOKEN_ANY: expression = (ObjExpr*) newExprLiteral(EXPR_LITERAL_NIL); break;
-            case TOKEN_STRUCT: expression = (ObjExpr*) structExpression(); break;
-            default:
-                error("Invalid type in expression.");
-        }
+        expression = bitTypeExpression(isConst);
+    } else if (checkTypeToken()) {
+        advance();
+        expression = regularTypeExpression(isConst);
     }
-    
+
     if (isConst && expression == NULL) {
         expression = (ObjExpr*) newExprLiteral(EXPR_LITERAL_NIL);
     }

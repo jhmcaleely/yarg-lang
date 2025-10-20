@@ -221,6 +221,11 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)type->target_type);
             break;
         }
+        case OBJ_YARGTYPE_BITFIELD: {
+            ObjConcreteYargTypeBitfield* type = (ObjConcreteYargTypeBitfield*)object;
+            markObject((Obj*)type->base_type);
+            break;
+        }
         case OBJ_SYNCGROUP: markSyncGroup((ObjSyncGroup*)object); break;
         case OBJ_STACKSLICE: break;
         case OBJ_AST: {
@@ -404,6 +409,12 @@ static void blackenObject(Obj* object) {
             markExpr(object);
             break;
         }
+        case OBJ_EXPR_TYPE_BITFIELD: {
+            markExpr(object);
+            ObjExprTypeBitField* expr = (ObjExprTypeBitField*)object;
+            markObject((Obj*)expr->offset);
+            break;
+        }
         case OBJ_EXPR_TYPE_STRUCT: {
             markExpr(object);
             ObjExprTypeStruct* expr = (ObjExprTypeStruct*)object;
@@ -503,6 +514,7 @@ static void freeObject(Obj* object) {
             break;
         }
         case OBJ_YARGTYPE_POINTER: FREE(ObjConcreteYargTypePointer, object); break;
+        case OBJ_YARGTYPE_BITFIELD: FREE(ObjConcreteYargTypeBitfield, object); break;
         case OBJ_SYNCGROUP: freeSyncGroup(object); break;
         case OBJ_STACKSLICE: FREE(ObjStackSlice, object); break;
         case OBJ_AST: FREE(ObjAst, object); break;
@@ -560,6 +572,7 @@ static void freeObject(Obj* object) {
         case OBJ_EXPR_DOT: FREE(ObjExprDot, object); break;
         case OBJ_EXPR_SUPER: FREE(ObjExprSuper, object); break;
         case OBJ_EXPR_TYPE: FREE(ObjExprTypeLiteral, object); break;
+        case OBJ_EXPR_TYPE_BITFIELD: FREE(ObjExprTypeBitField, object); break;
         case OBJ_EXPR_TYPE_STRUCT: {
             ObjExprTypeStruct* expr = (ObjExprTypeStruct*)object;
             freeDynamicValueArray(&expr->fieldsByIndex);

@@ -243,6 +243,13 @@ ObjExprTypeLiteral* newExprType(ExprTypeLiteral type) {
     return expr;
 }
 
+ObjExprTypeBitField* newExprTypeBitField(ExprTypeLiteral type, ObjExpr* offset) {
+    ObjExprTypeBitField* expr = ALLOCATE_OBJ(ObjExprTypeBitField, OBJ_EXPR_TYPE_BITFIELD);
+    expr->type = type;
+    expr->offset = offset;
+    return expr;
+}
+
 ObjExprTypeStruct* newExprTypeStruct() {
     ObjExprTypeStruct* expr = ALLOCATE_OBJ(ObjExprTypeStruct, OBJ_EXPR_TYPE_STRUCT);
     tempRootPush(OBJ_VAL(expr));

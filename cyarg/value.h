@@ -115,6 +115,12 @@ bool is_struct(PackedValue val);
 bool is_nil(PackedValue val);
 bool is_channel(PackedValue val);
 
+Value defaultBitfieldValue(ObjConcreteYargType* type);
+
+void initialisePackedBitfield(PackedValue packedValue);
+Value unpackPackedBitfield(PackedValue packedValue);
+void packPackedBitfield(PackedValue packedStorageTarget, Value value);
+
 typedef struct {
     Value value;
     ObjConcreteYargType* cellType;

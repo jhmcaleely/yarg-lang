@@ -97,6 +97,7 @@ void initialisePackedValue(PackedValue packedValue) {
             case TypeAny: packedValue.storedValue->asValue = NIL_VAL; break;
             case TypeBool: packedValue.storedValue->asValue = BOOL_VAL(false); break;
             case TypeDouble: packedValue.storedValue->asValue = DOUBLE_VAL(0); break;
+            case TypeBitfield: initialisePackedBitfield(packedValue); break;
             case TypeInt8: packedValue.storedValue->as.i8 = 0; break;
             case TypeUint8: packedValue.storedValue->as.ui8 = 0; break;
             case TypeInt16: packedValue.storedValue->as.i16 = 0; break;
@@ -149,6 +150,7 @@ Value unpackValue(PackedValue packedValue) {
             case TypeAny: return packedValue.storedValue->asValue;
             case TypeBool: return packedValue.storedValue->asValue;
             case TypeDouble: return packedValue.storedValue->asValue;
+            case TypeBitfield: return unpackPackedBitfield(packedValue);
             case TypeInt8: return I8_VAL(packedValue.storedValue->as.i8);
             case TypeUint8: return UI8_VAL(packedValue.storedValue->as.ui8);
             case TypeInt16: return I16_VAL(packedValue.storedValue->as.i16);
@@ -190,6 +192,7 @@ static void packValue(PackedValue packedStorageTarget, Value value) {
             case TypeAny: packedStorageTarget.storedValue->asValue = value; break;
             case TypeBool: packedStorageTarget.storedValue->asValue = value; break;
             case TypeDouble: packedStorageTarget.storedValue->asValue = value; break;
+            case TypeBitfield: packPackedBitfield(packedStorageTarget, value); break;
             case TypeInt8: packedStorageTarget.storedValue->as.i8 = AS_I8(value); break;
             case TypeUint8: packedStorageTarget.storedValue->as.ui8 = AS_UI8(value); break;
             case TypeInt16: packedStorageTarget.storedValue->as.i16 = AS_I16(value); break;
@@ -405,4 +408,36 @@ uint32_t as_positive_integer(Value a) {
         return AS_UI64(a);
     }
     return 0;
+}
+
+Value defaultBitfieldValue(ObjConcreteYargType* type) {
+    ObjConcreteYargTypeBitfield* bfType = (ObjConcreteYargTypeBitfield*)type;
+    return defaultValue(OBJ_VAL(bfType->base_type));
+}
+
+void initialisePackedBitfield(PackedValue packedValue) {
+    ObjConcreteYargTypeBitfield* bfType = (ObjConcreteYargTypeBitfield*)packedValue.storedType;
+    PackedValue basePackedValue = {
+        .storedType = bfType->base_type,
+        .storedValue = packedValue.storedValue
+    };
+    initialisePackedValue(basePackedValue);
+}
+
+Value unpackPackedBitfield(PackedValue packedValue) {
+    ObjConcreteYargTypeBitfield* bfType = (ObjConcreteYargTypeBitfield*)packedValue.storedType;
+    PackedValue basePackedValue = {
+        .storedType = bfType->base_type,
+        .storedValue = packedValue.storedValue
+    };
+    return unpackValue(basePackedValue);
+}
+
+void packPackedBitfield(PackedValue packedStorageTarget, Value value) {
+    ObjConcreteYargTypeBitfield* bfType = (ObjConcreteYargTypeBitfield*)packedStorageTarget.storedType;
+    PackedValue basePackedValue = {
+        .storedType = bfType->base_type,
+        .storedValue = packedStorageTarget.storedValue
+    };
+    packValue(basePackedValue, value);
 }

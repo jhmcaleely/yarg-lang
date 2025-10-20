@@ -46,6 +46,11 @@ ObjConcreteYargType* newYargTypeFromType(ConcreteYargType yt) {
             p->core.yt = yt;
             return (ObjConcreteYargType*)p;
         }
+        case TypeBitfield: {
+            ObjConcreteYargTypeBitfield* t = ALLOCATE_OBJ(ObjConcreteYargTypeBitfield, OBJ_YARGTYPE_BITFIELD);
+            t->core.yt = yt;
+            return (ObjConcreteYargType*)t;
+        }
     }
 }
 
@@ -185,6 +190,7 @@ bool type_packs_as_obj(ObjConcreteYargType* type) {
         case TypeAny:
         case TypeBool:
         case TypeDouble:
+        case TypeBitfield:
         case TypeInt8:
         case TypeUint8:
         case TypeInt16:
@@ -214,6 +220,7 @@ bool type_packs_as_container(ObjConcreteYargType* type) {
         case TypeAny:
         case TypeBool:
         case TypeDouble:
+        case TypeBitfield:
         case TypeInt8:
         case TypeUint8:
         case TypeInt16:
@@ -246,6 +253,7 @@ bool is_nil_assignable_type(Value type) {
         switch (ct->yt) {
             case TypeBool:
             case TypeDouble:
+            case TypeBitfield:
             case TypeInt8:
             case TypeUint8:
             case TypeInt16:
@@ -315,6 +323,10 @@ size_t yt_sizeof_type_storage(Value type) {
         case TypeBool:
         case TypeDouble:
             return sizeof(Value);
+        case TypeBitfield: {
+            ObjConcreteYargTypeBitfield* bt = (ObjConcreteYargTypeBitfield*)t;
+            return yt_sizeof_type_storage(OBJ_VAL(bt->base_type));
+        }
         case TypeInt8:
             return sizeof(int8_t);
         case TypeUint8:
@@ -361,6 +373,7 @@ Value defaultValue(Value type) {
         switch (ct->yt) {
             case TypeBool: return BOOL_VAL(false);
             case TypeDouble: return DOUBLE_VAL(0);
+            case TypeBitfield: return defaultBitfieldValue(ct);
             case TypeInt8: return I8_VAL(0);
             case TypeUint8: return UI8_VAL(0);
             case TypeInt16: return I16_VAL(0);
