@@ -1,0 +1,56 @@
+place struct {
+    struct {
+        uint32 read_addr;
+        uint32 write_addr;
+        uint32 trans_count;
+        uint32 ctrl_trig;
+        uint32 al1_ctrl;
+        uint32 al1_read_addr;
+        uint32 al1_write_addr;
+        uint32 al1_trans_count_trig;
+        uint32 al2_ctrl;
+        uint32 al2_trans_count;
+        uint32 al2_read_addr;
+        uint32 al2_write_addr_trig;
+        uint32 al3_ctrl;
+        uint32 al3_write_addr;
+        uint32 al3_trans_count;
+        uint32 al3_read_addr_trig;
+    }[12] channel;
+    uint32@0x400 intr;
+    struct {
+        uint32 e;
+        uint32 f;
+        uint32 s;
+        uint8[4] reserved;
+    }[2]@0x414 int;
+    uint32[3]@0x420 timer;
+    uint32 multi_chan_trigger;
+    uint32 sniff_ctrl;
+    uint32@0x440 fifo_levels;
+    uint32 chan_abort;
+    uint32 n_channels;
+    struct {
+        uint32 ctdreq;
+        uint32 tcr;
+        uint8[56] reserved;
+    }[12]@0x800 dbg;
+} @x50000000 dma;
+
+peek(dma.timer[2]);
+peek(dma.int[1].s);
+peek(dma.channel[0].read_addr);
+peek(dma.channel[0].al3_read_addr_trig);
+peek(dma.channel[11].read_addr);
+peek(dma.channel[11].al3_read_addr_trig);
+peek(dma.fifo_levels);
+peek(dma.dbg[0].tcr);
+peek(dma.dbg[1].tcr);
+peek(dma.dbg[2].tcr);
+peek(dma.dbg[3].tcr);
+peek(dma.dbg[4].tcr);
+peek(dma.dbg[5].tcr);
+peek(dma.dbg[6].tcr);
+peek(dma.dbg[7].tcr);
+peek(dma.dbg[8].tcr);
+peek(dma.dbg[11].tcr);
