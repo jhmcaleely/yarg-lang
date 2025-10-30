@@ -2,6 +2,7 @@ import("pio");
 import("pio-instructions");
 import("clock");
 import("gpio");
+import("dma");
 
 const uint16[4] ws2812_program;
 const ws2812_wrap_target = 0d0;
@@ -144,4 +145,12 @@ for (var i = 0d0; i < l; i = i + 0d1) {
     }
 
     poke txfifo, raw_pixels[i];
+}
+
+poke dma.channel[0].read_addr, raw_pixels;
+poke dma.channel[0].write_addr, pio[ws2812_pio].txf[ws2812_sm];
+poke dma.channel[0].trans_count = len(raw_pixels);
+uint32 ctrl = 0x0;
+reg_write_masked(dma.channel[0].ctrl_trig, ctrl, ctrl_mask);
+while(peek(dma.channel[0].ctrl) != busy) {
 }
