@@ -1,6 +1,6 @@
 # yarg-lang
 
-Yarg-Lang is a project to experiment with a dynamic language targetting microcontrollers. It has not yet made a release suitable for wide use.
+Yarg-Lang is a project to experiment with a dynamic language targetting microcontrollers. It has not yet made a release suitable for wide use. Additional documentation on the [wiki][wiki]
 
 Yarg aims to be a dedicated language for Microcontroller firmware development. It offers:
 
@@ -8,7 +8,7 @@ Yarg aims to be a dedicated language for Microcontroller firmware development. I
   - Direct hardware access
   - Interupt based and multi-core multiprocessing
   - Modern language conveniences
-  - Intended for production deployment
+  - Intended for production deployment, as it gets nearer to a 1.0 release.
 
 ## Installing Yarg
 
@@ -22,23 +22,6 @@ Connect your Pico to your favourite serial terminal. Minicom and Putty are popul
 ## Building Yarg
 
 Building yarg from source is required for some ports of Yarg, and to contribute to the language itself. See [BUILD.md](BUILD.md) for details.
-
-# About Yarg
-
-Microcontrollers (such as the $4 Raspberry Pi Pico, or the ESP32 family) are powerful computers, supporting multiple cores, many peripherals, and interrupts from those peripherals arriving at any time. We commonly develop software for them with languages like C or Python. C offers complete access to the system, but was designed when resources were very scarce, and it leaves a lot of work to the developer. Languages like Python offer more to the developer, but were designed with a general purpose computer in mind, and make access to hardware awkward (often they require a C driver). Yarg aims to provide the conveniences of languages like Python, alongside features that allow full access to hardware, so that C is not required to complete a project.
-
-Of course, if you want to use modern language features, many general purpose languages are available in 'Micro', 'Tiny' or other cut-down versions of their implementation for microcontroller use. These implementations are faced with choices when the resources available do not support the same implementation possible in their original form. Do they try to be compatible (at what cost, if that is even possible?), or do they document a limitation compared to the original language? Yarg always prioritises microcontroller development, so all of the implementation choices suit production use for firmware.
-
-Without clear multiprocessing support, language samples for starting projects must include polling, ("while true { sleep(x); do-stuff(); }"), which is wasteful of energy. How long is x? How often is do-stuff() actually needed? Modern microcontrollers are designed to be normally off, and to wake when something interesting is happening. Yarg is a language designed to eliminate wasteful polling like this from the start.
-
-## Aims
-
-  - A dynamic environment for on-device prototyping
-  - Tooling to deploy working firmware to production
-  - Sufficient static typing to reasonably add device specific code without writing C
-  - Interop with C libraries available on device (such as USB, TCP/IP or WiFi)
-
-Not (yet) intended for use. Additional documentation on the [wiki][wiki]
 
 [wiki]: https://github.com/jhmcaleely/yarg-lang/wiki
 
