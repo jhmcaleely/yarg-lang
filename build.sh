@@ -69,5 +69,5 @@ popd
 
 pushd vscode-yarg
 vsce package
-mv yarg-lang-0.1.0.vsix ../build/
+mv yarg-lang-0.2.1.vsix ../build/
 popd

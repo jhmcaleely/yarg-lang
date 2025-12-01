@@ -2,9 +2,9 @@
 
 TARGETUF2=build/yarg-lang-pico-0.2.0.uf2
 
-if [ -e release/yarg-lang-pico-0.2.0.tgz ]
+if [ -e release/yarg-lang-pico-0.2.1.tgz ]
 then
-    rm release/yarg-lang-pico-0.2.0.tgz
+    rm release/yarg-lang-pico-0.2.1.tgz
 fi
 
 if [ -e $TARGETUF2 ]
@@ -48,8 +48,8 @@ fi
 
 cp $TARGETUF2 build/release
 cp docs/release_README build/release/README
-cp build/yarg-lang-0.2.0.vsix build/release/extras/
+cp build/yarg-lang-0.2.1.vsix build/release/extras/
 
 pushd build/release
-tar -cvzf ../../release/yarg-lang-pico-0.2.0.tgz .
+tar -cvzf ../../release/yarg-lang-pico-0.2.1.tgz .
 popd
