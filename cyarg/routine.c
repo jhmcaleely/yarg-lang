@@ -79,7 +79,6 @@ ObjRoutine* newRoutine() {
 
 void runAndRenter(ObjRoutine* routine) {
     run(routine);
-    pop(routine);
     enterEntryFunction(routine);
 }
 
