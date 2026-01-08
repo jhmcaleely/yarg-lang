@@ -1,0 +1,69 @@
+name: Build on macOS
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.21'
+
+      - name: Install CMake
+        run: brew install cmake
+
+      - name: Install Raspberry Pi Pico SDK dependencies
+        run: |
+          brew tap ArmMbed/homebrew-formulae
+          brew install arm-none-eabi-gcc
+          brew install libusb
+
+      - name: Set up Pico SDK
+        run: |
+          cd $HOME
+          git clone https://github.com/raspberrypi/pico-sdk.git \
+            --branch 2.2.0 --depth 1
+          cd pico-sdk
+          git submodule update --init
+          echo "PICO_SDK_PATH=$HOME/pico-sdk" >> $GITHUB_ENV
+
+      - name: Install picotool
+        run: |
+          cd $HOME
+          git clone https://github.com/raspberrypi/picotool.git --depth 1
+          cd picotool
+          mkdir build
+          cd build
+          cmake ..
+          make
+          echo "$HOME/picotool/build" >> $GITHUB_PATH
+
+      - name: Run build script
+        run: ./build.sh
+
+      - name: Run test suite
+        run: ./test.sh
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: yarg-lang-macos-build
+          path: |
+            build/*.uf2
+            bin/hostyarg
+            bin/cyarg
