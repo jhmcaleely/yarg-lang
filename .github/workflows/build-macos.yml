@@ -11,6 +11,7 @@ on:
 
 jobs:
   build:
+    name: Build Yarg repo on macOS (gnu ARM toolchain)
     runs-on: macos-latest
     permissions:
       contents: read
@@ -26,22 +27,20 @@ jobs:
         with:
           go-version: '>=1.21'
 
-      - name: Install CMake
-        run: brew install cmake
-
       - name: Install Raspberry Pi Pico SDK dependencies
         run: |
-          brew tap ArmMbed/homebrew-formulae
-          brew install arm-none-eabi-gcc
-          brew install libusb
+          brew install --cask gcc-arm-embedded
+          arm-none-eabi-gcc -v
+
+      - name: Install VSCode dependencies
+        run: |
+          brew install vsce
 
       - name: Set up Pico SDK
         run: |
           cd $HOME
-          git clone https://github.com/raspberrypi/pico-sdk.git \
-            --branch 2.2.0 --depth 1
-          cd pico-sdk
-          git submodule update --init
+          git clone --recurse-submodules https://github.com/raspberrypi/pico-sdk.git \
+            --branch 2.2.0
           echo "PICO_SDK_PATH=$HOME/pico-sdk" >> $GITHUB_ENV
 
       - name: Install picotool
@@ -52,8 +51,8 @@ jobs:
           mkdir build
           cd build
           cmake ..
-          cmake --build . --parallel
-          echo "$HOME/picotool/build" >> $GITHUB_PATH
+          make
+          sudo cmake --install .
 
       - name: Run build script
         run: ./build.sh
