@@ -8,12 +8,17 @@ With that said, contributing to Yarg itself is appreciated!
 
 The host machine requires:
 
-  * A C development toolchain, eg Xcode commandline tools, or a GCC based toolchain (gcc must be v14 or higher)
-  * go (golang), for the test harness and target image generation tools (`hostyarg`)
-  * The [Raspberry Pi Pico SDK][picosdk] (currently v2.2.0), and it's dependencies (notably picotool), if you want to build for the Pico.
-  * ./tools/setup-ubuntu.sh is a specimen script to configure an Ubuntu 25.10 VM
+  * A C development toolchain, eg a GCC or CLang based toolchain (gcc must be v14 or higher)
+  * `go` ([golang][golang]), for the test harness and target image generation tools (`hostyarg`)
+  * The [Raspberry Pi Pico SDK][picosdk] (currently v2.2.0), and it's dependencies (notably `picotool`), if you want to build for the Pico.
+  * `./tools/setup-ubuntu.sh` is a specimen script to configure an Ubuntu 25.10 VM. It does not currently install the Pico SDK.
 
-## Pico SDK dependency
+Optionally:
+
+  * `vsce` should be installed to build the vscode-yarg project, to provide syntax highlighting in VSCode
+  * `Xcode` and its default toolchain can be used to build host binaries on MacOS. `go` is required to test them.
+
+### Pico SDK dependency
 
 The build needs to locate the Pico SDK and associated tools when it builds targets for the Pico. You can supply an environment with PICO_SDK_PATH set and picotool fully installed. Alternatively, you can use CMakeUserPresets.json to supply the necessary information. On my machine, I use cyarg\CMakeUserPresets.json with these entries:
 
@@ -46,6 +51,8 @@ The build needs to locate the Pico SDK and associated tools when it builds targe
 In my case the Raspberry Pi Pico extension for VSCode manages the dependencies in ~/.pico-sdk for me.
 
 ## First time build:
+
+First set up your environment to meet the requirements above, and then:
 
 ```
 $ git clone --recurse-submodules git@github.com:jhmcaleely/yarg-lang.git
@@ -80,6 +87,7 @@ Interpreter: bin/cyarg
 Tests: yarg/test
 Total tests: 1044, passed: 1044
 ```
+'Total tests' and 'passed' match, and are the same or higher than the last run on main.
 
 ## Cleanup
 
@@ -88,6 +96,8 @@ To clear all build atrefacts from the source tree:
 `$ ./tools/clean-repo.sh`
 
 ## CI Builds
+
+[![Release (Pico)](https://github.com/yarg-lang/yarg-lang/actions/workflows/release.yml/badge.svg)](https://github.com/yarg-lang/yarg-lang/actions/workflows/release.yml)
 
 When you push to the upstream yarg-lang repo, the CI will run a suite of tests on your code, which all have
 shell scripts in their name. These scripts will do the local equivalent, if you call them from a shell on host.
@@ -99,3 +109,4 @@ Releases are made from pushes to main, which is a repeat of some of the CI tests
 [rel]: https://github.com/jhmcaleely/yarg-lang/releases
 [picosdk]: https://www.raspberrypi.com/documentation/microcontrollers/c_sdk.html
 [pico1]: https://datasheets.raspberrypi.com/pico/pico-product-brief.pdf
+[golang]: https://go.dev
