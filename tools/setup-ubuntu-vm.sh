@@ -16,12 +16,16 @@ if [ "$1" = "pico" ]; then
     wget https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz
     tar xf arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz
 
-    export PATH="$(pwd)/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi/bin:$PATH"
+    TOOLCHAIN_DIR="$(pwd)/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi"
+    export PATH="$TOOLCHAIN_DIR/bin:$PATH"
+    echo "export PATH=\"$TOOLCHAIN_DIR/bin:\$PATH\"" >> ~/.bashrc
 
     git clone --recurse-submodules https://github.com/raspberrypi/pico-sdk.git \
         --branch 2.2.0 --single-branch --depth 1
 
-    export PICO_SDK_PATH="$(pwd)/pico-sdk"
+    PICO_SDK_DIR="$(pwd)/pico-sdk"
+    export PICO_SDK_PATH="$PICO_SDK_DIR"
+    echo "export PICO_SDK_PATH=\"$PICO_SDK_DIR\"" >> ~/.bashrc
 
     git clone https://github.com/raspberrypi/picotool.git \
               --branch 2.2.0-a4 --single-branch --depth 1

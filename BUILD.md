@@ -11,7 +11,11 @@ The host machine requires:
   * A C development toolchain, eg a GCC or CLang based toolchain (gcc must be v14 or higher)
   * `go` ([golang][golang]), for the test harness and target image generation tools (`hostyarg`)
   * The [Raspberry Pi Pico SDK][picosdk] (currently v2.2.0), and it's dependencies (notably `picotool`), if you want to build for the Pico.
-  * `./tools/setup-ubuntu.sh` is a specimen script to configure an Ubuntu 25.10 VM. It does not currently install the Pico SDK.
+  * `./tools/setup-ubuntu-vm.sh` is a specimen script to configure an Ubuntu 25.10 VM. It will installed the pico toolchain and sdk in pico-tooling/ if you supply `pico` as a parameter, eg:
+
+  ```
+  ./tools/setup-ubuntu-vm.sh pico
+  ```
 
 Optionally:
 
