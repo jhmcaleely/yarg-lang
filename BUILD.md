@@ -59,7 +59,7 @@ In my case the Raspberry Pi Pico extension for VSCode manages the dependencies i
 First set up your environment to meet the requirements above, and then:
 
 ```
-$ git clone --recurse-submodules git@github.com:jhmcaleely/yarg-lang.git
+$ git clone --recurse-submodules git@github.com:<username>/yarg-lang.git
 $ ./tools/build-host.sh
 $ ./tools/build-target-pico.sh
 ```

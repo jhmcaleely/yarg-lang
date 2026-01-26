@@ -13,10 +13,15 @@ if [ "$1" = "pico" ]; then
 
     mkdir -p pico-tooling
     pushd pico-tooling
-    wget https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz
-    tar xf arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz
 
-    TOOLCHAIN_DIR="$(pwd)/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi"
+    ARM_CROSS_COMPILER_VERSION="14.2.rel1"
+    ARM_CROSS_COMPILER_HOST="$(arch)"
+    ARM_TOOLCHAIN_FILENAME="arm-gnu-toolchain-${ARM_CROSS_COMPILER_VERSION}-${ARM_CROSS_COMPILER_HOST}-arm-none-eabi.tar.xz"
+    
+    wget https://developer.arm.com/-/media/Files/downloads/gnu/${ARM_CROSS_COMPILER_VERSION}/binrel/$ARM_TOOLCHAIN_FILENAME
+    tar xf $ARM_TOOLCHAIN_FILENAME
+
+    TOOLCHAIN_DIR="$(pwd)/arm-gnu-toolchain-${ARM_CROSS_COMPILER_VERSION}-${ARM_CROSS_COMPILER_HOST}-arm-none-eabi"
     export PATH="$TOOLCHAIN_DIR/bin:$PATH"
     echo "export PATH=\"$TOOLCHAIN_DIR/bin:\$PATH\"" >> ~/.bashrc
 
