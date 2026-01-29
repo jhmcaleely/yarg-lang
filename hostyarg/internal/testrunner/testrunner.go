@@ -2,7 +2,6 @@ package testrunner
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io/fs"
 	"log"
@@ -12,6 +11,8 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
+
+	"github.com/yarg-lang/yarg-lang/hostyarg/internal/runbinary"
 )
 
 const (
@@ -110,7 +111,9 @@ func runTestFile(interpreter string, testfile string) (total, pass int) {
 	test.parseTestSource()
 	total = test.Expectations
 
-	output, errors, code, ok := runInterpreter(interpreter, test.FileName)
+	runner := exec.Command(interpreter, test.FileName)
+
+	output, errors, code, ok := runbinary.RunCommand(runner)
 	if ok {
 
 		if test.validateCode(code) {
@@ -242,39 +245,4 @@ func (test *Test) parseLine(lineNo int, line string) {
 		test.ExpectedRuntimeErrorLine = lineNo
 		test.Expectations++
 	}
-}
-
-func streamToLines(stream bytes.Buffer) (lines []string) {
-	scanner := bufio.NewScanner(&stream)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	return lines
-}
-
-func runInterpreter(interpreter, argument string) (output, errors []string, exitcode int, ok bool) {
-	var cstdout, cstderr bytes.Buffer
-	runner := exec.Command(interpreter, argument)
-	runner.Stdout = &cstdout
-	runner.Stderr = &cstderr
-
-	err := runner.Run()
-	ok = err == nil
-
-	if err != nil {
-		switch e := err.(type) {
-		case *exec.ExitError:
-			ok = true
-			exitcode = e.ExitCode()
-		default:
-			fmt.Println("failed executing:", err)
-		}
-	}
-
-	if ok {
-		output = streamToLines(cstdout)
-		errors = streamToLines(cstderr)
-	}
-
-	return output, errors, exitcode, ok
 }

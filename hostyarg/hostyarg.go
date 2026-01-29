@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/yarg-lang/yarg-lang/hostyarg/internal/deviceimage"
+	"github.com/yarg-lang/yarg-lang/hostyarg/internal/devicerunner"
 	"github.com/yarg-lang/yarg-lang/hostyarg/internal/testrunner"
 )
 
@@ -29,6 +30,8 @@ func main() {
 	testRunCmd := flag.NewFlagSet("runtests", flag.ExitOnError)
 	testRunInterpreter := testRunCmd.String("interpreter", "cyarg", "default interpreter")
 	testRunTests := testRunCmd.String("tests", "", "default tests")
+
+	deviceResetCmd := flag.NewFlagSet("resetdevice", flag.ExitOnError)
 
 	if len(os.Args) < 2 {
 		fmt.Println("expected command")
@@ -57,6 +60,9 @@ func main() {
 		testRunCmd.Parse(os.Args[2:])
 		exit_code := testrunner.CmdRunTests(*testRunInterpreter, *testRunTests)
 		os.Exit(exit_code)
+	case "resetdevice":
+		deviceResetCmd.Parse(os.Args[2:])
+		devicerunner.CmdResetDevice()
 	default:
 		fmt.Println("unknown command")
 		os.Exit(64)
