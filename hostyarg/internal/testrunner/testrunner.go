@@ -184,7 +184,7 @@ func (test *Test) accountRuntimeErrorExpectations(errors []string, pass *int) {
 }
 
 func (test *Test) accountOutputExpectations(output []string, pass *int) {
-	if reflect.DeepEqual(test.ExpectedOutput[0:len(output)], output) {
+	if reflect.DeepEqual(test.ExpectedOutput, output) {
 		*pass += len(output)
 	}
 }
