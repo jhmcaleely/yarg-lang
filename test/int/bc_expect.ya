@@ -1,0 +1,14 @@
+// generates the expected output for bc.ya
+
+const reps = 10000;
+
+for (var x = 0; x < reps; x = x + 1)
+{
+    print x;
+
+    for (var y = 0; y < 5; y = y + 1)
+    {
+        print 0;
+    }
+}
+
