@@ -190,3 +190,12 @@ if (YARG_DEVICE STREQUAL "GENERIC_HOST")
 # Add the math library for the definition of pow()
 target_link_libraries(cyarg m)
 endif()
+
+enable_testing()
+
+add_executable(bigint_test big-int/big-int.c)
+target_link_libraries(bigint_test m)
+if (YARG_DEVICE STREQUAL "RASPBERRY_PI_PICO")
+target_link_libraries(bigint_test pico_stdlib)
+endif()
+target_compile_definitions(bigint_test PRIVATE CYARG_FEATURE_TEST_INT)
