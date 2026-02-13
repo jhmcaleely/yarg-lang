@@ -7,7 +7,7 @@ Yarg tests present in yarg/test exercise the complete Yarg stack. Currently thes
 To run the test suite, first build the repo, and then:
 
 ```
-$ ./bin/hostyarg runtests -tests "yarg/test" -interpreter "bin/cyarg"
+% ./bin/hostyarg runtests -tests "yarg/test" -interpreter "bin/cyarg"
 Interpreter: bin/cyarg
 Tests: yarg/test
 Total tests: 1065, passed: 1065
@@ -36,9 +36,9 @@ Total tests: 1065, passed: 1064
 The failing test can be located with `find`, and then run directly with `cyarg` to inspect the failure:
 
 ```
-$ find . -name bool.ya
+% find . -name bool.ya
 ./yarg/test/call/bool.ya
-$ ./bin/cyarg yarg/test/call/bool.ya
+% ./bin/cyarg yarg/test/call/bool.ya
 Undefined variable (OP_GET_GLOBAL) 'tru'.
 [line 1] in script
 ```
@@ -54,9 +54,9 @@ print -0.0;    // expect: -0.00000
 hostyarg executes cyarg, and captures its output and exit code, akin to:
 
 ```
-$ cyarg test.ya
+% cyarg test.ya
 -0.00000
-$ echo $?
+% echo $?
 0
 ```
 
