@@ -8,6 +8,7 @@
 #include "memory.h"
 #include "object.h"
 #include "scanner.h"
+#include "big-int/precalc.h"
 
 static void generateExpr(ObjExpr* expr);
 
@@ -1084,6 +1085,7 @@ ObjFunction* compile(const char* source) {
     struct Compiler compiler;
     initCompiler(&compiler, TYPE_SCRIPT, NULL);
 
+#define DEBUG_AST_PARSE 1
 #ifdef DEBUG_AST_PARSE
     collectGarbage();
     size_t bytesAllocated = vm.bytesAllocated;
@@ -1091,6 +1093,10 @@ ObjFunction* compile(const char* source) {
 
     bool parseError = parse(current->ast);
 
+    if (!parseError)
+    {
+        precalcStatements(current->ast->statements);
+    }
 #ifdef DEBUG_AST_PARSE
     collectGarbage();
     printf("Parse Tree (%zu net bytes)\n", vm.bytesAllocated - bytesAllocated);

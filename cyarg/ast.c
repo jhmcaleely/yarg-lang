@@ -179,14 +179,14 @@ ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength) {
     return var;
 }
 
-ObjExprNamedConstant* newExprNamedConstant(const char* name, int nameLength) {
-    ObjExprNamedConstant* var = ALLOCATE_OBJ(ObjExprNamedConstant, OBJ_EXPR_NAMEDCONSTANT);
-    tempRootPush(OBJ_VAL(var));
-    var->name = copyString(name, nameLength);
-    tempRootPop();
-    return var;
-}
-
+//ObjExprNamedConstant* newExprNamedConstant(const char* name, int nameLength) {
+//    ObjExprNamedConstant* var = ALLOCATE_OBJ(ObjExprNamedConstant, OBJ_EXPR_NAMEDCONSTANT);
+//    tempRootPush(OBJ_VAL(var));
+//    var->name = copyString(name, nameLength);
+//    tempRootPop();
+//    return var;
+//}
+//
 
 ObjExprLiteral* newExprLiteral(ExprLiteral literal) {
     ObjExprLiteral* lit = ALLOCATE_OBJ(ObjExprLiteral, OBJ_EXPR_LITERAL);
@@ -446,13 +446,14 @@ void printExpr(ObjExpr* expr) {
                 break;
             }
             case OBJ_EXPR_NUMBER: {
+                char s[311];
                 ObjExprNumber* num = (ObjExprNumber*)cursor;
                 switch (num->type) {
                     case NUMBER_DOUBLE:
-                        printf("%f", num->val.dbl);
+                        printf("f%f", num->val.dbl);
                         break;
                     case NUMBER_INTEGER32:
-                        printf("%d", num->val.integer32);
+                        printf("i%d", num->val.integer32);
                         break;
                     case NUMBER_UINTEGER32:
                         printf("u%u", num->val.uinteger32);
@@ -464,7 +465,7 @@ void printExpr(ObjExpr* expr) {
                         printf("@x%lx", num->val.address);
                         break;
                     case NUMBER_INT:
-                        printf("int66");
+                        printf("%s", int_to_s(&num->val.bigInt, s, 311));
                         break;
                 }
                 break;

@@ -1254,6 +1254,7 @@ runtimeError(routine, "Operands must both be numbers, integers or unsigned integ
             case OP_TYPE_ARRAY: {
                 if (!IS_NIL(peek(routine, 0)) && !is_positive_integer(peek(routine, 0))) {
                     runtimeError(routine, "Array cardinality must be positive integer or nil");
+                    return INTERPRET_RUNTIME_ERROR;
                 }
                 uint32_t cardinality = 0;
                 if (is_positive_integer(peek(routine, 0))) {

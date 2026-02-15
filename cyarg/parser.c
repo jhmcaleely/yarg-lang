@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "parser.h"
 #include "ast.h"
@@ -612,10 +613,6 @@ static ObjExpr* number(bool canAssign) {
             val = newExprNumberDouble(value);
         } else {
             val = newExprNumberInt(number_start, number_len);
-            if (int_is_range(&val->val.bigInt, INT32_MIN, INT32_MAX) == INT_WITHIN) // this won’t work for INT32_MIN or INT64_MIN as the - is not parsed here
-            {
-                val = newExprNumberInteger32(int_to_i32(&val->val.bigInt)); // todo will GC sort this?
-            } // todo what about i64?
         }
     }
     else {

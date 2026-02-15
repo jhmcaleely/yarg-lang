@@ -387,6 +387,8 @@ bool is_positive_integer(Value a) {
         return true;
     } else if (IS_I64(a) && AS_I64(a) >= 0) {
         return true;
+    } else if (IS_INT(a) && int_is_range(AS_INT(a), 0, UINT32_MAX) == INT_WITHIN) {
+        return true;
     }
     return false;
 }
@@ -408,6 +410,8 @@ uint32_t as_positive_integer(Value a) {
         return AS_UI16(a);
     } else if (IS_UI64(a) && AS_UI64(a) <= UINT32_MAX) {
         return AS_UI32(a);
+    } else if (IS_INT(a) && int_is_range(AS_INT(a), 0, UINT32_MAX) == INT_WITHIN) {
+        return int_to_u32(AS_INT(a));
     }
     return 0;
 }
