@@ -12,6 +12,12 @@
 #include <string.h>
 #include <assert.h> // should cause runtime error in target
 
+typedef struct
+{
+    Int i_;
+    uint32_t w0_;
+} StackInt2;
+
 union TwoDigits
 {
     struct
@@ -58,22 +64,47 @@ typedef union FourDigits FourDigits;
  a - A        => -(A - a)
  */
 
-void addPos(Int const *, Int const *, Int *);
-void int_sub_abs(Int const *, Int const *, Int *);
+static void addPos(Int const *, Int const *, Int *);
+static void int_sub_abs(Int const *, Int const *, Int *);
 static void subAGtB(Int const *, Int const *, Int *);
+static void stackInt2Init(StackInt2 *i);
+
+Int *int_new(int digits)
+{
+    assert(digits < 255);
+    int m = (digits + 1) / 2 * 2;
+    Int *r = (Int *) malloc(sizeof (Int) + m * sizeof (uint16_t));
+    r->m_ = m;
+    return r;
+}
+
+Int *int_resize(Int *old, int digits)
+{
+    assert(digits < 255);
+    if (digits == 0)
+    {
+        free(old);
+        return 0;
+    }
+    int m = (digits + 1) / 2 * 2;
+    assert(old->d_ <= m);
+    Int *r = (Int *) realloc(old, sizeof (Int) + m * sizeof (uint16_t));
+    r->m_ = m;
+    return r;
+}
 
 void int_init(Int *i)
 {
+    assert(i->m_ != 0 && i->m_ % 2 == 0);
     i->neg_ = false;
     i->overflow_ = false;
     i->d_ = 1;
-    i->m_ = INT_MAX_DIGITS;
     i->w_[0] = 0;
 }
 
 void int_set_i(int64_t to, Int *i)
 {
-    i->m_ = INT_MAX_DIGITS;
+    assert(i->m_ != 0 && i->m_ % 2 == 0);
     i->overflow_ = false;
 
     uint64_t v;
@@ -116,7 +147,7 @@ void int_set_i(int64_t to, Int *i)
 
 void int_set_u(uint64_t to, Int *i)
 {
-    i->m_ = INT_MAX_DIGITS;
+    assert(i->m_ != 0 && i->m_ % 2 == 0);
     i->overflow_ = false;
     i->neg_ = false;
 
@@ -141,14 +172,15 @@ void int_set_u(uint64_t to, Int *i)
     }
 }
 
+static StackInt2 ten = {.i_.m_ = 2, .i_.d_ = 1, .w0_ = 10};
+static StackInt2 digit = {.i_.m_ = 2, .i_.d_ = 1};
+
 void int_set_s(char const *s, Int *i)
 {
     int_init(i);
-    i->overflow_ = false;
 
-    Int ten, acc;
-    int_set_i(10, &ten);
-    int_init(&acc);
+    Int *acc = int_new(i->m_);
+    int_init(acc);
 
     bool neg;
     if (*s == '-')
@@ -162,22 +194,22 @@ void int_set_s(char const *s, Int *i)
     }
     while (*s != 0)
     {
-        int_mul(&ten, i, &acc); // todo mul by uint16 optimisation
+        int_mul(&ten.i_, i, acc); // todo mul by uint16 optimisation
         int d = *s++ - '0';
-        Int digit;
-        int_set_i(d, &digit); // todo add to uint16 optimisation
-        int_add(&acc, &digit, i);
+        int_set_i(d, &digit.i_); // todo add to uint16 optimisation
+        int_add(acc, &digit.i_, i);
     }
     i->neg_ = neg;
+    int_resize(acc, 0);
 }
 
 void int_set_t(Int const *v, Int *i)
 {
+    assert(i->m_ != 0 && i->m_ % 2 == 0 && i->m_ >= v->d_);
     i->neg_ = v->neg_;
     i->overflow_ = v->overflow_;
     i->d_ = v->d_;
-    i->m_ = INT_MAX_DIGITS;
-    assert(i->m_ == v->m_);
+    assert(i->m_ >= v->d_);
     memcpy(i->h_, v->h_, (v->d_ + 1) / 2 * sizeof v->w_[0]);
 }
 
@@ -374,6 +406,8 @@ static void subAGtB(Int const *a, Int const *b, Int *r)
 
 void int_mul(Int const *a, Int const *b, Int *r)
 {
+    Int *pp = int_new(r->m_);
+
     int_set_i(0, r);
     if (a->d_ == 1 && a->h_[0] == 0 || b->d_ == 1 && b->h_[0] == 0) // todo remove - no need for this optimisation
     {
@@ -389,16 +423,15 @@ void int_mul(Int const *a, Int const *b, Int *r)
         for (uint16_t const *bp = b->h_; bp < &b->h_[b->d_]; bp++, rp++)
         {
 //            printf(".%ld/%ld", ap - a->h_, bp - b->h_);
-            Int pp;
-            int_set_i((uint32_t) *ap * (uint32_t) *bp, &pp); // todo cast to int32 to use M0 single instruction mul
-            if (rp - r->h_ + pp.d_ > r->m_)
+            int_set_i((uint32_t) *ap * (uint32_t) *bp, pp);
+            if (rp - r->h_ + pp->d_ > r->m_)
             {
                 r->overflow_ = true;
                 break;
             }
-            int_shift((int)(rp - r->h_), &pp);
+            int_shift((int)(rp - r->h_), pp);
 //            printf("%d:%d := %d %d\n", (int)pp.h16_, (int)pp.l16_, (int)*ap, (int)*bp);
-            int_add(r, &pp, r); // todo add shifted uint32 optimisation
+            int_add(r, pp, r); // todo add shifted uint32 optimisation
             if (r->overflow_)
             {
                 break;
@@ -406,6 +439,8 @@ void int_mul(Int const *a, Int const *b, Int *r)
         }
     }
     r->neg_ = a->neg_ ^ b->neg_;
+
+    int_resize(pp, 0);
 }
 
 /*
@@ -451,10 +486,14 @@ void int_div(Int const *n, Int const *d, Int *q, Int *r)
     bool nSign = n->neg_;
     bool dSign = d->neg_;
 
-    Int qDigit;
-    int_init(&qDigit);
-    Int reduceBy;
-    int_init(&reduceBy);
+    Int *qDigit = int_new(n->m_);
+    int_init(qDigit);
+    Int *reduceBy = int_new(n->m_);
+    int_init(reduceBy);
+    Int *reducingNumerator = int_new(n->m_);
+    int_init(reducingNumerator);
+    Int *shiftingDenominator = int_new(n->m_);
+    int_init(shiftingDenominator);
 
     uint32_t testDenominator = d->h_[d->d_ - 1];
     assert(testDenominator != 0);
@@ -462,15 +501,13 @@ void int_div(Int const *n, Int const *d, Int *q, Int *r)
 
     // Shift denominator to be one digit to the right of the numerator
     // if n and d are the same length, assume numerator is one longer. Increase wirh a leading zero.
-    Int reducingNumerator;
-    int_set_t(n, &reducingNumerator);
-    reducingNumerator.neg_ = false;
-    int nDigit = reducingNumerator.d_ - 1;
+    int_set_t(n, reducingNumerator);
+    reducingNumerator->neg_ = false;
+    int nDigit = reducingNumerator->d_ - 1;
 
-    Int shiftingDenominator;
-    int_set_t(d, &shiftingDenominator);
-    shiftingDenominator.neg_ = false;
-    int shift = reducingNumerator.d_ - shiftingDenominator.d_ - 1;
+    int_set_t(d, shiftingDenominator);
+    shiftingDenominator->neg_ = false;
+    int shift = reducingNumerator->d_ - shiftingDenominator->d_ - 1;
     if (shift == -1)
     {
         shift = 0;
@@ -478,7 +515,7 @@ void int_div(Int const *n, Int const *d, Int *q, Int *r)
     }
     else if (shift >= 1)
     {
-        int_shift(shift, &shiftingDenominator);
+        int_shift(shift, shiftingDenominator);
     }
     else
     {
@@ -488,7 +525,7 @@ void int_div(Int const *n, Int const *d, Int *q, Int *r)
 
     while (1)
     {
-        if (int_is_abs(&reducingNumerator, &shiftingDenominator) == INT_LT) // should never be true on first iteration
+        if (int_is_abs(reducingNumerator, shiftingDenominator) == INT_LT) // should never be true on first iteration
         {
             if (shift == 0)
             {
@@ -499,7 +536,7 @@ void int_div(Int const *n, Int const *d, Int *q, Int *r)
                 shift--;
                 nDigit--;
                 //shifts++;
-                int_shift(-1, &shiftingDenominator);
+                int_shift(-1, shiftingDenominator);
                 int_shift(1, q);
             }
         }
@@ -508,19 +545,19 @@ void int_div(Int const *n, Int const *d, Int *q, Int *r)
         if (nDigit < 1)
         {
             assert(nDigit == 0);
-            guessNumerator.u32_ = reducingNumerator.h_[0];
+            guessNumerator.u32_ = reducingNumerator->h_[0];
         }
         else
         {
-            if (nDigit >= reducingNumerator.d_) // todo - combine with the preceding test
+            if (nDigit >= reducingNumerator->d_) // todo - combine with the preceding test
             {
                 guessNumerator.h16_ = 0u;
             }
             else
             {
-                guessNumerator.h16_ = reducingNumerator.h_[nDigit];
+                guessNumerator.h16_ = reducingNumerator->h_[nDigit];
             }
-            guessNumerator.l16_ = reducingNumerator.h_[nDigit - 1];
+            guessNumerator.l16_ = reducingNumerator->h_[nDigit - 1];
         }
         uint32_t guessMultiplier = guessNumerator.u32_ / testDenominator; // todo compare div_u32u32();
         if (guessMultiplier == 0u)
@@ -528,13 +565,13 @@ void int_div(Int const *n, Int const *d, Int *q, Int *r)
             guessMultiplier = 1u;
         }
 
-        int_set_i(guessMultiplier, &qDigit);
-        int_mul(&shiftingDenominator, &qDigit, &reduceBy);
+        int_set_i(guessMultiplier, qDigit);
+        int_mul(shiftingDenominator, qDigit, reduceBy);
 
-        if (int_is_abs(&reducingNumerator, &reduceBy) != INT_LT)
+        if (int_is_abs(reducingNumerator, reduceBy) != INT_LT)
         {
-            subAGtB(&reducingNumerator, &reduceBy, &reducingNumerator);
-            addPos(&qDigit, q, q);
+            subAGtB(reducingNumerator, reduceBy, reducingNumerator);
+            addPos(qDigit, q, q);
         }
         else // Guessed too high
             ;
@@ -542,7 +579,7 @@ void int_div(Int const *n, Int const *d, Int *q, Int *r)
     q->neg_ = nSign ^ dSign;
     if (r != 0)
     {
-        int_set_t(&reducingNumerator, r);
+        int_set_t(reducingNumerator, r);
         r->neg_ = nSign;
         // adjust for yarg’s weird %
         if (nSign)
@@ -550,6 +587,11 @@ void int_div(Int const *n, Int const *d, Int *q, Int *r)
             int_add(r, d, r);
         }
     }
+
+    int_resize(shiftingDenominator, 0);
+    int_resize(reducingNumerator, 0);
+    int_resize(reduceBy, 0);
+    int_resize(qDigit, 0);
 }
 
 void int_neg(Int *i)
@@ -650,25 +692,25 @@ IntRange int_is_range(Int const *i, int64_t l, uint64_t u)
     return r;
 }
 
+static StackInt2 tenToTheFour = {.i_.m_ = 2, .i_.d_ = 1, .w0_ = 10000};
+static StackInt2 r = {.i_.m_ = 2, .i_.d_ = 1};
+
 char const *int_to_s(Int const *i, char *s, int n)
 {
     char *out = &s[n - 1];
     *out = '\0';
 
-    Int v;
-    int_set_t(i, &v);
-    v.neg_ = false;
-    Int tenToTheFour;
-    int_set_i(10000u, &tenToTheFour);
+    Int *v = int_new(i->m_);
+    int_set_t(i, v);
+    v->neg_ = false;
 
-    while (!int_is_zero(&v))
+    while (!int_is_zero(v))
     {
-        Int r;
-        int_div(&v, &tenToTheFour, &v, &r);
+        int_div(v, &tenToTheFour.i_, v, &r.i_);
 
-        assert(r.d_ == 1);
-        uint16_t rem = r.h_[0];
-        bool leading = int_is_zero(&v);
+        assert(r.i_.d_ == 1);
+        uint16_t rem = r.i_.h_[0];
+        bool leading = int_is_zero(v);
         for (int c = 0; c < 4 && out > s; c++)
         {
             char ch = (char) (rem % 10u + '0');
@@ -687,6 +729,8 @@ char const *int_to_s(Int const *i, char *s, int n)
     {
         *--out = '-';
     }
+
+    int_resize(v, 0);
     return out;
 }
 
@@ -791,7 +835,7 @@ void int_invariant(Int const *i)
 {
     assert((int) i->neg_ == 1 || (int)i->neg_ == 0);
     assert(!i->overflow_);
-    assert(i->m_ == INT_MAX_DIGITS); // todo - this will change when arbitrary length
+    assert(i->m_ % 2 == 0);
     assert(i->d_ >= 1 && i->d_ <= i->m_);
     // check top half-word is zero if length is odd
     if (i->d_ % 2 == 1)
@@ -805,13 +849,15 @@ void int_invariant(Int const *i)
     }
 }
 
+static const uint8_t randMaxDigits = 64;
+
 void int_make_random(Int *i)
 {
-    i->m_ = INT_MAX_DIGITS;
+    i->m_ = randMaxDigits;
     i->overflow_ = false;
     i->neg_ = rand() > RAND_MAX / 2;
     i->d_ = 1 + rand() / (RAND_MAX / 64);
-    assert(i->d_ <= INT_MAX_DIGITS);
+    assert(i->d_ <= randMaxDigits);
     for (int x = 0; x < i->d_; x++)
     {
         i->h_[x] = (uint16_t) rand();
@@ -873,8 +919,6 @@ void int_run_tests(void)
     int_init(&q);
     int_init(&s);
     int_init(&r);
-    Int tenToTheFour;
-    int_set_i(10000u, &tenToTheFour);
 
 //    goto div;
 //    goto rand;
@@ -1298,4 +1342,13 @@ rand: // pipe the output from here into `bc -lLS 0`
         int_for_bc(&a);printf(" / ");int_for_bc(&b);printf(" - ");int_for_bc(&q);printf("\n");
         int_for_bc(&a);printf(" %% ");int_for_bc(&b);printf(" - ");int_for_bc(&r);printf("\n");
     }
+}
+
+void stackInt2Init(StackInt2 *i)
+{
+    i->i_.m_ = 2;;
+    i->i_.neg_ = false;
+    i->i_.overflow_ = false;
+    i->i_.d_ = 1;
+    i->i_.w_[0] = 0;
 }

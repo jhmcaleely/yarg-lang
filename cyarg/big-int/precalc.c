@@ -13,33 +13,28 @@
 
 static bool precalcExpression(ObjExpr **); // returns true if argument has reduced to Literal Int
 
-// (5) => 5
-// 6+7 => 13
-// 7+(2*1) => 10
-// ...etc.
-
-void precalcStatements(ObjStmt* stmts)
+void precalcStatements(ObjStmt* statements)
 {
-    ObjStmt *stmt = stmts;
-    while (stmt)
+    ObjStmt *s = statements;
+    while (s)
     {
-        switch (stmt->obj.type)
+        switch (s->obj.type)
         {
         case OBJ_STMT_RETURN:
         case OBJ_STMT_YIELD:
         case OBJ_STMT_PRINT:
         case OBJ_STMT_EXPRESSION:
-            precalcExpression(&((ObjStmtExpression *) stmt)->expression);
+            precalcExpression(&((ObjStmtExpression *) s)->expression);
             break;
         case OBJ_STMT_POKE: {
-            ObjStmtPoke *poke = (ObjStmtPoke *) stmt;
+            ObjStmtPoke *poke = (ObjStmtPoke *) s;
             precalcExpression(&poke->location);
             precalcExpression(&poke->offset);
             precalcExpression(&poke->assignment);
             break;
         }
         case OBJ_STMT_VARDECLARATION: {
-            ObjStmtVarDeclaration *varDecl = (ObjStmtVarDeclaration *) stmt;
+            ObjStmtVarDeclaration *varDecl = (ObjStmtVarDeclaration *) s;
             if (varDecl->initialiser)
             {
                 precalcExpression(&varDecl->initialiser);
@@ -49,30 +44,30 @@ void precalcStatements(ObjStmt* stmts)
         case OBJ_STMT_PLACEDECLARATION:
             break;
         case OBJ_STMT_BLOCK: {
-            ObjStmtBlock *block = (ObjStmtBlock *) stmt;
+            ObjStmtBlock *block = (ObjStmtBlock *) s;
             precalcStatements(block->statements);
             break;
         }
         case OBJ_STMT_IF: {
-            ObjStmtIf *ifelse = (ObjStmtIf *) stmt;
+            ObjStmtIf *ifelse = (ObjStmtIf *) s;
             precalcExpression(&ifelse->test);
             precalcStatements(ifelse->ifStmt);
             precalcStatements(ifelse->elseStmt);
             break;
         }
         case OBJ_STMT_FUNDECLARATION: {
-            ObjStmtFunDeclaration *fun = (ObjStmtFunDeclaration *) stmt;
+            ObjStmtFunDeclaration *fun = (ObjStmtFunDeclaration *) s;
             precalcStatements(fun->body);
             break;
         }
         case OBJ_STMT_WHILE: {
-            ObjStmtWhile *whileDone = (ObjStmtWhile*) stmt;
+            ObjStmtWhile *whileDone = (ObjStmtWhile *) s;
             precalcExpression(&whileDone->test);
             precalcStatements(whileDone->loop);
             break;
         }
         case OBJ_STMT_FOR: {
-            ObjStmtFor *forNext = (ObjStmtFor *) stmt;
+            ObjStmtFor *forNext = (ObjStmtFor *) s;
             precalcStatements(forNext->initializer);
             precalcExpression(&forNext->condition);
             precalcExpression(&forNext->loopExpression);
@@ -80,7 +75,7 @@ void precalcStatements(ObjStmt* stmts)
             break;
         }
         case OBJ_STMT_CLASSDECLARATION: {
-            ObjStmtClassDeclaration *classDecl = (ObjStmtClassDeclaration*) stmt;
+            ObjStmtClassDeclaration *classDecl = (ObjStmtClassDeclaration *) s;
             for (int i = 0; i < classDecl->methods.objectCount; i++)
             {
                 ObjStmtFunDeclaration *fun = (ObjStmtFunDeclaration *) classDecl->methods.objects[i];
@@ -89,13 +84,15 @@ void precalcStatements(ObjStmt* stmts)
             break;
         }
         case OBJ_STMT_FIELDDECLARATION: {
-            ObjStmtFieldDeclaration *field = (ObjStmtFieldDeclaration*) stmt;
-            precalcExpression(&field->offset);
+            ObjStmtFieldDeclaration *field = (ObjStmtFieldDeclaration *) s;
+            precalcExpression(&field->offset); // todo - check if this is needed, I doubt field declarations have expressions‽
             break;
         }
-        default: assert(!"Statement"); break;
+        default:
+            assert(!"Statement");
+            break;
         }
-        stmt = stmt->nextStmt;
+        s = s->nextStmt;
     }
 }
 
@@ -138,18 +135,18 @@ bool precalcExpression(ObjExpr **ep)
                     // EXPR_OP_NOT_EQUAL, EXPR_OP_GREATER_EQUAL, EXPR_OP_LESS_EQUAL, EXPR_OP_NOT,
                     // EXPR_OP_LOGICAL_AND, EXPR_OP_LOGICAL_OR, EXPR_OP_DEREF_PTR
                 case EXPR_OP_ADD:
-                    int_add(intExpr(*h), intExpr(o->rhs), intExpr(*h));
+                    int_add(intExpr(*h), intExpr(o->rhs), intExpr(*h)); --- result must be realloced
                     (*h)->nextExpr = e->nextExpr;
                     ep = h;
                     break;
                 case EXPR_OP_SUBTRACT:
-                    int_sub(intExpr(*h), intExpr(o->rhs), intExpr(*h));
+                    int_sub(intExpr(*h), intExpr(o->rhs), intExpr(*h)); --- result must be realloced
                     (*h)->nextExpr = e->nextExpr;
                     ep = h;
                     break;
                 case EXPR_OP_MULTIPLY: {
                     Int p;
-                    int_mul(intExpr(*h), intExpr(o->rhs), &p);
+                    int_mul(intExpr(*h), intExpr(o->rhs), &p); --- result must be realloced
                     int_set_t(&p, intExpr(*h));
                     (*h)->nextExpr = e->nextExpr;
                     ep = h;
@@ -231,5 +228,5 @@ bool isReducible(ObjExpr *e)
 Int *intExpr(ObjExpr *e)
 {
     assert(isReducible(e));
-    return &((ObjExprNumber *) e)->val.bigInt;
+    return &((ObjExprNumber *) e)->bigInt;
 }

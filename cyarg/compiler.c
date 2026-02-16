@@ -9,6 +9,7 @@
 #include "object.h"
 #include "scanner.h"
 #include "big-int/precalc.h"
+//#include "big-int/promote.h"
 
 static void generateExpr(ObjExpr* expr);
 
@@ -312,14 +313,12 @@ static void generateStmt(ObjStmt* stmt);
 
 static void generateNumber(ObjExprNumber* num) {
     switch(num->type) {
-        case NUMBER_DOUBLE: emitConstant(DOUBLE_VAL(num->val.dbl)); break;
-        case NUMBER_INTEGER32: emitConstant(I32_VAL(num->val.integer32)); break;
-        case NUMBER_UINTEGER32: emitConstant(UI32_VAL(num->val.uinteger32)); break;
-        case NUMBER_UINTEGER64: emitConstant(UI64_VAL(num->val.ui64)); break;
-        case NUMBER_ADDRESS: emitConstant(ADDRESS_VAL(num->val.address)); break;
+        case NUMBER_DOUBLE: emitConstant(DOUBLE_VAL(3.4)); break;
+        case NUMBER_ADDRESS: emitConstant(ADDRESS_VAL(0x457557)); break;
         case NUMBER_INT: {
-            ObjInt* objInt = ALLOCATE_OBJ(ObjInt, OBJ_INT);
-            int_set_t(&num->val.bigInt, &objInt->bigInt);
+            ObjInt *objInt = (ObjInt *) allocateObject(sizeof (ObjInt) + num->bigInt.m_ * sizeof (uint16_t), OBJ_INT);
+            objInt->bigInt.m_ = num->bigInt.m_;
+            int_set_t(&num->bigInt, &objInt->bigInt);
             emitConstant(OBJ_VAL(objInt));
             break;
         }
@@ -1085,18 +1084,34 @@ ObjFunction* compile(const char* source) {
     struct Compiler compiler;
     initCompiler(&compiler, TYPE_SCRIPT, NULL);
 
-#define DEBUG_AST_PARSE 1
-#ifdef DEBUG_AST_PARSE
+
+#if defined DEBUG_AST_PARSE || defined DEBUG_AST_OPTIMISE
     collectGarbage();
     size_t bytesAllocated = vm.bytesAllocated;
 #endif
 
     bool parseError = parse(current->ast);
 
+#ifdef DEBUG_AST_OPTIMISE
+    collectGarbage();
+    printf("Raw parse Tree (%zu net bytes)\n", vm.bytesAllocated - bytesAllocated);
+    printStmts(current->ast->statements);
+#endif
     if (!parseError)
     {
         precalcStatements(current->ast->statements);
     }
+
+//#ifdef DEBUG_AST_OPTIMISE
+//    collectGarbage();
+//    printf("Parse Tree after precalc and before promoteLitInt (%zu net bytes)\n", vm.bytesAllocated - bytesAllocated);
+//    printStmts(current->ast->statements);
+//#endif
+//    if (!parseError)
+//    {
+//        promoteLitIntStatements(current->ast->statements);
+//    }
+
 #ifdef DEBUG_AST_PARSE
     collectGarbage();
     printf("Parse Tree (%zu net bytes)\n", vm.bytesAllocated - bytesAllocated);

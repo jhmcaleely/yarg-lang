@@ -10,18 +10,24 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define INT_MAX_DIGITS 64
+#define INT_DIGITS_FOR_INT8 1
+#define INT_DIGITS_FOR_INT16 1
+#define INT_DIGITS_FOR_INT32 2
+#define INT_DIGITS_FOR_INT64 4
+#define INT_DIGITS_FOR_ADDRESS 4 // target address size could be 32 or 64
+#define INT_DIGITS_FOR_S(STRLEN) ((1651124 + (STRLEN) * 342808) / 1651125) // multiply by 1/log10(65536) - fails at 1224 decimal digits (255 (16-bit) digits)
 
 typedef struct Int
 {
     bool neg_;
     bool overflow_;
-    uint8_t d_; // num digits 1 - 64
-    uint8_t m_; // max digits always 64 in this implementation
+    uint8_t d_; // num (16-bit) digits 1 -
+    uint8_t m_; // max (16-bit) digits - allocated size, always even
     union
     {
-        uint16_t h_[INT_MAX_DIGITS];
-        uint32_t w_[INT_MAX_DIGITS / 2];
+        uint8_t b_[];
+        uint16_t h_[];
+        uint32_t w_[];
     };
 } Int;
 
@@ -39,6 +45,9 @@ typedef enum
     INT_ABOVE
 } IntRange;
 
+// allocators
+Int *int_new(int digits); // may return m_ > digits
+Int *int_resize(Int *, int digits); // digits == -1 reduce to d_, digits == 0 deallocates and returns 0, may return m_ > digits
 
 // constructors
 void int_init(Int *);
@@ -46,6 +55,7 @@ void int_set_i(int64_t, Int *);
 void int_set_u(uint64_t, Int *);
 void int_set_s(char const *, Int *);
 void int_set_t(Int const *, Int *);
+
 
 // funtions
 void int_add(Int const *, Int const *, Int *);

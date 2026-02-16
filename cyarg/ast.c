@@ -125,49 +125,29 @@ ObjExprGrouping* newExprGrouping(ObjExpr* expression) {
 }
 
 
-ObjExprNumber* newExprNumberDouble(double value) {
-    ObjExprNumber* num = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
+ObjExprNumber* newExprNumberDouble(int numberDecimalDigits) {
+    uint8_t s = INT_DIGITS_FOR_S(numberDecimalDigits);
+    s += s % 2;
+    ObjExprNumber *num = (ObjExprNumber *) allocateObject(sizeof (ObjExprNumber) + sizeof (uint16_t) * s, OBJ_EXPR_NUMBER);
+    num->bigInt.m_ = s;
     num->type = NUMBER_DOUBLE;
-    num->val.dbl = value;
     return num;
 }
 
-ObjExprNumber* newExprNumberInteger32(int value) {
-    ObjExprNumber* num = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
-    num->type = NUMBER_INTEGER32;
-    num->val.integer32 = value;
-    return num;
-}
-
-ObjExprNumber* newExprNumberUInteger32(uint32_t value) {
-    ObjExprNumber* num = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
-    num->type = NUMBER_UINTEGER32;
-    num->val.uinteger32 = value;
-    return num;
-}
-
-ObjExprNumber* newExprNumberUInteger64(uint64_t value) {
-    ObjExprNumber* num = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
-    num->type = NUMBER_UINTEGER64;
-    num->val.ui64 = value;
-    return num;
-}
-
-ObjExprNumber* newExprNumberAddress(uintptr_t value) {
-    ObjExprNumber* num = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
+ObjExprNumber* newExprNumberAddress() {
+    uint8_t s = INT_DIGITS_FOR_ADDRESS;
+    ObjExprNumber *num = (ObjExprNumber *) allocateObject(sizeof (ObjExprNumber) + sizeof (uint16_t) * s, OBJ_EXPR_NUMBER);
+    num->bigInt.m_ = s;
     num->type = NUMBER_ADDRESS;
-    num->val.address = value;
     return num;
 }
 
-ObjExprNumber* newExprNumberInt(const char* numbers, int numberDigits) {
-    char* heapChars = ALLOCATE(char, numberDigits + 1);
-    memcpy(heapChars, numbers, numberDigits);
-    heapChars[numberDigits] = 0;
-    ObjExprNumber* num = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
+ObjExprNumber* newExprNumberInt(int numberDecimalDigits) {
+    uint8_t s = INT_DIGITS_FOR_S(numberDecimalDigits);
+    s += s % 2;
+    ObjExprNumber *num = (ObjExprNumber *) allocateObject(sizeof (ObjExprNumber) + sizeof (uint16_t) * s, OBJ_EXPR_NUMBER);
+    num->bigInt.m_ = s;
     num->type = NUMBER_INT;
-    int_set_s(heapChars, &num->val.bigInt);
-    FREE(char, heapChars);
     return num;
 }
 
@@ -178,15 +158,6 @@ ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength) {
     tempRootPop();
     return var;
 }
-
-//ObjExprNamedConstant* newExprNamedConstant(const char* name, int nameLength) {
-//    ObjExprNamedConstant* var = ALLOCATE_OBJ(ObjExprNamedConstant, OBJ_EXPR_NAMEDCONSTANT);
-//    tempRootPush(OBJ_VAL(var));
-//    var->name = copyString(name, nameLength);
-//    tempRootPop();
-//    return var;
-//}
-//
 
 ObjExprLiteral* newExprLiteral(ExprLiteral literal) {
     ObjExprLiteral* lit = ALLOCATE_OBJ(ObjExprLiteral, OBJ_EXPR_LITERAL);
@@ -446,27 +417,20 @@ void printExpr(ObjExpr* expr) {
                 break;
             }
             case OBJ_EXPR_NUMBER: {
-                char s[311];
+                char s[1225];
                 ObjExprNumber* num = (ObjExprNumber*)cursor;
                 switch (num->type) {
-                    case NUMBER_DOUBLE:
-                        printf("f%f", num->val.dbl);
-                        break;
-                    case NUMBER_INTEGER32:
-                        printf("i%d", num->val.integer32);
-                        break;
-                    case NUMBER_UINTEGER32:
-                        printf("u%u", num->val.uinteger32);
-                        break;
-                    case NUMBER_UINTEGER64:
-                        printf("u%" PRIu64, num->val.ui64);
-                        break;
-                    case NUMBER_ADDRESS:
-                        printf("@x%lx", num->val.address);
-                        break;
-                    case NUMBER_INT:
-                        printf("%s", int_to_s(&num->val.bigInt, s, 311));
-                        break;
+                case NUMBER_DOUBLE: {
+                    const char *ns = int_to_s(&num->bigInt, s, 1225);
+                    printf("f%c.%sE%d", ns[0], &ns[1] , num->exp);
+                    break;
+                }
+                case NUMBER_ADDRESS:
+                    printf("@x%llx", int_to_u64(&num->bigInt));
+                    break;
+                case NUMBER_INT:
+                    printf("%s", int_to_s(&num->bigInt, s, 1225));
+                    break;
                 }
                 break;
             }

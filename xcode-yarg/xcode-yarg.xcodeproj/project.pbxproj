@@ -41,6 +41,7 @@
 		5AAAC3692F233239004C0336 /* Exceptions for "cyarg" folder in "xcode-yarg" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"big-int/promote.c",
 				fs/fs_littlefs.c,
 				fs/pico_lfs_hal.c,
 			);
@@ -183,7 +184,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastUpgradeCheck = 2610;
+				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					5A8D28312EDDB59F0068C8C3 = {
 						CreatedOnToolsVersion = 26.1.1;
@@ -274,6 +275,8 @@
 					"nCYARG_FEATURE_TEST_INT=1",
 					"CYARG_FEATURE_HOSTED_REPL=1",
 					"nDEBUG_TRACE_EXECUTION=1",
+					"DEBUG_AST_OPTIMISE=1",
+					"DEBUG_AST_PARSE=1",
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -337,6 +340,8 @@
 					"nCYARG_FEATURE_TEST_INT=1",
 					"CYARG_FEATURE_HOSTED_REPL=1",
 					"nDEBUG_TRACE_EXECUTION=1",
+					"DEBUG_AST_OPTIMISE=1",
+					"DEBUG_AST_PARSE=1",
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
