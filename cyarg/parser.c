@@ -674,7 +674,7 @@ static ObjExpr* number(bool canAssign) {
                 *heapChars = '\0';
                 if (state == NUMBER_NO_DOT_OR_MSB) // zero
                 {
-                    val = newExprNumberInt((int)(heapChars - heapChars_start));
+                    val = newExprNumberInt(1);
                 }
                 else if (state == NUMBER_MSB) // int
                 {

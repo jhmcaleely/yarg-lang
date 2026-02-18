@@ -127,6 +127,9 @@ bool precalcExpression(ObjExpr **ep)
             r = r & rhsIsReducecible;
             if (r)
             {
+                IntConcrete254 result;
+                int_init_concrete254(&result);
+                bool reduceToResult = true;
                 switch (o->operation)
                 {
                     // todo - could all be done if precalc handled machine type literals
@@ -135,42 +138,42 @@ bool precalcExpression(ObjExpr **ep)
                     // EXPR_OP_NOT_EQUAL, EXPR_OP_GREATER_EQUAL, EXPR_OP_LESS_EQUAL, EXPR_OP_NOT,
                     // EXPR_OP_LOGICAL_AND, EXPR_OP_LOGICAL_OR, EXPR_OP_DEREF_PTR
                 case EXPR_OP_ADD:
-                    int_add(intExpr(*h), intExpr(o->rhs), intExpr(*h)); --- result must be realloced
-                    (*h)->nextExpr = e->nextExpr;
-                    ep = h;
+                    int_add(intExpr(*h), intExpr(o->rhs), (Int *) &result);
                     break;
                 case EXPR_OP_SUBTRACT:
-                    int_sub(intExpr(*h), intExpr(o->rhs), intExpr(*h)); --- result must be realloced
-                    (*h)->nextExpr = e->nextExpr;
-                    ep = h;
+                    int_sub(intExpr(*h), intExpr(o->rhs), (Int *) &result);
                     break;
-                case EXPR_OP_MULTIPLY: {
-                    Int p;
-                    int_mul(intExpr(*h), intExpr(o->rhs), &p); --- result must be realloced
-                    int_set_t(&p, intExpr(*h));
-                    (*h)->nextExpr = e->nextExpr;
-                    ep = h;
+                case EXPR_OP_MULTIPLY:
+                    int_mul(intExpr(*h), intExpr(o->rhs), (Int *) &result);
                     break;
-                }
                 case EXPR_OP_DIVIDE:
-                    int_div(intExpr(*h), intExpr(o->rhs), intExpr(*h), 0);
-                    (*h)->nextExpr = e->nextExpr;
-                    ep = h;
+                    int_div(intExpr(*h), intExpr(o->rhs), (Int *) &result, 0);
                     break;
                 case EXPR_OP_MODULO: {
-                    Int q;
-                    int_div(intExpr(*h), intExpr(o->rhs), &q, intExpr(*h)); // todo allow q == 0
-                    (*h)->nextExpr = e->nextExpr;
-                    ep = h;
+                    IntConcrete254 q;
+                    int_init_concrete254(&q);
+                    int_div(intExpr(*h), intExpr(o->rhs), (Int *) &q, (Int *) &result);
                     break;
                 }
                 case EXPR_OP_NEGATE:
+                    reduceToResult = false;
                     int_neg(intExpr(o->rhs));
                     o->rhs->nextExpr = e->nextExpr;
                     *ep = o->rhs;
                     break;
                 default:
+                    r = false;
                     break;
+                }
+                if (reduceToResult)
+                {
+                    ObjExprNumber *reducedResult = (ObjExprNumber *) allocateObject(sizeof (ObjExprNumber) + sizeof (uint16_t) * result.d_, OBJ_EXPR_NUMBER);
+                    reducedResult->bigInt.m_ = result.d_ + result.d_ % 2;
+                    reducedResult->type = NUMBER_INT;
+                    int_set_t((Int *) &result, &reducedResult->bigInt);
+
+                    reducedResult->expr.nextExpr = e->nextExpr;
+                    *ep = &reducedResult->expr;
                 }
             }
             else
@@ -210,6 +213,8 @@ bool precalcExpression(ObjExpr **ep)
             }
             break;
         }
+        case OBJ_EXPR_BUILTIN:
+            break;
         default:
             printf("%d\n", t);
             break;

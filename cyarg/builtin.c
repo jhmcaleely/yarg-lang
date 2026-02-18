@@ -996,30 +996,43 @@ bool intBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
         i = AS_UI32(arg);
     } else if (IS_UI64(arg)) {
         uint64_t i = AS_UI64(arg);
-        ObjInt *newObj = ALLOCATE_OBJ(ObjInt, OBJ_INT);
+        ObjInt *newObj = (ObjInt *)allocateObject(sizeof (ObjInt) + sizeof i, OBJ_INT);
+        int_init_concrete4((IntConcrete4 *)&newObj->bigInt);
         result->as.obj = &newObj->obj;
         result->type = VAL_OBJ;
+        newObj->bigInt.m_ = sizeof i / sizeof (uint16_t);
         int_set_u(i, &newObj->bigInt);
         return true;
     } else if (IS_STRING(arg)) {
-        ObjInt *newObj = ALLOCATE_OBJ(ObjInt, OBJ_INT);
+        char *s = AS_CSTRING(arg);
+        int il = INT_DIGITS_FOR_S(strlen(s));
+        il += il % 2;
+        ObjInt *newObj = (ObjInt *)allocateObject(sizeof (ObjInt) + il * sizeof (uint16_t), OBJ_INT);
         result->as.obj = &newObj->obj;
         result->type = VAL_OBJ;
-        int_set_s(AS_CSTRING(arg), &newObj->bigInt);
+        newObj->bigInt.m_ = il;
+        int_set_s(s, &newObj->bigInt);
         return true;
     } else if (IS_INT(arg)) {
-        ObjInt *newObj = ALLOCATE_OBJ(ObjInt, OBJ_INT);
+        Int *from = AS_INT(arg);
+        int il = from->d_;
+        il += il % 2;
+        ObjInt *newObj = (ObjInt *)allocateObject(sizeof (ObjInt) + il * sizeof (uint16_t), OBJ_INT);
         result->as.obj = &newObj->obj;
         result->type = VAL_OBJ;
-        int_set_t(AS_INT(arg), &newObj->bigInt);
+        newObj->bigInt.m_ = il;
+        int_set_t(from, &newObj->bigInt);
         return true;
     } else if (IS_DOUBLE(arg)) { // todo  handle floats larger than int64
         double f = AS_DOUBLE(arg);
         char sb[310];
         sprintf(sb, "%.0f", f);
-        ObjInt *newObj = ALLOCATE_OBJ(ObjInt, OBJ_INT);
+        int il = INT_DIGITS_FOR_S(strlen(sb));
+        il += il % 2;
+        ObjInt *newObj = (ObjInt *)allocateObject(sizeof (ObjInt) + il * sizeof (uint16_t), OBJ_INT);
         result->as.obj = &newObj->obj;
         result->type = VAL_OBJ;
+        newObj->bigInt.m_ = il;
         int_set_s(sb, &newObj->bigInt);
         return true;
     } else if (IS_BOOL(arg)) {
@@ -1027,9 +1040,10 @@ bool intBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
     } else {
         return false;
     }
-    ObjInt *newObj = ALLOCATE_OBJ(ObjInt, OBJ_INT);
+    ObjInt *newObj = (ObjInt *)allocateObject(sizeof (ObjInt) + sizeof i, OBJ_INT);
     result->as.obj = &newObj->obj;
     result->type = VAL_OBJ;
+    newObj->bigInt.m_ = sizeof i / sizeof (uint16_t);
     int_set_i(i, &newObj->bigInt);
     return true;
 }
