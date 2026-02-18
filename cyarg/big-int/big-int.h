@@ -16,7 +16,7 @@
 #define INT_DIGITS_FOR_INT64 4
 #define INT_DIGITS_FOR_ADDRESS 4 // target address size could be 32 or 64
 #define INT_DIGITS_FOR_S(STRLEN) ((1651124 + (int)(STRLEN) * 342808) / 1651125) // multiply by 1/log10(65536) - fails at 1224 decimal digits (255 (16-bit) digits)
-#define INT_STRLEN_FOR_INT254 1225 // ceil(log10(pow(65536, 254))) + 1 (for null)
+#define INT_STRLEN_FOR_INT254 1226 // ceil(log10(pow(65536, 254))) + 1 (for null) + 1 for '-'
 
 typedef struct
 {

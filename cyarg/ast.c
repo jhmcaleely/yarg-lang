@@ -417,7 +417,7 @@ void printExpr(ObjExpr* expr) {
                 break;
             }
             case OBJ_EXPR_NUMBER: {
-                char s[1225];
+                char s[INT_STRLEN_FOR_INT254];
                 ObjExprNumber* num = (ObjExprNumber*)cursor;
                 switch (num->type) {
                 case NUMBER_DOUBLE: {

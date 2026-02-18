@@ -1380,6 +1380,7 @@ void binaryIntOp(ObjRoutine* routine, char const *c)
         assert(!"IntOp");
     }
     if (s > 254) s = 254;
+    s += s % 2;
     ObjInt *r = (ObjInt *)allocateObject(sizeof (ObjInt) + s * sizeof (uint16_t), OBJ_INT);
     r->bigInt.m_ = s;
     int_init(&r->bigInt);

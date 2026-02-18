@@ -742,7 +742,7 @@ char const *int_to_s(Int const *i, char *s, int n)
             rem /= 10u;
         }
     }
-    if (out == &s[310]) // todo optimise - break to for loop above if rem and v are zero
+    if (out == &s[n - 1]) // todo optimise - break to for loop above if rem and v are zero
     {
         *--out = '0';
     }

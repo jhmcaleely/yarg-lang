@@ -111,7 +111,6 @@ bool precalcExpression(ObjExpr **ep)
         switch (t)
         {
         case OBJ_EXPR_NUMBER:
-        case OBJ_EXPR_NAMEDVARIABLE:
         case OBJ_EXPR_STRING:
         case OBJ_EXPR_LITERAL:
             assert(e == *h);
@@ -121,6 +120,18 @@ bool precalcExpression(ObjExpr **ep)
                 return r;
             }
             break;
+        case OBJ_EXPR_NAMEDVARIABLE: {
+            ObjExprNamedVariable *var = (ObjExprNamedVariable *) e;
+            if (var->assignment == 0)
+            {
+                r = false;
+            }
+            else
+            {
+                r = precalcExpression(&var->assignment);
+            }
+            break;
+        }
         case OBJ_EXPR_OPERATION: {
             ObjExprOperation *o = (ObjExprOperation *) e;
             bool rhsIsReducecible = precalcExpression(&o->rhs);
@@ -173,7 +184,8 @@ bool precalcExpression(ObjExpr **ep)
                     int_set_t((Int *) &result, &reducedResult->bigInt);
 
                     reducedResult->expr.nextExpr = e->nextExpr;
-                    *ep = &reducedResult->expr;
+                    *h = &reducedResult->expr;
+                    *ep = *h;
                 }
             }
             else
@@ -214,6 +226,7 @@ bool precalcExpression(ObjExpr **ep)
             break;
         }
         case OBJ_EXPR_BUILTIN:
+            r = false;
             break;
         default:
             printf("%d\n", t);
