@@ -4,6 +4,7 @@
 
 #include "ast.h"
 #include "memory.h"
+#include "big-int/big-int.h"
 
 ObjAst* newObjAst() {
     ObjAst* ast = ALLOCATE_OBJ(ObjAst, OBJ_AST);
@@ -131,7 +132,7 @@ ObjExprNumber* newExprNumberDouble(double value) {
     return num;
 }
 
-ObjExprNumber* newExprNumberInteger(int value) {
+ObjExprNumber* newExprNumberInteger32(int value) {
     ObjExprNumber* num = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
     num->type = NUMBER_INTEGER32;
     num->val.integer32 = value;
@@ -159,6 +160,16 @@ ObjExprNumber* newExprNumberAddress(uintptr_t value) {
     return num;
 }
 
+ObjExprNumber* newExprNumberInt(const char* numbers, int numberDigits) {
+    char* heapChars = ALLOCATE(char, numberDigits + 1);
+    memcpy(heapChars, numbers, numberDigits);
+    heapChars[numberDigits] = 0;
+    ObjExprNumber* num = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
+    num->type = NUMBER_INT;
+    int_set_s(heapChars, &num->val.bigInt);
+    FREE(char, heapChars);
+    return num;
+}
 
 ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength) {
     ObjExprNamedVariable* var = ALLOCATE_OBJ(ObjExprNamedVariable, OBJ_EXPR_NAMEDVARIABLE);
@@ -189,7 +200,7 @@ ObjExprString* newExprString(const char* str, int strLength) {
     string->expr.nextExpr = NULL;
     string->string = NULL;
     tempRootPush(OBJ_VAL(string));
-    string->string = copyString(str, strLength);
+    string->string = copyStringWithEscapes(str, strLength);
     tempRootPop();
     return string;
 }
@@ -369,6 +380,9 @@ void printExprBuiltin(ObjExprBuiltin* fn) {
         case EXPR_BUILTIN_TS_WRITE: printf("test_write"); break;
         case EXPR_BUILTIN_TS_INTERRUPT: printf("test_interrupt"); break;
         case EXPR_BUILTIN_TS_SYNC: printf("test_sync"); break;
+        case EXPR_BUILTIN_INT: printf("int"); break;
+        case EXPR_BUILTIN_MFLOAT64: printf("mfloat64"); break;
+        case EXPR_BUILTIN_STRING: printf("string"); break;
     }
 }
 
@@ -388,13 +402,14 @@ static void printExprType(ObjExpr* type) {
             case EXPR_TYPE_LITERAL_UINT8: printf("uint8"); break;
             case EXPR_TYPE_LITERAL_INT16: printf("int16"); break;
             case EXPR_TYPE_LITERAL_UINT16: printf("uint16"); break;
-            case EXPR_TYPE_LITERAL_INTEGER: printf("int32"); break;
+            case EXPR_TYPE_LITERAL_INT32: printf("int32"); break;
             case EXPR_TYPE_LITERAL_UINT32: printf("uint32"); break;
             case EXPR_TYPE_LITERAL_INT64: printf("int64"); break;
             case EXPR_TYPE_LITERAL_UINT64: printf("uint64"); break;
             case EXPR_TYPE_LITERAL_BOOL: printf("bool"); break;
             case EXPR_TYPE_LITERAL_STRING: printf("string"); break;
             case EXPR_TYPE_MODIFIER_CONST: printf("<const>"); break;
+            case EXPR_TYPE_LITERAL_INT: printf("int"); break;
             default: printf("<unknown>"); break;
         }
     } else {
@@ -450,6 +465,12 @@ void printExpr(ObjExpr* expr) {
                     case NUMBER_ADDRESS:
                         printf("@x%lx", num->val.address);
                         break;
+                    case NUMBER_INT: {
+                        char sb[311];
+                        char const *s = int_to_s(&num->val.bigInt, sb, 311);
+                        printf("%s", s);
+                        break;
+                    }
                 }
                 break;
             }

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #ifdef CYARG_PICO_SDK_TARGET
 #include <pico/multicore.h>
 #endif
@@ -23,6 +24,9 @@
 #include "yargtype.h"
 
 VM vm;
+
+static void binaryIntOp(ObjRoutine* routine, char const *c);
+static void binaryIntBoolOp(ObjRoutine* routine, char const *c);
 
 void vmPinnedRoutineHandler(size_t handler) {
     ObjRoutine* routine = vm.pinnedRoutines[handler];
@@ -467,12 +471,6 @@ static void makeConcreteTypeConst(ObjRoutine* routine) {
     }
 }
 
-static void makeConcreteTypeArray(ObjRoutine* routine) {
-    ObjConcreteYargType* typeObject = newYargArrayTypeFromType(peek(routine, 0));
-    pop(routine);
-    push(routine, OBJ_VAL(typeObject));
-}
-
 InterpretResult run(ObjRoutine* routine) {
     CallFrame* frame = &routine->frames[routine->frameCount - 1];
     routine->state = EXEC_RUNNING;
@@ -525,6 +523,8 @@ InterpretResult run(ObjRoutine* routine) {
             double b = AS_DOUBLE(pop(routine)); \
             double a = AS_DOUBLE(pop(routine)); \
             push(routine, DOUBLE_VAL(a op b)); \
+        } else if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) { \
+            binaryIntOp(routine, #op); \
         } else { \
             runtimeError(routine, "Operands must both be numbers, integers or unsigned integers."); \
             return INTERPRET_RUNTIME_ERROR; \
@@ -568,6 +568,8 @@ InterpretResult run(ObjRoutine* routine) {
             double b = AS_DOUBLE(pop(routine)); \
             double a = AS_DOUBLE(pop(routine)); \
             push(routine, BOOL_VAL(a op b)); \
+        } else if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) { \
+            binaryIntBoolOp(routine, #op); \
         } else { \
             runtimeError(routine, "Operands must both be numbers, integers or unsigned integers."); \
             return INTERPRET_RUNTIME_ERROR; \
@@ -766,8 +768,8 @@ InterpretResult run(ObjRoutine* routine) {
                 break;
             }
             case OP_GET_PROPERTY: {
-                if (!IS_INSTANCE(peek(routine, 0)) && !IS_STRUCT(peek(routine, 0)) && !isStructPointer(peek(routine, 0))) {
-                    runtimeError(routine, "Only instances, structs and pointers to structs have properties.");
+                if (!IS_INSTANCE(peek(routine, 0)) && !IS_STRUCT(peek(routine, 0)) && !isStructPointer(peek(routine, 0)) && !IS_INT(peek(routine, 0))) {
+                    runtimeError(routine, "Only instances, structs, pointers to structs and ints have properties.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 if (IS_INSTANCE(peek(routine, 0))) {
@@ -812,6 +814,19 @@ InterpretResult run(ObjRoutine* routine) {
 
                     pop(routine);
                     push(routine, result);
+                } else if (IS_INT(peek(routine, 0)))
+                {
+                    Int *b = AS_INT(pop(routine));
+                    ObjString* name = READ_STRING();
+                    if (strcmp(name->chars, "overflow") == 0)
+                    {
+                        push(routine, BOOL_VAL(b->overflow_));
+                    }
+                    else
+                    {
+                        runtimeError(routine, "Undefined property '%s'.", name->chars);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
                 }
                 break;
             }
@@ -855,9 +870,13 @@ InterpretResult run(ObjRoutine* routine) {
                 break;
             }
             case OP_EQUAL: {
-                Value b = pop(routine);
-                Value a = pop(routine);
-                push(routine, BOOL_VAL(valuesEqual(a, b)));
+                if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) {
+                    binaryIntBoolOp(routine, "==");
+                } else {
+                    Value b = pop(routine);
+                    Value a = pop(routine);
+                    push(routine, BOOL_VAL(valuesEqual(a, b)));
+                }
                 break;
             }
             case OP_GREATER:  BINARY_BOOLEAN_OP(routine, >); break;
@@ -919,6 +938,8 @@ InterpretResult run(ObjRoutine* routine) {
                     push(routine, OBJ_VAL(pointer));
                 } else if (IS_STRING(peek(routine, 0)) && IS_STRING(peek(routine, 1))) {
                     concatenate(routine);
+                } else if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) {
+                    binaryIntOp(routine, "+");
                 } else {
                     runtimeError(routine, "Operands must be two numbers or two strings.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -974,6 +995,8 @@ InterpretResult run(ObjRoutine* routine) {
                     uint64_t b = AS_UI64(pop(routine));
                     uint64_t a = AS_UI64(pop(routine));
                     push(routine, UI64_VAL(a % b));
+                } else if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) {
+                    binaryIntOp(routine, "%");
                 } else {
                     runtimeError(routine, "Operands must integers or unsigned integers of same type.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -997,6 +1020,9 @@ InterpretResult run(ObjRoutine* routine) {
                     push(routine, I16_VAL(-AS_I16(pop(routine))));
                 } else if (IS_I64(peek(routine, 0))) {
                     push(routine, I64_VAL(-AS_I64(pop(routine))));
+                } else if (IS_INT(peek(routine, 0))) {
+                    Int *b = AS_INT(peek(routine, 0));
+                    int_neg(b);
                 } else {
                     runtimeError(routine, "Operand must be a number or integer.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -1182,12 +1208,13 @@ InterpretResult run(ObjRoutine* routine) {
                     case TYPE_LITERAL_UINT8: typeObj = newYargTypeFromType(TypeUint8); break;
                     case TYPE_LITERAL_INT16: typeObj = newYargTypeFromType(TypeInt16); break;
                     case TYPE_LITERAL_UINT16: typeObj = newYargTypeFromType(TypeUint16); break;
-                    case TYPE_LITERAL_INTEGER: typeObj = newYargTypeFromType(TypeInt32); break;
+                    case TYPE_LITERAL_INT32: typeObj = newYargTypeFromType(TypeInt32); break;
                     case TYPE_LITERAL_UINT32: typeObj = newYargTypeFromType(TypeUint32); break;
                     case TYPE_LITERAL_INT64: typeObj = newYargTypeFromType(TypeInt64); break;
                     case TYPE_LITERAL_UINT64: typeObj = newYargTypeFromType(TypeUint64); break;
                     case TYPE_LITERAL_MACHINE_FLOAT64: typeObj = newYargTypeFromType(TypeDouble); break;
                     case TYPE_LITERAL_STRING: typeObj = newYargTypeFromType(TypeString); break;
+                    case TYPE_LITERAL_INT: typeObj = newYargTypeFromType(TypeInt); break;
                 }
                 if (typeObj == NULL) {
                     runtimeError(routine, "Unknown type literal.");
@@ -1320,4 +1347,57 @@ InterpretResult interpret(const char* source) {
     }
 
     return result;
+}
+
+void binaryIntOp(ObjRoutine* routine, char const *c)
+{
+    Int *a = AS_INT(peek(routine, 1));
+    Int *b = AS_INT(peek(routine, 0));
+
+    ObjInt *r = ALLOCATE_OBJ(ObjInt, OBJ_INT);
+    int_init(&r->bigInt);
+
+    switch (*c)
+    {
+    case '+': int_add(a, b, &r->bigInt); break;
+    case '-': int_sub(a, b, &r->bigInt); break;
+    case '*': int_mul(a, b, &r->bigInt); break;
+    case '/': int_div(a, b, &r->bigInt, 0); break; // todo - compiler should optimise for /%
+    case '%': {
+        Int q;
+        int_init(&q);
+        int_div(a, b, &q, &r->bigInt); // todo int_div should handle q == 0
+        break;
+    }
+    default:
+        assert(!"IntOp");
+    }
+    routine->stackTopIndex -= 2;
+    push(routine, OBJ_VAL(r));
+}
+
+void binaryIntBoolOp(ObjRoutine* routine, char const *op)
+{
+    Int *b = AS_INT(pop(routine));
+    Int *a = AS_INT(pop(routine));
+    IntComp ic = int_is(a, b);
+    bool r;
+    switch (*op)
+    {
+    case '<':
+        assert(op[1] == 0);
+        r = ic == INT_LT;
+        break;
+    case '>':
+        assert(op[1] == 0);
+        r = ic == INT_GT;
+        break;
+    case '=':
+        assert(op[1] == '=');
+        r = ic == INT_EQ;
+        break;
+    default:
+        assert(!"BinaryOp");
+    }
+    push(routine, BOOL_VAL(r));
 }

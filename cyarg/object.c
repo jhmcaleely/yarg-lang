@@ -60,7 +60,7 @@ void appendToDynamicObjArray(DynamicObjArray* array, Obj* obj) {
 
 Obj* removeLastFromDynamicObjArray(DynamicObjArray* array) {
     Obj* end = NULL;
-    if (array->objectCount > 1) {
+    if (array->objectCount > 0) {
         end = array->objects[array->objectCount - 1];
         array->objectCount--;
     }
@@ -126,6 +126,12 @@ ObjBlob* newBlob(size_t count) {
     blob->blob = reallocate(NULL, 0, count);
     tempRootPop();
     return blob;
+}
+
+Value defaultIntValue() {
+    ObjInt* intObj = ALLOCATE_OBJ(ObjInt, OBJ_INT);
+    int_init(&intObj->bigInt);
+    return OBJ_VAL(intObj);
 }
 
 PackedValue arrayElement(PackedValue array, size_t index) {
@@ -373,6 +379,36 @@ ObjString* copyString(const char* chars, int length) {
     return allocateString(heapChars, length, hash);
 }
 
+ObjString* copyStringWithEscapes(const char* chars, int length)
+{
+    char* heapChars = ALLOCATE(char, length + 1);
+
+    char const *in = chars;
+    char *out = heapChars;
+    int lengthOut = 0;
+    for (int i = 0; i < length && *in != '\0'; i++)
+    {
+        if (*in == '\\')
+        {
+            in++;
+            i++;
+        }
+        *out++ = *in++;
+        lengthOut++;
+    }
+    uint32_t hash = hashString(heapChars, lengthOut);
+    ObjString* interned = tableFindString(&vm.strings, heapChars, lengthOut, hash);
+    if (interned != NULL)
+    {
+        FREE(char, heapChars);
+        return interned;
+    }
+
+    *out = '\0';
+    return allocateString(heapChars, lengthOut, hash);
+}
+
+
 ObjUpvalue* newUpvalue(ValueCell* slot, size_t stackOffset) {
     ObjUpvalue* upvalue = ALLOCATE_OBJ(ObjUpvalue, OBJ_UPVALUE);
     upvalue->closed.value = NIL_VAL;
@@ -484,6 +520,13 @@ void fprintObject(FILE* op, Value value) {
         case OBJ_PACKEDSTRUCT:
             printStruct(op, AS_STRUCT(value));
             break;
+        case OBJ_INT: {
+            Int *i = AS_INT(value);
+            char sb[311];
+            char const* s = int_to_s(i, sb, 311);
+            FPRINTMSG(op, "%s", s);
+            break;
+    }
         default:
             FPRINTMSG(op, "<implementation object %d>", OBJ_TYPE(value));
             break;
