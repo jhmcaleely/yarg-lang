@@ -127,7 +127,7 @@ typedef enum {
 typedef struct {
     ObjExpr expr;
     NumberType type;
-    int32_t exp;
+    double dbl;
     Int bigInt;
 } ObjExprNumber;
 
@@ -283,7 +283,7 @@ typedef struct {
 
 ObjAst* newObjAst();
 
-ObjExprNumber* newExprNumberDouble(int numberDecimalDigits);
+ObjExprNumber* newExprNumberDouble(double value);
 ObjExprNumber* newExprNumberAddress();
 ObjExprNumber* newExprNumberInt(int numberDecimalDigits);
 ObjExprLiteral* newExprLiteral(ExprLiteral literal);

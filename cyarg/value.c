@@ -108,8 +108,6 @@ void initialisePackedValue(PackedValue packedValue) {
             case TypeUint64: packedValue.storedValue->as.ui64 = 0; break;
             case TypeArray: {
                 ObjConcreteYargTypeArray* at = (ObjConcreteYargTypeArray*)packedValue.storedType;
-//                Value elementTypeVal = arrayElementType(at);
-//                ObjConcreteYargType* elementType = IS_NIL(elementTypeVal) ? NULL : AS_YARGTYPE(elementTypeVal);
                 if (at->cardinality > 0) {
                     for (size_t i = 0; i < at->cardinality; i++) {
                         PackedValue el = arrayElement(packedValue, i);
@@ -165,6 +163,13 @@ Value unpackValue(PackedValue packedValue) {
             case TypeArray: {
                 return OBJ_VAL(newPackedUniformArrayAt(packedValue));
             }
+            case TypeInt: {
+                if (packedValue.storedValue->as.obj) {
+                    return OBJ_VAL(packedValue.storedValue->as.obj);
+                } else {
+                    return defaultIntValue();
+                }
+            }
             case TypePointer:
             case TypeString:
             case TypeClass:
@@ -173,8 +178,7 @@ Value unpackValue(PackedValue packedValue) {
             case TypeNativeBlob:
             case TypeRoutine:
             case TypeChannel:
-            case TypeYargType:
-            case TypeInt: {
+            case TypeYargType: {
                 if (packedValue.storedValue->as.obj) {
                     return OBJ_VAL(packedValue.storedValue->as.obj);
                 } else {

@@ -448,7 +448,7 @@ static ObjExpr* type(bool canAssign) {
             case TOKEN_STRUCT: expression = (ObjExpr*) structExpression(); break;
             case TOKEN_INT: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_INT); break;
             case TOKEN_TYPE_STRING: expression = (ObjExpr*) newExprType(EXPR_TYPE_LITERAL_INT); break;
-           default: expression = NULL; // Unreachable
+            default: expression = NULL; // Unreachable
         }
         pushWorkingNode((Obj*)expression);
     
@@ -682,8 +682,9 @@ static ObjExpr* number(bool canAssign) {
                 }
                 else // double NUMBER_END xEy|0.Ey -- NUMBER_DOT 0. -- NUMBER_DOT_AND_MSB .y|x.y|x.
                 {
-                    val = newExprNumberDouble((int)(heapChars - heapChars_start));
-                    val->exp = expAdd;
+                    char *end;
+                    val->dbl = strtod(heapChars_start, &end);
+                    assert(end == heapChars);
                 }
                 int_set_s(heapChars_start, &val->bigInt);
                 state = NUMBER_END;

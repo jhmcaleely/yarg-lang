@@ -60,7 +60,7 @@ void appendToDynamicObjArray(DynamicObjArray* array, Obj* obj) {
 
 Obj* removeLastFromDynamicObjArray(DynamicObjArray* array) {
     Obj* end = NULL;
-    if (array->objectCount > 1) {
+    if (array->objectCount > 0) {
         end = array->objects[array->objectCount - 1];
         array->objectCount--;
     }
@@ -126,6 +126,12 @@ ObjBlob* newBlob(size_t count) {
     blob->blob = reallocate(NULL, 0, count);
     tempRootPop();
     return blob;
+}
+
+Value defaultIntValue() {
+    ObjInt* intObj = ALLOCATE_OBJ(ObjInt, OBJ_INT);
+    int_init(&intObj->bigInt);
+    return OBJ_VAL(intObj);
 }
 
 PackedValue arrayElement(PackedValue array, size_t index) {

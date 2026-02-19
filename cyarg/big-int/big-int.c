@@ -446,6 +446,8 @@ void int_mul(Int const *a, Int const *b, Int *r)
         {
 //            printf(".%ld/%ld", ap - a->h_, bp - b->h_);
             int_set_i((uint32_t) *ap * (uint32_t) *bp, (Int *) &pp);
+            Int pp;
+            int_set_i((uint32_t) *ap * (uint32_t) *bp, &pp); // todo cast to int32 to use M0 single instruction mul
             if (rp - r->h_ + pp.d_ > r->m_)
             {
                 r->overflow_ = true;

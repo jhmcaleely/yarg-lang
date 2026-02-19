@@ -107,6 +107,7 @@ void int_sub(Int const *, Int const *, Int *);
 void int_shift(int, Int *); // by half words
 void int_mul(Int const *, Int const *, Int *);
 void int_div(Int const *, Int const *, Int *q, Int *r); // r may be nil  // todo -- also allow q == 0
+void int_div(Int const *, Int const *, Int *i, Int *r); // r may be nil and not returned
 void int_neg(Int *);
 
 // comparisons

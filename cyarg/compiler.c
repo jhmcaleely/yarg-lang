@@ -313,7 +313,7 @@ static void generateStmt(ObjStmt* stmt);
 
 static void generateNumber(ObjExprNumber* num) {
     switch(num->type) {
-        case NUMBER_DOUBLE: emitConstant(DOUBLE_VAL(3.4)); break;
+        case NUMBER_DOUBLE: emitConstant(DOUBLE_VAL(num->dbl)); break;
         case NUMBER_ADDRESS: emitConstant(ADDRESS_VAL(0x457557)); break;
         case NUMBER_INT: {
             ObjInt *objInt = (ObjInt *) allocateObject(sizeof (ObjInt) + num->bigInt.m_ * sizeof (uint16_t), OBJ_INT);

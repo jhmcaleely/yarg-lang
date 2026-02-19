@@ -125,8 +125,8 @@ ObjExprGrouping* newExprGrouping(ObjExpr* expression) {
 }
 
 
-ObjExprNumber* newExprNumberDouble(int numberDecimalDigits) {
-    uint8_t s = INT_DIGITS_FOR_S(numberDecimalDigits);
+ObjExprNumber* newExprNumberDouble(double d) {
+    uint8_t s = INT_DIGITS_FOR_S(1); // todo ---
     s += s % 2;
     ObjExprNumber *num = (ObjExprNumber *) allocateObject(sizeof (ObjExprNumber) + sizeof (uint16_t) * s, OBJ_EXPR_NUMBER);
     num->bigInt.m_ = s;
@@ -352,6 +352,8 @@ void printExprBuiltin(ObjExprBuiltin* fn) {
         case EXPR_BUILTIN_TS_INTERRUPT: printf("test_interrupt"); break;
         case EXPR_BUILTIN_TS_SYNC: printf("test_sync"); break;
         case EXPR_BUILTIN_INT: printf("int"); break;
+        case EXPR_BUILTIN_MFLOAT64: printf("mfloat64"); break;
+        case EXPR_BUILTIN_STRING: printf("string"); break;
     }
 }
 
@@ -422,7 +424,7 @@ void printExpr(ObjExpr* expr) {
                 switch (num->type) {
                 case NUMBER_DOUBLE: {
                     const char *ns = int_to_s(&num->bigInt, s, 1225);
-                    printf("f%c.%sE%d", ns[0], &ns[1] , num->exp);
+                    printf("f%lg", num->dbl);
                     break;
                 }
                 case NUMBER_ADDRESS:
