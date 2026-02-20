@@ -55,7 +55,6 @@ typedef struct // concrete type of int which can hold uint64_t/int64_t - can be 
     {
         uint16_t h_[4];
         uint32_t w_[4 / 2];
-        uint64_t l_;
     };
 } IntConcrete4;
 

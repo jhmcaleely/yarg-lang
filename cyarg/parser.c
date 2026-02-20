@@ -675,18 +675,22 @@ static ObjExpr* number(bool canAssign) {
                 if (state == NUMBER_NO_DOT_OR_MSB) // zero
                 {
                     val = newExprNumberInt(1);
+                    int_set_i(0u, &val->bigInt);
                 }
                 else if (state == NUMBER_MSB) // int
                 {
                     val = newExprNumberInt((int)(heapChars - heapChars_start));
+                    int_set_s(heapChars_start, &val->bigInt);
                 }
                 else // double NUMBER_END xEy|0.Ey -- NUMBER_DOT 0. -- NUMBER_DOT_AND_MSB .y|x.y|x.
                 {
+                    val = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
+                    val->type = NUMBER_DOUBLE;
+
                     char *end;
-                    val->dbl = strtod(heapChars_start, &end);
-                    assert(end == heapChars);
+                    val->dbl = strtod(number_start, &end);
+                    assert(end - number_start == number_len);
                 }
-                int_set_s(heapChars_start, &val->bigInt);
                 state = NUMBER_END;
             }
         }

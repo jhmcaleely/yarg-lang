@@ -31,6 +31,11 @@ union FourDigits
         uint16_t a16_;
         uint16_t b[3];
     };
+    struct
+    {
+        uint32_t l32_;
+        uint32_t h32_;
+    };
     int64_t ll64_;
     uint64_t ull64_;
 };
@@ -745,7 +750,8 @@ IntRange int_is_range(Int const *i, int64_t l, uint64_t u)
     return r;
 }
 
-static const IntConcrete2 tenToTheFour = {.m_ = 2, .d_ = 1, .w_[0] = 10000};
+static const IntConcrete2 tenToTheFour = {.m_ = 2, .d_ = 1, .w_[0] = 10000u};
+static const IntConcrete4 tenToTheNineteen = {.m_ = 4, .d_ = 4, .w_ = {2313682944u, 2328306436u}}; // 10000000000000000000
 
 char const *int_to_s(Int const *i, char *s, int n)
 {
@@ -758,24 +764,23 @@ char const *int_to_s(Int const *i, char *s, int n)
     int_set_t(i, (Int *) &v);
     v.neg_ = false;
 
-    static IntConcrete2 r;
-    int_init_concrete2(&r);
+    static IntConcrete4 r;
+    int_init_concrete4(&r);
 
     while (!int_is_zero((Int *) &v))
     {
-        int_div((Int *) &v, (Int *) &tenToTheFour, (Int *) &v, (Int *) &r);
+        int_div((Int *) &v, (Int *) &tenToTheNineteen, (Int *) &v, (Int *) &r);
 
-        assert(r.d_ == 1);
-        uint16_t rem = r.h_[0];
+        FourDigits rem = {.l32_ = r.w_[0], .h32_ = r.d_ > 2 ? r.w_[1] : 0u};
         bool leading = int_is_zero((Int *) &v);
-        for (int c = 0; c < 4 && out > s; c++)
+        for (int c = 0; c < 19 && out > s; c++)
         {
-            char ch = (char) (rem % 10u + '0');
-            if (!leading || rem != 0)
+            char ch = (char) (rem.ull64_ % 10u + '0');
+            if (!leading || rem.ull64_ != 0)
             {
                 *--out = ch;
             }
-            rem /= 10u;
+            rem.ull64_ /= 10u;
         }
     }
     if (out == &s[n - 1]) // todo optimise - break to for loop above if rem and v are zero
@@ -1128,7 +1133,8 @@ void int_run_tests(void)
     int_set_i(45675*1230000001ll, t);
     int_invariant(t);
     assert(int_is(r, t) == INT_EQ);
-    assert(strcmp(int_to_s(r, ss, sizeof ss / sizeof ss[0]), "56180250045675") == 0);
+    char const *rr = int_to_s(r, ss, sizeof ss / sizeof ss[0]);
+    assert(strcmp(rr, "56180250045675") == 0);
     assert(int_to_i64(r) == 56180250045675);
 
     int_set_i(10000u, d);

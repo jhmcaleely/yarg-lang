@@ -1386,9 +1386,9 @@ void binaryIntOp(ObjRoutine* routine, char const *c)
     case '*': int_mul(a, b, &r->bigInt); break;
     case '/': int_div(a, b, &r->bigInt, 0); break; // todo - compiler should optimise for /%
     case '%': {
-        Int q;
-        int_init(&q);
-        int_div(a, b, &q, &r->bigInt); // todo int_div should handle q == 0
+        IntConcrete254 q;
+        int_init_concrete254(&q);
+        int_div(a, b, (Int *) &q, &r->bigInt); // todo int_div should handle q == 0
         break;
     }
     default:
