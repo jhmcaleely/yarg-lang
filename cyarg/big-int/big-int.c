@@ -282,8 +282,19 @@ void addPos(Int const *a, Int const *b, Int *r)
         {
             ps.u32_ = (uint32_t) *ap + (uint32_t) *bp + (uint32_t) carry;
         }
-        *rp++ = ps.l16_;
-        carry = ps.h16_;
+        if (rp < &r->h_[r->m_])
+        {
+            *rp++ = ps.l16_;
+            carry = ps.h16_;
+        }
+        else
+        {
+            if (ps.u32_ != 0)
+            {
+                r->overflow_ = true;
+                return;
+            }
+        }
     }
     if (rp < &r->h_[r->m_])
     {
@@ -341,7 +352,11 @@ void int_shift(int shift, Int *i)
     {
         if (shift >= 0)
         {
-            assert(i->d_ + shift <= i->m_);
+            if (i->d_ + shift > i->m_)
+            {
+                i->overflow_ = true;
+                return;
+            }
 
             memmove(&i->h_[shift], &i->h_[0], i->d_ * sizeof i->h_[0]);
             memset(&i->h_[0], 0, shift * sizeof (uint16_t));
@@ -412,7 +427,18 @@ static void subAGtB(Int const *a, Int const *b, Int *r)
             pd.u32_ = (uint32_t) ad - pd.u32_;
             assert(pd.h16_ == 0u);
         }
-        *rp++ = pd.l16_;
+        if (rp < &r->h_[r->m_])
+        {
+            *rp++ = pd.l16_;
+        }
+        else
+        {
+            if (pd.l16_ != 0u)
+            {
+                r->overflow_ = true;
+                return;
+            }
+        }
     }
     r->d_ = (uint8_t)(rp - r->h_);
     if (r->d_ % 2 == 1)
@@ -445,9 +471,7 @@ void int_mul(Int const *a, Int const *b, Int *r)
         for (uint16_t const *bp = b->h_; bp < &b->h_[b->d_]; bp++, rp++)
         {
 //            printf(".%ld/%ld", ap - a->h_, bp - b->h_);
-            int_set_i((uint32_t) *ap * (uint32_t) *bp, (Int *) &pp);
-            Int pp;
-            int_set_i((uint32_t) *ap * (uint32_t) *bp, &pp); // todo cast to int32 to use M0 single instruction mul
+            int_set_i((uint32_t) *ap * (uint32_t) *bp, (Int *) &pp); // todo cast to int32 to use M0 single instruction mul
             if (rp - r->h_ + pp.d_ > r->m_)
             {
                 r->overflow_ = true;
@@ -501,7 +525,13 @@ void int_div(Int const *n, Int const *d, Int *q, Int *r)
             {
                 int_add(r, d, r);
             }
-       }
+        }
+        return;
+    }
+
+    if (r != 0 && r->m_ < d->d_)
+    {
+        r->overflow_ = true;
         return;
     }
 
@@ -560,6 +590,10 @@ void int_div(Int const *n, Int const *d, Int *q, Int *r)
                 //shifts++;
                 int_shift(-1, (Int *) &shiftingDenominator);
                 int_shift(1, q);
+                if (q->overflow_)
+                {
+                    return;
+                }
             }
         }
 
@@ -871,14 +905,14 @@ void int_invariant(Int const *i)
     }
 }
 
-static const uint8_t randMaxDigits = 64;
+static const int randMaxDigits = 254;
 
 void int_make_random(Int *i)
 {
-    i->m_ = randMaxDigits;
     i->overflow_ = false;
     i->neg_ = rand() > RAND_MAX / 2;
-    i->d_ = 1 + rand() / (RAND_MAX / 64);
+    i->d_ = 1 + rand() / (RAND_MAX / randMaxDigits);
+    i->m_ = i->d_ + i->d_ % 2;
     assert(i->d_ <= randMaxDigits);
     for (int x = 0; x < i->d_; x++)
     {
@@ -888,7 +922,7 @@ void int_make_random(Int *i)
     {
         i->h_[i->d_ - 1] = (uint16_t) rand();
     }
-    if (i->d_ < 64)
+    if (i->d_ < i->m_)
     {
         i->h_[i->d_] = 0u;
     }
@@ -1325,6 +1359,11 @@ void int_run_tests(void)
 rand: // pipe the output from here into `bc -lLS 0`
     for (int x = 0; x < 100000; x++)
     {
+        s->m_ = (rand() % 127 + 1) * 2;
+        d->m_ = (rand() % 127 + 1) * 2;
+        q->m_ = (rand() % 127 + 1) * 2;
+        p->m_ = (rand() % 127 + 1) * 2;
+
         printf("%d\n", x);
 
         int_make_random(a);int_invariant(a);
@@ -1366,13 +1405,24 @@ rand: // pipe the output from here into `bc -lLS 0`
             p->overflow_ = false;
         }
 
-        int_div(a, b, q, r);int_invariant(q);int_invariant(r);
-        if (a->neg_) // put r back to normal c/bc modulus
+        int_div(a, b, q, r);
+        if (!q->overflow_ && !r->overflow_)
         {
-            int_sub(r, b, r);
-        }
+            int_invariant(q); int_invariant(r);
 
-        int_for_bc(a);printf(" / ");int_for_bc(b);printf(" - ");int_for_bc(q);printf("\n");
-        int_for_bc(a);printf(" %% ");int_for_bc(b);printf(" - ");int_for_bc(r);printf("\n");
+            if (a->neg_) // put r back to normal c/bc modulus
+            {
+                int_sub(r, b, r);
+            }
+
+            int_for_bc(a);printf(" / ");int_for_bc(b);printf(" - ");int_for_bc(q);printf("\n");
+            int_for_bc(a);printf(" %% ");int_for_bc(b);printf(" - ");int_for_bc(r);printf("\n");
+        }
+        else
+        {
+            //            printf("%d\n", x);
+            q->overflow_ = false;
+            r->overflow_ = false;
+        }
     }
 }
