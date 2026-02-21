@@ -90,7 +90,7 @@ for (var i = 0; i < 500; i = 1 + i) for (var j = 0; j < 500; j = 1 + j) for (var
 var t = clock() - s1;
 var ti = 10000000 * int(t);
 ti = ti / 500 / 500 / reps_addsub;
-print string(ti / 1000) + "." + string (ti % 1000);
+print string(ti / 1000) + "." + string (ti % 1000) + " ms / add";
 
 s1 = clock();
 print "Sub";
@@ -101,7 +101,7 @@ for (var i = 0; i < 500; i = 1 + i) for (var j = 0; j < 500; j = 1 + j) for (var
 t = clock() - s1;
 ti = 10000000 * int(t);
 ti = ti / 500 / 500 / reps_addsub;
-print string(ti / 1000) + "." + string (ti % 1000);
+print string(ti / 1000) + "." + string (ti % 1000) + " ms / sub";
 
 s1 = clock();
 print "Mul";
@@ -112,7 +112,7 @@ for (var i = 0; i < reps_mul; i = 1 + i) for (var j = 500 - reps_mul; j < 500; j
 t = clock() - s1;
 ti = 10000000 * int(t);
 ti = ti / reps_mul / reps_mul;
-print string(ti / 1000) + "." + string (ti % 1000);
+print string(ti / 1000) + "." + string (ti % 1000) + " ms / mul";
 
 const zint = int(0);
 s1 = clock();
@@ -132,4 +132,4 @@ for (var i = 0; i < reps_div; i = 1 + i) for (var j = 500 - reps_div; j < 500; j
 t = clock() - s1;
 ti = 10000000 * int(t);
 ti = ti / reps_div / reps_div;
-print string(ti / 1000) + "." + string (ti % 1000);
+print string(ti / 1000) + "." + string (ti % 1000) + " ms / div";
