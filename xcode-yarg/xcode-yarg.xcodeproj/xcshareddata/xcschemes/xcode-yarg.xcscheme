@@ -56,7 +56,7 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "&quot;$HOME/Documents/Personal/Dev/yarg/yarg-lang/yarg/test/int/perform.ya"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
    </LaunchAction>
