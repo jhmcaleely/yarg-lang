@@ -259,7 +259,7 @@ static void emitConstant(Value value) {
         if (IS_INT(value))
         {
             ObjInt *oi = (ObjInt *) value.as.obj;
-            if (int_is_range(&oi->bigInt, -16777215, 16777215))
+            if (int_is_range(&oi->bigInt, -16777215, 16777215) == INT_WITHIN)
             {
                 v = int_to_i32(&oi->bigInt);
             }
