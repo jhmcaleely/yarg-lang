@@ -120,8 +120,7 @@ typedef struct {
 
 typedef enum {
     NUMBER_INT,
-    NUMBER_DOUBLE,
-    NUMBER_ADDRESS
+    NUMBER_DOUBLE
 } NumberType;
 
 typedef struct {
@@ -284,7 +283,6 @@ typedef struct {
 ObjAst* newObjAst();
 
 ObjExprNumber* newExprNumberDouble(double value);
-ObjExprNumber* newExprNumberAddress();
 ObjExprNumber* newExprNumberInt(int numberDecimalDigits);
 ObjExprLiteral* newExprLiteral(ExprLiteral literal);
 ObjExprString* newExprString(const char* str, int strLength);

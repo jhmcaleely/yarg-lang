@@ -151,6 +151,7 @@ struct ObjString {
 
 typedef struct {
     Obj obj;
+    bool isLiteral;
     Int bigInt;
 } ObjInt;
 

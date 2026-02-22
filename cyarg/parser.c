@@ -585,7 +585,7 @@ static ObjExpr* number(bool canAssign) {
     int radix = 0;
     const char* number_start = parser.previous.start;
     int number_len = parser.previous.length;
-    if (number_len > 2 && number_start[0] == '0') {
+    if (number_len > 2 && (number_start[0] == '0' || number_start[0] == '@')) {
         switch (number_start[1]) {
         case 'x': case 'X':
             radix = 16;
@@ -697,7 +697,6 @@ static ObjExpr* number(bool canAssign) {
 
         FREE(char, heapChars_start);
     } else {
-        // for now, use C's stdlib to perform hex/bin formatting.
         uint64_t value = strtoNum(number_start, number_len, radix);
         int decimalDigits;
         if (value <= UINT8_MAX)
@@ -713,12 +712,6 @@ static ObjExpr* number(bool canAssign) {
         int_set_u(value, &val->bigInt);
     }
     return (ObjExpr*) val;
-}
-
-static ObjExpr* address(bool canAssign) {
-    uintptr_t value = strtoNum(parser.previous.start, parser.previous.length, 16);
-    ObjExprNumber* addr = newExprNumberAddress(value);
-    return (ObjExpr*) addr;
 }
 
 static AstParseRule rules[] = {
@@ -749,7 +742,6 @@ static AstParseRule rules[] = {
     [TOKEN_LESS]                 = {NULL,      binary, PREC_COMPARISON},
     [TOKEN_LESS_EQUAL]           = {NULL,      binary, PREC_COMPARISON},
     [TOKEN_LEFT_SHIFT]           = {NULL,      binary, PREC_FACTOR},
-    [TOKEN_ADDRESS]              = {address,   NULL,   PREC_NONE},
     [TOKEN_IDENTIFIER]           = {variable,  NULL,   PREC_NONE},
     [TOKEN_STRING]               = {string,    NULL,   PREC_NONE},
     [TOKEN_NUMBER]               = {number,    NULL,   PREC_NONE},

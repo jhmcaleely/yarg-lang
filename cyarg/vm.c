@@ -621,52 +621,22 @@ runtimeError(routine, "Operands must both be numbers, integers or unsigned integ
                 push(routine, constant);
                 break;
             }
-            case OP_IMMEDIATEi8: {
-                uint8_t byte = READ_BYTE();
-                Value constant = I8_VAL((int8_t)byte);
-                push(routine, constant);
-                break;
-            }
-            case OP_IMMEDIATEui8: {
-                uint8_t byte = READ_BYTE();
-                Value constant = UI8_VAL(byte);
-                push(routine, constant);
-                break;
-            }
-            case OP_IMMEDIATEi16: {
-                uint8_t byte = READ_BYTE();
-                Value constant = I16_VAL((int8_t)byte);
-                push(routine, constant);
-                break;
-            }
-            case OP_IMMEDIATEui16: {
-                uint8_t byte = READ_BYTE();
-                Value constant = UI16_VAL(byte);
-                push(routine, constant);
-                break;
-            }
-            case OP_IMMEDIATEi32: {
-                uint8_t byte = READ_BYTE();
-                Value constant = I32_VAL((int8_t)byte);
-                push(routine, constant);
-                break;
-            }
-            case OP_IMMEDIATEui32: {
-                uint8_t byte = READ_BYTE();
-                Value constant = UI32_VAL(byte);
-                push(routine, constant);
-                break;
-            }
-            case OP_IMMEDIATEi64: {
-                uint8_t byte = READ_BYTE();
-                Value constant = I64_VAL((int8_t)byte);
-                push(routine, constant);
-                break;
-            }
-            case OP_IMMEDIATEui64: {
-                uint8_t byte = READ_BYTE();
-                Value constant = UI64_VAL(byte);
-                push(routine, constant);
+            case OP_IMMEDIATE_N8: case OP_IMMEDIATE_P8: case OP_IMMEDIATE_N16: case OP_IMMEDIATE_P16: case OP_IMMEDIATE_N24: case OP_IMMEDIATE_P24: {
+                uint32_t num = READ_BYTE();
+                if (instruction == OP_IMMEDIATE_N16 || instruction == OP_IMMEDIATE_P16 || instruction == OP_IMMEDIATE_N24 || instruction == OP_IMMEDIATE_P24)
+                {
+                    num += 256 * READ_BYTE();
+                }
+                if (instruction == OP_IMMEDIATE_N24 || instruction == OP_IMMEDIATE_P24)
+                {
+                    num += 65536 * READ_BYTE();
+                }
+                ObjInt *i = (ObjInt *) allocateObject(sizeof (ObjInt) + 2 * sizeof (uint16_t), OBJ_INT);
+                i->isLiteral = true;
+                i->bigInt.m_ = 2;
+                int_set_u(num, &i->bigInt);
+                i->bigInt.neg_ = instruction == OP_IMMEDIATE_N8 || instruction == OP_IMMEDIATE_N16 || instruction == OP_IMMEDIATE_N24;
+                push(routine, OBJ_VAL(i));
                 break;
             }
             case OP_NIL: push(routine, NIL_VAL); break;
@@ -1053,8 +1023,14 @@ runtimeError(routine, "Operands must both be numbers, integers or unsigned integ
                 uintptr_t nominal_address = 0;
                 if (isUint32Pointer(location)) {
                     nominal_address = (uintptr_t) AS_POINTER(location)->destination;
-                } else {
+                }
+                else  if (IS_ADDRESS(location))
+                {
                     nominal_address = AS_ADDRESS(location);
+                }
+                else
+                {
+                    nominal_address = int_to_u64(AS_INT(location));
                 }
                 volatile uint32_t* reg = (volatile uint32_t*) nominal_address;
 

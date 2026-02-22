@@ -134,14 +134,6 @@ ObjExprNumber* newExprNumberDouble(double d) {
     return num;
 }
 
-ObjExprNumber* newExprNumberAddress() {
-    uint8_t s = INT_DIGITS_FOR_ADDRESS;
-    ObjExprNumber *num = (ObjExprNumber *) allocateObject(sizeof (ObjExprNumber) + sizeof (uint16_t) * s, OBJ_EXPR_NUMBER);
-    num->bigInt.m_ = s;
-    num->type = NUMBER_ADDRESS;
-    return num;
-}
-
 ObjExprNumber* newExprNumberInt(int numberDecimalDigits) {
     uint8_t s = INT_DIGITS_FOR_S(numberDecimalDigits);
     s += s % 2;
@@ -423,15 +415,11 @@ void printExpr(ObjExpr* expr) {
                 ObjExprNumber* num = (ObjExprNumber*)cursor;
                 switch (num->type) {
                 case NUMBER_DOUBLE: {
-                    const char *ns = int_to_s(&num->bigInt, s, 1225);
                     printf("f%lg", num->dbl);
                     break;
                 }
-                case NUMBER_ADDRESS:
-                    printf("@x%llx", int_to_u64(&num->bigInt));
-                    break;
                 case NUMBER_INT:
-                    printf("%s", int_to_s(&num->bigInt, s, 1225));
+                    printf("%s", int_to_s(&num->bigInt, s, INT_STRLEN_FOR_INT254));
                     break;
                 }
                 break;

@@ -231,8 +231,12 @@ bool assignToPackedValue(PackedValue lhs, Value rhsValue) {
         lhs.storedValue->asValue = rhsValue;
         return true;
     } else {
-        if (isCompatibleType(lhs.storedType, rhsValue)) {
-            packValue(lhs, rhsValue);
+        Value promoted;
+        if (isCompatibleType(lhs.storedType, rhsValue, &promoted)) {
+            if (promoted.type == VAL_NIL)
+                packValue(lhs, rhsValue);
+            else
+                packValue(lhs, promoted);
             return true;
         } else {
             return false;
@@ -245,8 +249,12 @@ bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
         *lhs.value = rhsValue;
         return true;
     } else {
-        if (isCompatibleType(lhs.cellType, rhsValue)) {
-            *(lhs.value) = rhsValue;
+        Value promoted;
+        if (isCompatibleType(lhs.cellType, rhsValue, &promoted)) {
+            if (promoted.type == VAL_NIL)
+                *(lhs.value) = rhsValue;
+            else
+                *(lhs.value) = promoted;
             return true;
         } else {
             return false;
@@ -259,8 +267,12 @@ bool initialiseValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
         *lhs.value = rhsValue;
         return true;
     } else {
-        if (isInitialisableType(lhs.cellType, rhsValue)) {
-            *(lhs.value) = rhsValue;
+        Value promoted;
+        if (isInitialisableType(lhs.cellType, rhsValue, &promoted)) {
+            if (promoted.type == VAL_NIL)
+                *(lhs.value) = rhsValue;
+            else
+                *(lhs.value) = promoted;
             return true;
         } else {
             return false;

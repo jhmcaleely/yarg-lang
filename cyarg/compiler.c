@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "common.h"
 #include "compiler.h"
@@ -9,7 +10,6 @@
 #include "object.h"
 #include "scanner.h"
 #include "big-int/precalc.h"
-//#include "big-int/promote.h"
 
 static void generateExpr(ObjExpr* expr);
 
@@ -228,25 +228,95 @@ static uint8_t makeConstant(Value value) {
 }
 
 static void emitConstant(Value value) {
+   // I32_VAL, DOUBLE_VAL, ADDRESS_VAL OBJ_VAL-c string or Int
+    int32_t v = 0;
+    bool asObject = false;
+    switch (value.type)
+    {
+    case VAL_I32:
+        v = AS_I32(value);
+        if (v > 16777215 || v < -16777215)
+        {
+            asObject = true;
+        }
+        break;
+    case VAL_DOUBLE:
+        asObject = true;
+        break;
+    case VAL_ADDRESS: {
+        uint64_t uv = AS_ADDRESS(value);
+        if (uv <= 16777215)
+        {
+            v = (int32_t) uv;
+        }
+        else
+        {
+            asObject = true;
+        }
+        break;
+    }
+    case VAL_OBJ:
+        if (IS_INT(value))
+        {
+            ObjInt *oi = (ObjInt *) value.as.obj;
+            if (int_is_range(&oi->bigInt, -16777215, 16777215))
+            {
+                v = int_to_i32(&oi->bigInt);
+            }
+            else
+            {
+                asObject = true;
+            }
+        }
+        break;
+    default:
+        assert(!"unexpected type");
+        break;
+    }
 
-    if (IS_I8(value)) {
-        emitBytes(OP_IMMEDIATEi8, AS_I8(value));
-    } else if (IS_UI8(value)) {
-        emitBytes(OP_IMMEDIATEui8, AS_UI8(value));
-    } else if (IS_I16(value) && AS_I16(value) >= INT8_MIN && AS_I16(value) <= INT8_MAX) {
-        emitBytes(OP_IMMEDIATEi16, AS_I16(value));
-    } else if (IS_UI16(value) && AS_UI16(value) <= UINT8_MAX) {
-        emitBytes(OP_IMMEDIATEui16, AS_UI16(value));
-    } else if (IS_I32(value) && AS_I32(value) >= INT8_MIN && AS_I32(value) <= INT8_MAX) {
-        emitBytes(OP_IMMEDIATEi32, AS_I32(value));
-    } else if (IS_UI32(value) && AS_UI32(value) <= UINT8_MAX) {
-        emitBytes(OP_IMMEDIATEui32, AS_UI32(value));
-    } else if (IS_I64(value) && AS_I64(value) >= INT8_MIN && AS_I64(value) <= INT8_MAX) {
-        emitBytes(OP_IMMEDIATEi64, AS_I64(value));
-    } else if (IS_UI64(value) && AS_UI64(value) <= UINT8_MAX) {
-        emitBytes(OP_IMMEDIATEui64, AS_UI64(value));
-    } else {
+    if (asObject)
+    {
         emitBytes(OP_CONSTANT, makeConstant(value));
+    }
+    else
+    {
+        if (v >= -255 && v <= 255)
+        {
+            if (v < 0)
+            {
+                emitBytes(OP_IMMEDIATE_N8, (uint8_t) (-v));
+            }
+            else
+            {
+                emitBytes(OP_IMMEDIATE_P8, (uint8_t) v);
+            }
+        }
+        else if (v >= -65535 && v <= 65535)
+        {
+            if (v < 0)
+            {
+                v = -v;
+                emitBytes(OP_IMMEDIATE_N16, (uint8_t) (v % 256));
+            }
+            else
+            {
+                emitBytes(OP_IMMEDIATE_P16, (uint16_t) (v % 256));
+            }
+            emitByte((uint8_t) (v / 256));
+        }
+        else // if (v >= -16777215 && v < 16777215)
+        {
+            if (v < 0)
+            {
+                v = -v;
+                emitBytes(OP_IMMEDIATE_N24, (uint8_t) (v % 256));
+            }
+            else
+            {
+                emitBytes(OP_IMMEDIATE_P24, (uint16_t) (v % 256));
+            }
+            emitBytes((uint8_t) ((v / 256) % 256), (uint8_t) (v / 65536));
+        }
     }
 }
 
@@ -313,17 +383,19 @@ static void generateStmt(ObjStmt* stmt);
 
 static void generateNumber(ObjExprNumber* num) {
     switch(num->type) {
-        case NUMBER_DOUBLE: emitConstant(DOUBLE_VAL(num->dbl)); break;
-        case NUMBER_ADDRESS: emitConstant(ADDRESS_VAL(0x457557)); break;
-        case NUMBER_INT: {
-            ObjInt *objInt = (ObjInt *) allocateObject(sizeof (ObjInt) + num->bigInt.m_ * sizeof (uint16_t), OBJ_INT);
-            objInt->bigInt.m_ = num->bigInt.m_;
-            int_set_t(&num->bigInt, &objInt->bigInt);
-            emitConstant(OBJ_VAL(objInt));
-            break;
-        }
-        default:
-            return; //  unreachable
+    case NUMBER_DOUBLE:
+        emitConstant(DOUBLE_VAL(num->dbl));
+        break;
+    case NUMBER_INT: {
+        ObjInt *objInt = (ObjInt *) allocateObject(sizeof (ObjInt) + num->bigInt.m_ * sizeof (uint16_t), OBJ_INT);
+        objInt->bigInt.m_ = num->bigInt.m_;
+        int_set_t(&num->bigInt, &objInt->bigInt);
+        emitConstant(OBJ_VAL(objInt));
+        break;
+    }
+    default:
+        assert(!"fatal");
+        return; //  unreachable
     }
 }
 
