@@ -225,8 +225,16 @@ static void packValue(PackedValue packedStorageTarget, Value value) {
     }
 }
 
-bool assignToPackedValue(PackedValue lhs, Value rhsValue) {
+static void noLongerLiteralInt(Value *value)
+{
+    if (IS_INT(*value))
+    {
+        ((ObjInt *) value->as.obj)->isLiteral = false;
+    }
+}
 
+bool assignToPackedValue(PackedValue lhs, Value rhsValue) {
+    noLongerLiteralInt(&rhsValue);
     if (lhs.storedType == NULL) {
         lhs.storedValue->asValue = rhsValue;
         return true;
@@ -245,6 +253,7 @@ bool assignToPackedValue(PackedValue lhs, Value rhsValue) {
 }
 
 bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
+    noLongerLiteralInt(&rhsValue);
     if (lhs.cellType == NULL) {
         *lhs.value = rhsValue;
         return true;
@@ -263,7 +272,9 @@ bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
 }
 
 bool initialiseValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
+    noLongerLiteralInt(&rhsValue);
     if (lhs.cellType == NULL) {
+
         *lhs.value = rhsValue;
         return true;
     } else {
