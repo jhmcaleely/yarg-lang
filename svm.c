@@ -471,109 +471,63 @@ static void makeConcreteTypeConst(ObjRoutine* routine) {
     }
 }
 
-static void promote(Value *left, Value *right)
+static void promote(Value const *from, ValueType toTypeOf, Value *promoted)
 {
-    assert(left != 0 && right != 0);
-
-    Value *toPromote = 0, *promotionToTypeOf;
-    if (IS_INT(*left) && ((ObjInt *) (left->as.obj))->isLiteral)
+    promoted->type = VAL_NIL;
+    ObjInt *i = (ObjInt *) from->as.obj;
+    if (IS_INT(*from) && i->isLiteral)
     {
-        toPromote = left;
-        promotionToTypeOf = right;
-    }
-    else if (IS_INT(*right) && ((ObjInt *) (right->as.obj))->isLiteral)
-    {
-        toPromote = right;
-        promotionToTypeOf = left;
-    }
-    if (toPromote != 0)
-    {
-        ValueType promoteTo = promotionToTypeOf->type;
-        Int *bigInt = &((ObjInt *) (toPromote->as.obj))->bigInt;
-
-        switch (promoteTo)
+        switch (toTypeOf)
         {
         case VAL_I8:
-            if (int_is_range(bigInt, INT8_MIN, INT8_MAX) == INT_WITHIN)
+            if (int_is_range(&i->bigInt, INT8_MIN, INT8_MAX) == INT_WITHIN)
             {
-                toPromote->type = promoteTo;
-                toPromote->as.i8 = (int8_t) int_to_i32(bigInt);
+                *promoted = I8_VAL(int_to_i32(&i->bigInt));
             }
             break;
         case VAL_UI8:
-            if (int_is_range(bigInt, 0, UINT8_MAX) == INT_WITHIN)
+            if (int_is_range(&i->bigInt, 0, UINT8_MAX) == INT_WITHIN)
             {
-                toPromote->type = promoteTo;
-                toPromote->as.ui8 = (uint8_t) int_to_u32(bigInt);
+                *promoted = UI8_VAL(int_to_u32(&i->bigInt));
             }
             break;
         case VAL_I16:
-            if (int_is_range(bigInt, INT16_MIN, INT16_MAX) == INT_WITHIN)
+            if (int_is_range(&i->bigInt, INT16_MIN, INT16_MAX) == INT_WITHIN)
             {
-                toPromote->type = promoteTo;
-                toPromote->as.i16 = (int16_t) int_to_i32(bigInt);
+                *promoted = I16_VAL(int_to_i32(&i->bigInt));
             }
             break;
         case VAL_UI16:
-            if (int_is_range(bigInt, 0, UINT16_MAX) == INT_WITHIN)
+            if (int_is_range(&i->bigInt, 0, UINT16_MAX) == INT_WITHIN)
             {
-                toPromote->type = promoteTo;
-                toPromote->as.ui16 = (uint16_t) int_to_u32(bigInt);
+                *promoted = UI16_VAL(int_to_u32(&i->bigInt));
             }
             break;
         case VAL_I32:
-            if (int_is_range(bigInt, INT32_MIN, INT32_MAX) == INT_WITHIN)
+            if (int_is_range(&i->bigInt, INT32_MIN, INT32_MAX) == INT_WITHIN)
             {
-                toPromote->type = promoteTo;
-                toPromote->as.i32 = int_to_i32(bigInt);
+                *promoted = I32_VAL(int_to_i32(&i->bigInt));
             }
             break;
         case VAL_UI32:
-            if (int_is_range(bigInt, 0, UINT32_MAX) == INT_WITHIN)
+            if (int_is_range(&i->bigInt, 0, UINT32_MAX) == INT_WITHIN)
             {
-                toPromote->type = promoteTo;
-                toPromote->as.ui32 = int_to_u32(bigInt);
+                *promoted = UI32_VAL(int_to_u32(&i->bigInt));
             }
             break;
         case VAL_I64:
-            if (int_is_range(bigInt, INT64_MIN, INT64_MAX) == INT_WITHIN)
+            if (int_is_range(&i->bigInt, INT64_MIN, INT64_MAX) == INT_WITHIN)
             {
-                toPromote->type = promoteTo;
-                toPromote->as.i64 = int_to_i64(bigInt);
+                *promoted = I64_VAL(int_to_i64(&i->bigInt));
             }
             break;
         case VAL_UI64:
-            if (int_is_range(bigInt, 0, UINT64_MAX) == INT_WITHIN)
+            if (int_is_range(&i->bigInt, 0, UINT64_MAX) == INT_WITHIN)
             {
-                toPromote->type = promoteTo;
-                toPromote->as.ui64 = int_to_u64(bigInt);
+                *promoted = UI8_VAL(int_to_u64(&i->bigInt));
             }
             break;
-        case VAL_ADDRESS:
-            if (int_is_range(bigInt, INT32_MIN, INT32_MAX) == INT_WITHIN)
-            {
-                toPromote->type = INT32_MAX;
-                toPromote->as.i32 = int_to_i32(bigInt);
-            }
-            else if (int_is_range(bigInt, 0, UINT32_MAX) == INT_WITHIN)
-            {
-                toPromote->type = VAL_UI32;
-                toPromote->as.ui32 = int_to_u32(bigInt);
-            }
-            break;
-        case VAL_OBJ:
-            if (IS_POINTER(*promotionToTypeOf))
-            {
-                if (int_is_range(bigInt, 0, UINT32_MAX) == INT_WITHIN)
-                {
-                    toPromote->type = VAL_UI32;
-                    toPromote->as.ui32 = int_to_u32(bigInt);
-                }
-            }
-            // else can’t promote to this type
-
         default:
-            // can’t promote to this type
             break;
         }
     }
@@ -595,7 +549,6 @@ InterpretResult run(ObjRoutine* routine) {
 #define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(routine, op) \
     do { \
-        promote(&peekCell(routine, 1)->value, &peekCell(routine, 0)->value); \
         if (IS_I32(peek(routine, 0)) && IS_I32(peek(routine, 1))) { \
             int32_t b = AS_I32(pop(routine)); \
             int32_t a = AS_I32(pop(routine)); \
@@ -686,7 +639,6 @@ runtimeError(routine, "Operands must both be numbers, integers or unsigned integ
     } while (false)
 #define BINARY_UINT_OP(routine, op) \
     do { \
-        promote(&peekCell(routine, 1)->value, &peekCell(routine, 0)->value); \
         if (IS_UI32(peek(routine, 0)) && IS_UI32(peek(routine, 1))) { \
             uint32_t b = AS_UI32(pop(routine)); \
             uint32_t a = AS_UI32(pop(routine)); \
@@ -953,8 +905,6 @@ runtimeError(routine, "Operands must both be numbers, integers or unsigned integ
                 if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) {
                     binaryIntBoolOp(routine, "==");
                 } else {
-                    promote(&peekCell(routine, 1)->value, &peekCell(routine, 0)->value);
-
                     Value b = pop(routine);
                     Value a = pop(routine);
                     push(routine, BOOL_VAL(valuesEqual(a, b)));
@@ -968,71 +918,133 @@ runtimeError(routine, "Operands must both be numbers, integers or unsigned integ
             case OP_BITOR:       BINARY_UINT_OP(routine, |); break;
             case OP_BITAND:      BINARY_UINT_OP(routine, &); break;
             case OP_BITXOR:      BINARY_UINT_OP(routine, ^); break;
-            case OP_ADD: {
-                promote(&peekCell(routine, 1)->value, &peekCell(routine, 0)->value);
-
-                if (IS_I32(peek(routine, 0)) && IS_I32(peek(routine, 1))) {
-                    int32_t b = AS_I32(pop(routine));
-                    int32_t a = AS_I32(pop(routine));
-                    push(routine, I32_VAL(a + b));
-                } else if (IS_UI32(peek(routine, 0)) && IS_UI32(peek(routine, 1))) {
-                    uint32_t b = AS_UI32(pop(routine));
-                    uint32_t a = AS_UI32(pop(routine));
-                    push(routine, UI32_VAL(a + b));
-                } else if (IS_I8(peek(routine, 0)) && IS_I8(peek(routine, 1))) {
-                    int8_t b = AS_I8(pop(routine));
-                    int8_t a = AS_I8(pop(routine));
-                    push(routine, I8_VAL(a + b));
-                } else if (IS_UI8(peek(routine, 0)) && IS_UI8(peek(routine, 1))) {
-                    uint8_t b = AS_UI8(pop(routine));
-                    uint8_t a = AS_UI8(pop(routine));
-                    push(routine, UI8_VAL(a + b));
-                } else if (IS_I16(peek(routine, 0)) && IS_I16(peek(routine, 1))) {
-                    int16_t b = AS_I16(pop(routine));
-                    int16_t a = AS_I16(pop(routine));
-                    push(routine, I16_VAL(a + b));
-                } else if (IS_UI16(peek(routine, 0)) && IS_UI16(peek(routine, 1))) {
-                    uint16_t b = AS_UI16(pop(routine));
-                    uint16_t a = AS_UI16(pop(routine));
-                    push(routine, UI16_VAL(a + b));
-                } else if (IS_I64(peek(routine, 0)) && IS_I64(peek(routine, 1))) {
-                    int64_t b = AS_I64(pop(routine));
-                    int64_t a = AS_I64(pop(routine));
-                    push(routine, I64_VAL(a + b));
-                } else if (IS_UI64(peek(routine, 0)) && IS_UI64(peek(routine, 1))) {
-                    uint64_t b = AS_UI64(pop(routine));
-                    uint64_t a = AS_UI64(pop(routine));
-                    push(routine, UI64_VAL(a + b));
-                } else if (IS_DOUBLE(peek(routine, 0)) && IS_DOUBLE(peek(routine, 1))) {
-                    double b = AS_DOUBLE(pop(routine));
-                    double a = AS_DOUBLE(pop(routine));
-                    push(routine, DOUBLE_VAL(a + b));
-                } else if (IS_ADDRESS(peek(routine, 1)) && IS_I32(peek(routine, 0))) {
-                    int32_t b = AS_I32(pop(routine));
-                    uintptr_t a = AS_ADDRESS(pop(routine));
-                    push(routine, ADDRESS_VAL(a + b));
-                } else if (IS_ADDRESS(peek(routine, 1)) && IS_UI32(peek(routine, 0))) {
-                    uint32_t b = AS_UI32(pop(routine));
-                    uintptr_t a = AS_ADDRESS(pop(routine));
-                    push(routine, ADDRESS_VAL(a + b));
-                } else if (IS_POINTER(peek(routine, 1)) && IS_UI32(peek(routine, 0))) {
-                    uint32_t b = AS_UI32(pop(routine));
-                    ObjPackedPointer* pointer = AS_POINTER(pop(routine));
-                    offsetPointerDestination(pointer, b);
-                    push(routine, OBJ_VAL(pointer));
-                } else if (IS_STRING(peek(routine, 0)) && IS_STRING(peek(routine, 1))) {
-                    concatenate(routine);
-                } else if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) {
-                    binaryIntOp(routine, "+");
-                } else {
-                    runtimeError(routine, "Operands must be two numbers or two strings." " +");
-                    return INTERPRET_RUNTIME_ERROR;
+        case OP_ADD: {
+            Value *v0 = &peekCell(routine, 0)->value, *v1 = &peekCell(routine, 1)->value;
+            Value promoted;
+            if (v0->type != v1->type)
+            {
+                if (IS_INT(*v0))
+                {
+                    promote(v0, v1->type, &promoted);
+                    v0 = &promoted;
                 }
+                else if (IS_INT(*v0))
+                {
+                    promote(v1, v0->type, &promoted);
+                    v1 = &promoted;
+                }
+            }
+            bool done = true;
+            Value result;
+            if (v0->type == v1->type)
+            {
+                switch (v1->type)
+                {
+                case VAL_I8:
+                    result = I8_VAL(AS_I8(*v1) + AS_I8(*v0));
+                    break;
+                case VAL_UI8:
+                    result = UI8_VAL(AS_UI8(*v1) + AS_UI8(*v0));
+                    break;
+                case VAL_I16:
+                    result = I16_VAL(AS_I16(*v1) + AS_I16(*v0));
+                    break;
+                case VAL_UI16:
+                    result = UI16_VAL(AS_UI16(*v1) + AS_UI16(*v0));
+                    break;
+                case VAL_I32:
+                    result = I32_VAL(AS_I32(*v1) + AS_I32(*v0));
+                    break;
+                case VAL_UI32:
+                    result = UI32_VAL(AS_UI32(*v1) + AS_UI32(*v0));
+                    break;
+                case VAL_I64:
+                    result = I64_VAL(AS_I64(*v1) + AS_I64(*v0));
+                    break;
+                case VAL_UI64:
+                    result = UI64_VAL(AS_UI64(*v0) + AS_UI64(*v1));
+                    break;
+                case VAL_DOUBLE:
+                    result = DOUBLE_VAL(AS_DOUBLE(*v1) + AS_DOUBLE(*v0));
+                    break;
+                default:
+                    done = false;
+                    break;
+                }
+            }
+            else
+            {
+                done = false;
+            }
+            bool dontStore = false;
+            if (!done)
+            {
+                done = true;
+                if (IS_ADDRESS(*v1))
+                {
+                    if (IS_INT(*v0))
+                    {
+                        if (int_is_range(AS_INT(*v0), INT32_MIN, UINT32_MAX) == INT_WITHIN)
+                        {
+                            int64_t o = int_to_i64(AS_INT(*v0));
+                            result = ADDRESS_VAL(AS_ADDRESS(*v1) + o);
+                        }
+                        else
+                        {
+                            done = false;
+                        }
+                    }
+                    else if (IS_I32(*v0))
+                    {
+                        result = ADDRESS_VAL(AS_ADDRESS(*v1) + AS_I32(*v0));
+                    }
+                    else if (IS_UI32(*v0))
+                    {
+                        result = ADDRESS_VAL(AS_ADDRESS(*v1) + AS_UI32(*v0));
+                    }
+                    else
+                    {
+                        done = false;
+                    }
+                }
+                else if (IS_POINTER(*v1) && IS_UI32(*v0))
+                {
+                    uint32_t b = AS_UI32(*v0);
+                    ObjPackedPointer* pointer = AS_POINTER(*v1);
+                    offsetPointerDestination(pointer, b);
+                    result = OBJ_VAL(pointer);
+                }
+                else if (IS_STRING(*v0) && IS_STRING(*v1))
+                {
+                    concatenate(routine);
+                    dontStore = true;
+                }
+                else if (IS_INT(*v0) && IS_INT(*v1))
+                {
+                    binaryIntOp(routine, "+");
+                    dontStore = true;
+                }
+                else
+                {
+                    done = false;
+                }
+            }
+            if (done)
+            {
+                if (!dontStore)
+                {
+                    routine->stackTopIndex -= 2;
+                    push(routine, result);
+                }
+            }
+            else
+            {
+                runtimeError(routine, "Operands must be two numbers or two strings." " +");
+                return INTERPRET_RUNTIME_ERROR;
+            }
                 break;
             }
             case OP_MODULO: {
-                promote(&peekCell(routine, 1)->value, &peekCell(routine, 0)->value);
-
                 if (IS_I32(peek(routine, 0)) && IS_I32(peek(routine, 1))) {
                     int32_t b = AS_I32(pop(routine));
                     int32_t a = AS_I32(pop(routine));

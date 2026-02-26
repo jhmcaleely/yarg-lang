@@ -389,6 +389,7 @@ static void generateNumber(ObjExprNumber* num) {
     case NUMBER_INT: {
         ObjInt *objInt = (ObjInt *) allocateObject(sizeof (ObjInt) + num->bigInt.m_ * sizeof (uint16_t), OBJ_INT);
         objInt->bigInt.m_ = num->bigInt.m_;
+        objInt->isLiteral = true;
         int_set_t(&num->bigInt, &objInt->bigInt);
         emitConstant(OBJ_VAL(objInt));
         break;
