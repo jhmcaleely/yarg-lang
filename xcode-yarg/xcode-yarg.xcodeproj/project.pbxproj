@@ -41,7 +41,6 @@
 		5AAAC3692F233239004C0336 /* Exceptions for "cyarg" folder in "xcode-yarg" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				"big-int/promote.c",
 				fs/fs_littlefs.c,
 				fs/pico_lfs_hal.c,
 			);

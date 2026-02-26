@@ -1175,16 +1175,6 @@ ObjFunction* compile(const char* source) {
         precalcStatements(current->ast->statements);
     }
 
-//#ifdef DEBUG_AST_OPTIMISE
-//    collectGarbage();
-//    printf("Parse Tree after precalc and before promoteLitInt (%zu net bytes)\n", vm.bytesAllocated - bytesAllocated);
-//    printStmts(current->ast->statements);
-//#endif
-//    if (!parseError)
-//    {
-//        promoteLitIntStatements(current->ast->statements);
-//    }
-
 #ifdef DEBUG_AST_PARSE
     collectGarbage();
     printf("Parse Tree (%zu net bytes)\n", vm.bytesAllocated - bytesAllocated);
