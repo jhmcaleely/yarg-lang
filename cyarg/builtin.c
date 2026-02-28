@@ -976,9 +976,9 @@ bool stringBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
         result->type = VAL_OBJ;
         return true;
     } else if (IS_INT(arg)) {
-        char sb[311];
+        char sb[INT_STRLEN_FOR_INT254];
         Int *i = AS_INT(arg);
-        char const *s = int_to_s(i, sb, 311);
+        char const *s = int_to_s(i, sb, INT_STRLEN_FOR_INT254);
         int len = (int)strlen(s);
         ObjString* string = copyString(s, len);
         result->as.obj = &string->obj;

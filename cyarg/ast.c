@@ -414,10 +414,9 @@ void printExpr(ObjExpr* expr) {
                 char s[INT_STRLEN_FOR_INT254];
                 ObjExprNumber* num = (ObjExprNumber*)cursor;
                 switch (num->type) {
-                case NUMBER_DOUBLE: {
+                case NUMBER_DOUBLE:
                     printf("f%lg", num->dbl);
                     break;
-                }
                 case NUMBER_INT:
                     printf("%s", int_to_s(&num->bigInt, s, INT_STRLEN_FOR_INT254));
                     break;

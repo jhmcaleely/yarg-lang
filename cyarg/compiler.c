@@ -228,30 +228,13 @@ static uint8_t makeConstant(Value value) {
 }
 
 static void emitConstant(Value value) {
-   // I32_VAL, DOUBLE_VAL, ADDRESS_VAL OBJ_VAL-c string or Int
+   // DOUBLE_VAL OBJ_VAL-c string or Int
     int32_t v = 0;
     bool asObject = true;
     switch (value.type)
     {
-    case VAL_I32:
-        assert(!"really");
-        v = AS_I32(value);
-        if (v <= 16777215 || v >= -16777215)
-        {
-            asObject = false;
-        }
-        break;
     case VAL_DOUBLE:
         break;
-    case VAL_ADDRESS: {
-        uint64_t uv = AS_ADDRESS(value);
-        if (uv <= 16777215)
-        {
-            v = (int32_t) uv;
-            asObject = false;
-        }
-        break;
-    }
     case VAL_OBJ:
         if (IS_INT(value))
         {
@@ -261,6 +244,10 @@ static void emitConstant(Value value) {
                 v = int_to_i32(&oi->bigInt);
                 asObject = false;
             }
+        }
+        else
+        {
+            assert(value.as.obj->type == OBJ_STRING);
         }
         break;
     default:
