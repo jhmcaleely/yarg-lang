@@ -234,17 +234,22 @@ static void noLongerLiteralInt(Value *value)
 }
 
 bool assignToPackedValue(PackedValue lhs, Value rhsValue) {
-    noLongerLiteralInt(&rhsValue);
     if (lhs.storedType == NULL) {
+        noLongerLiteralInt(&rhsValue);
         lhs.storedValue->asValue = rhsValue;
         return true;
     } else {
         Value promoted;
         if (isCompatibleType(lhs.storedType, rhsValue, &promoted)) {
             if (promoted.type == VAL_NIL)
+            {
+                noLongerLiteralInt(&rhsValue);
                 packValue(lhs, rhsValue);
+            }
             else
+            {
                 packValue(lhs, promoted);
+            }
             return true;
         } else {
             return false;
@@ -253,17 +258,22 @@ bool assignToPackedValue(PackedValue lhs, Value rhsValue) {
 }
 
 bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
-    noLongerLiteralInt(&rhsValue);
     if (lhs.cellType == NULL) {
+        noLongerLiteralInt(&rhsValue);
         *lhs.value = rhsValue;
         return true;
     } else {
         Value promoted;
         if (isCompatibleType(lhs.cellType, rhsValue, &promoted)) {
             if (promoted.type == VAL_NIL)
+            {
+                noLongerLiteralInt(&rhsValue);
                 *(lhs.value) = rhsValue;
+            }
             else
+            {
                 *(lhs.value) = promoted;
+            }
             return true;
         } else {
             return false;
@@ -272,18 +282,22 @@ bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
 }
 
 bool initialiseValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
-    noLongerLiteralInt(&rhsValue);
     if (lhs.cellType == NULL) {
-
+        noLongerLiteralInt(&rhsValue);
         *lhs.value = rhsValue;
         return true;
     } else {
         Value promoted;
         if (isInitialisableType(lhs.cellType, rhsValue, &promoted)) {
             if (promoted.type == VAL_NIL)
+            {
+                noLongerLiteralInt(&rhsValue);
                 *(lhs.value) = rhsValue;
+            }
             else
+            {
                 *(lhs.value) = promoted;
+            }
             return true;
         } else {
             return false;
