@@ -19,7 +19,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		5A6099732F5410860032ED4F /* Test1.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Test1.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5A8D28322EDDB59F0068C8C3 /* xcode-yarg */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "xcode-yarg"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5ADA7C9D2EE8CB8F00319EC0 /* xcode-yarg.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "xcode-yarg.xcodeproj"; sourceTree = "<group>"; };
 		5AE149B52EDDBB7400CBDF09 /* build.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = build.sh; path = ../build.sh; sourceTree = SOURCE_ROOT; };
@@ -95,13 +94,6 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		5A6099702F5410860032ED4F /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		5A8D282F2EDDB59F0068C8C3 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -125,7 +117,6 @@
 			isa = PBXGroup;
 			children = (
 				5A8D28322EDDB59F0068C8C3 /* xcode-yarg */,
-				5A6099732F5410860032ED4F /* Test1.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -158,25 +149,6 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		5A6099722F5410860032ED4F /* Test1 */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 5A6099772F5410870032ED4F /* Build configuration list for PBXNativeTarget "Test1" */;
-			buildPhases = (
-				5A60996F2F5410860032ED4F /* Sources */,
-				5A6099702F5410860032ED4F /* Frameworks */,
-				5A6099712F5410860032ED4F /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = Test1;
-			packageProductDependencies = (
-			);
-			productName = Test1;
-			productReference = 5A6099732F5410860032ED4F /* Test1.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 		5A8D28312EDDB59F0068C8C3 /* xcode-yarg */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 5A8D28392EDDB59F0068C8C3 /* Build configuration list for PBXNativeTarget "xcode-yarg" */;
@@ -213,9 +185,6 @@
 				BuildIndependentTargetsInParallel = 1;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
-					5A6099722F5410860032ED4F = {
-						CreatedOnToolsVersion = 26.2;
-					};
 					5A8D28312EDDB59F0068C8C3 = {
 						CreatedOnToolsVersion = 26.1.1;
 					};
@@ -242,29 +211,11 @@
 			projectRoot = "";
 			targets = (
 				5A8D28312EDDB59F0068C8C3 /* xcode-yarg */,
-				5A6099722F5410860032ED4F /* Test1 */,
 			);
 		};
 /* End PBXProject section */
 
-/* Begin PBXResourcesBuildPhase section */
-		5A6099712F5410860032ED4F /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
-
 /* Begin PBXSourcesBuildPhase section */
-		5A60996F2F5410860032ED4F /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		5A8D282E2EDDB59F0068C8C3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -275,44 +226,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		5A6099782F5410870032ED4F /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = yarg.dlm.Test1;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-			};
-			name = Debug;
-		};
-		5A6099792F5410870032ED4F /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = yarg.dlm.Test1;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-			};
-			name = Release;
-		};
 		5A8D28372EDDB59F0068C8C3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -358,8 +271,8 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"CYARG_PTHREADS_SYNC=1",
 					"CYARG_FEATURE_TEST_SYSTEM=1",
-					"CYARG_FEATURE_TEST_INT=1",
-					"nCYARG_FEATURE_HOSTED_REPL=1",
+					"nCYARG_FEATURE_TEST_INT=1",
+					"CYARG_FEATURE_HOSTED_REPL=1",
 					"nDEBUG_TRACE_EXECUTION=1",
 					"DEBUG_AST_OPTIMISE=1",
 					"DEBUG_AST_PARSE=1",
@@ -423,8 +336,8 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"CYARG_PTHREADS_SYNC=1",
 					"CYARG_FEATURE_TEST_SYSTEM=1",
-					"CYARG_FEATURE_TEST_INT=1",
-					"nCYARG_FEATURE_HOSTED_REPL=1",
+					"nCYARG_FEATURE_TEST_INT=1",
+					"CYARG_FEATURE_HOSTED_REPL=1",
 					"nDEBUG_TRACE_EXECUTION=1",
 					"DEBUG_AST_OPTIMISE=1",
 					"DEBUG_AST_PARSE=1",
@@ -463,15 +376,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5A6099772F5410870032ED4F /* Build configuration list for PBXNativeTarget "Test1" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				5A6099782F5410870032ED4F /* Debug */,
-				5A6099792F5410870032ED4F /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		5A8D282D2EDDB59F0068C8C3 /* Build configuration list for PBXProject "xcode-yarg" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
