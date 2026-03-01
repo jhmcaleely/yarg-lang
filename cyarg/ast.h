@@ -126,8 +126,10 @@ typedef enum {
 typedef struct {
     ObjExpr expr;
     NumberType type;
-    double dbl;
-    Int bigInt;
+    union {
+        Int bigInt;
+        double dbl;
+    };
 } ObjExprNumber;
 
 typedef struct {
@@ -289,7 +291,7 @@ ObjExprString* newExprString(const char* str, int strLength);
 ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op);
 ObjExprGrouping* newExprGrouping(ObjExpr* expression);
 ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength);
-//ObjExprNamedConstant* newExprNamedConstant(const char* name, int nameLength);
+ObjExprNamedConstant* newExprNamedConstant(const char* name, int nameLength);
 ObjExprCall* newExprCall();
 ObjExprArrayInit* newExprArrayInit();
 ObjExprArrayElement* newExprArrayElement();

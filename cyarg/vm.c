@@ -635,7 +635,7 @@ InterpretResult run(ObjRoutine* routine) {
         } else if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) { \
             binaryIntOp(routine, #op); \
         } else { \
-runtimeError(routine, "Operands must both be numbers, integers or unsigned integers." #op); \
+            runtimeError(routine, "Operands must both be numbers, integers or unsigned integers." #op); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
     } while (false)
@@ -680,7 +680,7 @@ runtimeError(routine, "Operands must both be numbers, integers or unsigned integ
         } else if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) { \
             binaryIntBoolOp(routine, #op); \
         } else { \
-runtimeError(routine, "Operands must both be numbers, integers or unsigned integers." #op); \
+            runtimeError(routine, "Operands must both be numbers, integers or unsigned integers." #op); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
     } while (false)
@@ -708,7 +708,7 @@ runtimeError(routine, "Operands must both be numbers, integers or unsigned integ
             uint64_t c = a op b; \
             push(routine, UI64_VAL(c)); \
         } else { \
-            runtimeError(routine, "Operands must be unsigned integers."); \
+runtimeError(routine, "Operands must be unsigned integers." #op); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
     } while (false)
@@ -1140,7 +1140,7 @@ runtimeError(routine, "Operands must both be numbers, integers or unsigned integ
                 if (isUint32Pointer(location)) {
                     nominal_address = (uintptr_t) AS_POINTER(location)->destination;
                 }
-                else  if (IS_ADDRESS(location))
+                else if (IS_ADDRESS(location))
                 {
                     nominal_address = AS_ADDRESS(location);
                 }

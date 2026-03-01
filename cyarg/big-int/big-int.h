@@ -26,7 +26,6 @@ typedef struct
     uint8_t m_; // max (16-bit) digits - allocated size, always even
     union
     {
-        uint8_t b_[];
         uint16_t h_[];
         uint32_t w_[];
     };
@@ -85,10 +84,6 @@ typedef enum
     INT_ABOVE
 } IntRange;
 
-// allocators
-Int *int_new(int digits); // may return m_ > digits
-// Int *int_resize(Int *, int digits); // digits == -1 reduce to d_, digits == 0 deallocates and returns 0, may return m_ > digits
-void int_delete(Int *);
 
 // constructors
 void int_init(Int *);
@@ -106,7 +101,6 @@ void int_sub(Int const *, Int const *, Int *);
 void int_shift(int, Int *); // by half words
 void int_mul(Int const *, Int const *, Int *);
 void int_div(Int const *, Int const *, Int *q, Int *r); // r may be nil  // todo -- also allow q == 0
-void int_div(Int const *, Int const *, Int *i, Int *r); // r may be nil and not returned
 void int_neg(Int *);
 
 // comparisons

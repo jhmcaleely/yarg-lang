@@ -375,7 +375,6 @@ static ObjExpr* builtin(bool canAssign) {
         case TOKEN_TS_INTERRUPT: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_TS_INTERRUPT, 1);
         case TOKEN_TS_SYNC: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_TS_SYNC, 1);
         case TOKEN_INT: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_INT, 1);
-        case TOKEN_MACHINE_FLOAT64: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_MFLOAT64, 1);
         case TOKEN_TYPE_STRING: return (ObjExpr*) newExprBuiltin(EXPR_BUILTIN_STRING, 1);
         default: return NULL; // Unreachable.
     } 
@@ -684,11 +683,8 @@ static ObjExpr* number(bool canAssign) {
                 }
                 else // double NUMBER_END xEy|0.Ey -- NUMBER_DOT 0. -- NUMBER_DOT_AND_MSB .y|x.y|x.
                 {
-                    val = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
-                    val->type = NUMBER_DOUBLE;
-
                     char *end;
-                    val->dbl = strtod(number_start, &end);
+                    val = newExprNumberDouble(strtod(number_start, &end));
                     assert(end - number_start == number_len);
                 }
                 state = NUMBER_END;

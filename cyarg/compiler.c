@@ -227,8 +227,9 @@ static uint8_t makeConstant(Value value) {
     return (uint8_t)constant;
 }
 
+#define UINT24_MAX 16777215
 static void emitConstant(Value value) {
-   // DOUBLE_VAL OBJ_VAL-c string or Int
+   // either DOUBLE_VAL or OBJ_VAL(String or Int)
     int32_t v = 0;
     bool asObject = true;
     switch (value.type)
@@ -239,7 +240,7 @@ static void emitConstant(Value value) {
         if (IS_INT(value))
         {
             ObjInt *oi = (ObjInt *) value.as.obj;
-            if (int_is_range(&oi->bigInt, -16777215, 16777215) == INT_WITHIN)
+            if (int_is_range(&oi->bigInt, -UINT24_MAX, UINT24_MAX) == INT_WITHIN)
             {
                 v = int_to_i32(&oi->bigInt);
                 asObject = false;
@@ -261,7 +262,7 @@ static void emitConstant(Value value) {
     }
     else
     {
-        if (v >= -255 && v <= 255)
+        if (v >= -UINT8_MAX && v <= UINT8_MAX)
         {
             if (v < 0)
             {
@@ -272,7 +273,7 @@ static void emitConstant(Value value) {
                 emitBytes(OP_IMMEDIATE_P8, (uint8_t) v);
             }
         }
-        else if (v >= -65535 && v <= 65535)
+        else if (v >= -UINT16_MAX && v <= UINT16_MAX)
         {
             if (v < 0)
             {
@@ -285,7 +286,7 @@ static void emitConstant(Value value) {
             }
             emitByte((uint8_t) (v / 256));
         }
-        else // if (v >= -16777215 && v < 16777215)
+        else // if (v >= -UINT24_MAX && v < UINT24_MAX)
         {
             if (v < 0)
             {
@@ -377,7 +378,6 @@ static void generateNumber(ObjExprNumber* num) {
     }
     default:
         assert(!"fatal");
-        return; //  unreachable
     }
 }
 

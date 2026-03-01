@@ -129,7 +129,7 @@ ObjBlob* newBlob(size_t count) {
 }
 
 Value defaultIntValue() {
-    ObjInt *intObj = (ObjInt *)allocateObject(sizeof (ObjInt) + 2 * sizeof (uint16_t), OBJ_INT);
+    ObjInt *intObj = (ObjInt *) allocateObject(sizeof (ObjInt) + 2 * sizeof (uint16_t), OBJ_INT);
     intObj->bigInt.m_ = 2;
     int_init(&intObj->bigInt);
     return OBJ_VAL(intObj);
@@ -213,7 +213,7 @@ void offsetPointerDestination(ObjPackedPointer* pointer, size_t offset) {
 
 bool isAddressValue(Value val) {
     if (IS_INT(val)) {
-        ObjInt *i = (ObjInt *) AS_OBJ(val);
+        ObjInt *i = AS_INTOBJ(val);
         return i->isLiteral;
     } else if (IS_ADDRESS(val)) {
         return true;
@@ -305,7 +305,6 @@ ObjPackedStruct* newPackedStruct(ObjConcreteYargTypeStruct* type) {
     tempRootPop();
     return object;
 }
-
 
 ObjPackedStruct* newPackedStructAt(PackedValue location) {
     ObjPackedStruct* object = ALLOCATE_OBJ(ObjPackedStruct, OBJ_UNOWNED_PACKEDSTRUCT);

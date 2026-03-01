@@ -12,7 +12,7 @@
 // 6+7 => 13
 // 7+(2*3) => 13
 // Currently the parse tree makes some optimisations difficult e.g:
-// x+5+2 as the parse tree looses the information i.e. x*5+2 results in a similar structure
+// x+5+2 as the parse tree loses the priority information i.e. x*5+2 results in a similar structure
 // a workaround is the developer writes x+(5+2) which is optimised
 // todo - the expressions x+0 and x*1 could be optimised
 

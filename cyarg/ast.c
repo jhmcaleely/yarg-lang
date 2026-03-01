@@ -124,13 +124,10 @@ ObjExprGrouping* newExprGrouping(ObjExpr* expression) {
     return grp;
 }
 
-
-ObjExprNumber* newExprNumberDouble(double d) {
-    uint8_t s = INT_DIGITS_FOR_S(1); // todo ---
-    s += s % 2;
-    ObjExprNumber *num = (ObjExprNumber *) allocateObject(sizeof (ObjExprNumber) + sizeof (uint16_t) * s, OBJ_EXPR_NUMBER);
-    num->bigInt.m_ = s;
+ObjExprNumber* newExprNumberDouble(double value) {
+    ObjExprNumber* num = ALLOCATE_OBJ(ObjExprNumber, OBJ_EXPR_NUMBER);
     num->type = NUMBER_DOUBLE;
+    num->dbl = value;
     return num;
 }
 
@@ -150,6 +147,15 @@ ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength) {
     tempRootPop();
     return var;
 }
+
+ObjExprNamedConstant* newExprNamedConstant(const char* name, int nameLength) {
+    ObjExprNamedConstant* var = ALLOCATE_OBJ(ObjExprNamedConstant, OBJ_EXPR_NAMEDCONSTANT);
+    tempRootPush(OBJ_VAL(var));
+    var->name = copyString(name, nameLength);
+    tempRootPop();
+    return var;
+}
+
 
 ObjExprLiteral* newExprLiteral(ExprLiteral literal) {
     ObjExprLiteral* lit = ALLOCATE_OBJ(ObjExprLiteral, OBJ_EXPR_LITERAL);
@@ -415,7 +421,7 @@ void printExpr(ObjExpr* expr) {
                 ObjExprNumber* num = (ObjExprNumber*)cursor;
                 switch (num->type) {
                 case NUMBER_DOUBLE:
-                    printf("f%lg", num->dbl);
+                    printf("%f", num->dbl);
                     break;
                 case NUMBER_INT:
                     printf("%s", int_to_s(&num->bigInt, s, INT_STRLEN_FOR_INT254));

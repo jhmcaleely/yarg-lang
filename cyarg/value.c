@@ -234,6 +234,7 @@ static void noLongerLiteralInt(Value *value)
 }
 
 bool assignToPackedValue(PackedValue lhs, Value rhsValue) {
+
     if (lhs.storedType == NULL) {
         noLongerLiteralInt(&rhsValue);
         lhs.storedValue->asValue = rhsValue;
@@ -410,7 +411,6 @@ bool valuesEqual(Value a, Value b) {
         case VAL_UI64:     return AS_UI64(a) == AS_UI64(b);
         case VAL_ADDRESS:  return AS_ADDRESS(a) == AS_ADDRESS(b);
         case VAL_OBJ:      return AS_OBJ(a) == AS_OBJ(b);
-
         default:           return false; // Unreachable.
     }
 }

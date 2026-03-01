@@ -908,7 +908,6 @@ bool intBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
     } else if (IS_UI64(arg)) {
         uint64_t i = AS_UI64(arg);
         ObjInt *newObj = (ObjInt *)allocateObject(sizeof (ObjInt) + sizeof i, OBJ_INT);
-        int_init_concrete4((IntConcrete4 *)&newObj->bigInt);
         result->as.obj = &newObj->obj;
         result->type = VAL_OBJ;
         newObj->bigInt.m_ = sizeof i / sizeof (uint16_t);

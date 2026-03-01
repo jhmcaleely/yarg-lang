@@ -29,7 +29,7 @@ union FourDigits
     struct
     {
         uint16_t a16_;
-        uint16_t b[3];
+        uint16_t b_[3];
     };
     struct
     {
@@ -60,35 +60,6 @@ static void addPos(Int const *, Int const *, Int *);
 static void int_sub_abs(Int const *, Int const *, Int *);
 static void subAGtB(Int const *, Int const *, Int *);
 
-Int *int_new(int digits)
-{
-    assert(digits < 255);
-    int m = (digits + 1) / 2 * 2;
-    Int *r = (Int *) malloc(sizeof (Int) + m * sizeof (uint16_t));
-    r->m_ = m;
-    return r;
-}
-
-//Int *int_resize(Int *old, int digits)
-//{
-//    assert(digits < 255);
-//    if (digits == 0)
-//    {
-//        free(old);
-//        return 0;
-//    }
-//    int m = (digits + 1) / 2 * 2;
-//    assert(old->d_ <= m);
-//    Int *r = (Int *) realloc(old, sizeof (Int) + m * sizeof (uint16_t));
-//    r->m_ = m;
-//    return r;
-//}
-
-void int_delete(Int *i)
-{
-    free(i);
-}
-
 void int_init(Int *i)
 {
     assert(i->m_ != 0 && i->m_ % 2 == 0);
@@ -101,30 +72,21 @@ void int_init(Int *i)
 Int *int_init_concrete2(IntConcrete2 *i)
 {
     i->m_ = 2;
-    i->neg_ = false;
-    i->overflow_ = false;
-    i->d_ = 1;
-    i->w_[0] = 0;
+    int_init((Int *) i);
     return (Int *) i;
 }
 
 Int *int_init_concrete4(IntConcrete4 *i)
 {
     i->m_ = 4;
-    i->neg_ = false;
-    i->overflow_ = false;
-    i->d_ = 1;
-    i->w_[0] = 0;
+    int_init((Int *) i);
     return (Int *) i;
 }
 
 Int *int_init_concrete254(IntConcrete254 *i)
 {
     i->m_ = 254;
-    i->neg_ = false;
-    i->overflow_ = false;
-    i->d_ = 1;
-    i->w_[0] = 0;
+    int_init((Int *) i);
     return (Int *) i;
 }
 
@@ -135,8 +97,7 @@ void int_set_i(int64_t to, Int *i)
     i->overflow_ = false;
 
     uint64_t v;
-    i->neg_ = to < 0;
-    if (i->neg_)
+    if (to < 0)
     {
         if (to == INT64_MIN)
         {
@@ -151,25 +112,8 @@ void int_set_i(int64_t to, Int *i)
     {
         v = (uint64_t) to;
     }
-    uint32_t *ip = i->w_;
-    for (; ip < &i->w_[i->m_ / 2] && v > 0;)
-    {
-        *ip++ = (uint32_t) v;
-        v /= 4294967296u;
-    }
-    i->d_ = (uint8_t)((ip - i->w_) * 2);
-    if (i->d_ == 0)
-    {
-        i->w_[0] = 0u;
-        i->d_ = 1;
-    }
-    else
-    {
-        if (i->h_[i->d_ - 1] == 0u) // overshot
-        {
-            i->d_--;
-        }
-    }
+    int_set_u(v, i);
+    i->neg_ = to < 0;
 }
 
 void int_set_u(uint64_t to, Int *i)
@@ -183,6 +127,10 @@ void int_set_u(uint64_t to, Int *i)
     {
         *ip++ = (uint32_t) to;
         to /= 4294967296u;
+    }
+    if (to > 0)
+    {
+        i->overflow_ = true;
     }
     i->d_ = (uint8_t)((ip - i->w_) * 2);
     if (i->d_ == 0)
@@ -974,6 +922,9 @@ void int_run_tests(void)
 {
     char ss[INT_STRLEN_FOR_INT254];
 
+    IntConcrete2 cl;
+    Int *l = int_init_concrete2(&cl);
+
     IntConcrete254 c[9];
     Int *a, *b, *s, *r, *t, *d, *q, *p, *t2;
     Int **all[9] = {&a, &b, &s, &r, &t, &d, &q, &p, &t2};
@@ -995,6 +946,18 @@ void int_run_tests(void)
     int_invariant(b);
     assert(int_is(a, b) == INT_LT);
     assert(int_is_abs(a, b) == INT_LT);
+
+    int_set_i(123, l);
+    int_invariant(l);
+    assert(int_is(l, a) == INT_EQ);
+
+    int_set_i(-123, l);
+    int_invariant(l);
+    l->neg_ = false;
+    assert(int_is(l, a) == INT_EQ);
+
+    int_set_u(4294967296, l);
+    assert(l->overflow_);
 
     int_set_i(9223372036854775807L, a);
     int_set_i(9223372036854775806ll, b);
