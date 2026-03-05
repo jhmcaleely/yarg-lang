@@ -23,6 +23,8 @@ Connect your Pico to your favourite serial terminal. Minicom and Putty are popul
 
 Building yarg from source is required for some ports of Yarg, and to contribute to the language itself. See [BUILD.md](BUILD.md) for details.
 
+## Repository Structure
+
 | dir | Description |
 | :--- | :--- |
 | `cyarg/` | yarg implementation in C |
