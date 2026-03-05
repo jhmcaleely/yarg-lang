@@ -12,7 +12,7 @@ Yarg aims to be a dedicated language for Microcontroller firmware development. I
 
 ## Installing Yarg
 
-Download the latest release from [releases](rel), and follow the README instructions in the tar file.
+Download the latest release from [releases][rel], and follow the README instructions in the tar file.
 
 ## Using Yarg
 
@@ -32,8 +32,8 @@ Building yarg from source is required for some ports of Yarg, and to contribute 
 | `tools/` | Miscellaneous tools |
 | `vscode-yarg/` | A VS Code Language Extension for Yarg |
 | `yarg/specimen/` | Samples of Yarg |
-| `yarg/specimen/conway-life-display` | A Yarg implemention of: [jhmcaleely:conway-life-display](conway) |
-| `external` | dependecies hosted as git submodules. Notably includes [littlefs-project:littlefs](lfs) |
+| `yarg/specimen/conway-life-display` | A Yarg implemention of: [jhmcaleely:conway-life-display][conway] |
+| `external/` | dependecies hosted as git submodules. Notably includes [littlefs-project:littlefs][lfs] |
 
 ## Samples
 
