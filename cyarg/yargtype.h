@@ -20,7 +20,6 @@ typedef enum {
    TypeClass,
    TypeInstance,
    TypeFunction,
-   TypeNativeBlob,
    TypeRoutine,
    TypeChannel,
    TypeArray,

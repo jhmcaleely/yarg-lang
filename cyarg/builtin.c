@@ -517,7 +517,6 @@ bool newBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
         case TypeClass:
         case TypeInstance:
         case TypeFunction:
-        case TypeNativeBlob:
         case TypeRoutine:
         case TypeChannel:
         case TypePointer: 
