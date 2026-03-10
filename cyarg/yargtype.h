@@ -7,6 +7,7 @@
 typedef enum {
    TypeAny,
    TypeBool,
+   TypeInt,
    TypeDouble,
    TypeInt8,
    TypeUint8,
@@ -25,8 +26,7 @@ typedef enum {
    TypeArray,
    TypeStruct,
    TypePointer,
-   TypeYargType,
-   TypeInt
+   TypeYargType
 } ConcreteYargType;
 
 typedef struct ObjConcreteYargType {
