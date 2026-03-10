@@ -163,6 +163,12 @@ typedef struct {
 
 typedef struct {
     ObjExpr expr;
+    ObjExpr* a;
+    ObjExpr* b;
+} ObjExprPair;
+
+typedef struct {
+    ObjExpr expr;
     ExprBuiltin builtin;
     int arity;
 } ObjExprBuiltin;
@@ -300,6 +306,7 @@ ObjExprNumber* newExprNumberAddress(uintptr_t value);
 ObjExprNumber* newExprNumberInt(const char* numbers, int numberDigits);
 ObjExprLiteral* newExprLiteral(ExprLiteral literal);
 ObjExprString* newExprString(const char* str, int strLength);
+ObjExprPair* newExprPair(ObjExpr* a, ObjExpr* b);
 ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op);
 ObjExprGrouping* newExprGrouping(ObjExpr* expression);
 ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength);
