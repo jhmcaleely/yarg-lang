@@ -37,7 +37,6 @@ typedef struct ObjConcreteYargTypePointer ObjConcreteYargTypePointer;
 #define AS_INSTANCE(value)     ((ObjInstance*)AS_OBJ(value))
 #define AS_NATIVE(value) \
     (((ObjNative*)AS_OBJ(value))->function)
-#define AS_BLOB(value)         ((ObjBlob*)AS_OBJ(value))
 #define AS_ROUTINE(value)      ((ObjRoutine*)AS_OBJ(value))
 #define AS_CHANNEL(value)      ((ObjChannelContainer*)AS_OBJ(value))
 #define AS_STRING(value)       ((ObjString*)AS_OBJ(value))
@@ -57,7 +56,6 @@ typedef enum {
     OBJ_FUNCTION,
     OBJ_INSTANCE,
     OBJ_NATIVE,
-    OBJ_BLOB,
     OBJ_ROUTINE,
     OBJ_CHANNELCONTAINER,
     OBJ_STRING,
@@ -137,11 +135,6 @@ typedef struct {
     NativeFn function;
 } ObjNative;
 
-typedef struct {
-    Obj obj;
-    void* blob;
-} ObjBlob;
-
 struct ObjString {
     Obj obj;
     int length;
@@ -220,7 +213,6 @@ ObjClosure* newClosure(ObjFunction* function);
 ObjFunction* newFunction();
 ObjInstance* newInstance(ObjClass* klass);
 ObjNative* newNative(NativeFn function);
-ObjBlob* newBlob(size_t size);
 ObjPackedUniformArray* newPackedUniformArray(ObjConcreteYargTypeArray* type);
 ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);

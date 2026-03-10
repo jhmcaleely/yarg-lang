@@ -130,7 +130,6 @@ void initialisePackedValue(PackedValue packedValue) {
             case TypeClass:
             case TypeInstance:
             case TypeFunction:
-            case TypeNativeBlob:
             case TypeRoutine:
             case TypeChannel:
             case TypeYargType: {
@@ -175,7 +174,6 @@ Value unpackValue(PackedValue packedValue) {
             case TypeClass:
             case TypeInstance:
             case TypeFunction:
-            case TypeNativeBlob:
             case TypeRoutine:
             case TypeChannel:
             case TypeYargType: {
@@ -210,7 +208,6 @@ static void packValue(PackedValue packedStorageTarget, Value value) {
             case TypeClass:
             case TypeInstance:
             case TypeFunction:
-            case TypeNativeBlob:
             case TypeRoutine:
             case TypeChannel:
             case TypeYargType:

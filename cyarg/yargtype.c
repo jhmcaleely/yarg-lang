@@ -22,7 +22,6 @@ ObjConcreteYargType* newYargTypeFromType(ConcreteYargType yt) {
         case TypeClass:
         case TypeInstance:
         case TypeFunction:
-        case TypeNativeBlob:
         case TypeRoutine:
         case TypeChannel:
         case TypeYargType:
@@ -160,8 +159,6 @@ Value concrete_typeof(Value a) {
         return OBJ_VAL(newYargTypeFromType(TypeClass));
     } else if (IS_INSTANCE(a)) {
         return OBJ_VAL(newYargTypeFromType(TypeInstance));
-    } else if (IS_BLOB(a)) {
-        return OBJ_VAL(newYargTypeFromType(TypeNativeBlob));
     } else if (IS_ROUTINE(a)) {
         return OBJ_VAL(newYargTypeFromType(TypeRoutine));
     } else if (IS_CHANNEL(a)) {
@@ -203,7 +200,6 @@ bool type_packs_as_obj(ObjConcreteYargType* type) {
         case TypeClass:
         case TypeInstance:
         case TypeFunction:
-        case TypeNativeBlob:
         case TypeRoutine:
         case TypeChannel:
         case TypePointer:
@@ -230,7 +226,6 @@ bool type_packs_as_container(ObjConcreteYargType* type) {
         case TypeClass:
         case TypeInstance:
         case TypeFunction:
-        case TypeNativeBlob:
         case TypeRoutine:
         case TypeChannel:
         case TypeYargType:
@@ -267,7 +262,6 @@ bool is_nil_assignable_type(Value type) {
             case TypeClass:
             case TypeInstance:
             case TypeFunction:
-            case TypeNativeBlob:
             case TypeRoutine:
             case TypeChannel:
             case TypeArray:
@@ -363,7 +357,6 @@ size_t yt_sizeof_type_storage(Value type) {
         case TypeClass:
         case TypeInstance:
         case TypeFunction:
-        case TypeNativeBlob:
         case TypeRoutine:
         case TypeChannel:
         case TypePointer:
@@ -399,7 +392,6 @@ Value defaultValue(Value type) {
             case TypeClass:
             case TypeInstance:
             case TypeFunction:
-            case TypeNativeBlob:
             case TypeRoutine:
             case TypeChannel:
             case TypeYargType:
@@ -486,7 +478,6 @@ static void printTypeLiteral(FILE* op, ObjConcreteYargType* type) {
         case TypeClass: FPRINTMSG(op, "Class"); break;
         case TypeInstance: FPRINTMSG(op, "Instance"); break;
         case TypeFunction: FPRINTMSG(op, "Function"); break;
-        case TypeNativeBlob: FPRINTMSG(op, "NativeBlob"); break;
         case TypeRoutine: FPRINTMSG(op, "Routine"); break;
         case TypeChannel: FPRINTMSG(op, "Channel"); break;  
         case TypeYargType: FPRINTMSG(op, "Type"); break;
