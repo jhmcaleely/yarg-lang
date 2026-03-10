@@ -206,7 +206,7 @@ bool precalcExpression(ObjExpr **ep)
             break;
         }
         case OBJ_EXPR_CALL: {
-            ObjExprCall* call = (ObjExprCall *)e;
+            ObjExprCall *call = (ObjExprCall *) e;
             DynamicObjArray *a = &call->arguments;
 
             for (int i = 0; i < a->objectCount; i++)
@@ -216,7 +216,7 @@ bool precalcExpression(ObjExpr **ep)
             break;
         }
         case OBJ_EXPR_ARRAYINIT: {
-            ObjExprArrayInit* array = (ObjExprArrayInit *)e;
+            ObjExprArrayInit *array = (ObjExprArrayInit *) e;
             DynamicObjArray *a = &array->initializers;
 
             for (int i = 0; i < a->objectCount; i++)
@@ -228,6 +228,18 @@ bool precalcExpression(ObjExpr **ep)
         case OBJ_EXPR_BUILTIN:
             r = false;
             break;
+        case OBJ_EXPR_DOT: {
+            ObjExprDot *dot = (ObjExprDot *) e;
+            if (dot->offset != 0)
+            {
+                precalcExpression(&dot->offset);
+            }
+            if (dot->assignment != 0)
+            {
+                precalcExpression(&dot->assignment);
+            }
+            break;
+        }
         default:
             printf("%d\n", t);
             break;
