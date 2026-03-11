@@ -425,10 +425,10 @@ static void blackenObject(Obj* object) {
             markArray(&expr->fieldsByIndex);
             break;
         }
-        case OBJ_EXPR_TYPE_ARRAY: {
+        case OBJ_EXPR_TYPE_INDEXED_COLLECTION: {
             markExpr(object);
-            ObjExprTypeArray* expr = (ObjExprTypeArray*)object;
-            markObject((Obj*)expr->cardinality);
+            ObjExprTypeIndexedCollection* collection = (ObjExprTypeIndexedCollection*)object;
+            markObject((Obj*)collection->indexing);
             break;
         }
         case OBJ_EXPR_PAIR: {
@@ -590,7 +590,7 @@ static void freeObject(Obj* object) {
             FREE(ObjExprTypeStruct, object);
             break;
         }
-        case OBJ_EXPR_TYPE_ARRAY: FREE(ObjExprTypeArray, object); break;
+        case OBJ_EXPR_TYPE_INDEXED_COLLECTION: FREE(ObjExprTypeIndexedCollection, object); break;
         case OBJ_INT: FREE(ObjInt, object); break;
     }
 }

@@ -225,6 +225,12 @@ ObjExprArrayElement* newExprArrayElement() {
     return array;
 }
 
+ObjExprTypeIndexedCollection* newExprTypeIndexedCollection() {
+    ObjExprTypeIndexedCollection* collection = ALLOCATE_OBJ(ObjExprTypeIndexedCollection, OBJ_EXPR_TYPE_INDEXED_COLLECTION);
+
+    return collection;
+}
+
 ObjExprPair* newExprPair(ObjExpr* a, ObjExpr* b) {
     ObjExprPair* pair = ALLOCATE_OBJ(ObjExprPair, OBJ_EXPR_PAIR);
     pair->a = a;
@@ -267,11 +273,6 @@ ObjExprTypeStruct* newExprTypeStruct() {
     tempRootPush(OBJ_VAL(expr));
     initDynamicValueArray(&expr->fieldsByIndex);
     tempRootPop();
-    return expr;
-}
-
-ObjExprTypeArray* newExprTypeArray() {
-    ObjExprTypeArray* expr = ALLOCATE_OBJ(ObjExprTypeArray, OBJ_EXPR_TYPE_ARRAY);
     return expr;
 }
 
@@ -434,10 +435,10 @@ void printStructType(ObjExprTypeStruct* struct_) {
     printf("}");
 }
 
-void printArrayType(ObjExprTypeArray* array) {
+void printIndexedCollectionType(ObjExprTypeIndexedCollection* array) {
     printf("[");
-    if (array->cardinality) {
-        printExpr(array->cardinality);
+    if (array->indexing) {
+        printExpr(array->indexing);
     }
     printf("]");
 }
@@ -544,7 +545,7 @@ void printExpr(ObjExpr* expr) {
             case OBJ_EXPR_SUPER: printExprSuper((ObjExprSuper*)cursor); break;
             case OBJ_EXPR_TYPE: printExprType(cursor); break;
             case OBJ_EXPR_TYPE_STRUCT: printStructType((ObjExprTypeStruct*)cursor); break;
-            case OBJ_EXPR_TYPE_ARRAY: printArrayType((ObjExprTypeArray*)cursor); break;
+            case OBJ_EXPR_TYPE_INDEXED_COLLECTION: printIndexedCollectionType((ObjExprTypeIndexedCollection*)cursor); break;
             default: printf("<unknown>"); break;
         }
         cursor = cursor->nextExpr;
