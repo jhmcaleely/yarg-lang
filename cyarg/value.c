@@ -225,14 +225,32 @@ static void packValue(PackedValue packedStorageTarget, Value value) {
     }
 }
 
+static void noLongerLiteralInt(Value *value)
+{
+    if (IS_INT(*value))
+    {
+        ((ObjInt *) value->as.obj)->isLiteral = false;
+    }
+}
+
 bool assignToPackedValue(PackedValue lhs, Value rhsValue) {
 
     if (lhs.storedType == NULL) {
+        noLongerLiteralInt(&rhsValue);
         lhs.storedValue->asValue = rhsValue;
         return true;
     } else {
-        if (isCompatibleType(lhs.storedType, rhsValue)) {
-            packValue(lhs, rhsValue);
+        Value promoted;
+        if (isCompatibleType(lhs.storedType, rhsValue, &promoted)) {
+            if (promoted.type == VAL_NIL)
+            {
+                noLongerLiteralInt(&rhsValue);
+                packValue(lhs, rhsValue);
+            }
+            else
+            {
+                packValue(lhs, promoted);
+            }
             return true;
         } else {
             return false;
@@ -242,11 +260,21 @@ bool assignToPackedValue(PackedValue lhs, Value rhsValue) {
 
 bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
     if (lhs.cellType == NULL) {
+        noLongerLiteralInt(&rhsValue);
         *lhs.value = rhsValue;
         return true;
     } else {
-        if (isCompatibleType(lhs.cellType, rhsValue)) {
-            *(lhs.value) = rhsValue;
+        Value promoted;
+        if (isCompatibleType(lhs.cellType, rhsValue, &promoted)) {
+            if (promoted.type == VAL_NIL)
+            {
+                noLongerLiteralInt(&rhsValue);
+                *(lhs.value) = rhsValue;
+            }
+            else
+            {
+                *(lhs.value) = promoted;
+            }
             return true;
         } else {
             return false;
@@ -256,11 +284,21 @@ bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
 
 bool initialiseValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
     if (lhs.cellType == NULL) {
+        noLongerLiteralInt(&rhsValue);
         *lhs.value = rhsValue;
         return true;
     } else {
-        if (isInitialisableType(lhs.cellType, rhsValue)) {
-            *(lhs.value) = rhsValue;
+        Value promoted;
+        if (isInitialisableType(lhs.cellType, rhsValue, &promoted)) {
+            if (promoted.type == VAL_NIL)
+            {
+                noLongerLiteralInt(&rhsValue);
+                *(lhs.value) = rhsValue;
+            }
+            else
+            {
+                *(lhs.value) = promoted;
+            }
             return true;
         } else {
             return false;
@@ -390,6 +428,8 @@ bool is_positive_integer(Value a) {
         return true;
     } else if (IS_I64(a) && AS_I64(a) >= 0) {
         return true;
+    } else if (IS_INT(a) && int_is_range(AS_INT(a), 0, UINT32_MAX) == INT_WITHIN) {
+        return true;
     }
     return false;
 }
@@ -411,6 +451,8 @@ uint32_t as_positive_integer(Value a) {
         return AS_UI16(a);
     } else if (IS_UI64(a) && AS_UI64(a) <= UINT32_MAX) {
         return AS_UI32(a);
+    } else if (IS_INT(a) && int_is_range(AS_INT(a), 0, UINT32_MAX) == INT_WITHIN) {
+        return int_to_u32(AS_INT(a));
     }
     return 0;
 }

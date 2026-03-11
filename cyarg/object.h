@@ -48,7 +48,7 @@ typedef struct ObjConcreteYargTypePointer ObjConcreteYargTypePointer;
 #define AS_STRUCT(value)       ((ObjPackedStruct*)AS_OBJ(value))
 #define AS_SYNCGROUP(value)    ((ObjSyncGroup*)AS_OBJ(value))
 #define AS_INTOBJ(value)       ((ObjInt*)AS_OBJ(value))
-#define AS_INT(value)          (&((ObjInt*)AS_OBJ(value))->bigInt)
+#define AS_INT(value)          (&(AS_INTOBJ(value)->bigInt))
 
 typedef enum {
     OBJ_BOUND_METHOD,
@@ -151,6 +151,7 @@ struct ObjString {
 
 typedef struct {
     Obj obj;
+    bool isLiteral;
     Int bigInt;
 } ObjInt;
 
