@@ -152,8 +152,9 @@ typedef struct {
 
 typedef struct {
     ObjExpr expr;
+    bool isMap;
     DynamicObjArray initializers;
-} ObjExprArrayInit;
+} ObjExprCollectionInitializer;
 
 typedef struct {
     ObjExpr expr;
@@ -312,7 +313,7 @@ ObjExprGrouping* newExprGrouping(ObjExpr* expression);
 ObjExprNamedVariable* newExprNamedVariable(const char* name, int nameLength);
 ObjExprNamedConstant* newExprNamedConstant(const char* name, int nameLength);
 ObjExprCall* newExprCall();
-ObjExprArrayInit* newExprArrayInit();
+ObjExprCollectionInitializer* newExprCollectionInitializer();
 ObjExprArrayElement* newExprArrayElement();
 ObjExprBuiltin* newExprBuiltin(ExprBuiltin fn, int arity);
 ObjExprDot* newExprDot(const char* name, int nameLength);
