@@ -89,6 +89,8 @@ Value defaultValue(Value type);
 bool isInitialisableType(ObjConcreteYargType* lhsType, Value rhsValue);
 bool isCompatibleType(ObjConcreteYargType* lhsType, Value rhsValue);
 
+bool isSupportedMapKeyType(Value type);
+
 void printType(FILE* op, ObjConcreteYargType* type);
 
 #endif
