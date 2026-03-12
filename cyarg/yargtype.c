@@ -22,7 +22,6 @@ ObjConcreteYargType* newYargTypeFromType(ConcreteYargType yt) {
         case TypeClass:
         case TypeInstance:
         case TypeFunction:
-        case TypeNativeBlob:
         case TypeRoutine:
         case TypeChannel:
         case TypeYargType:
@@ -106,8 +105,8 @@ size_t addFieldType(ObjConcreteYargTypeStruct* st, size_t index, size_t fieldOff
     tableSet(&st->field_names, AS_STRING(name), SIZE_T_UI_VAL(index));
     if (IS_NIL(offset)) {
         st->field_indexes[index] = fieldOffset;
-    } else if (is_positive_integer(offset)) {
-        fieldOffset = as_positive_integer(offset);
+    } else if (is_positive_integer32(offset)) {
+        fieldOffset = as_positive_integer32(offset);
         st->field_indexes[index] = fieldOffset;
     }
     st->storage_size = fieldOffset + yt_sizeof_type_storage(type);
@@ -160,8 +159,6 @@ Value concrete_typeof(Value a) {
         return OBJ_VAL(newYargTypeFromType(TypeClass));
     } else if (IS_INSTANCE(a)) {
         return OBJ_VAL(newYargTypeFromType(TypeInstance));
-    } else if (IS_BLOB(a)) {
-        return OBJ_VAL(newYargTypeFromType(TypeNativeBlob));
     } else if (IS_ROUTINE(a)) {
         return OBJ_VAL(newYargTypeFromType(TypeRoutine));
     } else if (IS_CHANNEL(a)) {
@@ -199,16 +196,15 @@ bool type_packs_as_obj(ObjConcreteYargType* type) {
         case TypeArray:
         case TypeStruct:
             return false;
+        case TypeInt:
         case TypeString:
         case TypeClass:
         case TypeInstance:
         case TypeFunction:
-        case TypeNativeBlob:
         case TypeRoutine:
         case TypeChannel:
         case TypePointer:
         case TypeYargType:
-        case TypeInt:
             return true;
     }
 }
@@ -217,6 +213,7 @@ bool type_packs_as_container(ObjConcreteYargType* type) {
     switch (type->yt) {
         case TypeAny:
         case TypeBool:
+        case TypeInt:
         case TypeDouble:
         case TypeInt8:
         case TypeUint8:
@@ -230,11 +227,9 @@ bool type_packs_as_container(ObjConcreteYargType* type) {
         case TypeClass:
         case TypeInstance:
         case TypeFunction:
-        case TypeNativeBlob:
         case TypeRoutine:
         case TypeChannel:
         case TypeYargType:
-        case TypeInt:
             return false;
         case TypePointer:
         case TypeArray:
@@ -250,6 +245,7 @@ bool is_nil_assignable_type(Value type) {
         ObjConcreteYargType* ct = AS_YARGTYPE(type);
         switch (ct->yt) {
             case TypeBool:
+            case TypeInt:
             case TypeDouble:
             case TypeInt8:
             case TypeUint8:
@@ -260,14 +256,12 @@ bool is_nil_assignable_type(Value type) {
             case TypeInt64:
             case TypeUint64:
             case TypeStruct:
-            case TypeInt:
                 return false;
             case TypeAny:
             case TypeString:
             case TypeClass:
             case TypeInstance:
             case TypeFunction:
-            case TypeNativeBlob:
             case TypeRoutine:
             case TypeChannel:
             case TypeArray:
@@ -359,16 +353,15 @@ size_t yt_sizeof_type_storage(Value type) {
             ObjConcreteYargTypeArray* array = (ObjConcreteYargTypeArray*)t;
             return arrayElementSize(array) * array->cardinality;
         }
+        case TypeInt:
         case TypeString:
         case TypeClass:
         case TypeInstance:
         case TypeFunction:
-        case TypeNativeBlob:
         case TypeRoutine:
         case TypeChannel:
         case TypePointer:
         case TypeYargType:
-        case TypeInt:
             return sizeof(Obj*);
         }
     }
@@ -381,6 +374,7 @@ Value defaultValue(Value type) {
         ObjConcreteYargType* ct = AS_YARGTYPE(type);
         switch (ct->yt) {
             case TypeBool: return BOOL_VAL(false);
+            case TypeInt: return defaultIntValue();
             case TypeDouble: return DOUBLE_VAL(0);
             case TypeInt8: return I8_VAL(0);
             case TypeUint8: return UI8_VAL(0);
@@ -390,7 +384,6 @@ Value defaultValue(Value type) {
             case TypeUint32: return UI32_VAL(0);
             case TypeInt64: return I64_VAL(0);
             case TypeUint64: return UI64_VAL(0);
-            case TypeInt: return defaultIntValue();
             case TypeStruct: return defaultStructValue(ct);
             case TypeArray: return defaultArrayValue(ct);
             case TypePointer:
@@ -399,7 +392,6 @@ Value defaultValue(Value type) {
             case TypeClass:
             case TypeInstance:
             case TypeFunction:
-            case TypeNativeBlob:
             case TypeRoutine:
             case TypeChannel:
             case TypeYargType:
@@ -557,7 +549,6 @@ static void printTypeLiteral(FILE* op, ObjConcreteYargType* type) {
         case TypeClass: FPRINTMSG(op, "Class"); break;
         case TypeInstance: FPRINTMSG(op, "Instance"); break;
         case TypeFunction: FPRINTMSG(op, "Function"); break;
-        case TypeNativeBlob: FPRINTMSG(op, "NativeBlob"); break;
         case TypeRoutine: FPRINTMSG(op, "Routine"); break;
         case TypeChannel: FPRINTMSG(op, "Channel"); break;  
         case TypeYargType: FPRINTMSG(op, "Type"); break;

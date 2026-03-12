@@ -360,17 +360,17 @@ static void defineMethod(ObjRoutine* routine, ObjString* name) {
 }
 
 static bool derefElement(ObjRoutine* routine) {
-    if (!(IS_UNIFORMARRAY(peek(routine, 1)) || isArrayPointer(peek(routine, 1))) || !is_positive_integer(peek(routine, 0))) {
+    if (!(IS_UNIFORMARRAY(peek(routine, 1)) || isArrayPointer(peek(routine, 1))) || !is_positive_integer32(peek(routine, 0))) {
         runtimeError(routine, "Expected an array and a positive or unsigned integer.");
         return false;
     }
-    size_t index = as_positive_integer(peek(routine, 0));
+    size_t index = as_positive_integer32(peek(routine, 0));
     Value result = NIL_VAL;
 
     if (IS_UNIFORMARRAY(peek(routine, 1))) {
         ObjPackedUniformArray* array = AS_UNIFORMARRAY(peek(routine, 1));
         if (index >= arrayCardinality(array->store)) {
-            runtimeError(routine, "Array index %d out of bounds.", index);
+            runtimeError(routine, "Array index %zu out of bounds.", index);
             return false;
         }
         PackedValue element = arrayElement(array->store, index);
@@ -379,7 +379,7 @@ static bool derefElement(ObjRoutine* routine) {
     } else {
         ObjPackedUniformArray* arrayObj = (ObjPackedUniformArray*)destinationObject(peek(routine, 1));
         if (index >= arrayCardinality(arrayObj->store)) {
-            runtimeError(routine, "Array index %d out of bounds (0:%zu)", index, arrayCardinality(arrayObj->store) - 1);
+            runtimeError(routine, "Array index %zu out of bounds (0:%zu)", index, arrayCardinality(arrayObj->store) - 1);
             return false;
         }
         tempRootPush(OBJ_VAL(arrayObj));
@@ -396,13 +396,13 @@ static bool derefElement(ObjRoutine* routine) {
 }
 
 static bool setArrayElement(ObjRoutine* routine) {
-    if (!IS_UNIFORMARRAY(peek(routine, 2)) || !is_positive_integer(peek(routine, 1))) {
+    if (!IS_UNIFORMARRAY(peek(routine, 2)) || !is_positive_integer32(peek(routine, 1))) {
         runtimeError(routine, "Expected an array and a positive or unsigned integer.");
         return false;
     }
 
     Value new_value = peek(routine, 0);
-    uint32_t index = as_positive_integer(peek(routine, 1));
+    uint32_t index = as_positive_integer32(peek(routine, 1));
     Value boxed_array = peek(routine, 2);
 
     if (IS_UNIFORMARRAY(boxed_array)) {
@@ -1130,7 +1130,7 @@ runtimeError(routine, "Operands must be unsigned integers." #op); \
                     runtimeError(routine, "Location must be a pointer to an uint32 or address.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                if (!is_positive_integer(assignment) && !is_stored_type(assignment_type)) {
+                if (!is_positive_integer32(assignment) && !is_stored_type(assignment_type)) {
                     tempRootPop();
                     runtimeError(routine, "Value must be a positive integer or a placeable type.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -1152,8 +1152,8 @@ runtimeError(routine, "Operands must be unsigned integers." #op); \
 
                 uint32_t val = 0;
 
-                if (is_positive_integer(assignment)) {
-                    val = as_positive_integer(assignment);
+                if (is_positive_integer32(assignment)) {
+                    val = as_positive_integer32(assignment);
                 } else if (is_stored_type(assignment_type)) {
 #if IS_32BIT
                     val = (uintptr_t)storedAddressof(assignment);
@@ -1338,13 +1338,13 @@ runtimeError(routine, "Operands must be unsigned integers." #op); \
                 break;
             }
             case OP_TYPE_ARRAY: {
-                if (!IS_NIL(peek(routine, 0)) && !is_positive_integer(peek(routine, 0))) {
+                if (!IS_NIL(peek(routine, 0)) && !is_positive_integer32(peek(routine, 0))) {
                     runtimeError(routine, "Array cardinality must be positive integer or nil");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 uint32_t cardinality = 0;
-                if (is_positive_integer(peek(routine, 0))) {
-                    cardinality = as_positive_integer(peek(routine, 0));
+                if (is_positive_integer32(peek(routine, 0))) {
+                    cardinality = as_positive_integer32(peek(routine, 0));
                 }
                 ObjConcreteYargTypeArray* typeObject = (ObjConcreteYargTypeArray*) newYargArrayTypeFromType(peek(routine, 1));
                 typeObject->cardinality = cardinality;

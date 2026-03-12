@@ -118,16 +118,6 @@ ObjNative* newNative(NativeFn function) {
     return native;
 }
 
-ObjBlob* newBlob(size_t count) {
-    ObjBlob* blob = ALLOCATE_OBJ(ObjBlob, OBJ_BLOB);
-    blob->blob = NULL;
-    
-    tempRootPush(OBJ_VAL(blob));
-    blob->blob = reallocate(NULL, 0, count);
-    tempRootPop();
-    return blob;
-}
-
 Value defaultIntValue() {
     ObjInt *intObj = (ObjInt *) allocateObject(sizeof (ObjInt) + 2 * sizeof (uint16_t), OBJ_INT);
     intObj->bigInt.m_ = 2;
@@ -488,9 +478,6 @@ void fprintObject(FILE* op, Value value) {
             break;
         case OBJ_NATIVE:
             FPRINTMSG(op, "<native fn>");
-            break;
-        case OBJ_BLOB:
-            FPRINTMSG(op, "<blob %p>", AS_BLOB(value)->blob);
             break;
         case OBJ_ROUTINE:
             printRoutine(op, AS_ROUTINE(value));
