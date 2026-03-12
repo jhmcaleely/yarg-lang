@@ -1,64 +1,133 @@
-package main
+package hostyarg
 
 import (
-	"flag"
 	"fmt"
-	"io"
 	"log"
-	"os"
+	"os/exec"
+	"strings"
 
-	"github.com/yarg-lang/yarg-lang/hostyarg/internal/deviceimage"
-	"github.com/yarg-lang/yarg-lang/hostyarg/internal/testrunner"
+	"github.com/yarg-lang/yarg-lang/hostyarg/internal/devicerunner"
+	"github.com/yarg-lang/yarg-lang/hostyarg/internal/runbinary"
+	"go.bug.st/serial/enumerator"
 )
 
-func main() {
+func IsDevicePath(path string) bool {
+	return strings.HasPrefix(path, "device:")
+}
 
-	log.SetOutput(io.Discard)
+func DevicePath(path string) string {
+	return strings.TrimPrefix(path, "device:")
+}
 
-	formatFSCmd := flag.NewFlagSet("format", flag.ExitOnError)
-	formatFSFS := formatFSCmd.String("fs", "test.uf2", "format fs on this image")
+type YargRunner interface {
+	Run(source string) error
+}
 
-	addFileCmd := flag.NewFlagSet("addfile", flag.ExitOnError)
-	addFileFS := addFileCmd.String("fs", "test.uf2", "add file to this filesystem")
-	addFileName := addFileCmd.String("add", "", "filename to add")
+type DeviceRunner struct {
+	Port devicerunner.PicoPort
+}
 
-	lsDirCmd := flag.NewFlagSet("ls", flag.ExitOnError)
-	lsDirFS := lsDirCmd.String("fs", "test.uf2", "filesystem to mount")
-	lsDirEntry := lsDirCmd.String("dir", "/", "directory to ls")
+func (d *DeviceRunner) Run(source string) error {
 
-	testRunCmd := flag.NewFlagSet("runtests", flag.ExitOnError)
-	testRunInterpreter := testRunCmd.String("interpreter", "cyarg", "default interpreter")
-	testRunTests := testRunCmd.String("tests", "", "default tests")
+	if !IsDevicePath(source) {
+		return fmt.Errorf("source must be a device path starting with 'device:'")
+	}
+	source = DevicePath(source)
 
-	if len(os.Args) < 2 {
-		fmt.Println("expected command")
-		os.Exit(64)
+	serialComplete := make(chan error)
+	output := make([]string, 0)
+	go func() {
+		output = devicerunner.GetSerialOutput(d.Port.Name(), source, serialComplete)
+	}()
+
+	error := <-serialComplete
+	if error != nil {
+		return error
+	}
+	fmt.Println(d.Port)
+	for _, line := range output {
+		fmt.Println(line)
 	}
 
-	switch os.Args[1] {
-	case "format":
-		formatFSCmd.Parse(os.Args[2:])
-		result := deviceimage.Cmdformat(*formatFSFS)
-		if result != nil {
-			fmt.Println("format failed: ", result)
-			os.Exit(1)
-		}
-	case "addfile":
-		addFileCmd.Parse(os.Args[2:])
-		if *addFileName == "" {
-			fmt.Println("expect filename to add")
-			os.Exit(64)
-		}
-		deviceimage.CmdAddFile(*addFileFS, *addFileName)
-	case "ls":
-		lsDirCmd.Parse(os.Args[2:])
-		deviceimage.CmdLs(*lsDirFS, *lsDirEntry)
-	case "runtests":
-		testRunCmd.Parse(os.Args[2:])
-		exit_code := testrunner.CmdRunTests(*testRunInterpreter, *testRunTests)
-		os.Exit(exit_code)
-	default:
-		fmt.Println("unknown command")
-		os.Exit(64)
+	return error
+}
+
+type HostRunner struct {
+	Interpreter string
+}
+
+func (h *HostRunner) Run(source string) error {
+
+	if IsDevicePath(source) {
+		return fmt.Errorf("cannot run device path locally")
 	}
+
+	runner := exec.Command(h.Interpreter, source)
+
+	output, errors, _, ok := runbinary.RunCommand(runner)
+	fmt.Println(h.Interpreter)
+	if ok {
+		for _, line := range output {
+			fmt.Println(line)
+		}
+		for _, line := range errors {
+			fmt.Println(line)
+		}
+	}
+	return nil
+}
+
+func DefaultYargRunner(suppliedPort, suppliedInterpreter string) (runner YargRunner, err error) {
+
+	if suppliedPort == "" && suppliedInterpreter == "" {
+		port, ok := devicerunner.DefaultPort()
+		if !ok {
+			return nil, fmt.Errorf("failed to find default device port")
+		}
+		runner = &DeviceRunner{Port: port}
+		return runner, nil
+	} else if suppliedPort != "" && suppliedInterpreter != "" {
+		return nil, fmt.Errorf("cannot specify both device port and local interpreter")
+	} else if suppliedInterpreter != "" {
+		runner = &HostRunner{Interpreter: suppliedInterpreter}
+		return runner, nil
+	} else if suppliedPort != "" {
+		port, ok := devicerunner.PicoPortFor(suppliedPort)
+		if !ok {
+			return nil, fmt.Errorf("failed to find specified device port")
+		}
+		runner = &DeviceRunner{Port: port}
+		return runner, nil
+	}
+	return nil, fmt.Errorf("invalid configuration")
+}
+
+func CmdListDevices() bool {
+
+	detailedports, err := enumerator.GetDetailedPortsList()
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	if len(detailedports) == 0 {
+		log.Println("No device serial ports found!")
+		return false
+	}
+	for _, port := range detailedports {
+		if port.IsUSB && port.VID == devicerunner.RaspberryPiVID {
+			switch port.PID {
+			case devicerunner.DebugProbePID:
+				fmt.Printf("%s, Serial=%s, VID:PID=%s:%s (Debug Probe)\n", port.Name, port.SerialNumber, port.VID, port.PID)
+			case devicerunner.PicoPID:
+				fmt.Printf("%s, Serial=%s, VID:PID=%s:%s (Pico)\n", port.Name, port.SerialNumber, port.VID, port.PID)
+			default:
+				fmt.Printf("%s, Serial=%s, VID:PID=%s:%s (Raspberry Pi Device)\n", port.Name, port.SerialNumber, port.VID, port.PID)
+			}
+		} else if port.IsUSB {
+			log.Printf("%s, VID:PID=%s:%s\n", port.Name, port.VID, port.PID)
+		} else {
+			log.Printf("%s\n", port.Name)
+		}
+	}
+	return true
 }

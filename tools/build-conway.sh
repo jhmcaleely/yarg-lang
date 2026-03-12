@@ -1,6 +1,6 @@
 #!/bin/bash
 
-HOSTYARG="../../../bin/hostyarg"
+HOSTYARG="../../../bin/yarg"
 TARGETUF2="../../../build/conway.uf2"
 
 
@@ -11,7 +11,7 @@ then
 fi
 
 cp ../../../build/yarg-lang.uf2 $TARGETUF2
-$HOSTYARG addfile -fs $TARGETUF2 -add conway.ya
-$HOSTYARG addfile -fs $TARGETUF2 -add cube_bit.ya
-$HOSTYARG addfile -fs $TARGETUF2 -add main.ya
+$HOSTYARG cp -fs $TARGETUF2 -src conway.ya -dest conway.ya
+$HOSTYARG cp -fs $TARGETUF2 -src cube_bit.ya -dest cube_bit.ya
+$HOSTYARG cp -fs $TARGETUF2 -src main.ya -dest main.ya
 popd > /dev/null
