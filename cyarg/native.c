@@ -112,3 +112,12 @@ bool clock_get_hzNative(ObjRoutine* routine, int argCount, Value* result) {
     *result = UI32_VAL(res);
     return true;
 }
+
+bool stdin_getsNative(ObjRoutine* routine, int argCount, Value* result) {
+
+}
+
+bool stdin_eofNative(ObjRoutine* routine, int argCount, Value* result) {
+    *result = BOOL_VAL(feof(stdin));
+    return true;
+}
