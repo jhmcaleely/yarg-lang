@@ -176,6 +176,7 @@ void initVM() {
 
     defineNative("c_stdin_gets", stdin_getsNative);
     defineNative("c_stdin_eof", stdin_eofNative);
+    defineNative("c_stdout_puts", stdout_putsNative);
 }
 
 void freeVM() {

@@ -11,5 +11,6 @@ bool irq_remove_handlerNative(ObjRoutine* routine, int argCount, Value* result);
 
 bool stdin_getsNative(ObjRoutine* routine, int argCount, Value* result);
 bool stdin_eofNative(ObjRoutine* routine, int argCount, Value* result);
+bool stdout_putsNative(ObjRoutine* routine, int argCount, Value* result);
 
 #endif
