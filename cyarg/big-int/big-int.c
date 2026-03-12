@@ -140,7 +140,8 @@ void int_set_u(uint64_t to, Int *i)
     }
     else
     {
-        if (i->h_[i->d_ - 1] == 0u) // overshot
+        uint16_t const *const h = (uint16_t *) i->w_;
+        if (h[i->d_ - 1] == 0u) // overshot
         {
             i->d_--;
         }
@@ -184,7 +185,7 @@ void int_set_t(Int const *v, Int *i)
     i->overflow_ = v->overflow_;
     i->d_ = v->d_;
     assert(i->m_ >= v->d_);
-    memcpy(i->h_, v->h_, (v->d_ + 1) / 2 * sizeof v->w_[0]);
+    memcpy(i->w_, v->w_, (v->d_ + 1) / 2 * sizeof v->w_[0]);
 }
 
 void int_add(Int const *a, Int const *b, Int *r)
@@ -218,16 +219,20 @@ void int_add(Int const *a, Int const *b, Int *r)
 void addPos(Int const *a, Int const *b, Int *r)
 {
     uint16_t carry = 0;
-    uint16_t *rp = r->h_;
-    uint16_t const *bp = b->h_;
-    for (uint16_t const *ap = a->h_; ap < &a->h_[a->d_] || bp < &b->h_[b->d_]; ap++, bp++)
+    uint16_t *rp = (uint16_t *) r->w_;
+    uint16_t *const re = &rp[r->m_];
+    uint16_t const *ap = (uint16_t const *) a->w_;
+    uint16_t const *bp = (uint16_t const *) b->w_;
+    uint16_t const *const ae = &ap[a->d_];
+    uint16_t const *const be = &bp[b->d_];
+    for (; ap < ae || bp < be; ap++, bp++)
     {
         TwoDigits ps;
-        if (ap >= &a->h_[a->d_])
+        if (ap >= ae)
         {
             ps.u32_ = (uint32_t) *bp + (uint32_t) carry;
         }
-        else if (bp >= &b->h_[b->d_])
+        else if (bp >= be)
         {
             ps.u32_ = (uint32_t) *ap + (uint32_t) carry;
         }
@@ -235,7 +240,7 @@ void addPos(Int const *a, Int const *b, Int *r)
         {
             ps.u32_ = (uint32_t) *ap + (uint32_t) *bp + (uint32_t) carry;
         }
-        if (rp < &r->h_[r->m_])
+        if (rp < re)
         {
             *rp++ = ps.l16_;
             carry = ps.h16_;
@@ -249,13 +254,13 @@ void addPos(Int const *a, Int const *b, Int *r)
             }
         }
     }
-    if (rp < &r->h_[r->m_])
+    if (rp < re)
     {
         *rp = carry; // only needs to be done (if carry is zero) of odd number of digits but saves a test
         if (carry > 0)
         {
             rp++;
-            if (rp < &r->h_[r->m_]) // only needs to be done of odd number of digits but saves a test
+            if (rp < re) // only needs to be done of odd number of digits but saves a test
             {
                 *rp = 0;
             }
@@ -268,7 +273,7 @@ void addPos(Int const *a, Int const *b, Int *r)
             r->overflow_ = true;
         }
     }
-    r->d_ = (uint8_t)(rp - r->h_);
+    r->d_ = (uint8_t)(rp - (uint16_t *) r->w_);
 }
 
 void int_sub(Int const *a, Int const *b, Int *r)
@@ -301,7 +306,8 @@ void int_sub(Int const *a, Int const *b, Int *r)
 
 void int_shift(int shift, Int *i)
 {
-    if (i->d_ != 1 || i->h_[0] != 0u)
+    uint16_t *const h = (uint16_t *) i->w_;
+    if (i->d_ != 1 || h[0] != 0u)
     {
         if (shift >= 0)
         {
@@ -311,25 +317,25 @@ void int_shift(int shift, Int *i)
                 return;
             }
 
-            memmove(&i->h_[shift], &i->h_[0], i->d_ * sizeof i->h_[0]);
-            memset(&i->h_[0], 0, shift * sizeof (uint16_t));
+            memmove(&h[shift], &h[0], i->d_ * sizeof h[0]);
+            memset(&h[0], 0, shift * sizeof h[0]);
             i->d_ += shift;
             if (i->d_ < i->m_)
             {
-                i->h_[i->d_] = 0u; // only need to do if rd.d_ + shift && shift is odd - but why not
+                h[i->d_] = 0u; // only need to do if rd.d_ + shift && shift is odd - but why not
             }
         }
         else
         {
             assert(i->d_ + shift >= 0);
 
-            memmove(&i->h_[0], &i->h_[-shift], ((int)i->d_ + shift) * sizeof i->h_[0]);
-            memset(&i->h_[i->d_ + shift], 0, -shift *  sizeof i->h_[0]);
+            memmove(&h[0], &h[-shift], ((int)i->d_ + shift) * sizeof h[0]);
+            memset(&h[i->d_ + shift], 0, -shift *  sizeof h[0]);
             i->d_ += shift;
             if (i->d_ == 0)
             {
                 i->d_ = 1;
-                assert(i->h_[0] == 0u);
+                assert(h[0] == 0u);
             }
         }
     }
@@ -353,12 +359,16 @@ void int_sub_abs(Int const *a, Int const *b, Int *r)
 static void subAGtB(Int const *a, Int const *b, Int *r)
 {
     uint16_t borrow = 0;
-    uint16_t *rp = r->h_;
-    uint16_t const *bp = b->h_;
-    for (uint16_t const *ap = a->h_; ap < &a->h_[a->d_]; ap++, bp++)
+    uint16_t *rp = (uint16_t *) r->w_;
+    uint16_t *const re = &rp[r->m_];
+    uint16_t const *ap = (uint16_t const *) a->w_;
+    uint16_t const *const ae = &ap[a->d_];
+    uint16_t const *bp = (uint16_t const *) b->w_;
+    uint16_t const *const be = &bp[b->d_];
+    for (; ap < ae; ap++, bp++)
     {
         uint16_t ad = *ap, bd;
-        if (bp < &b->h_[b->d_])
+        if (bp < be)
         {
             bd = *bp;
         }
@@ -380,7 +390,7 @@ static void subAGtB(Int const *a, Int const *b, Int *r)
             pd.u32_ = (uint32_t) ad - pd.u32_;
             assert(pd.h16_ == 0u);
         }
-        if (rp < &r->h_[r->m_])
+        if (rp < re)
         {
             *rp++ = pd.l16_;
         }
@@ -393,12 +403,13 @@ static void subAGtB(Int const *a, Int const *b, Int *r)
             }
         }
     }
-    r->d_ = (uint8_t)(rp - r->h_);
+    uint16_t *const rh = (uint16_t *) r->w_;
+    r->d_ = (uint8_t)(rp - rh);
     if (r->d_ % 2 == 1)
     {
-        r->h_[r->d_] = 0; // todo optimize - don’t need to do this if the following is true
+        rh[r->d_] = 0; // todo optimize - don’t need to do this if the following is true
     }
-    while (r->d_ > 1 && r->h_[r->d_ - 1] == 0)
+    while (r->d_ > 1 && rh[r->d_ - 1] == 0)
     {
         r->d_--;
     }
@@ -410,27 +421,26 @@ void int_mul(Int const *a, Int const *b, Int *r)
     int_init_concrete254(&pp);
 
     int_set_i(0, r);
-    if (a->d_ == 1 && a->h_[0] == 0 || b->d_ == 1 && b->h_[0] == 0) // todo remove - no need for this optimisation
-    {
-        return;
-    }
+    uint16_t *const rh = (uint16_t *) r->w_;
+    uint16_t const *const ah = (uint16_t const *) a->w_;
+    uint16_t const *const bh = (uint16_t const *) b->w_;
 
-    uint16_t *rpn = r->h_;
-    for (uint16_t const *ap = a->h_; ap < &a->h_[a->d_]; ap++)
+    uint16_t *rpn = rh;
+    for (uint16_t const *ap = ah; ap < &ah[a->d_]; ap++)
     {
         uint16_t *rp = rpn;
         rpn = rp + 1;
 //        printf("%ld->%ld", ap - a->h_, rp - r->h_);
-        for (uint16_t const *bp = b->h_; bp < &b->h_[b->d_]; bp++, rp++)
+        for (uint16_t const *bp = bh; bp < &bh[b->d_]; bp++, rp++)
         {
 //            printf(".%ld/%ld", ap - a->h_, bp - b->h_);
             int_set_i((uint32_t) *ap * (uint32_t) *bp, (Int *) &pp); // todo cast to int32 to use M0 single instruction mul
-            if (rp - r->h_ + pp.d_ > r->m_)
+            if (rp - rh + pp.d_ > r->m_)
             {
                 r->overflow_ = true;
                 break;
             }
-            int_shift((int)(rp - r->h_), (Int *) &pp);
+            int_shift((int)(rp - rh), (Int *) &pp);
 //            printf("%d:%d := %d %d\n", (int)pp.h16_, (int)pp.l16_, (int)*ap, (int)*bp);
             int_add(r, (Int *) &pp, r); // todo add shifted uint32 optimisation
             if (r->overflow_)
@@ -500,7 +510,8 @@ void int_div(Int const *n, Int const *d, Int *q, Int *r)
     IntConcrete254 shiftingDenominator;
     int_init_concrete254(&shiftingDenominator);
 
-    uint32_t testDenominator = d->h_[d->d_ - 1];
+    uint16_t const *const dh = (uint16_t const *) d->w_;
+    uint32_t testDenominator = dh[d->d_ - 1];
     assert(testDenominator != 0);
     testDenominator++;
 
@@ -550,11 +561,12 @@ void int_div(Int const *n, Int const *d, Int *q, Int *r)
             }
         }
 
+        uint16_t const *const rnh = (uint16_t const *) reducingNumerator.w_;
         TwoDigits guessNumerator;
         if (nDigit < 1)
         {
             assert(nDigit == 0);
-            guessNumerator.u32_ = reducingNumerator.h_[0];
+            guessNumerator.u32_ = rnh[0];
         }
         else
         {
@@ -564,9 +576,9 @@ void int_div(Int const *n, Int const *d, Int *q, Int *r)
             }
             else
             {
-                guessNumerator.h16_ = reducingNumerator.h_[nDigit];
+                guessNumerator.h16_ = rnh[nDigit];
             }
-            guessNumerator.l16_ = reducingNumerator.h_[nDigit - 1];
+            guessNumerator.l16_ = rnh[nDigit - 1];
         }
         uint32_t guessMultiplier = guessNumerator.u32_ / testDenominator; // todo compare div_u32u32();
         if (guessMultiplier == 0u)
@@ -605,15 +617,18 @@ void int_neg(Int *i)
 
 bool int_is_zero(Int const *i)
 {
-    return i->h_[0] == 0 && i->d_ == 1;
+    uint16_t const *const ih = (uint16_t const *) i->w_;
+    return ih[0] == 0 && i->d_ == 1;
 }
 
 IntComp int_is(Int const *a, Int const *b)
 {
+    uint16_t const *const ah = (uint16_t const *) a->w_;
+    uint16_t const *const bh = (uint16_t const *) b->w_;
     IntComp r;
     if (a->neg_ != b->neg_) // check for zero and -ve zero
     {
-        if (a->d_ == 1 && b->d_ == 1 && a->h_[0] == 0 && b->h_[0]  == 0)
+        if (a->d_ == 1 && b->d_ == 1 && ah[0] == 0 && bh[0]  == 0)
         {
             r = INT_EQ;
         }
@@ -752,8 +767,9 @@ int64_t int_to_i64(Int const *i)
 {
     FourDigits r;
     r.ll64_ = 0;
-    uint16_t const *s = i->h_;
-    uint16_t const *e = min(&i->h_[4], &i->h_[i->d_]);
+    uint16_t const *const ih = (uint16_t const *) i->w_;
+    uint16_t const *s = ih;
+    uint16_t const *e = min(&ih[4], &ih[i->d_]);
     uint16_t *d = &r.a16_;
     while (s < e)
     {
@@ -784,8 +800,9 @@ uint64_t int_to_u64(Int const *i)
 {
     FourDigits r;
     r.ull64_ = 0;
-    uint16_t const *s = i->h_;
-    uint16_t const *e = min(&i->h_[4], &i->h_[i->d_]);
+    uint16_t const *const ih = (uint16_t const *) i->w_;
+    uint16_t const *s = ih;
+    uint16_t const *e = min(&ih[4], &ih[i->d_]);
     uint16_t *d = &r.a16_;
     while (s < e)
     {
@@ -798,8 +815,9 @@ int32_t int_to_i32(Int const *i)
 {
     TwoDigits r;
     r.i32_ = 0;
-    uint16_t const *s = i->h_;
-    uint16_t const *e = min(&i->h_[2], &i->h_[i->d_]);
+    uint16_t const *const ih = (uint16_t const *) i->w_;
+    uint16_t const *s = ih;
+    uint16_t const *e = min(&ih[2], &ih[i->d_]);
     uint16_t *d = &r.l16_;
     while (s < e)
     {
@@ -830,8 +848,9 @@ uint32_t int_to_u32(Int const *i)
 {
     TwoDigits r;
     r.u32_ = 0;
-    uint16_t const *s = i->h_;
-    uint16_t const *e = min(&i->h_[2], &i->h_[i->d_]);
+    uint16_t const *const ih = (uint16_t const *) i->w_;
+    uint16_t const *s = ih;
+    uint16_t const *e = min(&ih[2], &ih[i->d_]);
     uint16_t *d = &r.l16_;
     while (s < e)
     {
@@ -847,14 +866,15 @@ void int_invariant(Int const *i)
     assert(i->m_ % 2 == 0);
     assert(i->d_ >= 1 && i->d_ <= i->m_);
     // check top half-word is zero if length is odd
+    uint16_t const *const ih = (uint16_t const *) i->w_;
     if (i->d_ % 2 == 1)
     {
-        assert(i->h_[i->d_] == 0);
+        assert(ih[i->d_] == 0);
     }
     // check no leading zeros
     if (i->d_ > 1)
     {
-        assert(i->h_[i->d_ - 1] != 0);
+        assert(ih[i->d_ - 1] != 0);
     }
 }
 
@@ -867,17 +887,18 @@ void int_make_random(Int *i)
     i->d_ = 1 + rand() / (RAND_MAX / randMaxDigits);
     i->m_ = i->d_ + i->d_ % 2;
     assert(i->d_ <= randMaxDigits);
+    uint16_t *const ih = (uint16_t *) i->w_;
     for (int x = 0; x < i->d_; x++)
     {
-        i->h_[x] = (uint16_t) rand();
+        ih[x] = (uint16_t) rand();
     }
-    while (i->h_[i->d_ - 1] == 0)
+    while (ih[i->d_ - 1] == 0)
     {
-        i->h_[i->d_ - 1] = (uint16_t) rand();
+        ih[i->d_ - 1] = (uint16_t) rand();
     }
     if (i->d_ < i->m_)
     {
-        i->h_[i->d_] = 0u;
+        ih[i->d_] = 0u;
     }
 }
 
@@ -895,11 +916,12 @@ void int_for_bc(Int const *a)
     {
         printf("(-");
     }
+    uint16_t const *const ah = (uint16_t const *) a->w_;
     for (; i < a->d_ - 1; i++)
     {
-        printf("(%d+65536*", a->h_[i]);
+        printf("(%d+65536*", ah[i]);
     }
-        printf("%d", a->h_[i]);
+    printf("%d", ah[i]);
     for (i = 0; i < a->d_ - 1; i++)
     {
         printf(")");

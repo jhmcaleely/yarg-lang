@@ -22,13 +22,9 @@ typedef struct
 {
     bool neg_;
     bool overflow_;
-    uint8_t d_; // num (16-bit) digits 1 -
+    uint8_t d_; // num (16-bit) digits 1..m_
     uint8_t m_; // max (16-bit) digits - allocated size, always even
-    union
-    {
-        uint16_t h_[];
-        uint32_t w_[];
-    };
+    uint32_t w_[];
 } Int;
 
 typedef struct // smallest concrete type of int - can be a global or a local or const, any IntConcreteX *obj may be cast to (Int *)
@@ -37,11 +33,7 @@ typedef struct // smallest concrete type of int - can be a global or a local or 
     bool overflow_;
     uint8_t d_;
     uint8_t m_; // {2}
-    union
-    {
-        uint16_t h_[2];
-        uint32_t w_[2 / 2];
-    };
+    uint32_t w_[2 / 2];
 } IntConcrete2;
 
 typedef struct // concrete type of int which can hold uint64_t/int64_t - can be a global or a local
@@ -50,11 +42,7 @@ typedef struct // concrete type of int which can hold uint64_t/int64_t - can be 
     bool overflow_;
     uint8_t d_;
     uint8_t m_; // {4}
-    union
-    {
-        uint16_t h_[4];
-        uint32_t w_[4 / 2];
-    };
+    uint32_t w_[4 / 2];
 } IntConcrete4;
 
 typedef struct // largest concrete type of int - can be a global or a local - use sparingly as takes up 512 bytes
@@ -63,11 +51,7 @@ typedef struct // largest concrete type of int - can be a global or a local - us
     bool overflow_;
     uint8_t d_;
     uint8_t m_; // {254}
-    union
-    {
-        uint16_t h_[254];
-        uint32_t w_[254 / 2];
-    };
+    uint32_t w_[254 / 2];
 } IntConcrete254;
 
 typedef enum
