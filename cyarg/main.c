@@ -16,21 +16,36 @@
 #include "debug.h"
 #endif
 
-static void repl(const char* libraryPath) {
-    char line[4096];
-    printf("> ");
-    for (;;) {
-        if (fgets(line, sizeof(line), stdin) != 0) {
-            interpret(libraryPath, line);
-            printf("> ");
-        }
-        else {
-            int feofi = feof(stdin); // fgets returns null when pause/continue in lldb
-            if (feofi) { // only exit if EOF
-                break;
-            }
-        }
+static char* libraryNameFor(const char* importname, const char* libraryPath) {
+    size_t namelen = strlen(importname);
+    size_t pathlen = 0;
+    if (libraryPath) {
+        pathlen = strlen(libraryPath);
     }
+    char* filename = malloc(pathlen + 1 +namelen + 3 + 1);
+    if (filename) {
+        if (libraryPath) {
+            strcpy(filename, libraryPath);
+            if (libraryPath[pathlen - 1] != '/') {
+                strcat(filename, "/");
+            }
+        } else {
+            strcpy(filename, "");
+        }
+        strcat(filename, importname);
+        strcat(filename, ".ya");
+    }
+    return filename;
+}
+
+static int runFile(const char* libraryPath, const char* path);
+
+static void repl(const char* libraryPath) {
+
+    char* replPath = libraryNameFor("repl", libraryPath);
+
+    runFile(libraryPath, replPath);
+    free(replPath);
 }
 
 #ifdef CYARG_FEATURE_HOSTED_REPL
