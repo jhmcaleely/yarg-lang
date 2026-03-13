@@ -218,6 +218,7 @@ bool precalcExpression(ObjExpr **ep)
         case OBJ_EXPR_ARRAYINIT: {
             ObjExprArrayInit *array = (ObjExprArrayInit *) e;
             DynamicObjArray *a = &array->initializers;
+            precalcExpression(&array->cardinality);
 
             for (int i = 0; i < a->objectCount; i++)
             {

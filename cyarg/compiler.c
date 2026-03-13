@@ -532,14 +532,17 @@ static void generateExprArrayInit(ObjExprArrayInit* array) {
  
     emitBytes(OP_GET_BUILTIN, BUILTIN_NEW);
     emitByte(OP_NIL);
-    emitConstant(I32_VAL(array->initializers.objectCount));
+    generateExpr(array->cardinality);
     emitByte(OP_TYPE_ARRAY);
     emitBytes(OP_CALL, 1);
  
     for (int i = 0; i < array->initializers.objectCount; i++) {
-        emitConstant(I32_VAL(i));
+        ObjExpr* index = (ObjExpr*) newExprNumberFromCint(i);
+        tempRootPush(OBJ_VAL(index));
+        generateExpr(index);
         generateExpr((ObjExpr*)array->initializers.objects[i]);
         emitByte(OP_SET_ELEMENT);
+        tempRootPop();
     }
 }
 

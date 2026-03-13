@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <inttypes.h>
+#include <assert.h>
 
 #include "ast.h"
 #include "memory.h"
@@ -137,6 +138,26 @@ ObjExprNumber* newExprNumberInt(int numberDecimalDigits) {
     ObjExprNumber *num = (ObjExprNumber *) allocateObject(sizeof (ObjExprNumber) + sizeof (uint16_t) * s, OBJ_EXPR_NUMBER);
     num->bigInt.m_ = s;
     num->type = NUMBER_INT;
+    return num;
+}
+
+ObjExprNumber* newExprNumberFromCint(int constant) {
+    uint8_t s = 0;
+    if (sizeof(int) == 4) {
+        // -2 147 483 648 to 2 147 483 647 (11 string characters with the minus sign)
+        s = INT_DIGITS_FOR_S(11);
+    } else if (sizeof(int) == 8) {
+        // -9 223 372 036 854 775 808 to 9 223 372 036 854 775 807 (20 string characters with the minus sign)
+        s = INT_DIGITS_FOR_S(20);
+    } else {
+        assert(!"Unsupported int size");
+    }
+    s += s % 2;
+    ObjExprNumber *num = (ObjExprNumber *) allocateObject(sizeof (ObjExprNumber) + sizeof (uint16_t) * s, OBJ_EXPR_NUMBER);
+    num->bigInt.m_ = s;
+    num->type = NUMBER_INT;
+    int64_t val = constant;
+    int_set_i(val, &num->bigInt);
     return num;
 }
 
