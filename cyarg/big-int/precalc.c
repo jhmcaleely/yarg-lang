@@ -6,7 +6,7 @@
 //
 
 #include "precalc.h"
-#include "ast.h"
+#include "../ast.h"
 
 #include <stdio.h>
 #include <assert.h> // should cause runtime error in target
