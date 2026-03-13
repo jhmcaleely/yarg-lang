@@ -25,6 +25,7 @@ typedef struct {
     ValueCellTable globals;
     ValueTable strings;
     ObjString* initString;
+    ObjString* libraryPath;
     ValueTable imports;
 
     platform_mutex heap;
@@ -51,7 +52,7 @@ extern VM vm;
 void initVM();
 void freeVM();
 void markVMRoots();
-InterpretResult interpret(const char* source);
+InterpretResult interpret(const char* libraryPath, const char* source);
 
 InterpretResult run(ObjRoutine* routine);
 bool callfn(ObjRoutine* routine, ObjClosure* closure, int argCount);

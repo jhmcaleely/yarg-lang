@@ -16,12 +16,12 @@
 #include "debug.h"
 #endif
 
-static void repl() {
+static void repl(const char* libraryPath) {
     char line[4096];
     printf("> ");
     for (;;) {
         if (fgets(line, sizeof(line), stdin) != 0) {
-            interpret(line);
+            interpret(libraryPath, line);
             printf("> ");
         }
         else {
@@ -34,10 +34,10 @@ static void repl() {
 }
 
 #ifdef CYARG_FEATURE_HOSTED_REPL
-static int runFile(const char* path) {
+static int runFile(const char* libraryPath, const char* path) {
     char* source = readFile(path);
     if (source) {
-        InterpretResult result = interpret(source);
+        InterpretResult result = interpret(libraryPath, source);
         free(source);
 
         if (result == INTERPRET_COMPILE_ERROR) {
@@ -96,10 +96,10 @@ int main() {
     initVM();
     char* source = readFile("main.ya");
     if (source) {
-        interpret(source);
+        interpret(NULL, source);
         free(source);
     }
-    repl();
+    repl(NULL);
 
     freeVM();
     return 0;
@@ -107,10 +107,20 @@ int main() {
 #elif defined(CYARG_FEATURE_HOSTED_REPL)
 void usageMessage(FILE* destination) {
     FPRINTMSG(destination, "Usage:\n");
-    FPRINTMSG(destination, "\tcyarg <path>\n");
-    FPRINTMSG(destination, "\tcyarg --help\n");
-    FPRINTMSG(destination, "\tcyarg --compile <path>\n");
-    FPRINTMSG(destination, "\tcyarg --disassemble <path>\n");
+    FPRINTMSG(destination, "\tcyarg [--library <dir>]\n");      // 1 or 3
+    FPRINTMSG(destination, "\tcyarg [--library <dir>] <path>\n"); // 2 or 4
+    FPRINTMSG(destination, "\tcyarg --help\n"); // 1
+    FPRINTMSG(destination, "\tcyarg --compile <path>\n"); // 3
+    FPRINTMSG(destination, "\tcyarg --disassemble <path>\n"); // 3
+}
+
+const char* getArgument(int argc, const char* argv[], const char* name) {
+    for (int i = 1; i < argc - 1; i++) {
+        if (strcmp(argv[i], name) == 0) {
+            return argv[i + 1];
+        }
+    }
+    return NULL;
 }
 
 int main(int argc, const char* argv[]) {
@@ -119,16 +129,30 @@ int main(int argc, const char* argv[]) {
 
     int returnCode = EX_OK;
 
-    if (argc == 1) {
-        repl();
+    if (argc < 1 && argc > 5) {
+        usageMessage(stderr);
+        return EX_USAGE;
+    }
+
+    const char* libraryPath = getArgument(argc, argv, "--library");
+    const char* compilePath = getArgument(argc, argv, "--compile");
+    const char* disassemblePath = getArgument(argc, argv, "--disassemble");
+    if (compilePath && disassemblePath) {
+        usageMessage(stderr);
+        return EX_USAGE;
+    }
+
+    if (argc == 1 || (argc == 3 && libraryPath)) {
+        repl(libraryPath);
     } else if (argc == 2 && strcmp(argv[1], "--help") == 0) {
         usageMessage(stdout);
-    } else if (argc == 2) {
-        returnCode = runFile(argv[1]);
-    } else if (argc == 3 && strcmp(argv[1], "--compile") == 0) {
-        returnCode = compileFile(argv[2]);
-    } else if (argc == 3 && strcmp(argv[1], "--disassemble") == 0) {
-        returnCode = disassembleFile(argv[2]);
+    } else if (argc == 2 || (argc == 4 && libraryPath)) {
+        int sourcePosition = argc == 2 ? 1 : 3;
+        returnCode = runFile(libraryPath, argv[sourcePosition]);
+    } else if (argc == 3 && compilePath) {
+        returnCode = compileFile(compilePath);
+    } else if (argc == 3 && disassemblePath) {
+        returnCode = disassembleFile(disassemblePath);
     }
     else {
         usageMessage(stderr);
