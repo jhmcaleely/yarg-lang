@@ -16,58 +16,81 @@
 #include "debug.h"
 #endif
 
-static void repl() {
-    char line[4096];
-    printf("> ");
-    for (;;) {
-        if (fgets(line, sizeof(line), stdin) != 0) {
-            interpret(line);
-            printf("> ");
-        }
-        else {
-            int feofi = feof(stdin); // fgets returns null when pause/continue in lldb
-            if (feofi) { // only exit if EOF
-                break;
-            }
-        }
+static char* libraryNameFor(const char* importname, const char* libraryPath) {
+    size_t namelen = strlen(importname);
+    size_t pathlen = 0;
+    if (libraryPath) {
+        pathlen = strlen(libraryPath);
     }
+    char* filename = malloc(pathlen + 1 +namelen + 3 + 1);
+    if (filename) {
+        if (libraryPath) {
+            strcpy(filename, libraryPath);
+            if (libraryPath[pathlen - 1] != '/') {
+                strcat(filename, "/");
+            }
+        } else {
+            strcpy(filename, "");
+        }
+        strcat(filename, importname);
+        strcat(filename, ".ya");
+    }
+    return filename;
+}
+
+static int runFile(const char* libraryPath, const char* path);
+
+static void repl(const char* libraryPath) {
+
+    char* replPath = libraryNameFor("repl", libraryPath);
+
+    runFile(libraryPath, replPath);
+    free(replPath);
 }
 
 #ifdef CYARG_FEATURE_HOSTED_REPL
-static void runFile(const char* path) {
+static int runFile(const char* libraryPath, const char* path) {
     char* source = readFile(path);
     if (source) {
-        InterpretResult result = interpret(source);
+        InterpretResult result = interpret(libraryPath, source);
         free(source);
 
-        if (result == INTERPRET_COMPILE_ERROR) exit(EX_DATAERR);
-        if (result == INTERPRET_RUNTIME_ERROR) exit(EX_SOFTWARE);
+        if (result == INTERPRET_COMPILE_ERROR) {
+            return EX_DATAERR;
+        } else if (result == INTERPRET_RUNTIME_ERROR) {
+            return EX_SOFTWARE;
+        } else {
+            return EX_OK;
+        }
     } else {
-        exit(EX_NOINPUT);
+        return EX_NOINPUT;
     }
 }
 
-static void compileFile(const char* path) {
+static int compileFile(const char* path) {
     char* source = readFile(path);
     if (!source) {
-        exit(EX_NOINPUT);
+        return EX_NOINPUT;
     }
 
     ObjFunction* result = compile(source);
+    free(source);
     if (!result) {
-        exit(EX_DATAERR);
+        return EX_DATAERR;
     }
+    return EX_OK;
 }
 
-static void disassembleFile(const char* path) {
+static int disassembleFile(const char* path) {
     char* source = readFile(path);
     if (!source) {
-        exit(EX_NOINPUT);
+        return EX_NOINPUT;
     }
 
     ObjFunction* result = compile(source);
+    free(source);
     if (!result) {
-        exit(EX_DATAERR);
+        return EX_DATAERR;
     }
 
     disassembleChunk(&result->chunk, path);
@@ -77,6 +100,7 @@ static void disassembleFile(const char* path) {
             disassembleChunk(&fun->chunk, fun->name->chars);
         }
     }
+    return EX_OK;
 }
 #endif
 
@@ -87,34 +111,70 @@ int main() {
     initVM();
     char* source = readFile("main.ya");
     if (source) {
-        interpret(source);
+        interpret(NULL, source);
         free(source);
     }
-    repl();
+    repl(NULL);
 
     freeVM();
     return 0;
 }
 #elif defined(CYARG_FEATURE_HOSTED_REPL)
+void usageMessage(FILE* destination) {
+    FPRINTMSG(destination, "Usage:\n");
+    FPRINTMSG(destination, "\tcyarg [--library <dir>]\n");      // 1 or 3
+    FPRINTMSG(destination, "\tcyarg [--library <dir>] <path>\n"); // 2 or 4
+    FPRINTMSG(destination, "\tcyarg --help\n"); // 1
+    FPRINTMSG(destination, "\tcyarg --compile <path>\n"); // 3
+    FPRINTMSG(destination, "\tcyarg --disassemble <path>\n"); // 3
+}
+
+const char* getArgument(int argc, const char* argv[], const char* name) {
+    for (int i = 1; i < argc - 1; i++) {
+        if (strcmp(argv[i], name) == 0) {
+            return argv[i + 1];
+        }
+    }
+    return NULL;
+}
+
 int main(int argc, const char* argv[]) {
     plaform_hal_init();
     initVM();
 
-    if (argc == 1) {
-        repl();
-    } else if (argc == 2) {
-        runFile(argv[1]);
-    } else if (argc == 3 && strcmp(argv[1], "--compile") == 0) {
-        compileFile(argv[2]);
-    } else if (argc == 3 && strcmp(argv[1], "--disassemble") == 0) {
-        disassembleFile(argv[2]);
+    int returnCode = EX_OK;
+
+    if (argc < 1 && argc > 5) {
+        usageMessage(stderr);
+        return EX_USAGE;
+    }
+
+    const char* libraryPath = getArgument(argc, argv, "--library");
+    const char* compilePath = getArgument(argc, argv, "--compile");
+    const char* disassemblePath = getArgument(argc, argv, "--disassemble");
+    if (compilePath && disassemblePath) {
+        usageMessage(stderr);
+        return EX_USAGE;
+    }
+
+    if (argc == 1 || (argc == 3 && libraryPath)) {
+        repl(libraryPath);
+    } else if (argc == 2 && strcmp(argv[1], "--help") == 0) {
+        usageMessage(stdout);
+    } else if (argc == 2 || (argc == 4 && libraryPath)) {
+        int sourcePosition = argc == 2 ? 1 : 3;
+        returnCode = runFile(libraryPath, argv[sourcePosition]);
+    } else if (argc == 3 && compilePath) {
+        returnCode = compileFile(compilePath);
+    } else if (argc == 3 && disassemblePath) {
+        returnCode = disassembleFile(disassemblePath);
     }
     else {
-        FPRINTMSG(stderr, "Usage: cyarg [path]\n");
-        exit(EX_USAGE);
+        usageMessage(stderr);
+        returnCode = EX_USAGE;
     }
 
     freeVM();
-    return 0;
+    return returnCode;
 }
 #endif

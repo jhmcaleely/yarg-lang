@@ -32,11 +32,23 @@ bool execBuiltinDummy(ObjRoutine* routineContext, int argCount, Value* result) {
 }
 
 
-static char* libraryNameFor(const char* importname) {
+static char* libraryNameFor(const char* importname, const char* libraryPath) {
     size_t namelen = strlen(importname);
-    char* filename = malloc(namelen + 3 + 1);
+    size_t pathlen = 0;
+    if (libraryPath) {
+        pathlen = strlen(libraryPath);
+    }
+    char* filename = malloc(pathlen + 1 +namelen + 3 + 1);
     if (filename) {
-        strcpy(filename, importname);
+        if (libraryPath) {
+            strcpy(filename, libraryPath);
+            if (libraryPath[pathlen - 1] != '/') {
+                strcat(filename, "/");
+            }
+        } else {
+            strcpy(filename, "");
+        }
+        strcat(filename, importname);
         strcat(filename, ".ya");
     }
     return filename;
@@ -61,7 +73,8 @@ bool importBuiltin(ObjRoutine* routineContext, int argCount) {
     }
 
     char* source = NULL;
-    char* library = libraryNameFor(AS_CSTRING(peek(routineContext, 0)));
+    const char* libraryPath = vm.libraryPath ? vm.libraryPath->chars : NULL;
+    char* library = libraryNameFor(AS_CSTRING(peek(routineContext, 0)), libraryPath);
     if (library) {
         source = readFile(library);
         free(library);

@@ -164,6 +164,7 @@ void initVM() {
     initCellTable(&vm.globals);
     initTable(&vm.strings);
     initTable(&vm.imports);
+    vm.libraryPath = NULL;
 
     vm.initString = NULL;
     vm.initString = copyString("init", 4);
@@ -184,6 +185,7 @@ void freeVM() {
     freeTable(&vm.strings);
     freeTable(&vm.imports);
     vm.initString = NULL;
+    vm.libraryPath = NULL;
     freeObjects();
 }
 
@@ -203,6 +205,7 @@ void markVMRoots() {
     }
 
     markTable(&vm.imports);
+    markObject((Obj*)vm.libraryPath);
     markCellTable(&vm.globals);
     markObject((Obj*)vm.initString);
 }
@@ -1322,9 +1325,10 @@ InterpretResult run(ObjRoutine* routine) {
 #undef BINARY_OP
 }
 
-InterpretResult interpret(const char* source) {
+InterpretResult interpret(const char* libraryPath, const char* source) {
     ObjFunction* function = compile(source);
     if (function == NULL) return INTERPRET_COMPILE_ERROR;
+    tempRootPush(OBJ_VAL(function));
 
 #ifdef DEBUG_TRACE_EXECUTION
     disassembleChunk(&function->chunk, "<script>");
@@ -1336,7 +1340,9 @@ InterpretResult interpret(const char* source) {
     }
 #endif
 
-    tempRootPush(OBJ_VAL(function));
+    if (libraryPath != NULL) {
+        vm.libraryPath = copyString(libraryPath, strlen(libraryPath));
+    }
     ObjClosure* closure = newClosure(function);
     tempRootPop();
 
