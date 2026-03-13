@@ -249,7 +249,7 @@ bool precalcExpression(ObjExpr **ep)
             }
             break;
         default:
-            printf("%d\n", t);
+            //printf("%d\n", t);
             break;
         }
         ep = &(*ep)->nextExpr;
