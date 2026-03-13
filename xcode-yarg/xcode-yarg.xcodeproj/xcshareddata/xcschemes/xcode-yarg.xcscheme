@@ -61,8 +61,12 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "$HOME/Documents/Personal/Dev/yarg/yarg-lang/test/hostyarg/array/array.ya"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "disassemble cc.ya"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "$HOME/Documents/Personal/Dev/yarg/yarg-lang/yarg/test/int/perform-t.ya"
@@ -79,6 +83,10 @@
          <CommandLineArgument
             argument = "$HOME/Documents/Personal/Dev/yarg/yarg-lang/yarg/test/int/bc.ya"
             isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "$HOME/Documents/Personal/Dev/yarg/yarg-lang/test/hostyarg/array/array_muint64.ya"
+            isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
       <AdditionalOptions>

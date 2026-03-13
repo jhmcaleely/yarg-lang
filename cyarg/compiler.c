@@ -532,12 +532,18 @@ static void generateExprArrayInit(ObjExprArrayInit* array) {
  
     emitBytes(OP_GET_BUILTIN, BUILTIN_NEW);
     emitByte(OP_NIL);
-    emitConstant(I32_VAL(array->initializers.objectCount));
+    ObjInt *objInt = (ObjInt *) allocateObject(sizeof (ObjInt) + sizeof (uint32_t), OBJ_INT);
+    objInt->bigInt.m_ = sizeof (uint32_t) / sizeof (uint16_t);
+    int_set_i(array->initializers.objectCount, &objInt->bigInt);
+    emitConstant(OBJ_VAL(objInt));
     emitByte(OP_TYPE_ARRAY);
     emitBytes(OP_CALL, 1);
  
     for (int i = 0; i < array->initializers.objectCount; i++) {
-        emitConstant(I32_VAL(i));
+        ObjInt *objInt = (ObjInt *) allocateObject(sizeof (ObjInt) + sizeof (uint32_t), OBJ_INT);
+        objInt->bigInt.m_ = sizeof (uint32_t) / sizeof (uint16_t);
+        int_set_i(i, &objInt->bigInt);
+        emitConstant(OBJ_VAL(objInt));
         generateExpr((ObjExpr*)array->initializers.objects[i]);
         emitByte(OP_SET_ELEMENT);
     }

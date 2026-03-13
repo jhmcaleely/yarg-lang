@@ -502,7 +502,7 @@ bool isInitialisableType(ObjConcreteYargType* lhsType, Value rhsValue, Value *pr
                 case TypeUint64:
                     if (int_is_range(&i->bigInt, 0, UINT64_MAX) == INT_WITHIN)
                     {
-                        *promotedRhs = UI8_VAL(int_to_u64(&i->bigInt));
+                        *promotedRhs = UI64_VAL(int_to_u64(&i->bigInt));
                         return true;
                     }
                     break;

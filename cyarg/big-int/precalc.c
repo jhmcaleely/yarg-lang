@@ -240,6 +240,14 @@ bool precalcExpression(ObjExpr **ep)
             }
             break;
         }
+        case OBJ_EXPR_ARRAYELEMENT:
+            ObjExprArrayElement* array = (ObjExprArrayElement*)e;
+            precalcExpression(&array->element);
+            if (array->assignment != 0)
+            {
+                precalcExpression(&array->assignment);
+            }
+            break;
         default:
             printf("%d\n", t);
             break;
