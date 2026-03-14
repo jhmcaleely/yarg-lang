@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #ifdef CYARG_FEATURE_HOSTED_REPL
 #include <sysexits.h>
 #endif
@@ -39,6 +40,16 @@ static char* libraryNameFor(const char* importname, const char* libraryPath) {
 }
 
 #ifdef CYARG_FEATURE_HOSTED_REPL
+
+uint8_t bootstrap_fn[] = {
+    OP_GET_BUILTIN, BUILTIN_EXEC,
+    OP_GET_BUILTIN, BUILTIN_READ_SOURCE,
+    OP_CONSTANT, 0,
+    OP_CALL, 1,
+    OP_CALL, 1,
+    OP_RETURN
+};
+
 static int runFile(const char* libraryPath, const char* path) {
 
     char* replPath = libraryNameFor(path, libraryPath);
@@ -49,17 +60,11 @@ static int runFile(const char* libraryPath, const char* path) {
     tempRootPush(OBJ_VAL(replFunction));
     replFunction->name = copyString("boot", 4);
 
-    writeChunk(&replFunction->chunk, OP_GET_BUILTIN, 0);
-    writeChunk(&replFunction->chunk, BUILTIN_EXEC, 0);
-    writeChunk(&replFunction->chunk, OP_GET_BUILTIN, 0);
-    writeChunk(&replFunction->chunk, BUILTIN_READ_SOURCE, 0);
-    writeChunk(&replFunction->chunk, OP_CONSTANT, 0);
-    writeChunk(&replFunction->chunk, addConstant(&replFunction->chunk, OBJ_VAL(replPathString)), 0);
-    writeChunk(&replFunction->chunk, OP_CALL, 0);
-    writeChunk(&replFunction->chunk, 1, 0);
-    writeChunk(&replFunction->chunk, OP_CALL, 0);
-    writeChunk(&replFunction->chunk, 1, 0);
-    writeChunk(&replFunction->chunk, OP_RETURN, 0);
+    for (size_t i = 0; i < sizeof(bootstrap_fn); i++) {
+        writeChunk(&replFunction->chunk, bootstrap_fn[i], 0);
+    }
+    uint8_t constant = addConstant(&replFunction->chunk, OBJ_VAL(replPathString));
+    assert(constant == replFunction->chunk.code[5]);
 
     InterpretResult result = startup(replFunction);
 
