@@ -53,6 +53,7 @@ void initVM();
 void freeVM();
 void markVMRoots();
 InterpretResult interpret(const char* libraryPath, const char* source);
+InterpretResult startup(ObjFunction* boot);
 
 InterpretResult run(ObjRoutine* routine);
 bool callfn(ObjRoutine* routine, ObjClosure* closure, int argCount);

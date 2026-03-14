@@ -1358,6 +1358,22 @@ InterpretResult interpret(const char* libraryPath, const char* source) {
     return result;
 }
 
+InterpretResult startup(ObjFunction* boot) {
+
+    ObjClosure* closure = newClosure(boot);
+
+    bindEntryFn(&vm.core0, closure);
+    pushEntryElements(&vm.core0);
+
+    enterEntryFunction(&vm.core0);
+    InterpretResult result = run(&vm.core0);
+    if (result == INTERPRET_OK) {
+        pop(&vm.core0);
+    }
+
+    return result;
+}
+
 void binaryIntOp(ObjRoutine* routine, char const *c)
 {
     Int *a = AS_INT(peek(routine, 1));

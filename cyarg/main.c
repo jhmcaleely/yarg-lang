@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #ifdef CYARG_FEATURE_HOSTED_REPL
 #include <sysexits.h>
 #endif
@@ -22,7 +23,7 @@ static char* libraryNameFor(const char* importname, const char* libraryPath) {
     if (libraryPath) {
         pathlen = strlen(libraryPath);
     }
-    char* filename = malloc(pathlen + 1 +namelen + 3 + 1);
+    char* filename = malloc(pathlen + 1 +namelen + 1);
     if (filename) {
         if (libraryPath) {
             strcpy(filename, libraryPath);
@@ -33,37 +34,49 @@ static char* libraryNameFor(const char* importname, const char* libraryPath) {
             strcpy(filename, "");
         }
         strcat(filename, importname);
-        strcat(filename, ".ya");
     }
     return filename;
 }
 
-static int runFile(const char* libraryPath, const char* path);
-
-static void repl(const char* libraryPath) {
-
-    char* replPath = libraryNameFor("repl", libraryPath);
-
-    runFile(libraryPath, replPath);
-    free(replPath);
-}
-
 #ifdef CYARG_FEATURE_HOSTED_REPL
-static int runFile(const char* libraryPath, const char* path) {
-    char* source = readFile(path);
-    if (source) {
-        InterpretResult result = interpret(libraryPath, source);
-        free(source);
 
-        if (result == INTERPRET_COMPILE_ERROR) {
-            return EX_DATAERR;
-        } else if (result == INTERPRET_RUNTIME_ERROR) {
-            return EX_SOFTWARE;
-        } else {
-            return EX_OK;
-        }
+uint8_t bootstrap_fn[] = {
+    OP_GET_BUILTIN, BUILTIN_EXEC,
+    OP_GET_BUILTIN, BUILTIN_READ_SOURCE,
+    OP_CONSTANT, 0,
+    OP_CALL, 1,
+    OP_CALL, 1,
+    OP_RETURN
+};
+
+static int runFile(const char* libraryPath, const char* path) {
+
+    char* replPath = libraryNameFor(path, libraryPath);
+    ObjString* replPathString = copyString(replPath, strlen(replPath));
+    tempRootPush(OBJ_VAL(replPathString));
+
+    ObjFunction* replFunction = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
+    tempRootPush(OBJ_VAL(replFunction));
+    replFunction->name = copyString("boot", 4);
+
+    for (size_t i = 0; i < sizeof(bootstrap_fn); i++) {
+        writeChunk(&replFunction->chunk, bootstrap_fn[i], 0);
+    }
+    uint8_t constant = addConstant(&replFunction->chunk, OBJ_VAL(replPathString));
+    assert(constant == replFunction->chunk.code[5]);
+
+    InterpretResult result = startup(replFunction);
+
+    tempRootPop();
+    tempRootPop();
+    free(replPath);
+
+    if (result == INTERPRET_COMPILE_ERROR) {
+        return EX_DATAERR;
+    } else if (result == INTERPRET_RUNTIME_ERROR) {
+        return EX_SOFTWARE;
     } else {
-        return EX_NOINPUT;
+        return EX_OK;
     }
 }
 
@@ -158,7 +171,7 @@ int main(int argc, const char* argv[]) {
     }
 
     if (argc == 1 || (argc == 3 && libraryPath)) {
-        repl(libraryPath);
+        runFile(libraryPath, "repl.ya");
     } else if (argc == 2 && strcmp(argv[1], "--help") == 0) {
         usageMessage(stdout);
     } else if (argc == 2 || (argc == 4 && libraryPath)) {
