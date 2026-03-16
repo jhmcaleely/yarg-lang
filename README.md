@@ -1,6 +1,6 @@
 # yarg-lang
 
-Yarg-Lang is a project to experiment with a dynamic language targetting microcontrollers. It has not yet made a release suitable for wide use. Additional documentation in [docs/](docs/) and on the [wiki][wiki].
+Yarg-Lang is a project to experiment with a dynamic language targetting microcontrollers. It has not yet made a release suitable for wide use.
 
 Yarg aims to be a dedicated language for Microcontroller firmware development. It offers:
 
@@ -10,10 +10,6 @@ Yarg aims to be a dedicated language for Microcontroller firmware development. I
   - Modern language conveniences
   - Intended for production deployment, as it gets nearer to a 1.0 release.
 
-## Installing Yarg
-
-Download the latest release from [releases](https://github.com/yarg-lang/yarg-lang/releases), and follow the README instructions in the tar file.
-
 ## Using Yarg
 
 Connect your Pico to your favourite serial terminal. Minicom and Putty are popular choices. Connect to the USB serial device, which will have a name specific to your board and host. Connect at 115200, 8N1. Use a VT100 or ANSI compatible terminal emulation.
@@ -21,18 +17,18 @@ Connect your Pico to your favourite serial terminal. Minicom and Putty are popul
 
 ## Building Yarg
 
-Building yarg from source is required for some ports of Yarg, and to contribute to the language itself. See [BUILD.md](BUILD.md) for details.
+Building yarg from source is required for some ports of Yarg, and to contribute to the language itself.
 
 | dir | Description |
 | :--- | :--- |
 | `cyarg/` | yarg implementation in C |
 | `hostyarg/` | host tooling for yarg maintenance |
 | `docs/` | Additional documentation |
-| `test/` | Various Test Suites. See [README.md](test/README.md) |
+| `test/` | Various Test Suites. |
 | `tools/` | Miscellaneous tools |
 | `vscode-yarg/` | A VS Code Language Extension for Yarg |
 | `yarg/specimen/` | Samples of Yarg |
-| `yarg/specimen/conway-life-display` | A Yarg implemention of: [jhmcaleely:conway-life-display](https://github.com/jhmcaleely/conway-life-display) |
+| `yarg/specimen/conway-life-display` |
 
 ## Samples
 
@@ -46,9 +42,6 @@ This sample turns on the builtin LED for a Pico, manipulating the registers dire
 
 `yarg/specimen/hello_led.ya`:
 ```
-// the memory locations we need, see rp2040 datasheet: 
-// https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf
-
 const NUM_BANK0_GPIOS = 30;
 
 place struct {
@@ -142,9 +135,3 @@ while (true) {
 }
 
 ```
-
-## Name
-
-[Cornish Yarg](https://en.wikipedia.org/wiki/Cornish_Yarg) is a cheese I enjoy.
-
-[wiki]: https://github.com/yarg-lang/yarg-lang/wiki
