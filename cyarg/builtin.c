@@ -73,8 +73,8 @@ InterpretResult importBuiltin(ObjRoutine* routineContext, int argCount) {
     }
 
     char* source = NULL;
-    const char* libraryPath = vm.libraryPath ? vm.libraryPath->chars : NULL;
-    char* library = libraryNameFor(AS_CSTRING(peek(routineContext, 0)), libraryPath);
+    char* inmportLibrary = vm.libraryPath ? AS_CSTRING(OBJ_VAL(vm.libraryPath)) : NULL;
+    char* library = libraryNameFor(AS_CSTRING(peek(routineContext, 0)), inmportLibrary);
     if (library) {
         source = readFile(library);
         free(library);

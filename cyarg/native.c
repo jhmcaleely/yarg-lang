@@ -7,6 +7,8 @@
 #include "native.h"
 #include "routine.h"
 #include "vm.h"
+#include "debug.h"
+#include "hosted.h"
 
 #ifdef CYARG_PICO_SDK_TARGET
 #include <hardware/irq.h>
@@ -158,3 +160,55 @@ bool stdout_putsNative(ObjRoutine* routine, int argCount, Value* result) {
 #endif
     return true;
 }
+
+bool disassembleNative(ObjRoutine* routine, int argCount, Value* result) {
+    if (argCount != 1) {
+        runtimeError(routine, "Expected 1 argument but got %d.", argCount);
+        return false;
+    }
+
+    Value fnVal = nativeArgument(routine, argCount, 0);
+    if (!IS_CLOSURE(fnVal)) {
+        runtimeError(routine, "Expected a function.");
+        return false;
+    }
+
+    ObjClosure* closure = AS_CLOSURE(fnVal);
+    char* name = closure->function->name != NULL ? closure->function->name->chars : "<fn>";
+    disassembleChunk(&closure->function->chunk, name);
+    *result = NIL_VAL;
+    return true;
+}
+
+#if defined(CYARG_FEATURE_HOSTED_REPL)
+bool host_argcNative(ObjRoutine* routine, int argCount, Value* result) {
+    if (argCount != 0) {
+        runtimeError(routine, "Expected 0 arguments but got %d.", argCount);
+        return false;
+    }
+
+    *result = I32_VAL(vmHost.argc);
+    return true;
+}
+
+bool host_argnNative(ObjRoutine* routine, int argCount, Value* result) {
+    if (argCount != 1) {
+        runtimeError(routine, "Expected 1 argument but got %d.", argCount);
+        return false;
+    }
+
+    Value indexVal = nativeArgument(routine, argCount, 0);
+    if (!is_positive_integer32(indexVal)) {
+        runtimeError(routine, "Expected a positive integer.");
+        return false;
+    }
+    uint32_t index = as_positive_integer32(indexVal);
+    if (index >= vmHost.argc) {
+        runtimeError(routine, "Argument index out of range.");
+        return false;
+    }
+
+    *result = OBJ_VAL(copyString(vmHost.argv[index], strlen(vmHost.argv[index])));
+    return true;
+}
+#endif

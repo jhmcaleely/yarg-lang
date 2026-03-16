@@ -16,6 +16,7 @@ typedef void (*PinnedRoutineHandler)(void);
 
 typedef struct {
     ObjRoutine core0;
+    ObjFunction bootFunction;
     ObjRoutine* core1;
 
     ObjRoutine* pinnedRoutines[MAX_PINNED_ROUTINES];
@@ -43,12 +44,16 @@ typedef struct {
 } VM;
 
 extern VM vm;
+extern uint8_t exec_bootstrap[];
+extern uint8_t compile_bootstrap[];
 
-void initVM();
+// two-phase init, broadly get the memory manager up, and then get the yarg env up.
+void initVMMemory();
+void initVMRuntime();
 void freeVM();
 void markVMRoots();
-InterpretResult interpret(const char* libraryPath, const char* source);
-InterpretResult startup(ObjFunction* boot);
+
+InterpretResult bootstrapVM(const uint8_t bootstrap[], Value* bootstrapResult, ObjString* script);
 
 InterpretResult run(ObjRoutine* routine);
 bool callfn(ObjRoutine* routine, ObjClosure* closure, int argCount);
