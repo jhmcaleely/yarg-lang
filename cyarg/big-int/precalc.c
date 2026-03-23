@@ -173,6 +173,7 @@ bool precalcExpression(ObjExpr **ep)
                     *ep = o->rhs;
                     break;
                 default:
+                    reduceToResult = false;
                     r = false;
                     break;
                 }
