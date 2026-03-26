@@ -1,14 +1,14 @@
 var verb;
 fun do(cheese) {
-    var n = "1 ";
+    const n = 1;
     fun do2() {
-        var m = verb + n + *cheese;
+        var m = verb + " " + string(n) + " " + *cheese;
         print m;
         *cheese = nil;
         struct { int32 i; } x;
         fun do3() {
             x.i = 77777;
-            for (var i = 0; i < 10000; i = 1 + i) i;
+            for (var i = 0; i < n; i = 1 + i) m;
             return x;
         }
         return do3();
@@ -22,10 +22,11 @@ class CheeseMaker {
     }
 
     ripen() {
-        var n = "Enjoy ripened ";
+        var n = "Enjoy ripened";
         verb = n;
         var tc = new(any);
         *tc = this.cheese;
+        print *tc;
         var y = do(tc);
         print *tc;
         print this.cheese;
@@ -33,7 +34,54 @@ class CheeseMaker {
     }
 }
 
+class CheeseEater {
+    init(cheese) {
+        this.cheese = "\"" + cheese + "\"";
+    }
+
+    ripen() {
+        var n = "Already ripened";
+        verb = n;
+        var tc = new(any);
+        *tc = this.cheese;
+        print *tc;
+        var y = do(tc);
+        print *tc;
+        print this.cheese;
+        return y;
+    }
+
+    eat() {
+        print "Eaten";
+    }
+}
+
 var maker = CheeseMaker("cheddar");
+var eater = CheeseEater("cheddar");
 var z = maker.ripen();
 print z.i;
 print maker.cheese;
+var w = eater.ripen();
+print w.i;
+eater.eat();
+
+// global - n
+// local
+// upvalue
+// property - n
+// constant - n
+// class - n
+// method - n
+// invoke - n
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//

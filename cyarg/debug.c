@@ -18,13 +18,16 @@ void disassembleChunk(Chunk* chunk, const char* name) {
         if (IS_FUNCTION(chunk->constants.values[i]))
         {
             ObjFunction *fun = AS_FUNCTION(chunk->constants.values[i]);
-            size_t newNameLen = strlen(name) + 1 + fun->name->length + 1;
-            char *funName = (char *) realloc(0, newNameLen);
-            memcpy(funName, name, strlen(name));
-            strlcat(funName, ".", newNameLen);
-            strlcat(funName, fun->name->chars, newNameLen);
+            char *funNameC = (char *) realloc(0, fun->name->length + 1);
+            memcpy(funNameC, fun->name->chars, fun->name->length + 1);
+//            int line = chunk->lines[i];
+            int line = i;
+            size_t l = snprintf(0, 0, "%s.%d:%s", name, line, funNameC);
+            char *funName = (char *) realloc(0, l + 1);
+            snprintf(funName, l + 1, "%s.%d:%s", name, line, funNameC);
             disassembleChunk(&fun->chunk, funName);
             free(funName);
+            free(funNameC);
         }
     }
 }
@@ -114,6 +117,7 @@ static int builtinInstruction(const char* name, Chunk* chunk, int offset) {
         case BUILTIN_TS_INTERRUPT: printf("test_interrupt"); break;
         case BUILTIN_TS_SYNC: printf("test_sync"); break;
         case BUILTIN_INT: printf("int"); break;
+    case BUILTIN_STRING: printf("string"); break;
         default: printf("<unknown %4d>", slot); break;
     }
     printf("\n");
