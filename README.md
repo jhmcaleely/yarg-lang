@@ -19,16 +19,19 @@ Connect your Pico to your favourite serial terminal. Minicom and Putty are popul
 
 Building yarg from source is required for some ports of Yarg, and to contribute to the language itself.
 
+## Repository Structure
+
 | dir | Description |
 | :--- | :--- |
 | `cyarg/` | yarg implementation in C |
-| `hostyarg/` | host tooling for yarg maintenance |
+| `hostyarg/` | host tooling, notably `yarg` |
 | `docs/` | Additional documentation |
 | `test/` | Various Test Suites. |
 | `tools/` | Miscellaneous tools |
 | `vscode-yarg/` | A VS Code Language Extension for Yarg |
 | `yarg/specimen/` | Samples of Yarg |
 | `yarg/specimen/conway-life-display` |
+| `external/` | dependecies hosted as git submodules. |
 
 ## Samples
 
@@ -57,8 +60,8 @@ place struct {
     } @x40014000 io_bank0;
 
 // the built in LED on a Pico.
-const pico_led = 0d25;
-const gpio_field = 0x1 << pico_led;
+const pico_led = uint32(0d25);
+const gpio_field = uint32(0x1) << pico_led;
 
 // minimally configure a GPIO, assuming core was reset first.
 const GPIO_FUNC_SIO = 0d5;
@@ -135,3 +138,4 @@ while (true) {
 }
 
 ```
+>>>>>>> forkbase/main

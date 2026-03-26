@@ -196,7 +196,6 @@ static void blackenObject(Obj* object) {
             break;
         }
         case OBJ_NATIVE: break;
-        case OBJ_BLOB: break;
         case OBJ_CHANNELCONTAINER: {
             ObjChannelContainer* channel = (ObjChannelContainer*)object;
             markChannel(channel);
@@ -326,6 +325,11 @@ static void blackenObject(Obj* object) {
             ObjExprNumber* expr = (ObjExprNumber*)object;
             markObject((Obj*)expr->expr.nextExpr);
             break;
+        }
+        case OBJ_EXPR_ADDRESS: {
+            ObjExprAddress* addr = (ObjExprAddress*)object;
+            markObject((Obj*)addr->expr.nextExpr);
+            break;
         }       
         case OBJ_EXPR_OPERATION: {
             markExpr(object);
@@ -375,6 +379,7 @@ static void blackenObject(Obj* object) {
             markExpr(object);
             ObjExprArrayInit* array = (ObjExprArrayInit*)object;
             markDynamicObjArray(&array->initializers);
+            markObject((Obj*)array->cardinality);
             break;
         }
         case OBJ_EXPR_ARRAYELEMENT: {
@@ -455,12 +460,6 @@ static void freeObject(Obj* object) {
             break;
         }
         case OBJ_NATIVE: FREE(ObjNative, object); break;
-        case OBJ_BLOB: {
-            ObjBlob* blob = (ObjBlob*)object;
-            free(blob->blob);
-            FREE(ObjBlob, object);
-            break;
-        }
         case OBJ_ROUTINE:
             FREE(ObjRoutine, object);
             break;
@@ -541,6 +540,7 @@ static void freeObject(Obj* object) {
             break;
         }
         case OBJ_EXPR_NUMBER: FREE(ObjExprNumber, object); break;
+        case OBJ_EXPR_ADDRESS: FREE(ObjExprAddress, object); break;
         case OBJ_EXPR_OPERATION: FREE(ObjExprOperation, object); break;
         case OBJ_EXPR_GROUPING: FREE(ObjExprGrouping, object); break;
         case OBJ_EXPR_NAMEDVARIABLE: FREE(ObjExprNamedVariable, object); break;

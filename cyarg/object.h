@@ -37,7 +37,6 @@ typedef struct ObjConcreteYargTypePointer ObjConcreteYargTypePointer;
 #define AS_INSTANCE(value)     ((ObjInstance*)AS_OBJ(value))
 #define AS_NATIVE(value) \
     (((ObjNative*)AS_OBJ(value))->function)
-#define AS_BLOB(value)         ((ObjBlob*)AS_OBJ(value))
 #define AS_ROUTINE(value)      ((ObjRoutine*)AS_OBJ(value))
 #define AS_CHANNEL(value)      ((ObjChannelContainer*)AS_OBJ(value))
 #define AS_STRING(value)       ((ObjString*)AS_OBJ(value))
@@ -48,7 +47,7 @@ typedef struct ObjConcreteYargTypePointer ObjConcreteYargTypePointer;
 #define AS_STRUCT(value)       ((ObjPackedStruct*)AS_OBJ(value))
 #define AS_SYNCGROUP(value)    ((ObjSyncGroup*)AS_OBJ(value))
 #define AS_INTOBJ(value)       ((ObjInt*)AS_OBJ(value))
-#define AS_INT(value)          (&((ObjInt*)AS_OBJ(value))->bigInt)
+#define AS_INT(value)          (&(AS_INTOBJ(value)->bigInt))
 
 typedef enum {
     OBJ_BOUND_METHOD,
@@ -57,7 +56,6 @@ typedef enum {
     OBJ_FUNCTION,
     OBJ_INSTANCE,
     OBJ_NATIVE,
-    OBJ_BLOB,
     OBJ_ROUTINE,
     OBJ_CHANNELCONTAINER,
     OBJ_STRING,
@@ -91,6 +89,7 @@ typedef enum {
     OBJ_STMT_FOR,
     OBJ_STMT_CLASSDECLARATION,
     OBJ_EXPR_NUMBER,
+    OBJ_EXPR_ADDRESS,
     OBJ_EXPR_OPERATION,
     OBJ_EXPR_GROUPING,
     OBJ_EXPR_NAMEDVARIABLE,
@@ -137,11 +136,6 @@ typedef struct {
     NativeFn function;
 } ObjNative;
 
-typedef struct {
-    Obj obj;
-    void* blob;
-} ObjBlob;
-
 struct ObjString {
     Obj obj;
     int length;
@@ -151,6 +145,7 @@ struct ObjString {
 
 typedef struct {
     Obj obj;
+    bool isLiteral;
     Int bigInt;
 } ObjInt;
 
@@ -220,7 +215,6 @@ ObjClosure* newClosure(ObjFunction* function);
 ObjFunction* newFunction();
 ObjInstance* newInstance(ObjClass* klass);
 ObjNative* newNative(NativeFn function);
-ObjBlob* newBlob(size_t size);
 ObjPackedUniformArray* newPackedUniformArray(ObjConcreteYargTypeArray* type);
 ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);

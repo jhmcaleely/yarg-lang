@@ -22,7 +22,6 @@ ObjConcreteYargType* newYargTypeFromType(ConcreteYargType yt) {
         case TypeClass:
         case TypeInstance:
         case TypeFunction:
-        case TypeNativeBlob:
         case TypeRoutine:
         case TypeChannel:
         case TypeYargType:
@@ -106,8 +105,8 @@ size_t addFieldType(ObjConcreteYargTypeStruct* st, size_t index, size_t fieldOff
     tableSet(&st->field_names, AS_STRING(name), SIZE_T_UI_VAL(index));
     if (IS_NIL(offset)) {
         st->field_indexes[index] = fieldOffset;
-    } else if (is_positive_integer(offset)) {
-        fieldOffset = as_positive_integer(offset);
+    } else if (is_positive_integer32(offset)) {
+        fieldOffset = as_positive_integer32(offset);
         st->field_indexes[index] = fieldOffset;
     }
     st->storage_size = fieldOffset + yt_sizeof_type_storage(type);
@@ -160,8 +159,6 @@ Value concrete_typeof(Value a) {
         return OBJ_VAL(newYargTypeFromType(TypeClass));
     } else if (IS_INSTANCE(a)) {
         return OBJ_VAL(newYargTypeFromType(TypeInstance));
-    } else if (IS_BLOB(a)) {
-        return OBJ_VAL(newYargTypeFromType(TypeNativeBlob));
     } else if (IS_ROUTINE(a)) {
         return OBJ_VAL(newYargTypeFromType(TypeRoutine));
     } else if (IS_CHANNEL(a)) {
@@ -199,16 +196,15 @@ bool type_packs_as_obj(ObjConcreteYargType* type) {
         case TypeArray:
         case TypeStruct:
             return false;
+        case TypeInt:
         case TypeString:
         case TypeClass:
         case TypeInstance:
         case TypeFunction:
-        case TypeNativeBlob:
         case TypeRoutine:
         case TypeChannel:
         case TypePointer:
         case TypeYargType:
-        case TypeInt:
             return true;
     }
 }
@@ -217,6 +213,7 @@ bool type_packs_as_container(ObjConcreteYargType* type) {
     switch (type->yt) {
         case TypeAny:
         case TypeBool:
+        case TypeInt:
         case TypeDouble:
         case TypeInt8:
         case TypeUint8:
@@ -230,11 +227,9 @@ bool type_packs_as_container(ObjConcreteYargType* type) {
         case TypeClass:
         case TypeInstance:
         case TypeFunction:
-        case TypeNativeBlob:
         case TypeRoutine:
         case TypeChannel:
         case TypeYargType:
-        case TypeInt:
             return false;
         case TypePointer:
         case TypeArray:
@@ -250,6 +245,7 @@ bool is_nil_assignable_type(Value type) {
         ObjConcreteYargType* ct = AS_YARGTYPE(type);
         switch (ct->yt) {
             case TypeBool:
+            case TypeInt:
             case TypeDouble:
             case TypeInt8:
             case TypeUint8:
@@ -260,14 +256,12 @@ bool is_nil_assignable_type(Value type) {
             case TypeInt64:
             case TypeUint64:
             case TypeStruct:
-            case TypeInt:
                 return false;
             case TypeAny:
             case TypeString:
             case TypeClass:
             case TypeInstance:
             case TypeFunction:
-            case TypeNativeBlob:
             case TypeRoutine:
             case TypeChannel:
             case TypeArray:
@@ -359,16 +353,15 @@ size_t yt_sizeof_type_storage(Value type) {
             ObjConcreteYargTypeArray* array = (ObjConcreteYargTypeArray*)t;
             return arrayElementSize(array) * array->cardinality;
         }
+        case TypeInt:
         case TypeString:
         case TypeClass:
         case TypeInstance:
         case TypeFunction:
-        case TypeNativeBlob:
         case TypeRoutine:
         case TypeChannel:
         case TypePointer:
         case TypeYargType:
-        case TypeInt:
             return sizeof(Obj*);
         }
     }
@@ -381,6 +374,7 @@ Value defaultValue(Value type) {
         ObjConcreteYargType* ct = AS_YARGTYPE(type);
         switch (ct->yt) {
             case TypeBool: return BOOL_VAL(false);
+            case TypeInt: return defaultIntValue();
             case TypeDouble: return DOUBLE_VAL(0);
             case TypeInt8: return I8_VAL(0);
             case TypeUint8: return UI8_VAL(0);
@@ -390,7 +384,6 @@ Value defaultValue(Value type) {
             case TypeUint32: return UI32_VAL(0);
             case TypeInt64: return I64_VAL(0);
             case TypeUint64: return UI64_VAL(0);
-            case TypeInt: return defaultIntValue();
             case TypeStruct: return defaultStructValue(ct);
             case TypeArray: return defaultArrayValue(ct);
             case TypePointer:
@@ -399,7 +392,6 @@ Value defaultValue(Value type) {
             case TypeClass:
             case TypeInstance:
             case TypeFunction:
-            case TypeNativeBlob:
             case TypeRoutine:
             case TypeChannel:
             case TypeYargType:
@@ -433,7 +425,10 @@ static bool isInitializableArray(ObjConcreteYargTypeArray* lhsConcreteType, ObjC
     }
 }
 
-bool isInitialisableType(ObjConcreteYargType* lhsType, Value rhsValue) {
+bool isInitialisableType(ObjConcreteYargType* lhsType, Value rhsValue, Value *promotedRhs) {
+
+    promotedRhs->type = VAL_NIL;
+
     if (lhsType->yt == TypeAny) {
         return true;
     }
@@ -448,15 +443,83 @@ bool isInitialisableType(ObjConcreteYargType* lhsType, Value rhsValue) {
     if (lhsType->yt == TypeArray && rhsConcreteType->yt == TypeArray) {       
         return isInitializableArray((ObjConcreteYargTypeArray*)lhsType, (ObjConcreteYargTypeArray*)rhsConcreteType); 
     } else {
+        if (IS_INT(rhsValue))
+        {
+            ObjInt *i = (ObjInt *) rhsValue.as.obj;
+            if (i->isLiteral)
+            {
+                switch (lhsType->yt)
+                {
+                case TypeInt8:
+                    if (int_is_range(&i->bigInt, INT8_MIN, INT8_MAX) == INT_WITHIN)
+                    {
+                        *promotedRhs = I8_VAL(int_to_i32(&i->bigInt));
+                        return true;
+                    }
+                    break;
+                case TypeUint8:
+                    if (int_is_range(&i->bigInt, 0, UINT8_MAX) == INT_WITHIN)
+                    {
+                        *promotedRhs = UI8_VAL(int_to_u32(&i->bigInt));
+                        return true;
+                    }
+                    break;
+                case TypeInt16:
+                    if (int_is_range(&i->bigInt, INT16_MIN, INT16_MAX) == INT_WITHIN)
+                    {
+                        *promotedRhs = I16_VAL(int_to_i32(&i->bigInt));
+                        return true;
+                    }
+                    break;
+                case TypeUint16:
+                    if (int_is_range(&i->bigInt, 0, UINT16_MAX) == INT_WITHIN)
+                    {
+                        *promotedRhs = UI16_VAL(int_to_u32(&i->bigInt));
+                        return true;
+                    }
+                    break;
+                case TypeInt32:
+                    if (int_is_range(&i->bigInt, INT32_MIN, INT32_MAX) == INT_WITHIN)
+                    {
+                        *promotedRhs = I32_VAL(int_to_i32(&i->bigInt));
+                        return true;
+                    }
+                    break;
+                case TypeUint32:
+                    if (int_is_range(&i->bigInt, 0, UINT32_MAX) == INT_WITHIN)
+                    {
+                        *promotedRhs = UI32_VAL(int_to_u32(&i->bigInt));
+                        return true;
+                    }
+                    break;
+                case TypeInt64:
+                    if (int_is_range(&i->bigInt, INT64_MIN, INT64_MAX) == INT_WITHIN)
+                    {
+                        *promotedRhs = I64_VAL(int_to_i64(&i->bigInt));
+                        return true;
+                    }
+                    break;
+                case TypeUint64:
+                    if (int_is_range(&i->bigInt, 0, UINT64_MAX) == INT_WITHIN)
+                    {
+                        *promotedRhs = UI64_VAL(int_to_u64(&i->bigInt));
+                        return true;
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
         return lhsType->yt == rhsConcreteType->yt;
     }
 }
 
-bool isCompatibleType(ObjConcreteYargType* lhsType, Value rhsValue) {
+bool isCompatibleType(ObjConcreteYargType* lhsType, Value rhsValue, Value *promotedRhs) {
     if (lhsType->isConst) {
         return false;
     } else {
-        return isInitialisableType(lhsType, rhsValue);
+        return isInitialisableType(lhsType, rhsValue, promotedRhs);
     }
 }
 
@@ -486,7 +549,6 @@ static void printTypeLiteral(FILE* op, ObjConcreteYargType* type) {
         case TypeClass: FPRINTMSG(op, "Class"); break;
         case TypeInstance: FPRINTMSG(op, "Instance"); break;
         case TypeFunction: FPRINTMSG(op, "Function"); break;
-        case TypeNativeBlob: FPRINTMSG(op, "NativeBlob"); break;
         case TypeRoutine: FPRINTMSG(op, "Routine"); break;
         case TypeChannel: FPRINTMSG(op, "Channel"); break;  
         case TypeYargType: FPRINTMSG(op, "Type"); break;

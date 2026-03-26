@@ -119,26 +119,23 @@ typedef struct {
 } ObjExprLiteral;
 
 typedef enum {
-    NUMBER_DOUBLE,
-    NUMBER_INTEGER32,
-    NUMBER_UINTEGER32,
-    NUMBER_UINTEGER64,
-    NUMBER_ADDRESS,
-    NUMBER_INT
+    NUMBER_INT,
+    NUMBER_DOUBLE
 } NumberType;
 
 typedef struct {
     ObjExpr expr;
     NumberType type;
     union {
-        double dbl;
-        int32_t integer32;
-        uint32_t uinteger32;
-        uint64_t ui64;
-        uintptr_t address;
         Int bigInt;
-    } val;
+        double dbl;
+    };
 } ObjExprNumber;
+
+typedef struct {
+    ObjExpr expr;
+    uintptr_t address;
+} ObjExprAddress;
 
 typedef struct {
     ObjExpr expr;
@@ -153,6 +150,7 @@ typedef struct {
 typedef struct {
     ObjExpr expr;
     DynamicObjArray initializers;
+    ObjExpr* cardinality;
 } ObjExprArrayInit;
 
 typedef struct {
@@ -293,12 +291,10 @@ typedef struct {
 ObjAst* newObjAst();
 
 ObjExprNumber* newExprNumberDouble(double value);
-ObjExprNumber* newExprNumberInteger32(int value);
-ObjExprNumber* newExprNumberUInteger32(uint32_t value);
-ObjExprNumber* newExprNumberUInteger64(uint64_t value);
-ObjExprNumber* newExprNumberAddress(uintptr_t value);
-ObjExprNumber* newExprNumberInt(const char* numbers, int numberDigits);
+ObjExprNumber* newExprNumberInt(int numberDecimalDigits);
+ObjExprNumber* newExprNumberFromCint(int constant);
 ObjExprLiteral* newExprLiteral(ExprLiteral literal);
+ObjExprAddress* newExprAddress(uintptr_t value);
 ObjExprString* newExprString(const char* str, int strLength);
 ObjExprOperation* newExprOperation(ObjExpr* rhs, ExprOp op);
 ObjExprGrouping* newExprGrouping(ObjExpr* expression);

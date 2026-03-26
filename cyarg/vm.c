@@ -129,6 +129,7 @@ void initVM() {
     // must be done before initRoutine as initRoutine does a realloc
     platform_mutex_init(&vm.heap);
     platform_mutex_init(&vm.env);
+    initTable(&vm.strings);
 
     // We have an Obj here not on the heap. hack up its init.
     vm.core0.obj.type = OBJ_ROUTINE;
@@ -162,7 +163,6 @@ void initVM() {
     vm.grayStack = NULL;
 
     initCellTable(&vm.globals);
-    initTable(&vm.strings);
     initTable(&vm.imports);
 
     vm.initString = NULL;
@@ -360,17 +360,17 @@ static void defineMethod(ObjRoutine* routine, ObjString* name) {
 }
 
 static bool derefElement(ObjRoutine* routine) {
-    if (!(IS_UNIFORMARRAY(peek(routine, 1)) || isArrayPointer(peek(routine, 1))) || !is_positive_integer(peek(routine, 0))) {
+    if (!(IS_UNIFORMARRAY(peek(routine, 1)) || isArrayPointer(peek(routine, 1))) || !is_positive_integer32(peek(routine, 0))) {
         runtimeError(routine, "Expected an array and a positive or unsigned integer.");
         return false;
     }
-    size_t index = as_positive_integer(peek(routine, 0));
+    size_t index = as_positive_integer32(peek(routine, 0));
     Value result = NIL_VAL;
 
     if (IS_UNIFORMARRAY(peek(routine, 1))) {
         ObjPackedUniformArray* array = AS_UNIFORMARRAY(peek(routine, 1));
         if (index >= arrayCardinality(array->store)) {
-            runtimeError(routine, "Array index %d out of bounds.", index);
+            runtimeError(routine, "Array index %zu out of bounds.", index);
             return false;
         }
         PackedValue element = arrayElement(array->store, index);
@@ -379,7 +379,7 @@ static bool derefElement(ObjRoutine* routine) {
     } else {
         ObjPackedUniformArray* arrayObj = (ObjPackedUniformArray*)destinationObject(peek(routine, 1));
         if (index >= arrayCardinality(arrayObj->store)) {
-            runtimeError(routine, "Array index %d out of bounds (0:%zu)", index, arrayCardinality(arrayObj->store) - 1);
+            runtimeError(routine, "Array index %zu out of bounds (0:%zu)", index, arrayCardinality(arrayObj->store) - 1);
             return false;
         }
         tempRootPush(OBJ_VAL(arrayObj));
@@ -396,13 +396,13 @@ static bool derefElement(ObjRoutine* routine) {
 }
 
 static bool setArrayElement(ObjRoutine* routine) {
-    if (!IS_UNIFORMARRAY(peek(routine, 2)) || !is_positive_integer(peek(routine, 1))) {
+    if (!IS_UNIFORMARRAY(peek(routine, 2)) || !is_positive_integer32(peek(routine, 1))) {
         runtimeError(routine, "Expected an array and a positive or unsigned integer.");
         return false;
     }
 
     Value new_value = peek(routine, 0);
-    uint32_t index = as_positive_integer(peek(routine, 1));
+    uint32_t index = as_positive_integer32(peek(routine, 1));
     Value boxed_array = peek(routine, 2);
 
     if (IS_UNIFORMARRAY(boxed_array)) {
@@ -471,6 +471,92 @@ static void makeConcreteTypeConst(ObjRoutine* routine) {
     }
 }
 
+static void promote(Value *left, Value *right)
+{
+    assert(left != 0 && right != 0);
+
+    Value *toPromote = 0, *promotionToTypeOf;
+    if (IS_INT(*left) && (AS_INTOBJ(*left)->isLiteral))
+    {
+        toPromote = left;
+        promotionToTypeOf = right;
+    }
+    else if (IS_INT(*right) && (AS_INTOBJ(*right)->isLiteral))
+    {
+        toPromote = right;
+        promotionToTypeOf = left;
+    }
+    if (toPromote != 0)
+    {
+        ValueType promoteTo = promotionToTypeOf->type;
+        Int *bigInt = AS_INT(*toPromote);
+
+        switch (promoteTo)
+        {
+        case VAL_I8:
+            if (int_is_range(bigInt, INT8_MIN, INT8_MAX) == INT_WITHIN)
+            {
+                toPromote->type = promoteTo;
+                toPromote->as.i8 = (int8_t) int_to_i32(bigInt);
+            }
+            break;
+        case VAL_UI8:
+            if (int_is_range(bigInt, 0, UINT8_MAX) == INT_WITHIN)
+            {
+                toPromote->type = promoteTo;
+                toPromote->as.ui8 = (uint8_t) int_to_u32(bigInt);
+            }
+            break;
+        case VAL_I16:
+            if (int_is_range(bigInt, INT16_MIN, INT16_MAX) == INT_WITHIN)
+            {
+                toPromote->type = promoteTo;
+                toPromote->as.i16 = (int16_t) int_to_i32(bigInt);
+            }
+            break;
+        case VAL_UI16:
+            if (int_is_range(bigInt, 0, UINT16_MAX) == INT_WITHIN)
+            {
+                toPromote->type = promoteTo;
+                toPromote->as.ui16 = (uint16_t) int_to_u32(bigInt);
+            }
+            break;
+        case VAL_I32:
+            if (int_is_range(bigInt, INT32_MIN, INT32_MAX) == INT_WITHIN)
+            {
+                toPromote->type = promoteTo;
+                toPromote->as.i32 = int_to_i32(bigInt);
+            }
+            break;
+        case VAL_UI32:
+            if (int_is_range(bigInt, 0, UINT32_MAX) == INT_WITHIN)
+            {
+                toPromote->type = promoteTo;
+                toPromote->as.ui32 = int_to_u32(bigInt);
+            }
+            break;
+        case VAL_I64:
+            if (int_is_range(bigInt, INT64_MIN, INT64_MAX) == INT_WITHIN)
+            {
+                toPromote->type = promoteTo;
+                toPromote->as.i64 = int_to_i64(bigInt);
+            }
+            break;
+        case VAL_UI64:
+            if (int_is_range(bigInt, 0, UINT64_MAX) == INT_WITHIN)
+            {
+                toPromote->type = promoteTo;
+                toPromote->as.ui64 = int_to_u64(bigInt);
+            }
+            break;
+
+        default:
+            // can’t promote to this type
+            break;
+        }
+    }
+}
+
 InterpretResult run(ObjRoutine* routine) {
     CallFrame* frame = &routine->frames[routine->frameCount - 1];
     routine->state = EXEC_RUNNING;
@@ -487,6 +573,7 @@ InterpretResult run(ObjRoutine* routine) {
 #define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(routine, op) \
     do { \
+        promote(&peekCell(routine, 1)->value, &peekCell(routine, 0)->value); \
         if (IS_I32(peek(routine, 0)) && IS_I32(peek(routine, 1))) { \
             int32_t b = AS_I32(pop(routine)); \
             int32_t a = AS_I32(pop(routine)); \
@@ -577,6 +664,7 @@ InterpretResult run(ObjRoutine* routine) {
     } while (false)
 #define BINARY_UINT_OP(routine, op) \
     do { \
+        promote(&peekCell(routine, 1)->value, &peekCell(routine, 0)->value); \
         if (IS_UI32(peek(routine, 0)) && IS_UI32(peek(routine, 1))) { \
             uint32_t b = AS_UI32(pop(routine)); \
             uint32_t a = AS_UI32(pop(routine)); \
@@ -621,52 +709,22 @@ InterpretResult run(ObjRoutine* routine) {
                 push(routine, constant);
                 break;
             }
-            case OP_IMMEDIATEi8: {
-                uint8_t byte = READ_BYTE();
-                Value constant = I8_VAL((int8_t)byte);
-                push(routine, constant);
-                break;
-            }
-            case OP_IMMEDIATEui8: {
-                uint8_t byte = READ_BYTE();
-                Value constant = UI8_VAL(byte);
-                push(routine, constant);
-                break;
-            }
-            case OP_IMMEDIATEi16: {
-                uint8_t byte = READ_BYTE();
-                Value constant = I16_VAL((int8_t)byte);
-                push(routine, constant);
-                break;
-            }
-            case OP_IMMEDIATEui16: {
-                uint8_t byte = READ_BYTE();
-                Value constant = UI16_VAL(byte);
-                push(routine, constant);
-                break;
-            }
-            case OP_IMMEDIATEi32: {
-                uint8_t byte = READ_BYTE();
-                Value constant = I32_VAL((int8_t)byte);
-                push(routine, constant);
-                break;
-            }
-            case OP_IMMEDIATEui32: {
-                uint8_t byte = READ_BYTE();
-                Value constant = UI32_VAL(byte);
-                push(routine, constant);
-                break;
-            }
-            case OP_IMMEDIATEi64: {
-                uint8_t byte = READ_BYTE();
-                Value constant = I64_VAL((int8_t)byte);
-                push(routine, constant);
-                break;
-            }
-            case OP_IMMEDIATEui64: {
-                uint8_t byte = READ_BYTE();
-                Value constant = UI64_VAL(byte);
-                push(routine, constant);
+            case OP_IMMEDIATE_N8: case OP_IMMEDIATE_P8: case OP_IMMEDIATE_N16: case OP_IMMEDIATE_P16: case OP_IMMEDIATE_N24: case OP_IMMEDIATE_P24: {
+                uint32_t num = READ_BYTE();
+                if (instruction == OP_IMMEDIATE_N16 || instruction == OP_IMMEDIATE_P16 || instruction == OP_IMMEDIATE_N24 || instruction == OP_IMMEDIATE_P24)
+                {
+                    num += 256 * READ_BYTE();
+                }
+                if (instruction == OP_IMMEDIATE_N24 || instruction == OP_IMMEDIATE_P24)
+                {
+                    num += 65536 * READ_BYTE();
+                }
+                ObjInt *i = (ObjInt *) allocateObject(sizeof (ObjInt) + 2 * sizeof (uint16_t), OBJ_INT);
+                i->isLiteral = true;
+                i->bigInt.m_ = 2;
+                int_set_u(num, &i->bigInt);
+                i->bigInt.neg_ = instruction == OP_IMMEDIATE_N8 || instruction == OP_IMMEDIATE_N16 || instruction == OP_IMMEDIATE_N24;
+                push(routine, OBJ_VAL(i));
                 break;
             }
             case OP_NIL: push(routine, NIL_VAL); break;
@@ -769,7 +827,8 @@ InterpretResult run(ObjRoutine* routine) {
             }
             case OP_GET_PROPERTY: {
                 if (!IS_INSTANCE(peek(routine, 0)) && !IS_STRUCT(peek(routine, 0)) && !isStructPointer(peek(routine, 0)) && !IS_INT(peek(routine, 0))) {
-                    runtimeError(routine, "Only instances, structs, pointers to structs and ints have properties.");
+                    // int is a very special case, so we'll document the general case for ease of understanding.
+                    runtimeError(routine, "Only instances, structs, pointers to structs have properties.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 if (IS_INSTANCE(peek(routine, 0))) {
@@ -824,7 +883,7 @@ InterpretResult run(ObjRoutine* routine) {
                     }
                     else
                     {
-                        runtimeError(routine, "Undefined property '%s'.", name->chars);
+                        runtimeError(routine, "Undefined property '%s' on int. Only 'overflow' is available.", name->chars);
                         return INTERPRET_RUNTIME_ERROR;
                     }
                 }
@@ -873,6 +932,8 @@ InterpretResult run(ObjRoutine* routine) {
                 if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) {
                     binaryIntBoolOp(routine, "==");
                 } else {
+                    promote(&peekCell(routine, 1)->value, &peekCell(routine, 0)->value);
+
                     Value b = pop(routine);
                     Value a = pop(routine);
                     push(routine, BOOL_VAL(valuesEqual(a, b)));
@@ -887,6 +948,8 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_BITAND:      BINARY_UINT_OP(routine, &); break;
             case OP_BITXOR:      BINARY_UINT_OP(routine, ^); break;
             case OP_ADD: {
+                promote(&peekCell(routine, 1)->value, &peekCell(routine, 0)->value);
+
                 if (IS_I32(peek(routine, 0)) && IS_I32(peek(routine, 1))) {
                     int32_t b = AS_I32(pop(routine));
                     int32_t a = AS_I32(pop(routine));
@@ -947,6 +1010,8 @@ InterpretResult run(ObjRoutine* routine) {
                 break;
             }
             case OP_MODULO: {
+                promote(&peekCell(routine, 1)->value, &peekCell(routine, 0)->value);
+
                 if (IS_I32(peek(routine, 0)) && IS_I32(peek(routine, 1))) {
                     int32_t b = AS_I32(pop(routine));
                     int32_t a = AS_I32(pop(routine));
@@ -1044,7 +1109,7 @@ InterpretResult run(ObjRoutine* routine) {
                     runtimeError(routine, "Location must be a pointer to an uint32 or address.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                if (!is_positive_integer(assignment) && !is_stored_type(assignment_type)) {
+                if (!is_positive_integer32(assignment) && !is_stored_type(assignment_type)) {
                     tempRootPop();
                     runtimeError(routine, "Value must be a positive integer or a placeable type.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -1053,15 +1118,21 @@ InterpretResult run(ObjRoutine* routine) {
                 uintptr_t nominal_address = 0;
                 if (isUint32Pointer(location)) {
                     nominal_address = (uintptr_t) AS_POINTER(location)->destination;
-                } else {
+                }
+                else if (IS_ADDRESS(location))
+                {
                     nominal_address = AS_ADDRESS(location);
+                }
+                else
+                {
+                    nominal_address = int_to_u64(AS_INT(location));
                 }
                 volatile uint32_t* reg = (volatile uint32_t*) nominal_address;
 
                 uint32_t val = 0;
 
-                if (is_positive_integer(assignment)) {
-                    val = as_positive_integer(assignment);
+                if (is_positive_integer32(assignment)) {
+                    val = as_positive_integer32(assignment);
                 } else if (is_stored_type(assignment_type)) {
 #if IS_32BIT
                     val = (uintptr_t)storedAddressof(assignment);
@@ -1246,12 +1317,13 @@ InterpretResult run(ObjRoutine* routine) {
                 break;
             }
             case OP_TYPE_ARRAY: {
-                if (!IS_NIL(peek(routine, 0)) && !is_positive_integer(peek(routine, 0))) {
+                if (!IS_NIL(peek(routine, 0)) && !is_positive_integer32(peek(routine, 0))) {
                     runtimeError(routine, "Array cardinality must be positive integer or nil");
+                    return INTERPRET_RUNTIME_ERROR;
                 }
                 uint32_t cardinality = 0;
-                if (is_positive_integer(peek(routine, 0))) {
-                    cardinality = as_positive_integer(peek(routine, 0));
+                if (is_positive_integer32(peek(routine, 0))) {
+                    cardinality = as_positive_integer32(peek(routine, 0));
                 }
                 ObjConcreteYargTypeArray* typeObject = (ObjConcreteYargTypeArray*) newYargArrayTypeFromType(peek(routine, 1));
                 typeObject->cardinality = cardinality;
@@ -1354,7 +1426,28 @@ void binaryIntOp(ObjRoutine* routine, char const *c)
     Int *a = AS_INT(peek(routine, 1));
     Int *b = AS_INT(peek(routine, 0));
 
-    ObjInt *r = ALLOCATE_OBJ(ObjInt, OBJ_INT);
+    int s = 0;
+    switch (*c)
+    {
+    case '+': case '-':
+        s = 1 + (a->m_ > b->m_ ? a->m_ : b->m_);
+        break;
+    case '*':
+        s = a->m_ + b->m_;
+        break;
+    case '/':
+        s = a->m_ ;
+        break;
+    case '%':
+        s = a->m_ > b->m_ ? a->m_ : b->m_;
+        break;
+    default:
+        assert(!"IntOp");
+    }
+    if (s > 254) s = 254;
+    s += s % 2;
+    ObjInt *r = (ObjInt *)allocateObject(sizeof (ObjInt) + s * sizeof (uint16_t), OBJ_INT);
+    r->bigInt.m_ = s;
     int_init(&r->bigInt);
 
     switch (*c)
@@ -1364,9 +1457,9 @@ void binaryIntOp(ObjRoutine* routine, char const *c)
     case '*': int_mul(a, b, &r->bigInt); break;
     case '/': int_div(a, b, &r->bigInt, 0); break; // todo - compiler should optimise for /%
     case '%': {
-        Int q;
-        int_init(&q);
-        int_div(a, b, &q, &r->bigInt); // todo int_div should handle q == 0
+        IntConcrete254 q;
+        int_init_concrete254(&q);
+        int_div(a, b, (Int *) &q, &r->bigInt); // todo int_div should handle q == 0
         break;
     }
     default:
