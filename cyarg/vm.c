@@ -613,7 +613,7 @@ InterpretResult run(ObjRoutine* routine) {
         } else if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) { \
             binaryIntOp(routine, #op); \
         } else { \
-            runtimeError(routine, "Operands must both be numbers, integers or unsigned integers."); \
+            runtimeError(routine, #op " Operands %d %d must both be numbers, integers or unsigned integers.", peek(routine, 0).type, peek(routine, 1).type); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
     } while (false)
@@ -658,7 +658,7 @@ InterpretResult run(ObjRoutine* routine) {
         } else if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) { \
             binaryIntBoolOp(routine, #op); \
         } else { \
-            runtimeError(routine, "Operands must both be numbers, integers or unsigned integers."); \
+            runtimeError(routine, #op " Operands %d %d must both be numbers, integers or unsigned integers.", peek(routine, 0).type, peek(routine, 1).type); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
     } while (false)
@@ -686,7 +686,7 @@ InterpretResult run(ObjRoutine* routine) {
             uint64_t c = a op b; \
             push(routine, UI64_VAL(c)); \
         } else { \
-            runtimeError(routine, "Operands must be unsigned integers."); \
+            runtimeError(routine, #op " Operands %d %d must be unsigned integers.", peek(routine, 0).type, peek(routine, 1).type); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
     } while (false)
@@ -1397,12 +1397,6 @@ InterpretResult interpret(const char* source) {
 
 #ifdef DEBUG_TRACE_EXECUTION
     disassembleChunk(&function->chunk, "<script>");
-    for (int i = 0; i < function->chunk.constants.count; i++) {
-        if (IS_FUNCTION(function->chunk.constants.values[i])) {
-            ObjFunction* fun = AS_FUNCTION(function->chunk.constants.values[i]);
-            disassembleChunk(&fun->chunk, fun->name->chars);
-        }
-    }
 #endif
 
     tempRootPush(OBJ_VAL(function));

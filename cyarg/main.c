@@ -70,13 +70,17 @@ static void disassembleFile(const char* path) {
         exit(EX_DATAERR);
     }
 
-    disassembleChunk(&result->chunk, path);
-    for (int i = 0; i < result->chunk.constants.count; i++) {
-        if (IS_FUNCTION(result->chunk.constants.values[i])) {
-            ObjFunction* fun = AS_FUNCTION(result->chunk.constants.values[i]);
-            disassembleChunk(&fun->chunk, fun->name->chars);
-        }
+    char const *file = strrchr(path, '/');
+    if (file == 0)
+    {
+        file = path;
     }
+    else
+    {
+        file++;
+    }
+
+    disassembleChunk(&result->chunk, file);
 }
 #endif
 

@@ -1,0 +1,39 @@
+var verb;
+fun do(cheese) {
+    var n = "1 ";
+    fun do2() {
+        var m = verb + n + *cheese;
+        print m;
+        *cheese = nil;
+        struct { int32 i; } x;
+        fun do3() {
+            x.i = 77777;
+            for (var i = 0; i < 10000; i = 1 + i) i;
+            return x;
+        }
+        return do3();
+    }
+    return do2();
+}
+
+class CheeseMaker {
+    init(cheese) {
+        this.cheese = cheese;
+    }
+
+    ripen() {
+        var n = "Enjoy ripened ";
+        verb = n;
+        var tc = new(any);
+        *tc = this.cheese;
+        var y = do(tc);
+        print *tc;
+        print this.cheese;
+        return y;
+    }
+}
+
+var maker = CheeseMaker("cheddar");
+var z = maker.ripen();
+print z.i;
+print maker.cheese;

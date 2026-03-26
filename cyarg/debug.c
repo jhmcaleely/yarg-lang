@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 
 #include "debug.h"
 #include "object.h"
@@ -10,6 +12,20 @@ void disassembleChunk(Chunk* chunk, const char* name) {
     printf("== %s ==\n", name);
     for (int offset = 0; offset < chunk->count;) {
         offset = disassembleInstruction(chunk, offset);
+    }
+    for (int i = 0; i < chunk->constants.count; i++)
+    {
+        if (IS_FUNCTION(chunk->constants.values[i]))
+        {
+            ObjFunction *fun = AS_FUNCTION(chunk->constants.values[i]);
+            size_t newNameLen = strlen(name) + 1 + fun->name->length + 1;
+            char *funName = (char *) realloc(0, newNameLen);
+            memcpy(funName, name, strlen(name));
+            strlcat(funName, ".", newNameLen);
+            strlcat(funName, fun->name->chars, newNameLen);
+            disassembleChunk(&fun->chunk, funName);
+            free(funName);
+        }
     }
 }
 
@@ -97,6 +113,7 @@ static int builtinInstruction(const char* name, Chunk* chunk, int offset) {
         case BUILTIN_TS_WRITE: printf("test_write"); break;
         case BUILTIN_TS_INTERRUPT: printf("test_interrupt"); break;
         case BUILTIN_TS_SYNC: printf("test_sync"); break;
+        case BUILTIN_INT: printf("int"); break;
         default: printf("<unknown %4d>", slot); break;
     }
     printf("\n");
