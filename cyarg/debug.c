@@ -32,9 +32,35 @@ void disassembleChunk(Chunk* chunk, const char* name) {
     }
 }
 
+static char const *valueType(Value *v) {
+    switch (v->type)
+    {
+    case VAL_BOOL: return "bool";
+    case VAL_NIL: return "";
+    case VAL_DOUBLE: return "double";
+    case VAL_I8: return "i8";
+    case VAL_UI8: return "ui8";
+    case VAL_I16: return "i16";
+    case VAL_UI16: return "ui16";
+    case VAL_I32: return "i32";
+    case VAL_UI32: return "ui32";
+    case VAL_UI64: return "ui64";
+    case VAL_I64: return "i64";
+    case VAL_ADDRESS: return "address";
+    case VAL_OBJ:
+        switch (AS_OBJ(*v)->type)
+        {
+        case OBJ_INT: return "int";
+        case OBJ_STRING: return "string";
+        default: return "valueType.Obj?";
+        }
+    default: return "valueType?";
+    }
+}
+
 static int constantInstruction(const char* name, Chunk* chunk, int offset) {
     uint8_t constant = chunk->code[offset + 1];
-    printf("%-16s %4d:'", name, constant);
+    printf("%-16s %4d %s:'", name, constant, valueType(&chunk->constants.values[constant]));
     printValue(chunk->constants.values[constant]);
     printf("'\n");
     return offset + 2;
@@ -117,7 +143,8 @@ static int builtinInstruction(const char* name, Chunk* chunk, int offset) {
         case BUILTIN_TS_INTERRUPT: printf("test_interrupt"); break;
         case BUILTIN_TS_SYNC: printf("test_sync"); break;
         case BUILTIN_INT: printf("int"); break;
-    case BUILTIN_STRING: printf("string"); break;
+        case BUILTIN_MFLOAT64:  printf("mfloat64"); break;
+        case BUILTIN_STRING: printf("string"); break;
         default: printf("<unknown %4d>", slot); break;
     }
     printf("\n");

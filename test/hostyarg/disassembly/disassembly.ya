@@ -79,16 +79,57 @@ fun a1() {
         fun a3() {
             print string(80) + "." + string(u); // expect 80.2
             var u = 3;
-            var dd = mfloat64("-1.2e-38");
-            print dd;                           // expect -1.20000e-38
-            dd = mfloat64("123456341234123412341234123412341234123412342341234123412341234123412341234123412341234123412341234123412341234213412341234123412341234"); // expect 1.23456e+134
-            print dd;
+            var dd = mfloat64("-9.87654E-38");
+            print dd;                           // expect -9.87654e-38
+            dd = -9.87654E-38;
+            print dd;                           // expect -9.87654e-38
+            dd = mfloat64("123456341234123412341234123412341234123412342341234123412341234123412341234123412341234123412341234123412341234213412341234123412341234");
+            print dd;                           // expect 1.23456e+134
+            dd = mfloat64(123456341234123412341234123412341234123412342341234123412341234123412341234123412341234123412341234123412341234213412341234123412341234);
+            print dd;                           // expect 1.23456e+134
+            dd = -0.1;
+            print dd;                           // expect -0.100000
+            dd = 1.1;
+            print dd;                           // expect 1.10000
+            dd = 001.1;
+            print dd;                           // expect 1.10000
+            dd = 1e99;
+            print dd;                           // expect 1.00000e+99
+            dd = 0e99;
+            print dd;                           // expect 0.00000
+            dd = 01e99;
+            print dd;                           // expect 1.00000e+99
+            dd = 0.0e0099;
+            print dd;                           // expect 0.00000
+            dd = 0.1e0099;
+            print dd;                           // expect 1.10000e+98
+            dd = 1.1e99;
+            print dd;                           // expect 1.10000e+99
+            dd = 01.1e99;
+            print dd;                           // expect 1.10000e+99
+            dd = 1.01e99;
+            print dd;                           // expect 1.01000e+99
+            dd = 1e-99;
+            print dd;                           // expect 1.00000e-99
+            dd = 0e-99;
+            print dd;                           // expect 0.00000
+            dd = 01e-99;
+            print dd;                           // expect 1.00000e-99
+            dd = 0.0e-0099;
+            print dd;                           // expect 0.00000
+            dd = 0.1e-0099;
+            print dd;                           // expect 1.00000e-100
+            dd = 1.1e-99;
+            print dd;                           // expect 1.10000e-99
+            dd = 01.1e-99;
+            print dd;                           // expect 1.10000e-99
+            dd = -1.01e-99;
+            print dd;                           // expect -1.01000e-99
         }
         a3();
     }
     a2();
 }
-
 a1();
 
 // global - n
@@ -126,13 +167,9 @@ a1();
 // OP_CONSTANT         2:'"'
 // OP_CONSTANT         0:'Already ripened'
 // OP_CONSTANT         0:'Eaten'
-//
-//
-//
-//
-//
-//
-//
-//
-//
+// OP_CONSTANT         0:'77.0000'
+// OP_CONSTANT         1:'0.100000'
+// OP_CONSTANT         0:'.'
+// OP_CONSTANT         1:'-1.2e-38'
+// OP_CONSTANT         2:'123456341234123412341234123412341234123412342341234123412341234123412341234123412341234123412341234123412341234213412341234123412341234'
 //
