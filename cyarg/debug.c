@@ -10,6 +10,7 @@
 
 void disassembleChunk(Chunk* chunk, const char* name) {
     printf("== %s ==\n", name);
+    chunk->line = chunk->lastLine = 0;
     for (int offset = 0; offset < chunk->count;) {
         offset = disassembleInstruction(chunk, offset);
     }
@@ -20,8 +21,7 @@ void disassembleChunk(Chunk* chunk, const char* name) {
             ObjFunction *fun = AS_FUNCTION(chunk->constants.values[i]);
             char *funNameC = (char *) realloc(0, fun->name->length + 1);
             memcpy(funNameC, fun->name->chars, fun->name->length + 1);
-//            int line = chunk->lines[i];
-            int line = i;
+            int line = chunk->line;
             size_t l = snprintf(0, 0, "%s.%d:%s", name, line, funNameC);
             char *funName = (char *) realloc(0, l + 1);
             snprintf(funName, l + 1, "%s.%d:%s", name, line, funNameC);
@@ -82,6 +82,7 @@ static int simpleInstruction(const char* name, int offset) {
 
 static int byteInstruction(const char* name, Chunk* chunk, int offset) {
     uint8_t slot = chunk->code[offset + 1];
+    chunk->immediate = slot;
     printf("%-16s %4d\n", name, slot);
     return offset + 2;
 }
@@ -89,6 +90,7 @@ static int byteInstruction(const char* name, Chunk* chunk, int offset) {
 static int twoByteInstruction(const char* name, Chunk* chunk, int offset) {
     uint16_t slot = chunk->code[offset + 1];
     slot += chunk->code[offset + 2] * 256;
+    chunk->immediate = slot;
     printf("%-16s %6d\n", name, slot);
     return offset + 3;
 }
@@ -97,6 +99,7 @@ static int threeByteInstruction(const char* name, Chunk* chunk, int offset) {
     uint32_t slot = chunk->code[offset + 1];
     slot += chunk->code[offset + 2] * 256;
     slot += chunk->code[offset + 3] * 65536;
+    chunk->immediate = slot;
     printf("%-16s %9d\n", name, slot);
     return offset + 4;
 }
@@ -176,10 +179,11 @@ static int typeLiteralInstruction(const char* name, Chunk* chunk, int offset) {
 
 int disassembleInstruction(Chunk* chunk, int offset) {
     printf("%04d ", offset);
-    if (offset > 0 && chunk->lines[offset] == chunk->lines[offset - 1]) {
+    if (chunk->line == chunk->lastLine) {
         printf("   | ");
     } else {
-        printf("%4d ", chunk->lines[offset]);
+        chunk->lastLine = chunk->line;
+        printf("%4d ", chunk->line);
     }
 
     uint8_t instruction = chunk->code[offset];
@@ -326,6 +330,10 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return simpleInstruction("OP_SET_PTR_TARGET", offset);
         case OP_PLACE:
             return simpleInstruction("OP_PLACE", offset);
+        case OP_LINE:
+            offset = simpleInstruction("OP_LINE", offset);
+            chunk->line = chunk->immediate;
+            return offset;
         default:
             printf("Unknown opcode %d\n", instruction);
             return offset + 1;

@@ -1,6 +1,7 @@
 var verb;
 fun do(cheese) {
     const n = 1;
+    const an = [1, 5, nil, "j"];
     fun do2() {
         var m = verb + " " + string(n) + " " + *cheese;
         print m;
@@ -15,6 +16,9 @@ fun do(cheese) {
     }
     return do2();
 }
+
+       const struct { int32 i; } xy;
+        xy.i = int32(1234);
 
 class CheeseMaker {
     init(cheese) {
@@ -40,7 +44,7 @@ class CheeseEater {
     }
 
     ripen() {
-        var n = "Already ripened";
+        var n = "Already ripened " + string(xy.i);
         verb = n;
         var tc = new(any);
         *tc = this.cheese;
@@ -93,6 +97,7 @@ fun a1() {
             print dd;                           // expect 1.10000
             dd = 001.1;
             print dd;                           // expect 1.10000
+            a2(1,2);
             dd = 1e99;
             print dd;                           // expect 1.00000e+99
             dd = 0e99;
@@ -140,36 +145,36 @@ a1();
 // class - n
 // method - n
 //
+
+// OP_CLASS            3:'CheeseMaker'
+// OP_CLASS            9:'CheeseEater'
+// OP_CONSTANT         0:'.'
+// OP_CONSTANT         0:'77.0000'
+// OP_CONSTANT         0:'Already ripened'
+// OP_CONSTANT         0:'Eaten'
+// OP_CONSTANT         0:'Enjoy ripened'
+// OP_CONSTANT         1:'-1.2e-38'
+// OP_CONSTANT         1:'"'
+// OP_CONSTANT         1:'0.100000'
+// OP_CONSTANT         2:' '
+// OP_CONSTANT         2:'"'
+// OP_CONSTANT         2:'123456341234123412341234123412341234123412342341234123412341234123412341234123412341234123412341234123412341234213412341234123412341234'
+// OP_CONSTANT         3:'i'
+// OP_CONSTANT        19:'cheddar'
+// OP_CONSTANT        22:'cheddar'
 // OP_DEFINE_GLOBAL    0:'verb'
 // OP_DEFINE_GLOBAL    1:'do'
-// OP_CLASS            3:'CheeseMaker'
 // OP_DEFINE_GLOBAL    3:'CheeseMaker'
+// OP_DEFINE_GLOBAL    9:'CheeseEater'
+// OP_DEFINE_GLOBAL   17:'maker'
+// OP_DEFINE_GLOBAL   20:'eater'
+// OP_DEFINE_GLOBAL   23:'z'
+// OP_DEFINE_GLOBAL   30:'w'
+// OP_GET_PROPERTY    27:'i'
+// OP_GET_PROPERTY    29:'cheese'
 // OP_METHOD           5:'init'
 // OP_METHOD           7:'ripen'
-// OP_CLASS            9:'CheeseEater'
-// OP_DEFINE_GLOBAL    9:'CheeseEater'
 // OP_METHOD          11:'init'
 // OP_METHOD          13:'ripen'
 // OP_METHOD          15:'eat'
-// OP_CONSTANT        19:'cheddar'
-// OP_DEFINE_GLOBAL   17:'maker'
-// OP_CONSTANT        22:'cheddar'
-// OP_DEFINE_GLOBAL   20:'eater'
-// OP_DEFINE_GLOBAL   23:'z'
-// OP_GET_PROPERTY    27:'i'
-// OP_GET_PROPERTY    29:'cheese'
-// OP_DEFINE_GLOBAL   30:'w'
-// OP_CONSTANT         2:' '
-// OP_CONSTANT         3:'i'
-// OP_SET_PROPERTY     0:'cheese'
-// OP_CONSTANT         0:'Enjoy ripened'
-// OP_CONSTANT         1:'"'
-// OP_CONSTANT         2:'"'
-// OP_CONSTANT         0:'Already ripened'
-// OP_CONSTANT         0:'Eaten'
-// OP_CONSTANT         0:'77.0000'
-// OP_CONSTANT         1:'0.100000'
-// OP_CONSTANT         0:'.'
-// OP_CONSTANT         1:'-1.2e-38'
-// OP_CONSTANT         2:'123456341234123412341234123412341234123412342341234123412341234123412341234123412341234123412341234123412341234213412341234123412341234'
 //

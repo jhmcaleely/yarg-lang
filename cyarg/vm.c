@@ -1380,6 +1380,11 @@ InterpretResult run(ObjRoutine* routine) {
                 push(routine, result);
                 break;
             }
+            case OP_LINE: {
+                Int *line = AS_INT(pop(routine));
+                frame->closure->function->chunk.line = int_to_i32(line);
+                break;
+            }
         }
     }
 

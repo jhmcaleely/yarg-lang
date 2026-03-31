@@ -251,8 +251,7 @@ void runtimeError(ObjRoutine* routine, const char* format, ...) {
         CallFrame* frame = &routine->frames[i];
         ObjFunction* function = frame->closure->function;
         size_t instruction = frame->ip - function->chunk.code - 1;
-        PRINTERR("[line %d] in ",
-                 function->chunk.lines[instruction]);
+        PRINTERR("[line %d] in ", function->chunk.line);
         if (function->name == NULL) {
             PRINTERR("script\n");
         } else {

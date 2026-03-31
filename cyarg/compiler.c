@@ -227,6 +227,7 @@ static uint8_t makeConstant(Value value) {
 }
 
 #define UINT24_MAX 16777215
+static void emitImmediateConstant(int32_t);
 static void emitConstant(Value value) {
     // DOUBLE_VAL, ADDRESS_VAL or OBJ_VAL(String or Int)
     int32_t v = 0;
@@ -262,43 +263,48 @@ static void emitConstant(Value value) {
     }
     else
     {
-        if (v >= -UINT8_MAX && v <= UINT8_MAX)
+        emitImmediateConstant(v);
+    }
+}
+
+static void emitImmediateConstant(int32_t v)
+{
+    if (v >= -UINT8_MAX && v <= UINT8_MAX)
+    {
+        if (v < 0)
         {
-            if (v < 0)
-            {
-                emitBytes(OP_IMMEDIATE_N8, (uint8_t) (-v));
-            }
-            else
-            {
-                emitBytes(OP_IMMEDIATE_P8, (uint8_t) v);
-            }
+            emitBytes(OP_IMMEDIATE_N8, (uint8_t) (-v));
         }
-        else if (v >= -UINT16_MAX && v <= UINT16_MAX)
+        else
         {
-            if (v < 0)
-            {
-                v = -v;
-                emitBytes(OP_IMMEDIATE_N16, (uint8_t) (v % 256));
-            }
-            else
-            {
-                emitBytes(OP_IMMEDIATE_P16, (uint16_t) (v % 256));
-            }
-            emitByte((uint8_t) (v / 256));
+            emitBytes(OP_IMMEDIATE_P8, (uint8_t) v);
         }
-        else // if (v >= -UINT24_MAX && v < UINT24_MAX)
+    }
+    else if (v >= -UINT16_MAX && v <= UINT16_MAX)
+    {
+        if (v < 0)
         {
-            if (v < 0)
-            {
-                v = -v;
-                emitBytes(OP_IMMEDIATE_N24, (uint8_t) (v % 256));
-            }
-            else
-            {
-                emitBytes(OP_IMMEDIATE_P24, (uint16_t) (v % 256));
-            }
-            emitBytes((uint8_t) ((v / 256) % 256), (uint8_t) (v / 65536));
+            v = -v;
+            emitBytes(OP_IMMEDIATE_N16, (uint8_t) (v % 256));
         }
+        else
+        {
+            emitBytes(OP_IMMEDIATE_P16, (uint16_t) (v % 256));
+        }
+        emitByte((uint8_t) (v / 256));
+    }
+    else // if (v >= -UINT24_MAX && v < UINT24_MAX)
+    {
+        if (v < 0)
+        {
+            v = -v;
+            emitBytes(OP_IMMEDIATE_N24, (uint8_t) (v % 256));
+        }
+        else
+        {
+            emitBytes(OP_IMMEDIATE_P24, (uint16_t) (v % 256));
+        }
+        emitBytes((uint8_t) ((v / 256) % 256), (uint8_t) (v / 65536));
     }
 }
 
@@ -908,6 +914,7 @@ static void generateFunction(FunctionType type, ObjStmtFunDeclaration* decl) {
         emitByte(compiler.upvalues[i].isLocal ? 1 : 0);
         emitByte(compiler.upvalues[i].index);
     }
+    compiler.function->chunk.line = 0;
 }
 
 static void generateStmtFunDeclaration(ObjStmtFunDeclaration* decl) {
@@ -1071,6 +1078,13 @@ static void generateStmtFieldDeclaration(ObjStmtFieldDeclaration* stmt) {
 }
 
 static void generateStmt(ObjStmt* stmt) {
+#if defined COMPILE_INCLUDE_LINE_NUMBERS
+    if (current->function->chunk.line != stmt->line)
+    {
+        emitImmediateConstant(stmt->line);
+        emitByte(OP_LINE);
+    }
+#endif
     current->panicMode = false;
     current->recent = stmt;
     switch (stmt->obj.type) {
@@ -1140,6 +1154,7 @@ static ObjFunction* endCompiler() {
     ObjFunction* function = current->function;
 
     current = current->enclosing;
+
     return function;
 }
 
@@ -1169,7 +1184,8 @@ ObjFunction* compile(const char* source) {
     }
 
     ObjFunction* function = endCompiler();
-
+    function->chunk.line = 0;
+    
     bool compileError = parseError || hadCompilerError;
 
     return compileError ? NULL : function;
