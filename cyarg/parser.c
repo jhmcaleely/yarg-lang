@@ -697,6 +697,7 @@ static ObjExpr* number(bool canAssign) {
         if (state == NUMBER_ZERO || state == NUMBER_MSB)
         {
             char *heapChars = ALLOCATE(char, number_len + 1);
+            heapChars[number - msb] = '\0';
             memcpy(heapChars, msb, number - msb);
             val = newExprNumberInt((int)(msb - number_start + number_len));
             int_set_s(heapChars, &val->bigInt);

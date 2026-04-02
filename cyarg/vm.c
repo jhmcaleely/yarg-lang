@@ -692,8 +692,12 @@ InterpretResult run(ObjRoutine* routine) {
     } while (false)
 
     for (;;) {
-        if (routine->state == EXEC_ERROR) return INTERPRET_RUNTIME_ERROR;
-
+        char *h = frame->ip;
+        if (routine->state == EXEC_ERROR)
+        {
+            runtimeError(routine, "Error");
+            return INTERPRET_RUNTIME_ERROR;
+        }
         if (routine->traceExecution) {
             PRINTERR("[%p]", routine);
             printValueStack(routine, "          ");
@@ -843,6 +847,7 @@ InterpretResult run(ObjRoutine* routine) {
                     }
 
                     if (!bindMethod(routine, instance->klass, name)) {
+                        runtimeError(routine, "Error");
                         return INTERPRET_RUNTIME_ERROR;
                     }
                 } else if (IS_STRUCT(peek(routine, 0))) {
@@ -924,6 +929,7 @@ InterpretResult run(ObjRoutine* routine) {
                 ObjClass* superclass = AS_CLASS(pop(routine));
 
                 if (!bindMethod(routine, superclass, name)) {
+                    runtimeError(routine, "Error");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
@@ -1174,6 +1180,7 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_CALL: {
                 int argCount = READ_BYTE();
                 if (!callValue(routine, peek(routine, argCount), argCount)) {
+                    runtimeError(routine, "Error");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 frame = &routine->frames[routine->frameCount - 1];
@@ -1183,6 +1190,7 @@ InterpretResult run(ObjRoutine* routine) {
                 ObjString* method = READ_STRING();
                 int argCount = READ_BYTE();
                 if (!invoke(routine, method, argCount)) {
+                    runtimeError(routine, "Error");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 frame = &routine->frames[routine->frameCount - 1];
@@ -1193,6 +1201,7 @@ InterpretResult run(ObjRoutine* routine) {
                 int argCount = READ_BYTE();
                 ObjClass* superclass = AS_CLASS(pop(routine));
                 if (!invokeFromClass(routine, superclass, method, argCount)) {
+                    runtimeError(routine, "Error");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 frame = &routine->frames[routine->frameCount - 1];
@@ -1260,12 +1269,14 @@ InterpretResult run(ObjRoutine* routine) {
                 break;
             case OP_ELEMENT: {
                 if (!derefElement(routine)) {
+                    runtimeError(routine, "Error");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
             }
             case OP_SET_ELEMENT: {
                 if (!setArrayElement(routine)) {
+                    runtimeError(routine, "Error");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
@@ -1380,13 +1391,9 @@ InterpretResult run(ObjRoutine* routine) {
                 push(routine, result);
                 break;
             }
-            case OP_LINE: {
-                Int *line = AS_INT(pop(routine));
-                frame->closure->function->chunk.line = int_to_i32(line);
-                break;
-            }
         }
     }
+}
 
 #undef READ_BYTE
 #undef READ_SHORT
@@ -1394,7 +1401,6 @@ InterpretResult run(ObjRoutine* routine) {
 #undef READ_STRING
 #undef BINARY_BOOLEAN_OP
 #undef BINARY_OP
-}
 
 InterpretResult interpret(const char* source) {
     ObjFunction* function = compile(source);

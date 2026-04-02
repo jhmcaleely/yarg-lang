@@ -67,16 +67,21 @@ typedef enum {
     OP_SET_CELL_TYPE,
     OP_DEREF_PTR,
     OP_SET_PTR_TARGET,
-    OP_PLACE,
-    OP_LINE
+    OP_PLACE
 } OpCode;
+
+typedef struct {
+    uint16_t address;
+    uint16_t line;
+} ChunkSource;
 
 typedef struct {
     int count;
     int capacity;
     uint8_t* code;
-    int immediate;
-    int line, lastLine;
+    int numLines;
+    int lineCapacity;
+    ChunkSource *lines;
     DynamicValueArray constants;
 } Chunk;
 

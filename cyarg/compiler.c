@@ -914,7 +914,6 @@ static void generateFunction(FunctionType type, ObjStmtFunDeclaration* decl) {
         emitByte(compiler.upvalues[i].isLocal ? 1 : 0);
         emitByte(compiler.upvalues[i].index);
     }
-    compiler.function->chunk.line = 0;
 }
 
 static void generateStmtFunDeclaration(ObjStmtFunDeclaration* decl) {
@@ -1079,10 +1078,17 @@ static void generateStmtFieldDeclaration(ObjStmtFieldDeclaration* stmt) {
 
 static void generateStmt(ObjStmt* stmt) {
 #if defined COMPILE_INCLUDE_LINE_NUMBERS
-    if (current->function->chunk.line != stmt->line)
+    if (current->function->chunk.numLines == 0 ||
+        current->function->chunk.lines[current->function->chunk.numLines - 1].line != stmt->line)
     {
-        emitImmediateConstant(stmt->line);
-        emitByte(OP_LINE);
+        if (current->function->chunk.numLines == current->function->chunk.lineCapacity)
+        {
+            int capacity = current->function->chunk.lineCapacity;
+            int newCapacity = capacity + 16;
+            current->function->chunk.lineCapacity = newCapacity;
+            current->function->chunk.lines = GROW_ARRAY(ChunkSource, current->function->chunk.lines, capacity, newCapacity);
+        }
+        current->function->chunk.lines[current->function->chunk.numLines++] = (ChunkSource){current->function->chunk.count, stmt->line};
     }
 #endif
     current->panicMode = false;
@@ -1184,7 +1190,6 @@ ObjFunction* compile(const char* source) {
     }
 
     ObjFunction* function = endCompiler();
-    function->chunk.line = 0;
     
     bool compileError = parseError || hadCompilerError;
 

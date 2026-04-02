@@ -17,13 +17,37 @@ fun do(cheese) {
     return do2();
 }
 
-const xa = [int32(1234),  77.0, int32(33554432)];
-const struct { int32 i; mfloat64 f; int32 j; } xy;
-xa[0] = int32(4321);
-xy.i = xa[0];
-xy.f = xa[1];
-xy.j = xa[2];
-print xy;
+const xa = [int8(-128), int16(213), int32(222), int64(444555566666667777), uint8(127), uint16(44444), uint32(1111999900), uint64(4445555666666677777), int8(0), 77.0, int8(1), 333777777788888888444555555566666666, int8(2), true];
+print string(xa[0]);                                // expect: -128
+print xa;                                           // expect: Type:any[14]:[-128, 213, 222, 444555566666667777, 127, 44444, 1111999900, 4445555666666677777, 0, 77.0000, 1, 333777777788888888444555555566666666, 2, true]
+xa[0] = int8(-127);
+xa[3] = int64(7777777666666555444);
+xa[11] = 6666666666555555555544488888888887777777777333;
+print xa;                                           // expect: Type:any[14]:[-127, 213, 222, 7777777666666555444, 127, 44444, 1111999900, 4445555666666677777, 0, 77.0000, 1, 6666666666555555555544488888888887777777777333, 2, true]
+const struct { int8 a; int16 b; int32 c; int64 d; uint8 ua; uint16 ub; uint32 uc; uint64 ud; int8 e; mfloat64 f; int8 g; int i; int8 j; bool k; any u; } xy;
+print xy;                                           // expect: struct{|15:89|0; 0; 0; 0; 0; 0; 0; 0; 0; 0.00000; 0; 0; 0; false; nil; }
+xy.a = xa[0];
+xy.b = xa[1];
+xy.c = xa[2];
+xy.d = xa[3];
+xy.ua = xa[4];
+xy.ub = uint16(xa[1]);
+xy.uc = uint32(xa[2]);
+xy.ud = xa[7];
+xy.e = xa[8];
+xy.f = xa[9];
+xy.g = -xa[10];
+xy.i = xa[11];
+xy.j = xa[12];
+xy.k = xa[13];
+print xy;                                           // expect: struct{|15:89|-127; 213; 222; 7777777666666555444; 127; 213; 222; 4445555666666677777; 0; 77.0000; -1; 6666666666555555555544488888888887777777777333; 2; true; nil; }
+xy.u = [2, 3, 4];
+var za;
+za = xa;
+var xz;
+xz = xy;
+print za;                                           // expect: Type:any[14]:[-127, 213, 222, 7777777666666555444, 127, 44444, 1111999900, 4445555666666677777, 0, 77.0000, 1, 6666666666555555555544488888888887777777777333, 2, true]
+print xz;                                           // expect: struct{|15:89|-127; 213; 222; 7777777666666555444; 127; 213; 222; 4445555666666677777; 0; 77.0000; -1; 6666666666555555555544488888888887777777777333; 2; true; Type:any[3]:[2, 3, 4]; }
 
 class CheeseMaker {
     init(cheese) {
@@ -67,18 +91,18 @@ class CheeseEater {
 
 var maker = CheeseMaker("cheddar");
 var eater = CheeseEater("cheddar");
-var z = maker.ripen(); // expect cheddar
-                       // expect Enjoy ripened 1 cheddar
-                       // expect nil
-                       // expect cheddar
-print z.i;             // expect 77777
-print maker.cheese;    // expect cheddar
-var w = eater.ripen(); // expect "cheddar"
-                       // expect Already ripened 1 "cheddar"
-                       // expect nil
-                       // expect "cheddar"
-print w.i;             // expect 77777
-eater.eat();           // expect Eaten
+var z = maker.ripen(); // expect: cheddar
+                       // expect: Enjoy ripened 1 cheddar
+                       // expect: nil
+                       // expect: cheddar
+print z.i;             // expect: 77777
+print maker.cheese;    // expect: cheddar
+var w = eater.ripen(); // expect: "cheddar"
+                       // expect: Already ripened 1 "cheddar"
+                       // expect: nil
+                       // expect: "cheddar"
+print w.i;             // expect: 77777
+eater.eat();           // expect: Eaten
 
 // global - n
 // local
@@ -117,3 +141,555 @@ eater.eat();           // expect Eaten
 //	OP_METHOD	string:'eat'
 //	OP_METHOD	string:'init'
 //	OP_METHOD	string:'ripen'
+
+//gh.yarg-lang(60574,0x1fdbd2240) malloc: nano zone abandoned due to inability to reserve vm space.
+//== disassembly.ya ==
+//0000    1 OP_NIL
+//0001    | OP_SET_CELL_TYPE
+//0002    | OP_DEFINE_GLOBAL    0 string:'verb'
+//0004    2 OP_CLOSURE          2 <fn do>
+//0006    | OP_DEFINE_GLOBAL    1 string:'do'
+//0008   20 OP_NIL
+//0009    | OP_TYPE_MODIFIER const
+//0011    | OP_SET_CELL_TYPE
+//0012    | OP_GET_BUILTIN   new
+//0014    | OP_NIL
+//0015    | OP_IMMEDIATE_P8    14
+//0017    | OP_TYPE_ARRAY
+//0018    | OP_CALL             1
+//0020    | OP_IMMEDIATE_P8     0
+//0022    | OP_GET_BUILTIN   int8
+//0024    | OP_IMMEDIATE_P8   128
+//0026    | OP_NEGATE
+//0027    | OP_CALL             1
+//0029    | OP_SET_ELEMENT
+//0030    | OP_IMMEDIATE_P8     1
+//0032    | OP_GET_BUILTIN   int16
+//0034    | OP_IMMEDIATE_P8   213
+//0036    | OP_CALL             1
+//0038    | OP_SET_ELEMENT
+//0039    | OP_IMMEDIATE_P8     2
+//0041    | OP_GET_BUILTIN   int32
+//0043    | OP_IMMEDIATE_P8   222
+//0045    | OP_CALL             1
+//0047    | OP_SET_ELEMENT
+//0048    | OP_IMMEDIATE_P8     3
+//0050    | OP_GET_BUILTIN   int64
+//0052    | OP_CONSTANT         4 int:'444555566666667777'
+//0054    | OP_CALL             1
+//0056    | OP_SET_ELEMENT
+//0057    | OP_IMMEDIATE_P8     4
+//0059    | OP_GET_BUILTIN   uint8
+//0061    | OP_IMMEDIATE_P8   127
+//0063    | OP_CALL             1
+//0065    | OP_SET_ELEMENT
+//0066    | OP_IMMEDIATE_P8     5
+//0068    | OP_GET_BUILTIN   uint16
+//0070    | OP_IMMEDIATE_P16  44444
+//0073    | OP_CALL             1
+//0075    | OP_SET_ELEMENT
+//0076    | OP_IMMEDIATE_P8     6
+//0078    | OP_GET_BUILTIN   uint32
+//0080    | OP_CONSTANT         5 int:'1111999900'
+//0082    | OP_CALL             1
+//0084    | OP_SET_ELEMENT
+//0085    | OP_IMMEDIATE_P8     7
+//0087    | OP_GET_BUILTIN   uint64
+//0089    | OP_CONSTANT         6 int:'4445555666666677777'
+//0091    | OP_CALL             1
+//0093    | OP_SET_ELEMENT
+//0094    | OP_IMMEDIATE_P8     8
+//0096    | OP_GET_BUILTIN   int8
+//0098    | OP_IMMEDIATE_P8     0
+//0100    | OP_CALL             1
+//0102    | OP_SET_ELEMENT
+//0103    | OP_IMMEDIATE_P8     9
+//0105    | OP_CONSTANT         7 double:'77.0000'
+//0107    | OP_SET_ELEMENT
+//0108    | OP_IMMEDIATE_P8    10
+//0110    | OP_GET_BUILTIN   int8
+//0112    | OP_IMMEDIATE_P8     1
+//0114    | OP_CALL             1
+//0116    | OP_SET_ELEMENT
+//0117    | OP_IMMEDIATE_P8    11
+//0119    | OP_CONSTANT         8 int:'333777777788888888444555555566666666'
+//0121    | OP_SET_ELEMENT
+//0122    | OP_IMMEDIATE_P8    12
+//0124    | OP_GET_BUILTIN   int8
+//0126    | OP_IMMEDIATE_P8     2
+//0128    | OP_CALL             1
+//0130    | OP_SET_ELEMENT
+//0131    | OP_IMMEDIATE_P8    13
+//0133    | OP_TRUE
+//0134    | OP_SET_ELEMENT
+//0135    | OP_INITIALISE
+//0136    | OP_DEFINE_GLOBAL    3 string:'xa'
+//0138   21 OP_GET_BUILTIN   string
+//0140    | OP_GET_GLOBAL       9 string:'xa'
+//0142    | OP_IMMEDIATE_P8     0
+//0144    | OP_ELEMENT
+//0145    | OP_CALL             1
+//0147    | OP_PRINT
+//0148   22 OP_GET_GLOBAL      10 string:'xa'
+//0150    | OP_PRINT
+//0151   23 OP_GET_GLOBAL      11 string:'xa'
+//0153    | OP_IMMEDIATE_P8     0
+//0155    | OP_GET_BUILTIN   int8
+//0157    | OP_IMMEDIATE_P8   127
+//0159    | OP_NEGATE
+//0160    | OP_CALL             1
+//0162    | OP_SET_ELEMENT
+//0163    | OP_POP
+//0164   24 OP_GET_GLOBAL      12 string:'xa'
+//0166    | OP_IMMEDIATE_P8     3
+//0168    | OP_GET_BUILTIN   int64
+//0170    | OP_CONSTANT        13 int:'7777777666666555444'
+//0172    | OP_CALL             1
+//0174    | OP_SET_ELEMENT
+//0175    | OP_POP
+//0176   25 OP_GET_GLOBAL      14 string:'xa'
+//0178    | OP_IMMEDIATE_P8    11
+//0180    | OP_CONSTANT        15 int:'6666666666555555555544488888888887777777777333'
+//0182    | OP_SET_ELEMENT
+//0183    | OP_POP
+//0184   26 OP_GET_GLOBAL      16 string:'xa'
+//0186    | OP_PRINT
+//0187   27 OP_NIL
+//0188    | OP_NIL
+//0189    | OP_CONSTANT        18 string:'u'
+//0191    | OP_TYPE_LITERAL  bool
+//0193    | OP_NIL
+//0194    | OP_CONSTANT        19 string:'k'
+//0196    | OP_TYPE_LITERAL  int8
+//0198    | OP_NIL
+//0199    | OP_CONSTANT        20 string:'j'
+//0201    | OP_TYPE_LITERAL  int
+//0203    | OP_NIL
+//0204    | OP_CONSTANT        21 string:'i'
+//0206    | OP_TYPE_LITERAL  int8
+//0208    | OP_NIL
+//0209    | OP_CONSTANT        22 string:'g'
+//0211    | OP_TYPE_LITERAL  mfloat64
+//0213    | OP_NIL
+//0214    | OP_CONSTANT        23 string:'f'
+//0216    | OP_TYPE_LITERAL  int8
+//0218    | OP_NIL
+//0219    | OP_CONSTANT        24 string:'e'
+//0221    | OP_TYPE_LITERAL  uint64
+//0223    | OP_NIL
+//0224    | OP_CONSTANT        25 string:'ud'
+//0226    | OP_TYPE_LITERAL  uint32
+//0228    | OP_NIL
+//0229    | OP_CONSTANT        26 string:'uc'
+//0231    | OP_TYPE_LITERAL  uint16
+//0233    | OP_NIL
+//0234    | OP_CONSTANT        27 string:'ub'
+//0236    | OP_TYPE_LITERAL  uint8
+//0238    | OP_NIL
+//0239    | OP_CONSTANT        28 string:'ua'
+//0241    | OP_TYPE_LITERAL  int64
+//0243    | OP_NIL
+//0244    | OP_CONSTANT        29 string:'d'
+//0246    | OP_TYPE_LITERAL  int32
+//0248    | OP_NIL
+//0249    | OP_CONSTANT        30 string:'c'
+//0251    | OP_TYPE_LITERAL  int16
+//0253    | OP_NIL
+//0254    | OP_CONSTANT        31 string:'b'
+//0256    | OP_TYPE_LITERAL  int8
+//0258    | OP_NIL
+//0259    | OP_CONSTANT        32 string:'a'
+//0261    | OP_TYPE_STRUCT     15
+//0263    | OP_TYPE_MODIFIER const
+//0265    | OP_SET_CELL_TYPE
+//0266    | OP_DEFINE_GLOBAL   17 string:'xy'
+//0268   28 OP_GET_GLOBAL      33 string:'xy'
+//0270    | OP_PRINT
+//0271   29 OP_GET_GLOBAL      34 string:'xy'
+//0273    | OP_GET_GLOBAL      36 string:'xa'
+//0275    | OP_IMMEDIATE_P8     0
+//0277    | OP_ELEMENT
+//0278    | OP_SET_PROPERTY    35 string:'a'
+//0280    | OP_POP
+//0281   30 OP_GET_GLOBAL      37 string:'xy'
+//0283    | OP_GET_GLOBAL      39 string:'xa'
+//0285    | OP_IMMEDIATE_P8     1
+//0287    | OP_ELEMENT
+//0288    | OP_SET_PROPERTY    38 string:'b'
+//0290    | OP_POP
+//0291   31 OP_GET_GLOBAL      40 string:'xy'
+//0293    | OP_GET_GLOBAL      42 string:'xa'
+//0295    | OP_IMMEDIATE_P8     2
+//0297    | OP_ELEMENT
+//0298    | OP_SET_PROPERTY    41 string:'c'
+//0300    | OP_POP
+//0301   32 OP_GET_GLOBAL      43 string:'xy'
+//0303    | OP_GET_GLOBAL      45 string:'xa'
+//0305    | OP_IMMEDIATE_P8     3
+//0307    | OP_ELEMENT
+//0308    | OP_SET_PROPERTY    44 string:'d'
+//0310    | OP_POP
+//0311   33 OP_GET_GLOBAL      46 string:'xy'
+//0313    | OP_GET_GLOBAL      48 string:'xa'
+//0315    | OP_IMMEDIATE_P8     4
+//0317    | OP_ELEMENT
+//0318    | OP_SET_PROPERTY    47 string:'ua'
+//0320    | OP_POP
+//0321   34 OP_GET_GLOBAL      49 string:'xy'
+//0323    | OP_GET_BUILTIN   uint16
+//0325    | OP_GET_GLOBAL      51 string:'xa'
+//0327    | OP_IMMEDIATE_P8     1
+//0329    | OP_ELEMENT
+//0330    | OP_CALL             1
+//0332    | OP_SET_PROPERTY    50 string:'ub'
+//0334    | OP_POP
+//0335   35 OP_GET_GLOBAL      52 string:'xy'
+//0337    | OP_GET_BUILTIN   uint32
+//0339    | OP_GET_GLOBAL      54 string:'xa'
+//0341    | OP_IMMEDIATE_P8     2
+//0343    | OP_ELEMENT
+//0344    | OP_CALL             1
+//0346    | OP_SET_PROPERTY    53 string:'uc'
+//0348    | OP_POP
+//0349   36 OP_GET_GLOBAL      55 string:'xy'
+//0351    | OP_GET_GLOBAL      57 string:'xa'
+//0353    | OP_IMMEDIATE_P8     7
+//0355    | OP_ELEMENT
+//0356    | OP_SET_PROPERTY    56 string:'ud'
+//0358    | OP_POP
+//0359   37 OP_GET_GLOBAL      58 string:'xy'
+//0361    | OP_GET_GLOBAL      60 string:'xa'
+//0363    | OP_IMMEDIATE_P8     8
+//0365    | OP_ELEMENT
+//0366    | OP_SET_PROPERTY    59 string:'e'
+//0368    | OP_POP
+//0369   38 OP_GET_GLOBAL      61 string:'xy'
+//0371    | OP_GET_GLOBAL      63 string:'xa'
+//0373    | OP_IMMEDIATE_P8     9
+//0375    | OP_ELEMENT
+//0376    | OP_SET_PROPERTY    62 string:'f'
+//0378    | OP_POP
+//0379   39 OP_GET_GLOBAL      64 string:'xy'
+//0381    | OP_GET_GLOBAL      66 string:'xa'
+//0383    | OP_IMMEDIATE_P8    10
+//0385    | OP_ELEMENT
+//0386    | OP_NEGATE
+//0387    | OP_SET_PROPERTY    65 string:'g'
+//0389    | OP_POP
+//0390   40 OP_GET_GLOBAL      67 string:'xy'
+//0392    | OP_GET_GLOBAL      69 string:'xa'
+//0394    | OP_IMMEDIATE_P8    11
+//0396    | OP_ELEMENT
+//0397    | OP_SET_PROPERTY    68 string:'i'
+//0399    | OP_POP
+//0400   41 OP_GET_GLOBAL      70 string:'xy'
+//0402    | OP_GET_GLOBAL      72 string:'xa'
+//0404    | OP_IMMEDIATE_P8    12
+//0406    | OP_ELEMENT
+//0407    | OP_SET_PROPERTY    71 string:'j'
+//0409    | OP_POP
+//0410   42 OP_GET_GLOBAL      73 string:'xy'
+//0412    | OP_GET_GLOBAL      75 string:'xa'
+//0414    | OP_IMMEDIATE_P8    13
+//0416    | OP_ELEMENT
+//0417    | OP_SET_PROPERTY    74 string:'k'
+//0419    | OP_POP
+//0420   43 OP_GET_GLOBAL      76 string:'xy'
+//0422    | OP_PRINT
+//0423   44 OP_GET_GLOBAL      77 string:'xy'
+//0425    | OP_GET_BUILTIN   new
+//0427    | OP_NIL
+//0428    | OP_IMMEDIATE_P8     3
+//0430    | OP_TYPE_ARRAY
+//0431    | OP_CALL             1
+//0433    | OP_IMMEDIATE_P8     0
+//0435    | OP_IMMEDIATE_P8     2
+//0437    | OP_SET_ELEMENT
+//0438    | OP_IMMEDIATE_P8     1
+//0440    | OP_IMMEDIATE_P8     3
+//0442    | OP_SET_ELEMENT
+//0443    | OP_IMMEDIATE_P8     2
+//0445    | OP_IMMEDIATE_P8     4
+//0447    | OP_SET_ELEMENT
+//0448    | OP_SET_PROPERTY    78 string:'u'
+//0450    | OP_POP
+//0451   45 OP_NIL
+//0452    | OP_SET_CELL_TYPE
+//0453    | OP_DEFINE_GLOBAL   79 string:'za'
+//0455   46 OP_GET_GLOBAL      81 string:'xa'
+//0457    | OP_SET_GLOBAL      80 string:'za'
+//0459    | OP_POP
+//0460   47 OP_NIL
+//0461    | OP_SET_CELL_TYPE
+//0462    | OP_DEFINE_GLOBAL   82 string:'xz'
+//0464   48 OP_GET_GLOBAL      84 string:'xy'
+//0466    | OP_SET_GLOBAL      83 string:'xz'
+//0468    | OP_POP
+//0469   49 OP_GET_GLOBAL      85 string:'za'
+//0471    | OP_PRINT
+//0472   50 OP_GET_GLOBAL      86 string:'xz'
+//0474    | OP_PRINT
+//0475   52 OP_CLASS           87 string:'CheeseMaker'
+//0477    | OP_DEFINE_GLOBAL   87 string:'CheeseMaker'
+//0479    | OP_GET_GLOBAL      88 string:'CheeseMaker'
+//0481    | OP_CLOSURE         90 <fn init>
+//0483    | OP_METHOD          89 string:'init'
+//0485    | OP_CLOSURE         92 <fn ripen>
+//0487    | OP_METHOD          91 string:'ripen'
+//0489    | OP_POP
+//0490   70 OP_CLASS           93 string:'CheeseEater'
+//0492    | OP_DEFINE_GLOBAL   93 string:'CheeseEater'
+//0494    | OP_GET_GLOBAL      94 string:'CheeseEater'
+//0496    | OP_CLOSURE         96 <fn init>
+//0498    | OP_METHOD          95 string:'init'
+//0500    | OP_CLOSURE         98 <fn ripen>
+//0502    | OP_METHOD          97 string:'ripen'
+//0504    | OP_CLOSURE        100 <fn eat>
+//0506    | OP_METHOD          99 string:'eat'
+//0508    | OP_POP
+//0509   92 OP_NIL
+//0510    | OP_SET_CELL_TYPE
+//0511    | OP_GET_GLOBAL     102 string:'CheeseMaker'
+//0513    | OP_CONSTANT       103 string:'cheddar'
+//0515    | OP_CALL             1
+//0517    | OP_INITIALISE
+//0518    | OP_DEFINE_GLOBAL  101 string:'maker'
+//0520   93 OP_NIL
+//0521    | OP_SET_CELL_TYPE
+//0522    | OP_GET_GLOBAL     105 string:'CheeseEater'
+//0524    | OP_CONSTANT       106 string:'cheddar'
+//0526    | OP_CALL             1
+//0528    | OP_INITIALISE
+//0529    | OP_DEFINE_GLOBAL  104 string:'eater'
+//0531   94 OP_NIL
+//0532    | OP_SET_CELL_TYPE
+//0533    | OP_GET_GLOBAL     108 string:'maker'
+//0535    | OP_INVOKE        (0 args)  109:'ripen'
+//0538    | OP_INITIALISE
+//0539    | OP_DEFINE_GLOBAL  107 string:'z'
+//0541   98 OP_GET_GLOBAL     110 string:'z'
+//0543    | OP_GET_PROPERTY   111 string:'i'
+//0545    | OP_PRINT
+//0546   99 OP_GET_GLOBAL     112 string:'maker'
+//0548    | OP_GET_PROPERTY   113 string:'cheese'
+//0550    | OP_PRINT
+//0551  100 OP_NIL
+//0552    | OP_SET_CELL_TYPE
+//0553    | OP_GET_GLOBAL     115 string:'eater'
+//0555    | OP_INVOKE        (0 args)  116:'ripen'
+//0558    | OP_INITIALISE
+//0559    | OP_DEFINE_GLOBAL  114 string:'w'
+//0561  104 OP_GET_GLOBAL     117 string:'w'
+//0563    | OP_GET_PROPERTY   118 string:'i'
+//0565    | OP_PRINT
+//0566  105 OP_GET_GLOBAL     119 string:'eater'
+//0568    | OP_INVOKE        (0 args)  120:'eat'
+//0571    | OP_POP
+//0572    | OP_NIL
+//0573    | OP_RETURN
+//== disassembly.ya.1:do ==
+//0000    3 OP_NIL
+//0001    | OP_TYPE_MODIFIER const
+//0003    | OP_SET_CELL_TYPE
+//0004    | OP_IMMEDIATE_P8     1
+//0006    | OP_INITIALISE
+//0007    4 OP_NIL
+//0008    | OP_TYPE_MODIFIER const
+//0010    | OP_SET_CELL_TYPE
+//0011    | OP_GET_BUILTIN   new
+//0013    | OP_NIL
+//0014    | OP_IMMEDIATE_P8     4
+//0016    | OP_TYPE_ARRAY
+//0017    | OP_CALL             1
+//0019    | OP_IMMEDIATE_P8     0
+//0021    | OP_IMMEDIATE_P8     1
+//0023    | OP_SET_ELEMENT
+//0024    | OP_IMMEDIATE_P8     1
+//0026    | OP_IMMEDIATE_P8     5
+//0028    | OP_SET_ELEMENT
+//0029    | OP_IMMEDIATE_P8     2
+//0031    | OP_NIL
+//0032    | OP_SET_ELEMENT
+//0033    | OP_IMMEDIATE_P8     3
+//0035    | OP_CONSTANT         0 string:'j'
+//0037    | OP_SET_ELEMENT
+//0038    | OP_INITIALISE
+//0039    5 OP_CLOSURE          1 <fn do2>
+//0041       |                    local 2
+//0043       |                    local 1
+//0045   17 OP_GET_LOCAL        4
+//0047    | OP_CALL             0
+//0049    | OP_RETURN
+//0050    | OP_NIL
+//0051    | OP_RETURN
+//== disassembly.ya.1:do.3:do2 ==
+//0000    6 OP_NIL
+//0001    | OP_SET_CELL_TYPE
+//0002    | OP_GET_GLOBAL       0 string:'verb'
+//0004    | OP_CONSTANT         1 string:' '
+//0006    | OP_ADD
+//0007    | OP_GET_BUILTIN   string
+//0009    | OP_GET_UPVALUE      0
+//0011    | OP_CALL             1
+//0013    | OP_ADD
+//0014    | OP_CONSTANT         2 string:' '
+//0016    | OP_ADD
+//0017    | OP_GET_UPVALUE      1
+//0019    | OP_DEREF_PTR
+//0020    | OP_ADD
+//0021    | OP_INITIALISE
+//0022    7 OP_GET_LOCAL        1
+//0024    | OP_PRINT
+//0025    8 OP_GET_UPVALUE      1
+//0027    | OP_NIL
+//0028    | OP_SET_PTR_TARGET
+//0029    | OP_POP
+//0030    9 OP_TYPE_LITERAL  int32
+//0032    | OP_NIL
+//0033    | OP_CONSTANT         3 string:'i'
+//0035    | OP_TYPE_STRUCT      1
+//0037    | OP_SET_CELL_TYPE
+//0038   10 OP_CLOSURE          4 <fn do3>
+//0040       |                    local 2
+//0042       |                    upvalue 0
+//0044       |                    local 1
+//0046   15 OP_GET_LOCAL        3
+//0048    | OP_CALL             0
+//0050    | OP_RETURN
+//0051    | OP_NIL
+//0052    | OP_RETURN
+//== disassembly.ya.1:do.3:do2.6:do3 ==
+//0000   11 OP_GET_UPVALUE      0
+//0002    | OP_IMMEDIATE_P24     77777
+//0006    | OP_SET_PROPERTY     0 string:'i'
+//0008    | OP_POP
+//0009   12 OP_NIL
+//0010    | OP_SET_CELL_TYPE
+//0011    | OP_IMMEDIATE_P8     0
+//0013    | OP_INITIALISE
+//0014    | OP_GET_LOCAL        1
+//0016    | OP_GET_UPVALUE      1
+//0018    | OP_LESS
+//0019    | OP_JUMP_IF_FALSE   19 -> 43
+//0022    | OP_POP
+//0023    | OP_JUMP            23 -> 37
+//0026    | OP_IMMEDIATE_P8     1
+//0028    | OP_GET_LOCAL        1
+//0030    | OP_ADD
+//0031    | OP_SET_LOCAL        1
+//0033    | OP_POP
+//0034    | OP_LOOP            34 -> 14
+//0037    | OP_GET_UPVALUE      2
+//0039    | OP_POP
+//0040    | OP_LOOP            40 -> 26
+//0043    | OP_POP
+//0044    | OP_POP
+//0045   13 OP_GET_UPVALUE      0
+//0047    | OP_RETURN
+//0048    | OP_NIL
+//0049    | OP_RETURN
+//== disassembly.ya.1:init ==
+//0000   54 OP_GET_LOCAL        0
+//0002    | OP_GET_LOCAL        1
+//0004    2 OP_SET_PROPERTY     0 string:'cheese'
+//0006    | OP_POP
+//0007    | OP_GET_LOCAL        0
+//0009    | OP_RETURN
+//== disassembly.ya.1:ripen ==
+//0000   58 OP_NIL
+//0001    | OP_SET_CELL_TYPE
+//0002    | OP_CONSTANT         0 string:'Enjoy ripened'
+//0004    | OP_INITIALISE
+//0005   59 OP_GET_LOCAL        1
+//0007    | OP_SET_GLOBAL       1 string:'verb'
+//0009    | OP_POP
+//0010   60 OP_NIL
+//0011    | OP_SET_CELL_TYPE
+//0012    | OP_GET_BUILTIN   new
+//0014    | OP_NIL
+//0015    | OP_CALL             1
+//0017    | OP_INITIALISE
+//0018   61 OP_GET_LOCAL        2
+//0020    | OP_GET_LOCAL        0
+//0022    | OP_GET_PROPERTY     2 string:'cheese'
+//0024    | OP_SET_PTR_TARGET
+//0025    | OP_POP
+//0026   62 OP_GET_LOCAL        2
+//0028    | OP_DEREF_PTR
+//0029    | OP_PRINT
+//0030   63 OP_NIL
+//0031    | OP_SET_CELL_TYPE
+//0032    | OP_GET_GLOBAL       3 string:'do'
+//0034    | OP_GET_LOCAL        2
+//0036    | OP_CALL             1
+//0038    | OP_INITIALISE
+//0039   64 OP_GET_LOCAL        2
+//0041    | OP_DEREF_PTR
+//0042    | OP_PRINT
+//0043   65 OP_GET_LOCAL        0
+//0045    | OP_GET_PROPERTY     4 string:'cheese'
+//0047    | OP_PRINT
+//0048   66 OP_GET_LOCAL        3
+//0050    | OP_RETURN
+//0051    | OP_NIL
+//0052    | OP_RETURN
+//== disassembly.ya.1:init ==
+//0000   72 OP_GET_LOCAL        0
+//0002    | OP_CONSTANT         1 string:'"'
+//0004    | OP_GET_LOCAL        1
+//0006    | OP_ADD
+//0007    | OP_CONSTANT         2 string:'"'
+//0009    | OP_ADD
+//0010    | OP_SET_PROPERTY     0 string:'cheese'
+//0012    | OP_POP
+//0013    | OP_GET_LOCAL        0
+//0015    | OP_RETURN
+//== disassembly.ya.1:ripen ==
+//0000   76 OP_NIL
+//0001    | OP_SET_CELL_TYPE
+//0002    | OP_CONSTANT         0 string:'Already ripened '
+//0004    | OP_GET_BUILTIN   string
+//0006    | OP_GET_GLOBAL       1 string:'xy'
+//0008    | OP_GET_PROPERTY     2 string:'i'
+//0010    | OP_CALL             1
+//0012    | OP_ADD
+//0013    | OP_INITIALISE
+//0014   77 OP_GET_LOCAL        1
+//0016    | OP_SET_GLOBAL       3 string:'verb'
+//0018    | OP_POP
+//0019   78 OP_NIL
+//0020    | OP_SET_CELL_TYPE
+//0021    | OP_GET_BUILTIN   new
+//0023    | OP_NIL
+//0024    | OP_CALL             1
+//0026    | OP_INITIALISE
+//0027   79 OP_GET_LOCAL        2
+//0029    | OP_GET_LOCAL        0
+//0031    | OP_GET_PROPERTY     4 string:'cheese'
+//0033    | OP_SET_PTR_TARGET
+//0034    | OP_POP
+//0035   80 OP_GET_LOCAL        2
+//0037    | OP_DEREF_PTR
+//0038    | OP_PRINT
+//0039   81 OP_NIL
+//0040    | OP_SET_CELL_TYPE
+//0041    | OP_GET_GLOBAL       5 string:'do'
+//0043    | OP_GET_LOCAL        2
+//0045    | OP_CALL             1
+//0047    | OP_INITIALISE
+//0048   82 OP_GET_LOCAL        2
+//0050    | OP_DEREF_PTR
+//0051    | OP_PRINT
+//0052   83 OP_GET_LOCAL        0
+//0054    | OP_GET_PROPERTY     6 string:'cheese'
+//0056    | OP_PRINT
+//0057   84 OP_GET_LOCAL        3
+//0059    | OP_RETURN
+//0060    | OP_NIL
+//0061    | OP_RETURN
+//== disassembly.ya.1:eat ==
+//0000   88 OP_CONSTANT         0 string:'Eaten'
+//0002    | OP_PRINT
+//0003    | OP_NIL
+//0004    | OP_RETURN
+//Program ended with exit code: 0

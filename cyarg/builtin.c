@@ -479,7 +479,7 @@ bool pinBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
 bool newBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
 
     Value typeToCreate = NIL_VAL;
-    if (   argCount == 1
+    if (argCount == 1
         && IS_YARGTYPE(nativeArgument(routineContext, argCount, 0))) {
         typeToCreate = nativeArgument(routineContext, argCount, 0);
     }
@@ -1075,7 +1075,7 @@ Value getBuiltin(uint8_t builtin) {
         case BUILTIN_INT64: return OBJ_VAL(newNative(int64Builtin));
         case BUILTIN_UINT64: return OBJ_VAL(newNative(uint64Builtin));
         case BUILTIN_INT: return OBJ_VAL(newNative(intBuiltin));
-        case BUILTIN_MFLOAT64: return  OBJ_VAL(newNative(floatBuiltin));
+        case BUILTIN_MFLOAT64: return OBJ_VAL(newNative(floatBuiltin));
         case BUILTIN_STRING: return OBJ_VAL(newNative(stringBuiltin));
 #ifndef CYARG_FEATURE_TEST_SYSTEM
         default: return NIL_VAL;
