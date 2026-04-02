@@ -232,23 +232,18 @@ static void emitConstant(Value value) {
     // DOUBLE_VAL, ADDRESS_VAL or OBJ_VAL(String or Int)
     int32_t v = 0;
     bool asObject = true;
-    switch (value.type)
-    {
+    switch (value.type) {
     case VAL_ADDRESS: // fall through
     case VAL_DOUBLE:
         break;
     case VAL_OBJ:
-        if (IS_INT(value))
-        {
+        if (IS_INT(value)) {
             ObjInt *oi = (ObjInt *) value.as.obj;
-            if (int_is_range(&oi->bigInt, -UINT24_MAX, UINT24_MAX) == INT_WITHIN)
-            {
+            if (int_is_range(&oi->bigInt, -UINT24_MAX, UINT24_MAX) == INT_WITHIN) {
                 v = int_to_i32(&oi->bigInt);
                 asObject = false;
             }
-        }
-        else
-        {
+        } else {
             assert(value.as.obj->type == OBJ_STRING);
         }
         break;
@@ -257,51 +252,33 @@ static void emitConstant(Value value) {
         break;
     }
 
-    if (asObject)
-    {
+    if (asObject) {
         emitBytes(OP_CONSTANT, makeConstant(value));
-    }
-    else
-    {
+    } else {
         emitImmediateConstant(v);
     }
 }
 
-static void emitImmediateConstant(int32_t v)
-{
-    if (v >= -UINT8_MAX && v <= UINT8_MAX)
-    {
-        if (v < 0)
-        {
+static void emitImmediateConstant(int32_t v) {
+    if (v >= -UINT8_MAX && v <= UINT8_MAX) {
+        if (v < 0) {
             emitBytes(OP_IMMEDIATE_N8, (uint8_t) (-v));
-        }
-        else
-        {
+        } else {
             emitBytes(OP_IMMEDIATE_P8, (uint8_t) v);
         }
-    }
-    else if (v >= -UINT16_MAX && v <= UINT16_MAX)
-    {
-        if (v < 0)
-        {
+    } else if (v >= -UINT16_MAX && v <= UINT16_MAX) {
+        if (v < 0) {
             v = -v;
             emitBytes(OP_IMMEDIATE_N16, (uint8_t) (v % 256));
-        }
-        else
-        {
+        } else {
             emitBytes(OP_IMMEDIATE_P16, (uint16_t) (v % 256));
         }
         emitByte((uint8_t) (v / 256));
-    }
-    else // if (v >= -UINT24_MAX && v < UINT24_MAX)
-    {
-        if (v < 0)
-        {
+    } else { // if (v >= -UINT24_MAX && v < UINT24_MAX)
+        if (v < 0) {
             v = -v;
             emitBytes(OP_IMMEDIATE_N24, (uint8_t) (v % 256));
-        }
-        else
-        {
+        } else {
             emitBytes(OP_IMMEDIATE_P24, (uint16_t) (v % 256));
         }
         emitBytes((uint8_t) ((v / 256) % 256), (uint8_t) (v / 65536));
@@ -1079,10 +1056,8 @@ static void generateStmtFieldDeclaration(ObjStmtFieldDeclaration* stmt) {
 static void generateStmt(ObjStmt* stmt) {
 #if defined COMPILE_INCLUDE_LINE_NUMBERS
     if (current->function->chunk.numLines == 0 ||
-        current->function->chunk.lines[current->function->chunk.numLines - 1].line != stmt->line)
-    {
-        if (current->function->chunk.numLines == current->function->chunk.lineCapacity)
-        {
+        current->function->chunk.lines[current->function->chunk.numLines - 1].line != stmt->line) {
+        if (current->function->chunk.numLines == current->function->chunk.lineCapacity) {
             int capacity = current->function->chunk.lineCapacity;
             int newCapacity = capacity + 16;
             current->function->chunk.lineCapacity = newCapacity;

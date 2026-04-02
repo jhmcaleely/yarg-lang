@@ -98,7 +98,7 @@ var z = maker.ripen(); // expect: cheddar
 print z.i;             // expect: 77777
 print maker.cheese;    // expect: cheddar
 var w = eater.ripen(); // expect: "cheddar"
-                       // expect: Already ripened 1 "cheddar"
+                       // expect: Already ripened 6666666666555555555544488888888887777777777333 1 "cheddar"
                        // expect: nil
                        // expect: "cheddar"
 print w.i;             // expect: 77777

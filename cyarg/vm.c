@@ -692,9 +692,7 @@ InterpretResult run(ObjRoutine* routine) {
     } while (false)
 
     for (;;) {
-        char *h = frame->ip;
-        if (routine->state == EXEC_ERROR)
-        {
+        if (routine->state == EXEC_ERROR) {
             runtimeError(routine, "Error");
             return INTERPRET_RUNTIME_ERROR;
         }

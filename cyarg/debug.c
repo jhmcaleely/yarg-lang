@@ -13,10 +13,8 @@ void disassembleChunk(Chunk* chunk, const char* name) {
     for (int offset = 0; offset < chunk->count;) {
         offset = disassembleInstruction(chunk, offset);
     }
-    for (int i = 0; i < chunk->constants.count; i++)
-    {
-        if (IS_FUNCTION(chunk->constants.values[i]))
-        {
+    for (int i = 0; i < chunk->constants.count; i++) {
+        if (IS_FUNCTION(chunk->constants.values[i])) {
             ObjFunction *fun = AS_FUNCTION(chunk->constants.values[i]);
             char *funNameC = (char *) realloc(0, fun->name->length + 1);
             memcpy(funNameC, fun->name->chars, fun->name->length + 1);
@@ -32,8 +30,7 @@ void disassembleChunk(Chunk* chunk, const char* name) {
 }
 
 static char const *valueType(Value *v) {
-    switch (v->type)
-    {
+    switch (v->type) {
     case VAL_BOOL: return "bool";
     case VAL_NIL: return "";
     case VAL_DOUBLE: return "double";
@@ -47,8 +44,7 @@ static char const *valueType(Value *v) {
     case VAL_I64: return "i64";
     case VAL_ADDRESS: return "address";
     case VAL_OBJ:
-        switch (AS_OBJ(*v)->type)
-        {
+        switch (AS_OBJ(*v)->type) {
         case OBJ_INT: return "int";
         case OBJ_STRING: return "string";
         default: return "valueType.Obj?";
@@ -175,16 +171,11 @@ static int typeLiteralInstruction(const char* name, Chunk* chunk, int offset) {
 
 int disassembleInstruction(Chunk* chunk, int offset) {
     printf("%04d ", offset);
-    for (int s = 0;; s++)
-    {
-        if (chunk->lines[s].address == offset)
-        {
+    for (int s = 0;; s++) {
+        if (chunk->lines[s].address == offset) {
             printf("%4d ", chunk->lines[s].line);
             break;
-        }
-        else if (s == chunk->numLines ||
-                 chunk->lines[s].address > offset)
-        {
+        } else if (s == chunk->numLines || chunk->lines[s].address > offset) {
             printf("   | ");
             break;
         }

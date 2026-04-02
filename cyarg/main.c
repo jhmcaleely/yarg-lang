@@ -71,12 +71,9 @@ static void disassembleFile(const char* path) {
     }
 
     char const *file = strrchr(path, '/');
-    if (file == 0)
-    {
+    if (file == 0) {
         file = path;
-    }
-    else
-    {
+    } else {
         file++;
     }
 

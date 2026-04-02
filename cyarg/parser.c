@@ -620,73 +620,50 @@ static ObjExpr* number(bool canAssign) {
         enum {NUMBER_START, NUMBER_ZERO, NUMBER_MSB, NUMBER_DOT, NUMBER_DOT_AND_MSB, NUMBER_FRAC, NUMBER_E, NUMBER_EN, NUMBER_EXPONENT} state = NUMBER_START;
         const char *number = number_start;
         const char *msb = number;
-        while (number < number_start + number_len)
-        {
-            switch (*number)
-            {
+        while (number < number_start + number_len) {
+            switch (*number) {
             case '0':
-                if (state == NUMBER_START)
-                {
+                if (state == NUMBER_START) {
                     state = NUMBER_ZERO;
-                }
-                else if (state == NUMBER_DOT || state == NUMBER_DOT_AND_MSB)
-                {
+                } else if (state == NUMBER_DOT || state == NUMBER_DOT_AND_MSB) {
                     state = NUMBER_FRAC;
-                }
-                else if (state == NUMBER_E || state == NUMBER_EN)
-                {
+                } else if (state == NUMBER_E || state == NUMBER_EN) {
                     state = NUMBER_EXPONENT;
                 }
                 break;
             case '.':
-                if (state == NUMBER_START || state == NUMBER_ZERO)
-                {
+                if (state == NUMBER_START || state == NUMBER_ZERO) {
                     state = NUMBER_DOT;
-                }
-                else if (state == NUMBER_MSB)
-                {
+                } else if (state == NUMBER_MSB) {
                     state = NUMBER_DOT_AND_MSB;
-                }
-                else
-                {
+                } else {
                     errorAtCurrent("Only one decimal point allowed");
                     return 0;
                 }
                 break;
             case 'e': case 'E':
-                if (state == NUMBER_ZERO || state == NUMBER_MSB || state == NUMBER_DOT || state == NUMBER_DOT_AND_MSB || state == NUMBER_FRAC)
-                {
+                if (state == NUMBER_ZERO || state == NUMBER_MSB || state == NUMBER_DOT || state == NUMBER_DOT_AND_MSB || state == NUMBER_FRAC) {
                     state = NUMBER_E;
-                }
-                else
-                {
+                }  else {
                     errorAtCurrent("Only one E|e allowed");
                     return 0;
                 }
                 break;
             case '-':
-                if (state == NUMBER_E)
-                {
+                if (state == NUMBER_E) {
                     state = NUMBER_EN;
-                }
-                else
-                {
+                } else {
                     errorAtCurrent("- only allowed after e or E");
                     return 0;
                 }
                 break;
             default:
-                if (state == NUMBER_START || state == NUMBER_ZERO)
-                {
+                if (state == NUMBER_START || state == NUMBER_ZERO) {
                     state = NUMBER_MSB;
                     msb = number;
-                }
-                else if (state == NUMBER_DOT ||state == NUMBER_DOT_AND_MSB)
-                {
+                } else if (state == NUMBER_DOT ||state == NUMBER_DOT_AND_MSB) {
                     state = NUMBER_FRAC;
-                }
-                else if (state == NUMBER_E || state == NUMBER_EN)
-                {
+                } else if (state == NUMBER_E || state == NUMBER_EN) {
                     state = NUMBER_EXPONENT;
                 }
                 break;
@@ -694,31 +671,23 @@ static ObjExpr* number(bool canAssign) {
 
             number++;
         }
-        if (state == NUMBER_ZERO || state == NUMBER_MSB)
-        {
+        if (state == NUMBER_ZERO || state == NUMBER_MSB) {
             char *heapChars = ALLOCATE(char, number_len + 1);
             heapChars[number - msb] = '\0';
             memcpy(heapChars, msb, number - msb);
             val = newExprNumberInt((int)(msb - number_start + number_len));
             int_set_s(heapChars, &val->bigInt);
             FREE(char, heapChars);
-        }
-        else if (state == NUMBER_DOT_AND_MSB || state == NUMBER_FRAC || state == NUMBER_EXPONENT)
-        {
+        } else if (state == NUMBER_DOT_AND_MSB || state == NUMBER_FRAC || state == NUMBER_EXPONENT) {
             char *end;
             val = newExprNumberDouble(strtod(number_start, &end));
-            if (end - number_start != number_len)
-            {
+            if (end - number_start != number_len) {
                 errorAtCurrent("misformed float literal");
                 return 0;
             }
-        }
-        else
-        {
+        } else {
             errorAtCurrent("misformed number");
             return 0;
-        }
-      {
         }
     } else {
         uint64_t value = strtoNum(number_start, number_len, radix);
