@@ -6,7 +6,7 @@ fun do(cheese) {
         var m = verb + " " + string(n) + " " + *cheese;
         print m;
         *cheese = nil;
-        struct { int32 i; } x;
+        struct { int32 i; int j; } x;
         fun do3() {
             x.i = 77777;
             for (var i = 0; i < n; i = 1 + i) m;
@@ -103,6 +103,21 @@ var w = eater.ripen(); // expect: "cheddar"
                        // expect: "cheddar"
 print w.i;             // expect: 77777
 eater.eat();           // expect: Eaten
+
+// C code bytes
+// L lines -- optionally zero
+// M chunks
+// N string bytes
+// O doubles
+// P int offsets
+// PB int bytess
+// double *O
+// int offsets *P
+// ints *
+// strings *N
+// offsets *M
+// pair<offset, line> *L
+// code *C
 
 // global - n
 // local

@@ -132,10 +132,8 @@ void initialisePackedValue(PackedValue packedValue) {
             case TypeFunction:
             case TypeRoutine:
             case TypeChannel:
-            case TypeYargType: {
-                packedValue.storedValue->as.obj = NULL;
-                break;
-            }
+            case TypeYargType:
+                memcpy(packedValue.storedValue, &(Obj *){0}, sizeof (Obj *)); break;
         }
     }
 }

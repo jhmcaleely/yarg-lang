@@ -114,33 +114,32 @@ void fatalVMError(const char* format, ...) {
 }
 
 static void defineNative(const char* name, NativeFn function) {
-    tempRootPush(OBJ_VAL(copyString(name, (int)strlen(name))));
-    tempRootPush(OBJ_VAL(newNative(function)));
+    ObjString* nameString = copyString(name, (int)strlen(name));
+    tempRootPush(OBJ_VAL(nameString));
+    ObjNative* native = newNative(function);
+    tempRootPush(OBJ_VAL(native));
+
     ValueCell cell;
-    cell.value = vm.tempRoots[1];
+    cell.value = OBJ_VAL(native);
     cell.cellType = NULL;
-    tableCellSet(&vm.globals, AS_STRING(vm.tempRoots[0]), cell);
+    tableCellSet(&vm.globals, nameString, cell);
     tempRootPop();
     tempRootPop();
 }
 
-void initVM() {
-    
-    // must be done before initRoutine as initRoutine does a realloc
+void initVMMemory() {
+
+    memset(&vm, 0, sizeof(VM));
+
+    vm.tempRootsTop = vm.tempRoots;
+
+    vm.nextGC = FIRST_GC_AT;
+
     platform_mutex_init(&vm.heap);
     platform_mutex_init(&vm.env);
-    initTable(&vm.strings);
+}
 
-    // We have an Obj here not on the heap. hack up its init.
-    vm.core0.obj.type = OBJ_ROUTINE;
-    vm.core0.obj.isMarked = false;
-    vm.core0.obj.next = NULL;
-    initRoutine(&vm.core0);
-
-    vm.core1 = NULL;
-    for (int i = 0; i < MAX_PINNED_ROUTINES; i++) {
-        vm.pinnedRoutines[i] = NULL;
-    }
+void initVMRuntime() {
     vm.pinnedRoutineHandlers[0] = pinnedRoutine0;
     vm.pinnedRoutineHandlers[1] = pinnedRoutine1;
     vm.pinnedRoutineHandlers[2] = pinnedRoutine2;
@@ -152,20 +151,17 @@ void initVM() {
     vm.pinnedRoutineHandlers[8] = pinnedRoutine8;
     vm.pinnedRoutineHandlers[9] = pinnedRoutine9;
 
-    vm.tempRootsTop = vm.tempRoots;
+    // We have two Obj here not on the heap. hack up their init.
+    vm.core0.obj.type = OBJ_ROUTINE;
+    initRoutine(&vm.core0);
 
-    vm.objects = NULL;
-    vm.bytesAllocated = 0;
-    vm.nextGC = FIRST_GC_AT;
-
-    vm.grayCount = 0;
-    vm.grayCapacity = 0;
-    vm.grayStack = NULL;
+    vm.bootFunction.obj.type = OBJ_FUNCTION;
+    initFunction(&vm.bootFunction);
 
     initCellTable(&vm.globals);
     initTable(&vm.imports);
-
-    vm.initString = NULL;
+    initTable(&vm.strings);
+    
     vm.initString = copyString("init", 4);
 
     defineNative("clock", clockNative);
@@ -174,6 +170,14 @@ void initVM() {
     defineNative("irq_remove_handler", irq_remove_handlerNative);
     defineNative("irq_add_shared_handler", irq_add_shared_handlerNative);
 
+    defineNative("c_stdin_gets", stdin_getsNative);
+    defineNative("c_stdin_eof", stdin_eofNative);
+    defineNative("c_stdout_puts", stdout_putsNative);
+
+#if defined(CYARG_FEATURE_HOSTED_REPL)
+    defineNative("host_argc", host_argcNative);
+    defineNative("host_argn", host_argnNative);
+#endif
 }
 
 void freeVM() {
@@ -181,13 +185,15 @@ void freeVM() {
     freeTable(&vm.strings);
     freeTable(&vm.imports);
     vm.initString = NULL;
+    vm.libraryPath = NULL;
     freeObjects();
 }
 
 void markVMRoots() {
     
-    // Don't use markObject, as this is not on the heap.
+    // Don't use markObject, as these are not on the heap.
     markRoutine(&vm.core0);
+    markFunction(&vm.bootFunction);
     
     markObject((Obj*)vm.core1);
 
@@ -200,6 +206,7 @@ void markVMRoots() {
     }
 
     markTable(&vm.imports);
+    markObject((Obj*)vm.libraryPath);
     markCellTable(&vm.globals);
     markObject((Obj*)vm.initString);
 }
@@ -223,7 +230,7 @@ bool callfn(ObjRoutine* routine, ObjClosure* closure, int argCount) {
     return true;
 }
 
-static bool callValue(ObjRoutine* routine, Value callee, int argCount) {
+static InterpretResult callValue(ObjRoutine* routine, Value callee, int argCount) {
     if (IS_OBJ(callee)) {
         switch (OBJ_TYPE(callee)) {
             case OBJ_BOUND_METHOD: {
@@ -231,7 +238,7 @@ static bool callValue(ObjRoutine* routine, Value callee, int argCount) {
                 ValueCell* target = peekCell(routine, argCount);
                 target->value = bound->reciever;
                 target->cellType = NULL;
-                return callfn(routine, bound->method, argCount);
+                return callfn(routine, bound->method, argCount) ? INTERPRET_OK : INTERPRET_RUNTIME_ERROR;
             }
             case OBJ_CLASS: {
                 ObjClass* klass = AS_CLASS(callee);
@@ -240,15 +247,15 @@ static bool callValue(ObjRoutine* routine, Value callee, int argCount) {
                 target->cellType = NULL;
                 Value initializer;
                 if (tableGet(&klass->methods, vm.initString, &initializer)) {
-                    return callfn(routine, AS_CLOSURE(initializer), argCount);
+                    return callfn(routine, AS_CLOSURE(initializer), argCount) ? INTERPRET_OK : INTERPRET_RUNTIME_ERROR;
                 } else if (argCount != 0) {
                     runtimeError(routine, "Expected 0 arguments but got %d.", argCount);
-                    return false;
+                    return INTERPRET_RUNTIME_ERROR;
                 }
-                return true;
+                return INTERPRET_OK;
             }
             case OBJ_CLOSURE:
-                return callfn(routine, AS_CLOSURE(callee), argCount);
+                return callfn(routine, AS_CLOSURE(callee), argCount) ? INTERPRET_OK : INTERPRET_RUNTIME_ERROR;
             case OBJ_NATIVE: {
                 NativeFn native = AS_NATIVE(callee);
                 if (native == importBuiltinDummy) {
@@ -260,9 +267,9 @@ static bool callValue(ObjRoutine* routine, Value callee, int argCount) {
                     if (native(routine, argCount, &result)) {
                         popN(routine, argCount + 1);
                         push(routine, result);
-                        return true;
+                        return INTERPRET_OK;
                     } else {
-                        return false;
+                        return INTERPRET_RUNTIME_ERROR;
                     }
                 }
             }
@@ -271,25 +278,25 @@ static bool callValue(ObjRoutine* routine, Value callee, int argCount) {
         }
     }
     runtimeError(routine, "Can only call functions and classes.");
-    return false;
+    return INTERPRET_RUNTIME_ERROR;
 }
 
-static bool invokeFromClass(ObjRoutine* routine, ObjClass* klass, ObjString* name,
+static InterpretResult invokeFromClass(ObjRoutine* routine, ObjClass* klass, ObjString* name,
                             int argCount) {
     Value method;
     if (!tableGet(&klass->methods, name, &method)) {
         runtimeError(routine, "Undefined property '%s'.", name->chars);
-        return false;
+        return INTERPRET_RUNTIME_ERROR;
     }
-    return callfn(routine, AS_CLOSURE(method), argCount);
+    return callfn(routine, AS_CLOSURE(method), argCount) ? INTERPRET_OK : INTERPRET_RUNTIME_ERROR;
 }
 
-static bool invoke(ObjRoutine* routine, ObjString* name, int argCount) {
+static InterpretResult invoke(ObjRoutine* routine, ObjString* name, int argCount) {
     Value receiver = peek(routine, argCount);
 
     if (!IS_INSTANCE(receiver)) {
         runtimeError(routine, "Only instances have methods.");
-        return false;
+        return INTERPRET_RUNTIME_ERROR;
     }
 
     ObjInstance* instance = AS_INSTANCE(receiver);
@@ -1131,7 +1138,9 @@ InterpretResult run(ObjRoutine* routine) {
                 {
                     nominal_address = int_to_u64(AS_INT(location));
                 }
+#if defined (CYARG_SELF_HOSTED)
                 volatile uint32_t* reg = (volatile uint32_t*) nominal_address;
+#endif
 
                 uint32_t val = 0;
 
@@ -1177,9 +1186,9 @@ InterpretResult run(ObjRoutine* routine) {
             }
             case OP_CALL: {
                 int argCount = READ_BYTE();
-                if (!callValue(routine, peek(routine, argCount), argCount)) {
-                    runtimeError(routine, "Error");
-                    return INTERPRET_RUNTIME_ERROR;
+                InterpretResult result = callValue(routine, peek(routine, argCount), argCount);
+                if (result != INTERPRET_OK) {
+                    return result;
                 }
                 frame = &routine->frames[routine->frameCount - 1];
                 break;
@@ -1187,9 +1196,9 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_INVOKE: {
                 ObjString* method = READ_STRING();
                 int argCount = READ_BYTE();
-                if (!invoke(routine, method, argCount)) {
-                    runtimeError(routine, "Error");
-                    return INTERPRET_RUNTIME_ERROR;
+                InterpretResult result = invoke(routine, method, argCount);
+                if (result != INTERPRET_OK) {
+                    return result;
                 }
                 frame = &routine->frames[routine->frameCount - 1];
                 break;
@@ -1198,9 +1207,9 @@ InterpretResult run(ObjRoutine* routine) {
                 ObjString* method = READ_STRING();
                 int argCount = READ_BYTE();
                 ObjClass* superclass = AS_CLASS(pop(routine));
-                if (!invokeFromClass(routine, superclass, method, argCount)) {
-                    runtimeError(routine, "Error");
-                    return INTERPRET_RUNTIME_ERROR;
+                InterpretResult result = invokeFromClass(routine, superclass, method, argCount);
+                if (result != INTERPRET_OK) {
+                    return result;
                 }
                 frame = &routine->frames[routine->frameCount - 1];
                 break;
@@ -1400,27 +1409,61 @@ InterpretResult run(ObjRoutine* routine) {
 #undef BINARY_BOOLEAN_OP
 #undef BINARY_OP
 
-InterpretResult interpret(const char* source) {
-    ObjFunction* function = compile(source);
-    if (function == NULL) return INTERPRET_COMPILE_ERROR;
+uint8_t exec_bootstrap[] = {
+    OP_GET_BUILTIN, BUILTIN_EXEC,
+    OP_GET_BUILTIN, BUILTIN_READ_SOURCE,
+    OP_CONSTANT, 0,
+    OP_CALL, 1,
+    OP_CALL, 1,
+    OP_RETURN
+};
 
-#ifdef DEBUG_TRACE_EXECUTION
-    disassembleChunk(&function->chunk, "<script>");
-#endif
+uint8_t compile_bootstrap[] = {
+    OP_GET_BUILTIN, BUILTIN_COMPILE,
+    OP_GET_BUILTIN, BUILTIN_READ_SOURCE,
+    OP_CONSTANT, 0,
+    OP_CALL, 1,
+    OP_CALL, 1,
+    OP_RETURN
+};
 
-    tempRootPush(OBJ_VAL(function));
-    ObjClosure* closure = newClosure(function);
-    tempRootPop();
+static void installBootstrap(const uint8_t bootstrap[], ObjString* script) {
+
+    vm.bootFunction.name = copyString("boot", 4);
+
+    for (size_t i = 0; i < sizeof(exec_bootstrap); i++) {
+        writeChunk(&vm.bootFunction.chunk, bootstrap[i], 0);
+    }
+    uint8_t constant = addConstant(&vm.bootFunction.chunk, OBJ_VAL(script));
+    assert(constant == vm.bootFunction.chunk.code[5]);
+}
+
+InterpretResult bootstrapVM(const uint8_t bootstrap[], Value* bootstrapResult, ObjString* script) {
+    installBootstrap(bootstrap, script);
+
+    ObjClosure* closure = newClosure(&vm.bootFunction);
 
     bindEntryFn(&vm.core0, closure);
     pushEntryElements(&vm.core0);
 
     enterEntryFunction(&vm.core0);
+
     InterpretResult result = run(&vm.core0);
     if (result == INTERPRET_OK) {
-        pop(&vm.core0);
+        *bootstrapResult = pop(&vm.core0);
+    } else {
+        *bootstrapResult = NIL_VAL;
     }
+    return result;
+}
 
+InterpretResult bootScript(const char* script, size_t length) {
+    ObjString* scriptObj = copyString(script, (int) length);
+    tempRootPush(OBJ_VAL(scriptObj));
+    // Yarg scripts have no mechanism to return a result, so we discard it (it will always be nil).
+    Value discardedResult;
+    InterpretResult result = bootstrapVM(exec_bootstrap, &discardedResult, scriptObj);
+    tempRootPop();
     return result;
 }
 

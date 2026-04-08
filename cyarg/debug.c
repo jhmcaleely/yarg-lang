@@ -18,10 +18,10 @@ void disassembleChunk(Chunk* chunk, const char* name) {
             ObjFunction *fun = AS_FUNCTION(chunk->constants.values[i]);
             char *funNameC = (char *) realloc(0, fun->name->length + 1);
             memcpy(funNameC, fun->name->chars, fun->name->length + 1);
-            int line = chunk->numLines > 0 ? chunk->lines[0].line : 0;
-            size_t l = snprintf(0, 0, "%s.%d:%s", name, line, funNameC);
+            int line = fun->chunk.numLines > 0 ? fun->chunk.lines[0].line : 0;
+            size_t l = snprintf(0, 0, "%s/%s(%d)", name, funNameC, line);
             char *funName = (char *) realloc(0, l + 1);
-            snprintf(funName, l + 1, "%s.%d:%s", name, line, funNameC);
+            snprintf(funName, l + 1, "%s/%s(%d)", name, funNameC, line);
             disassembleChunk(&fun->chunk, funName);
             free(funName);
             free(funNameC);
