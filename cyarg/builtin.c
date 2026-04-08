@@ -318,7 +318,7 @@ bool makeRoutineBuiltin(ObjRoutine* routineContext, int argCount, Value* result)
     }
 
     ObjClosure* closure = AS_CLOSURE(nativeArgument(routineContext, argCount, 0));
-    bool isISR = AS_BOOL(nativeArgument(routineContext, argCount, 1));
+    [[maybe_unused]] bool isISR = AS_BOOL(nativeArgument(routineContext, argCount, 1));
 
     ObjRoutine* routine = newRoutine();
 

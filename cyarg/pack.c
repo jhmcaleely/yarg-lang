@@ -8,27 +8,152 @@
 #include "yargtype.h"
 #include "routine.h"
 
-void disassembleChunk(Chunk* chunk, const char* name) {
-    printf("== %s ==\n", name);
-    for (int offset = 0; offset < chunk->count;) {
-        offset = disassembleInstruction(chunk, offset);
-    }
-    for (int i = 0; i < chunk->constants.count; i++) {
-        if (IS_FUNCTION(chunk->constants.values[i])) {
-            ObjFunction *fun = AS_FUNCTION(chunk->constants.values[i]);
-            char *funNameC = realloc(0, fun->name->length + 1);
-            memcpy(funNameC, fun->name->chars, fun->name->length + 1);
-            int line = fun->chunk.numLines > 0 ? fun->chunk.lines[0].line : 0;
-            size_t l = snprintf(0, 0, "%s/%s(%d)", name, funNameC, line);
-            char *funName = realloc(0, l + 1);
-            snprintf(funName, l + 1, "%s/%s(%d)", name, funNameC, line);
-            disassembleChunk(&fun->chunk, funName);
-            free(funName);
-            free(funNameC);
-        }
-    }
+typedef struct {
+    uint32_t n_;
+    uint32_t extent_;
+    char *i_;
+} CodeFile;
+
+typedef struct {
+    uint32_t n_;
+    uint32_t extent_;
+    struct {
+        uint32_t offset_;
+        uint32_t line_;
+    } *i_;
+} LinesFile;
+
+typedef struct {
+    uint32_t n_;
+    uint32_t extent_;
+    uint32_t *i_;
+} ChunksFile;
+
+typedef struct {
+    uint32_t n_;
+    uint32_t extent_;
+    uint32_t *i_;
+} StringsFile;
+
+typedef struct {
+    uint32_t n_;
+    uint32_t extent_;
+    double *i_;
+} DoublesFile;
+
+typedef struct {
+    uint32_t n_;
+    uint32_t extent_;
+    Int **i_;
+} IntsFile;
+
+typedef struct {
+    CodeFile codeFile_;
+    LinesFile linesFile_;
+    ChunksFile chunksFile_;
+    StringsFile stringsFile_;
+    DoublesFile doublesFile_;
+    IntsFile intsFile_;
+} Files;
+
+static void fileExtend(void *, int, size_t);
+static void fileExtendIfNeeded(void *, size_t);
+static void packAnotherChunk(Chunk *, bool, Files *);
+static int packInstruction(Chunk *, int, Files *);
+
+char *packChunk(Chunk *chunk, bool includeLines, int *len)
+{
+    Files f = {0};
+    fileExtend(&f.codeFile_, 1024, sizeof *f.codeFile_.i_);
+    fileExtend(&f.linesFile_, 128, sizeof *f.linesFile_.i_);
+    fileExtend(&f.chunksFile_, 8, sizeof *f.chunksFile_.i_);
+    fileExtend(&f.stringsFile_, 32, sizeof *f.stringsFile_.i_);
+    fileExtend(&f.doublesFile_, 8, sizeof *f.doublesFile_.i_);
+    fileExtend(&f.intsFile_, 16, sizeof *f.intsFile_.i_);
+
+    packAnotherChunk(chunk, includeLines, &f);
+
+    // magic
+    // version
+    // C code bytes
+    // L lines -- optionally zero
+    // M chunks
+    // N string bytes
+    // O doubles
+    // P int offsets
+    // double *O1(8)
+    // int offsets *P1(3)
+    // ints *
+    // strings *N3
+    // code offsets *M3(3)
+    // pair<offset, line> *L
+    // code *C
+
+    char *binary = realloc(0, 4096);
+    len = 0;
+
+    return binary;
 }
 
+static void packAnotherChunk(Chunk* chunk, bool includeLines, Files *f) {
+    struct {
+        uint32_t n_;
+        uint32_t extent_;
+        struct {
+            uint8_t constant_;
+            uint32_t xip_;
+        } *i_;
+    } relocationTable = {0};
+
+    fileExtend(&relocationTable, 64, sizeof *relocationTable.i_);
+
+    for (int i = 0; i < chunk->constants.count; i++) {
+        Value *v = &chunk->constants.values[i];
+        if (IS_DOUBLE(*v)) {
+            fileExtendIfNeeded(&relocationTable, sizeof *relocationTable.i_);
+            // add to file
+            // add to relocation table
+        } else if (IS_OBJ(*v)) {
+            switch (AS_OBJ(*v)->type) {
+            case OBJ_FUNCTION:
+                break;
+            case OBJ_INT:
+                fileExtendIfNeeded(&relocationTable, sizeof *relocationTable.i_);
+                // add to file
+                // add to relocation table
+                break;
+            case OBJ_STRING:
+                fileExtendIfNeeded(&relocationTable, sizeof *relocationTable.i_);
+                // add to file
+                // add to relocation table
+                break;
+            default:
+                assert(!"Unexpected constant obj");
+                break;
+            }
+        } else {
+            assert(!"Unexpected constant value");
+        }
+    }
+
+    for (int offset = 0; offset < chunk->count;) {
+        offset = packInstruction(chunk, offset, f);
+    }
+
+    for (int i = 0; i < chunk->constants.count; i++) {
+        Value *v = &chunk->constants.values[i];
+        if (IS_OBJ(*v)) {
+            switch (AS_OBJ(*v)->type) {
+            case OBJ_FUNCTION:
+                packAnotherChunk(&AS_FUNCTION(*v)->chunk, includeLines, f);
+            default:
+                break;
+            }
+        }
+    }
+
+    free(relocationTable.i_);
+}
 static char const *valueType(Value *v) {
     switch (v->type) {
     case VAL_BOOL: return "bool";
@@ -169,7 +294,7 @@ static int typeLiteralInstruction(const char* name, Chunk* chunk, int offset) {
     return offset + 2;
 }
 
-int disassembleInstruction(Chunk* chunk, int offset) {
+int packInstruction(Chunk *chunk, int offset, Files *f) {
     printf("%04d ", offset);
     for (int s = 0;; s++) {
         if (chunk->lines[s].address == offset) {
@@ -331,7 +456,7 @@ int disassembleInstruction(Chunk* chunk, int offset) {
     }
 }
 
-void printValueStack(ObjRoutine* routine, const char* message) {
+void xprintValueStack(ObjRoutine* routine, const char* message) {
     size_t stackSize = routine->stackTopIndex;
     printf("%6s", message);
     printf("%3zu:", stackSize);
@@ -344,4 +469,23 @@ void printValueStack(ObjRoutine* routine, const char* message) {
         printf(" ]");
     }
     printf("\n");
+}
+
+void fileExtend(void *f, int n, size_t i)
+{
+    CodeFile *file = (CodeFile *) f;
+
+    file->extent_ += n;
+    file->i_ = realloc(file->i_, file->extent_ * i);
+}
+
+void fileExtendIfNeeded(void *f, size_t i)
+{
+    CodeFile *file = (CodeFile *) f;
+
+    if (file->n_ == file->extent_)
+    {
+        file->extent_ += file->extent_ / 2;
+        file->i_ = realloc(file->i_, file->extent_ * i);
+    }
 }

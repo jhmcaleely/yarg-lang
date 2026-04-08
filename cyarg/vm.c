@@ -495,7 +495,10 @@ static void promote(Value *left, Value *right)
     }
     if (toPromote != 0)
     {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconditional-uninitialized" // clang thinks promotionToTypeOf may uninitialized
         ValueType promoteTo = promotionToTypeOf->type;
+#pragma GCC diagnostic pop
         Int *bigInt = AS_INT(*toPromote);
 
         switch (promoteTo)

@@ -104,18 +104,19 @@ var w = eater.ripen(); // expect: "cheddar"
 print w.i;             // expect: 77777
 eater.eat();           // expect: Eaten
 
+// magic
+// version
 // C code bytes
 // L lines -- optionally zero
 // M chunks
 // N string bytes
 // O doubles
 // P int offsets
-// PB int bytess
-// double *O
-// int offsets *P
+// double *O1
+// int offsets *P1(3)
 // ints *
-// strings *N
-// offsets *M
+// strings *N3
+// code offsets *M3(3)
 // pair<offset, line> *L
 // code *C
 

@@ -6,6 +6,7 @@
 #include "object.h"
 #include "memory.h"
 #include "debug.h"
+#include "pack.h"
 #include "vm.h"
 
 Host vmHost;
@@ -89,4 +90,19 @@ int disassembleFile(const char* path) {
 
     tempRootPop();
     return returnCode;
+}
+
+int buildBinary(const char *path, Value const *script)
+{
+    if (IS_CLOSURE(*script)) {
+        int len;
+        char *binary = packChunk(&AS_CLOSURE(*script)->function->chunk, true, &len);
+
+        if (binary != 0) {
+
+            free(binary);
+            return EX_OK;
+        }
+    }
+    return EX_SOFTWARE;
 }

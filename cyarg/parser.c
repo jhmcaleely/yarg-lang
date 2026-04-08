@@ -492,7 +492,10 @@ static ObjExpr* unary(bool canAssign) {
     switch (operatorType) {
         case TOKEN_BANG: op = EXPR_OP_NOT; break;
         case TOKEN_MINUS: op = EXPR_OP_NEGATE; break;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsometimes-uninitialized" // op is not initialised -- should default return OBJ_NIL or assert?
         default: break; // Unreachable.
+#pragma GCC diagnostic pop
     }
 
     ObjExprOperation* expr = newExprOperation(rhs, op);
@@ -509,7 +512,10 @@ static ObjExpr* unaryPlace(bool canAssign) {
     ExprOp op;
     switch (operatorType) {
         case TOKEN_STAR: op = EXPR_OP_DEREF_PTR; break;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsometimes-uninitialized" // op is not initialised -- should default return OBJ_NIL or assert?
         default: break; // Unreachable.
+#pragma GCC diagnostic pop
     }
 
     ObjExprOperation* expr = newExprOperation(rhs, op);
