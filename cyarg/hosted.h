@@ -13,6 +13,6 @@ extern Host vmHost;
 int runFile(const char* libraryPath, const char* path);
 int compileFile(const char* path, Value* yargResult);
 int disassembleFile(const char* path);
-int buildBinary(const char *path, Value const *yargResult);
+int packageBinary(const char *path, Value const *yargResult);
 
 #endif

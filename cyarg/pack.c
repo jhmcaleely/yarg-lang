@@ -1,12 +1,15 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
+#include "pack.h"
 
 #include "debug.h"
 #include "object.h"
 #include "value.h"
 #include "yargtype.h"
 #include "routine.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <sysexits.h>
+#include <assert.h>
 
 typedef struct {
     uint32_t n_;
@@ -21,112 +24,123 @@ typedef struct {
 } LinesFile;
 
 typedef struct {
+    enum { PACK_CONST_S, PACK_CONST_I, PACK_CONST_D } type_;
+    uint16_t index_;
+} ConstItems;
+
+typedef struct {
+    uint32_t codeOffset;
+    uint8_t numConsts;
+    ConstItems constOffsets_[256];
+} ChunkFile;
+
+typedef struct {
     uint32_t n_;
     uint32_t extent_;
-    uint32_t *i_;
+    ChunkFile *i_;
 } ChunksFile;
 
 typedef struct {
     uint32_t n_;
     uint32_t extent_;
-    uint32_t *i_;
-} OffsetsFile;
-
-typedef struct {
-    uint32_t n_;
-    uint32_t extent_;
-    char *i_;
+    struct {
+        ObjString *s_;
+        int chunkIndex_;
+        int constNumber_;
+    } *i_;
+    int totalStringLength_;
 } StringsFile;
 
 typedef struct {
     uint32_t n_;
     uint32_t extent_;
-    double *i_;
+    struct {
+        double f_;
+        int chunkIndex_;
+        int constNumber_;
+    } *i_;
 } DoublesFile;
 
 typedef struct {
     uint32_t n_;
     uint32_t extent_;
-    uint32_t *i_;
+    struct {
+        ObjInt *i_;
+        int chunkIndex_;
+        int constNumber_;
+    } *i_;
+    int totalIntsLength_;
 } IntsFile;
 
 typedef struct {
-    OffsetsFile codeOffsetsFile_;
+    ChunksFile chunksFile_;
     CodeFile codeFile_;
     LinesFile linesFile_;
-    OffsetsFile stringOffsetsFile_;
     StringsFile stringsFile_;
     DoublesFile doublesFile_;
-    OffsetsFile intOffsetsFile_;
     IntsFile intsFile_;
-} Files;
+} PackageFiles;
 
 static void fileExtend(void *, int, size_t);
-static void packConstants(Chunk *, bool, Files *);
-static void packCode(Chunk *, bool, Files *);
-static int packInstruction(Chunk *, int, Files *);
+static void packConstants(Chunk const *, bool, PackageFiles *);
+static void packCode(Chunk const *, bool, PackageFiles *);
+static int packInstruction(Chunk const *, int, PackageFiles *);
 
-char *packChunk(Chunk *chunk, bool includeLines, int *len)
+int packChunks(char const *sourceFileName, Chunk const *chunk, bool includeLines, FILE *file)
 {
-    Files f = {0};
-    fileExtend(&f.codeOffsetsFile_, 4, sizeof *f.codeOffsetsFile_.i_);
+    int r = EX_OK;
+    PackageFiles f = {0};
+
+    fileExtend(&f.chunksFile_, 4, sizeof *f.chunksFile_.i_);
     fileExtend(&f.codeFile_, 512, sizeof *f.codeFile_.i_);
     fileExtend(&f.linesFile_, 128, sizeof *f.linesFile_.i_);
-    fileExtend(&f.stringOffsetsFile_, 16, sizeof *f.stringOffsetsFile_.i_);
-    fileExtend(&f.stringsFile_, 128, sizeof *f.stringsFile_.i_);
+    fileExtend(&f.stringsFile_, 16, sizeof *f.stringsFile_.i_);
     fileExtend(&f.doublesFile_, 4, sizeof *f.doublesFile_.i_);
-    fileExtend(&f.intOffsetsFile_, 8, sizeof *f.intOffsetsFile_.i_);
-    fileExtend(&f.intsFile_, 256, sizeof *f.intsFile_.i_);
+    fileExtend(&f.intsFile_, 16, sizeof *f.intsFile_.i_);
 
+    // todo add sourceFileName to strings
+
+    f.chunksFile_.n_ = 1;
     packConstants(chunk, includeLines, &f);
-    fileExtend(&f.stringOffsetsFile_, 1, sizeof *f.stringOffsetsFile_.i_);
-    f.stringOffsetsFile_.i_[f.stringOffsetsFile_.n_++] = f.stringsFile_.n_;
-    // todo remove duplicates and sort
 
+    // todo remove duplicates
+    // todo remove non global, non returned method/property
+
+    f.chunksFile_.n_ = 1;
     packCode(chunk, includeLines, &f);
 
-    // 0    magic(6) - 79 0a 72 67 00 42
-    // 6    version(3) - 26, 52, 01 year, week, issue
-    // 9  M code offsets(1)
-    // 10 C code 4-bytes(2)
-    // 12 L lines(2) -- optionally zero
-    // 14 T string 4-bytes(2)
-    // 16 N strings(2)
-    // 18 O doubles(2)
-    // 20 P int offsets(2)
-    // 22 Q int words(2)
-    // 24   double *O1(8)
-    // x8   ints *Q
-    // x4   int offsets(2) *P
-    // x2   offset(3) *L -- optional
-    // x1   string offsets(3) *(N+1) -- extra offset to determine length of last string
-    // x1   strings *(T*4)
-    // x1   code offsets(3) *M
-    // x1   code *(C*4)
-
-    int stringLen = (f.stringsFile_.n_ + 3) / 4;
-    int codeLen = (f.codeFile_.n_ + 3) / 4;
-    int totalLen = 24 +
-                    8 * f.doublesFile_.n_ +
-                    4 * f.intsFile_.n_ + 2 * f.intOffsetsFile_.n_ +
-                    3 * f.linesFile_.n_ +
-                    3 * (f.stringOffsetsFile_.n_ + 1) + 4 * stringLen +
-                    3 * f.codeOffsetsFile_.n_ + 4 * codeLen;
-    char *binary = realloc(0, totalLen);
-    len = 0;
+    PackageFileHeader h;
+    assert(sizeof h == 24);
 
     // generate
 
+    memcpy(&h.magic_, &(int8_t [PACKAGE_MAGIC_LEN]){0x79, 0x0a, 0x72, 0x67, 0x00, 0x42}, 6);
+    h.version_ = 0x2601;
+    h.numChunks_ = f.chunksFile_.n_;
+    h.stringHashMod_ = f.stringsFile_.n_ < 765 ? (uint8_t) f.stringsFile_.n_ / 3 : 255;
+    h.codeLen_ = (f.codeFile_.n_ + 3) / 4;
+    h.stringsLen_ = (f.stringsFile_.totalStringLength_ + 3) / 4;
+    h.intsLen_= (f.intsFile_.totalIntsLength_ + 3) / 4;
+    h.numStrings_ = f.stringsFile_.n_;
+    h.numInts_ = f.intsFile_.n_;
+    h.numDoubles_ = f.doublesFile_.n_;
+    h.numLines_ = f.linesFile_.n_;
+
+    size_t written = fwrite(&h, sizeof h, 1, file);
+    if (written != 1) {
+        r = EX_SOFTWARE;
+        goto exit;
+    }
+
+exit:
     free(f.intsFile_.i_);
-    free(f.intOffsetsFile_.i_);
     free(f.doublesFile_.i_);
     free(f.stringsFile_.i_);
-    free(f.stringOffsetsFile_.i_);
     free(f.linesFile_.i_);
     free(f.codeFile_.i_);
-    free(f.codeOffsetsFile_.i_);
+    free(f.chunksFile_.i_);
 
-    return binary;
+    return r;
 }
 
 /////  todo  file and sort strings first
@@ -135,38 +149,39 @@ char *packChunk(Chunk *chunk, bool includeLines, int *len)
 ///////            returned includes copied to var parameters
 //////            remove non-global consts
 
-void packConstants(Chunk *chunk, bool includeLines, Files *f) {
+void packConstants(Chunk const *chunk, bool includeLines, PackageFiles *f) {
     for (int i = 0; i < chunk->constants.count; i++) {
         Value *v = &chunk->constants.values[i];
         if (IS_DOUBLE(*v)) {
             fileExtend(&f->doublesFile_, 4, sizeof *f->doublesFile_.i_);
-            f->doublesFile_.i_[f->doublesFile_.n_++] = AS_DOUBLE(*v);
+            f->doublesFile_.i_[f->doublesFile_.n_++].f_ = AS_DOUBLE(*v);
+            f->doublesFile_.i_[f->doublesFile_.n_++].chunkIndex_ =  f->chunksFile_.n_ - 1;
+            f->doublesFile_.i_[f->doublesFile_.n_++].constNumber_ =  i;
         } else if (IS_OBJ(*v)) {
             switch (AS_OBJ(*v)->type) {
             case OBJ_FUNCTION:
                 break;
             case OBJ_INT: {
-                fileExtend(&f->intOffsetsFile_, 8, sizeof *f->intOffsetsFile_.i_);
-                f->intOffsetsFile_.i_[f->intOffsetsFile_.n_++] = f->intsFile_.n_;
+                fileExtend(&f->intsFile_, 16, sizeof *f->intsFile_.i_);
+                f->intsFile_.i_[f->intsFile_.n_++].i_ = AS_INTOBJ(*v);
+                f->intsFile_.i_[f->intsFile_.n_++].chunkIndex_ =  f->chunksFile_.n_ - 1;
+                f->intsFile_.i_[f->intsFile_.n_++].constNumber_ =  i;
                 Int *from = AS_INT(*v);
                 int len = (int)((char *) from->w_ - (char *) from);
                 assert(len % 4 == 0);
                 len += sizeof (uint16_t) * from->d_;
                 len += len % 4;
-                fileExtend(&f->intsFile_, len / 4, sizeof *f->intsFile_.i_);
-                memcpy(&f->intsFile_.i_[f->intsFile_.n_], from, len);
-                f->intsFile_.n_ += len / 4;
+                f->intsFile_.totalIntsLength_ += len;
                 break;
             }
             case OBJ_STRING: {
-                fileExtend(&f->stringOffsetsFile_, 16, sizeof *f->stringOffsetsFile_.i_);
-                f->stringOffsetsFile_.i_[f->stringOffsetsFile_.n_++] = f->stringsFile_.n_;
+                fileExtend(&f->stringsFile_, 16, sizeof *f->stringsFile_.i_);
                 ObjString *from = AS_STRING(*v);
+                f->stringsFile_.i_[f->stringsFile_.n_++].s_ = from;
+                f->stringsFile_.i_[f->stringsFile_.n_++].chunkIndex_ =  f->chunksFile_.n_ - 1;
+                f->stringsFile_.i_[f->stringsFile_.n_++].constNumber_ =  i;
                 int len = from->length;
-                fileExtend(&f->stringsFile_, len + 1, sizeof *f->stringsFile_.i_);
-                assert(len < f->stringsFile_.extent_ - f->stringsFile_.n_);
-                memcpy(&f->stringsFile_.i_[f->stringsFile_.n_], from->chars, len);
-                f->stringsFile_.n_ += len;
+                f->stringsFile_.totalStringLength_ += len;
                 break;
             }
             default:
@@ -183,6 +198,8 @@ void packConstants(Chunk *chunk, bool includeLines, Files *f) {
         if (IS_OBJ(*v)) {
             switch (AS_OBJ(*v)->type) {
             case OBJ_FUNCTION:
+                fileExtend(&f->chunksFile_, 4, sizeof *f->chunksFile_.i_);
+                f->chunksFile_.n_++;
                 packConstants(&AS_FUNCTION(*v)->chunk, includeLines, f);
             default:
                 break;
@@ -191,9 +208,8 @@ void packConstants(Chunk *chunk, bool includeLines, Files *f) {
     }
 }
 
-static void packCode(Chunk *chunk, bool includeLines, Files *f) {
-    fileExtend(&f->codeOffsetsFile_, 4, sizeof *f->codeOffsetsFile_.i_);
-    f->codeOffsetsFile_.i_[f->codeOffsetsFile_.n_++] = f->codeFile_.n_;
+static void packCode(Chunk const *chunk, bool includeLines, PackageFiles *f) {
+    int chunkIndex = f->chunksFile_.n_ - 1;
 
     fileExtend(&f->codeFile_, 512, sizeof *f->codeFile_.i_);
 
@@ -206,6 +222,7 @@ static void packCode(Chunk *chunk, bool includeLines, Files *f) {
         if (IS_OBJ(*v)) {
             switch (AS_OBJ(*v)->type) {
             case OBJ_FUNCTION:
+                f->chunksFile_.n_++;
                 packCode(&AS_FUNCTION(*v)->chunk, includeLines, f);
             default:
                 break;
@@ -354,10 +371,10 @@ static int typeLiteralInstruction(const char* name, Chunk* chunk, int offset) {
     return offset + 2;
 }
 
-int packInstruction(Chunk *chunk, int offset, Files *f) {
+int packInstruction(Chunk const *chunk, int offset, PackageFiles *f) {
     printf("%04d ", offset);
     for (int s = 0;; s++) {
-        if (chunk->lines[s].address == offset) {
+        if (chunk->lines != 0 && chunk->lines[s].address == offset) {
             printf("%4d ", chunk->lines[s].line);
             break;
         } else if (s == chunk->numLines || chunk->lines[s].address > offset) {

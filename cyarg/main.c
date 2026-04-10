@@ -84,7 +84,7 @@ int main(int argc, const char* argv[]) {
             returnCode = EX_DATAERR;
         }
         if (returnCode == EX_OK) {
-            returnCode = buildBinary(argv[2], &result);
+            returnCode = packageBinary(argv[2], &result);
         }
     } else if ((argv[1] && strcmp(argv[1], "--disassemble") == 0) && argc == 3) {
         returnCode = disassembleFile(argv[2]);

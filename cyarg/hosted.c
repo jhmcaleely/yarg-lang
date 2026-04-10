@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <sysexits.h>
+#include <assert.h>
 
 #include "common.h"
 #include "hosted.h"
@@ -17,7 +18,7 @@ static char* libraryNameFor(const char* importname, const char* libraryPath) {
     if (libraryPath) {
         pathlen = strlen(libraryPath);
     }
-    char* filename = malloc(pathlen + 1 +namelen + 1);
+    char* filename = malloc(pathlen + 1 + namelen + 1);
     if (filename) {
         if (libraryPath) {
             strcpy(filename, libraryPath);
@@ -92,17 +93,32 @@ int disassembleFile(const char* path) {
     return returnCode;
 }
 
-int buildBinary(const char *path, Value const *script)
+int packageBinary(const char *path, Value const *script)
 {
+    int r = EX_SOFTWARE;
     if (IS_CLOSURE(*script)) {
-        int len;
-        char *binary = packChunk(&AS_CLOSURE(*script)->function->chunk, true, &len);
-
-        if (binary != 0) {
-
-            free(binary);
-            return EX_OK;
+        char const *scriptFileName = strrchr(path, '/');
+        if (scriptFileName == 0) {
+            scriptFileName = path;
+        } else {
+            scriptFileName++;
         }
+
+        size_t len = strlen(path);
+        char *packagePath = malloc(len + 1);
+        strcpy(packagePath, path);
+        assert(packagePath[len - 1] == 'a');
+        packagePath[len - 1] = 'b';
+
+        FILE *file = fopen(packagePath, "wb");
+        r = packChunks(scriptFileName, &AS_CLOSURE(*script)->function->chunk, true, file);
+        fclose(file);
+
+        if (r != EX_OK)
+        {
+            (void) remove(packagePath);
+        }
+        free(packagePath);
     }
-    return EX_SOFTWARE;
+    return r;
 }
