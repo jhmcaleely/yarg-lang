@@ -134,6 +134,12 @@ int loadPackage(FILE *file) {
     size_t n = fread(&h, sizeof h, 1, file);
     assert(n == 1);
 
+    if (memcmp(h.magic_, &(int8_t [PACKAGE_MAGIC_LEN]){0x79, 0x0a, 0x72, 0x67, 0x00, 0x42}, PACKAGE_MAGIC_LEN) != 0) {
+        return EX_PROTOCOL;
+    }
+    if (h.version_ != 0x2601) {
+        return EX_DATAERR;
+    }
     int bufferLen = 0;
     // 24   double D*8
     // per chunk -- m == M-1
@@ -167,6 +173,12 @@ int loadPackage(FILE *file) {
 
     double *doubles = (double *)body;
 
+    for (int i = 0; i < h.numDoubles_; i++) {
+        if (i < 7) {
+            printf("float@%ld:%f\n", (uint8_t *)&doubles[i] - (uint8_t *)doubles, doubles[i]);
+        }
+    }
+
     typedef struct {
         uint8_t numConsts_;
         uint8_t codeOffset[3];
@@ -174,17 +186,55 @@ int loadPackage(FILE *file) {
     } PackedChunk;
     PackedChunk const *chunks[256];
     uint8_t const *next = body + h.numDoubles_ * sizeof (double);
+    uint8_t const *chunkFile = next;
     for (int i = 0; i < h.numChunks_; i++) {
         chunks[i] = (PackedChunk const *)next;
         next += 4 + 4 * chunks[i]->numConsts_;
     }
-    Int const *ints[11]; // could be 65535 ints but this is test code so only need to look at first few, in vm the ints are indexed by typedIndexs
+    uint8_t const *intFile = next;
+
     for (int i = 0; i < h.numInts_; i++) {
         Int const *thisInt = (Int const *)next;
         if (i < 11) {
-            ints[i] = thisInt;
+            printf("int@%ld:", (uint8_t *)thisInt - intFile); int_print(thisInt); printf("\n");
         }
         next += sizeof (Int) + sizeof (uint16_t) * thisInt->m_;
+    }
+    uint8_t const *stringFile = next;
+
+    for (int i = 0; i < h.numStrings_ + 1; i++) {
+        char const *thisString = (char const *)next;
+        if (i < 13) {
+            printf("string@%ld:\"%s\"\n", (uint8_t *)thisString - stringFile, thisString);
+        }
+        next += strlen(thisString) + 1;
+    }
+    int pad = 4 - (next - body) % 4;
+    if (pad != 4) next += pad;
+    uint8_t const *codeFile = next;
+
+    for (int i = 0; i < h.numChunks_; i++) {
+        uint32_t codeOffset = 0;
+        memcpy(&codeOffset, chunks[i]->codeOffset, 3);
+        printf("Chunk:%d code@%u numConsts:%d\n", i, codeOffset, (int)chunks[i]->numConsts_);
+        for (int c = 0; c < chunks[i]->numConsts_; c++) {
+            uint32_t index = chunks[i]->typedIndexs[c] >> 8;
+            uint8_t type = chunks[i]->typedIndexs[c] & 0xffu;
+            static const char *typesName[] = {"string", "int", "float"};
+            printf("%s@%u:", typesName[type], index);
+            if (type == 0) {
+                char const *thisString = (char const *)&stringFile[index];
+                printf("\"%s\"", thisString);
+            } else if (type == 1) {
+                Int const *thisInt = (Int const *)&intFile[index];
+                int_print(thisInt);
+            } else {
+                assert(type == 2);
+                double thisFloat = doubles[index];
+                printf("\"%f\"", thisFloat);
+            }
+            printf("\n");
+        }
     }
 
 exit:
@@ -205,12 +255,12 @@ void flattenConstants(Chunk const *chunk, PackageFiles *f) {
     int constCount = chunk->constants.count;
 
     FlatChunk *fc = &f->chunksFile_.i_[chunkIndex];
-    fc->numConsts_ = constCount;
+    fc->numConsts_ = 0;
 
     for (int i = 0; i < constCount; i++) {
         Value *v = &chunk->constants.values[i];
         if (IS_DOUBLE(*v)) {
-            fc->constTypesAndOffsets_[i] = (ConstItem){ .type_ = PACK_CONST_D, .index_ = f->doublesFile_.n_ };
+            fc->constTypesAndOffsets_[fc->numConsts_++] = (ConstItem){ .type_ = PACK_CONST_D, .index_ = f->doublesFile_.n_ };
             fileExtend(&f->doublesFile_, 4, sizeof *f->doublesFile_.i_);
             f->doublesFile_.i_[f->doublesFile_.n_].f_ = AS_DOUBLE(*v);
             f->doublesFile_.i_[f->doublesFile_.n_].chunkIndex_ =  chunkIndex;
@@ -220,7 +270,7 @@ void flattenConstants(Chunk const *chunk, PackageFiles *f) {
             case OBJ_FUNCTION:
                 break;
             case OBJ_INT: {
-                fc->constTypesAndOffsets_[i] = (ConstItem){ .type_ = PACK_CONST_I, .index_ = f->intsFile_.n_ };
+                fc->constTypesAndOffsets_[fc->numConsts_++] = (ConstItem){ .type_ = PACK_CONST_I, .index_ = f->intsFile_.totalIntsLength_ };
                 fileExtend(&f->intsFile_, 16, sizeof *f->intsFile_.i_);
                 f->intsFile_.i_[f->intsFile_.n_].i_ = AS_INTOBJ(*v);
                 f->intsFile_.i_[f->intsFile_.n_].chunkIndex_ =  chunkIndex;
@@ -230,10 +280,10 @@ void flattenConstants(Chunk const *chunk, PackageFiles *f) {
                 assert(len % 4 == 0);
                 len += sizeof (uint16_t) * (from->d_ + from->d_ % 2);
                 f->intsFile_.totalIntsLength_ += len;
-                break;
+               break;
             }
             case OBJ_STRING: {
-                fc->constTypesAndOffsets_[i] = (ConstItem){ .type_ = PACK_CONST_S, .index_ = f->stringsFile_.n_ };
+                fc->constTypesAndOffsets_[fc->numConsts_++] = (ConstItem){ .type_ = PACK_CONST_S, .index_ = f->stringsFile_.totalStringLength_ };
                 fileExtend(&f->stringsFile_, 16, sizeof *f->stringsFile_.i_);
                 ObjString *from = AS_STRING(*v);
                 f->stringsFile_.i_[f->stringsFile_.n_].s_ = from;
@@ -241,7 +291,7 @@ void flattenConstants(Chunk const *chunk, PackageFiles *f) {
                 f->stringsFile_.i_[f->stringsFile_.n_++].constNumber_ =  i;
                 int len = from->length;
                 f->stringsFile_.totalStringLength_ += len + 1;
-                break;
+               break;
             }
             default:
                 assert(!"Unexpected constant obj");
@@ -250,6 +300,7 @@ void flattenConstants(Chunk const *chunk, PackageFiles *f) {
         } else {
             assert(!"Unexpected constant value");
         }
+
     }
 
     for (int i = 0; i < chunk->constants.count; i++) {
@@ -302,6 +353,8 @@ void flattenLines(Chunk const *chunk, PackageFiles *f) {
 
     if (lastLine > flattenedLines) {
         fileSet(&f->linesFile_, lastLine, sizeof *f->linesFile_.i_);
+        f->linesFile_.n_ = lastLine;
+        memset(&f->linesFile_.i_[flattenedLines], 0xff, sizeof (uint32_t) * (lastLine - flattenedLines));
     }
 
     for (int i = 0; i < chunk->numLines; i++) {
@@ -392,7 +445,7 @@ int pack(char const *sourceFileName, Chunk const *chunk, PackageFiles *f, FILE *
         if (written != 3) return EX_SOFTWARE;
         for (int k = 0; k < fc->numConsts_; k++) {
             ConstItem *ci = &fc->constTypesAndOffsets_[k];
-
+            assert(ci->type_ >= 0 && ci->type_ <= 3);
             written = fwrite(&ci->type_, sizeof (char), 1, file);
             if (written != 1) return EX_SOFTWARE;
             written = fwrite(&ci->index_, sizeof (char), 3, file);
@@ -405,7 +458,7 @@ int pack(char const *sourceFileName, Chunk const *chunk, PackageFiles *f, FILE *
         IntConcrete254 t;
         int_set_t(bigInt, int_init_concrete254(&t));
         t.m_ = t.d_ + t.d_ % 2;
-        written = fwrite(&t, sizeof (Int) + sizeof (uint16_t) * bigInt->m_, 1, file);
+        written = fwrite(&t, sizeof (Int) + sizeof (uint16_t) * t.m_, 1, file);
         if (written != 1) return EX_SOFTWARE;
     }
 
@@ -430,6 +483,12 @@ int pack(char const *sourceFileName, Chunk const *chunk, PackageFiles *f, FILE *
         FlatChunk *fc = &f->chunksFile_.i_[i];
         written = fwrite(fc->code_, fc->codeLength_, 1, file);
         if (written != 1) return EX_SOFTWARE;
+    }
+
+    for (int i = 0; i < f->linesFile_.n_; i++) {
+        uint32_t offset = f->linesFile_.i_[i];
+        written = fwrite(&offset, sizeof (char), 3, file);
+        if (written != 3) return EX_SOFTWARE;
     }
 
     return EX_OK;

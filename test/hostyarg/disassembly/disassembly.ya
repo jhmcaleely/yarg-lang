@@ -1,3 +1,5 @@
+// test packed binary file generation and loading
+
 var verb;
 fun do(cheese) {
     const n = 1;
@@ -6,9 +8,10 @@ fun do(cheese) {
         var m = verb + " " + string(n) + " " + *cheese;
         print m;
         *cheese = nil;
-        struct { int32 i; int j; } x;
+        struct { int32 i; int j; mfloat64 f; } x;
         fun do3() {
             x.i = 77777;
+            x.f = 0.00000123;
             for (var i = 0; i < n; i = 1 + i) m;
             return x;
         }
