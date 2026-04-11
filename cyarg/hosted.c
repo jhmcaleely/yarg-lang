@@ -93,8 +93,8 @@ int disassembleFile(const char* path) {
     return returnCode;
 }
 
-int packageBinary(const char *path, Value const *script)
-{
+int packageBinary(const char *path, Value const *script) {
+
     int r = EX_SOFTWARE;
     if (IS_CLOSURE(*script)) {
         char const *scriptFileName = strrchr(path, '/');
@@ -114,11 +114,17 @@ int packageBinary(const char *path, Value const *script)
         r = packChunks(scriptFileName, &AS_CLOSURE(*script)->function->chunk, true, file);
         fclose(file);
 
-        if (r != EX_OK)
-        {
+        if (r != EX_OK) {
             (void) remove(packagePath);
+        } else {
+            FILE *file = fopen(packagePath, "rb");
+            r = loadPackage(file);
+            fclose(file);
         }
-        free(packagePath);
+
+        if (r == EX_OK) {
+//            runBinary();
+        }
     }
     return r;
 }
