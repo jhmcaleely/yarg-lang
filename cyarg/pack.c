@@ -11,17 +11,24 @@
 #include <sysexits.h>
 #include <assert.h>
 
+static int8_t const magic[PACKAGE_MAGIC_LEN] = {0x79, 0x0a, 0x72, 0x67, 0xff, 0x42};
+static int16_t const version = 0x2601;
+
 typedef struct {
     uint32_t n_;
     uint32_t extent_;
     uint32_t *i_;
 } LinesFile;
 
+enum { PACK_CONST_TYPE_S, PACK_CONST_TYPE_I, PACK_CONST_TYPE_D } type_;
+
 typedef struct {
-    enum { PACK_CONST_S, PACK_CONST_I, PACK_CONST_D } type_;
-    uint16_t index_;
+    uint8_t type_;
+    uint32_t index_;
 } ConstItem;
 
+// if const were sorted by type ConstItem::type_ and FlatChunk::numConsts_ could be replaced by
+//  FlatChunk::numS_, FlatChunk::numI_, FlatChunk::numD_
 typedef struct {
     uint32_t codeOffset_;
     uint8_t *code_;
@@ -90,7 +97,9 @@ int packChunks(char const *sourceFileName, Chunk const *chunk, bool includeLines
     PackageFiles f = {0};
 
     fileExtend(&f.chunksFile_, 8, sizeof *f.chunksFile_.i_);
-    fileExtend(&f.linesFile_, 128, sizeof *f.linesFile_.i_);
+    if (includeLines) {
+        fileExtend(&f.linesFile_, 128, sizeof *f.linesFile_.i_);
+    }
     fileExtend(&f.stringsFile_, 16, sizeof *f.stringsFile_.i_);
     fileExtend(&f.doublesFile_, 4, sizeof *f.doublesFile_.i_);
     fileExtend(&f.intsFile_, 4, sizeof *f.intsFile_.i_);
@@ -130,45 +139,23 @@ exit:
 
 int loadPackage(FILE *file) {
     PackageFileHeader h = {0};
+    assert(sizeof h == 24);
 
     size_t n = fread(&h, sizeof h, 1, file);
     assert(n == 1);
 
-    if (memcmp(h.magic_, &(int8_t [PACKAGE_MAGIC_LEN]){0x79, 0x0a, 0x72, 0x67, 0x00, 0x42}, PACKAGE_MAGIC_LEN) != 0) {
+    if (memcmp(h.magic_, magic, PACKAGE_MAGIC_LEN) != 0) {
         return EX_PROTOCOL;
     }
-    if (h.version_ != 0x2601) {
+    if (h.version_ != version) {
         return EX_DATAERR;
     }
-    int bufferLen = 0;
-    // 24   double D*8
-    // per chunk -- m == M-1
-    // x8 K0    num consts in chunk0 1
-    // x1       code offset for chunk0 3
-    // x4       const offsets indexs -- K0*4 - type(1):index(3)
-    // x1       code offset for chunk0 3
-    // x4       const indexs -- K1*4
-    // …
-    // x4 Km    num consts in chunk0 1
-    // x1       code offset for chunk0 3
-    // x4       const indexs -- Km*4
-    // x4   ints (4I)*1
-    // x4   strings (4T)*1
-    // x1   …padding(0..3)
-    // x4   code (4C)*1
-    // x1   code offsets for lines L*3
-    bufferLen += h.numDoubles_ * sizeof (double);
-    bufferLen += h.numChunks_ * 256 * 4 + 4; // this is max most chunks will have fewer consts
-    bufferLen += h.intsLen_;
-    bufferLen += h.stringsLen_;
-    bufferLen += h.codeLen_;
-    bufferLen += h.numLines_ * 3;
 
-    uint8_t *buffer = realloc(0, bufferLen);
+    uint8_t *buffer = realloc(0, h.bodyLength_);
     assert((long)buffer % 8 == 0);
 
-    size_t bodyLen = fread(buffer, 1, bufferLen, file);
-    assert(bodyLen > 0 && bodyLen <= bufferLen);
+    size_t bodyLen = fread(buffer, 1, h.bodyLength_, file);
+    assert(bodyLen == h.bodyLength_);
     uint8_t const *body = buffer;
 
     double *doubles = (double *)body;
@@ -179,10 +166,14 @@ int loadPackage(FILE *file) {
         }
     }
 
+    typedef uint8_t Uint24[3];
     typedef struct {
         uint8_t numConsts_;
-        uint8_t codeOffset[3];
-        uint32_t typedIndexs[];
+        Uint24 codeOffset_;
+        struct {
+            uint8_t type_;
+            Uint24 constOffset_;
+        } typedIndexs[];
     } PackedChunk;
     PackedChunk const *chunks[256];
     uint8_t const *next = body + h.numDoubles_ * sizeof (double);
@@ -215,13 +206,14 @@ int loadPackage(FILE *file) {
 
     for (int i = 0; i < h.numChunks_; i++) {
         uint32_t codeOffset = 0;
-        memcpy(&codeOffset, chunks[i]->codeOffset, 3);
+        memcpy(&codeOffset, chunks[i]->codeOffset_, 3);
         printf("Chunk:%d code@%u numConsts:%d\n", i, codeOffset, (int)chunks[i]->numConsts_);
         for (int c = 0; c < chunks[i]->numConsts_; c++) {
-            uint32_t index = chunks[i]->typedIndexs[c] >> 8;
-            uint8_t type = chunks[i]->typedIndexs[c] & 0xffu;
+            uint32_t index = 0;
+            memcpy(&index, chunks[i]->typedIndexs[c].constOffset_, 3);
+            uint8_t type = chunks[i]->typedIndexs[c].type_;
             static const char *typesName[] = {"string", "int", "float"};
-            printf("%s@%u:", typesName[type], index);
+            printf("%s%d@%u:", typesName[type], (int)c, index);
             if (type == 0) {
                 char const *thisString = (char const *)&stringFile[index];
                 printf("\"%s\"", thisString);
@@ -260,7 +252,7 @@ void flattenConstants(Chunk const *chunk, PackageFiles *f) {
     for (int i = 0; i < constCount; i++) {
         Value *v = &chunk->constants.values[i];
         if (IS_DOUBLE(*v)) {
-            fc->constTypesAndOffsets_[fc->numConsts_++] = (ConstItem){ .type_ = PACK_CONST_D, .index_ = f->doublesFile_.n_ };
+            fc->constTypesAndOffsets_[fc->numConsts_++] = (ConstItem){ .type_ = PACK_CONST_TYPE_D, .index_ = f->doublesFile_.n_ };
             fileExtend(&f->doublesFile_, 4, sizeof *f->doublesFile_.i_);
             f->doublesFile_.i_[f->doublesFile_.n_].f_ = AS_DOUBLE(*v);
             f->doublesFile_.i_[f->doublesFile_.n_].chunkIndex_ =  chunkIndex;
@@ -270,7 +262,7 @@ void flattenConstants(Chunk const *chunk, PackageFiles *f) {
             case OBJ_FUNCTION:
                 break;
             case OBJ_INT: {
-                fc->constTypesAndOffsets_[fc->numConsts_++] = (ConstItem){ .type_ = PACK_CONST_I, .index_ = f->intsFile_.totalIntsLength_ };
+                fc->constTypesAndOffsets_[fc->numConsts_++] = (ConstItem){ .type_ = PACK_CONST_TYPE_I, .index_ = f->intsFile_.totalIntsLength_ };
                 fileExtend(&f->intsFile_, 16, sizeof *f->intsFile_.i_);
                 f->intsFile_.i_[f->intsFile_.n_].i_ = AS_INTOBJ(*v);
                 f->intsFile_.i_[f->intsFile_.n_].chunkIndex_ =  chunkIndex;
@@ -283,7 +275,7 @@ void flattenConstants(Chunk const *chunk, PackageFiles *f) {
                break;
             }
             case OBJ_STRING: {
-                fc->constTypesAndOffsets_[fc->numConsts_++] = (ConstItem){ .type_ = PACK_CONST_S, .index_ = f->stringsFile_.totalStringLength_ };
+                fc->constTypesAndOffsets_[fc->numConsts_++] = (ConstItem){ .type_ = PACK_CONST_TYPE_S, .index_ = f->stringsFile_.totalStringLength_ };
                 fileExtend(&f->stringsFile_, 16, sizeof *f->stringsFile_.i_);
                 ObjString *from = AS_STRING(*v);
                 f->stringsFile_.i_[f->stringsFile_.n_].s_ = from;
@@ -382,50 +374,26 @@ void flattenLines(Chunk const *chunk, PackageFiles *f) {
 int pack(char const *sourceFileName, Chunk const *chunk, PackageFiles *f, FILE *file) {
 
     PackageFileHeader h;
-    assert(sizeof h == 24);
 
-    // xN is alignment, number is offset
-    //
-    // 0    magic(6) - 79 0a 72 67 00 42
-    // 6    version(2) - 26, 01 - year, issue (update for any changes to byte-code, number format, file format)
-    // 8  M chunks(1) -- 0..255 (0: just global)
-    // 9  …padding(1)
-    // 10 C code size(2) -- max 256k bytes
-    // 12 T strings size(2) -- max 256k chars
-    // 14 I ints size(2) -- max 256k chars
-    // 16 N strings(2) -- max 64k strings
-    // 18 D doubles(2) -- max 64k floats
-    // 20 Q ints(2) -- max 64k ints
-    // 22 L lines(2) -- min zero, max 64k lines
-    // 24   double D*8
-    // per chunk -- m == M-1
-    // x8 K0    num consts in chunk0 1
-    // x1       code offset for chunk0 3
-    // x4       const offsets indexs -- K0*4 - type(1):index(3)
-    // x4 K1    num consts in chunk0 1
-    // x1       code offset for chunk0 3
-    // x4       const indexs -- K1*4
-    // …
-    // x4 Km    num consts in chunk0 1
-    // x1       code offset for chunk0 3
-    // x4       const indexs -- Km*4
-    // x4   ints (4I)*1
-    // x4   strings (4T)*1
-    // x1   …padding(0..3)
-    // x4   code (4C)*1
-    // x1   code offsets for lines L*3
-
-    memcpy(&h.magic_, &(int8_t [PACKAGE_MAGIC_LEN]){0x79, 0x0a, 0x72, 0x67, 0x00, 0x42}, PACKAGE_MAGIC_LEN);
-    h.version_ = 0x2601;
+    memcpy(&h.magic_, magic, PACKAGE_MAGIC_LEN);
+    h.version_ = version;
     h.numChunks_ = f->chunksFile_.n_;
-    h.stringHashMod_ = f->stringsFile_.n_ < 765 ? (uint8_t) f->stringsFile_.n_ / 3 : 255;
-    h.codeLen_ = (f->chunksFile_.totalCodeLength_ + 3) / 4;
-    h.stringsLen_ = (f->stringsFile_.totalStringLength_ + 3) / 4;
-    h.intsLen_= (f->intsFile_.totalIntsLength_ + 3) / 4;
     h.numStrings_ = f->stringsFile_.n_;
     h.numInts_ = f->intsFile_.n_;
     h.numDoubles_ = f->doublesFile_.n_;
     h.numLines_ = f->linesFile_.n_;
+    h.bodyLength_ = 0;
+
+    h.bodyLength_ += h.numDoubles_ * sizeof (double);
+    for (int i = 0; i < f->chunksFile_.n_; i++) {
+        h.bodyLength_ += 1 + 3 + 4 * f->chunksFile_.i_[i].numConsts_;
+    }
+    assert(h.bodyLength_ % 4 == 0);
+    h.bodyLength_ += f->intsFile_.totalIntsLength_;
+    assert(h.bodyLength_ % 4 == 0);
+    h.bodyLength_ += f->stringsFile_.totalStringLength_;
+    h.bodyLength_ += f->chunksFile_.totalCodeLength_;
+    h.bodyLength_ += 3 * h.numLines_;
 
     size_t written = fwrite(&h, sizeof h, 1, file);
     if (written != 1) return EX_SOFTWARE;
@@ -471,11 +439,6 @@ int pack(char const *sourceFileName, Chunk const *chunk, PackageFiles *f, FILE *
         written = fwrite(s->chars, s->length, 1, file);
         if (written != 1) return EX_SOFTWARE;
         written = fwrite(nullChar, 1, 1, file);
-        if (written != 1) return EX_SOFTWARE;
-    }
-    int pad = 4 - f->stringsFile_.totalStringLength_ % 4;
-    if (pad != 4) {
-        written = fwrite(&pad, pad, 1, file);
         if (written != 1) return EX_SOFTWARE;
     }
 
