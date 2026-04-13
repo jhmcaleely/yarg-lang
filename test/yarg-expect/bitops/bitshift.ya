@@ -1,0 +1,3 @@
+print uint8(1)  << 2;  // expect: 4
+print uint16(4) >> 2;  // expect: 1
+print uint32(1) << 32; // expect: 1

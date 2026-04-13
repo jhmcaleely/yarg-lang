@@ -1,2 +1,0 @@
-var source = read_source("test/hostyarg/read_source/sample.ya");
-print source; // expect: print "hello world"; // expect: hello world

@@ -123,6 +123,22 @@ ObjNative* newNative(NativeFn function) {
     return native;
 }
 
+ObjInt* newInt(int64_t value) {
+    ObjInt *i = (ObjInt *) allocateObject(sizeof (ObjInt) + 2 * sizeof (uint16_t), OBJ_INT);
+    i->isLiteral = false;
+    i->bigInt.m_ = sizeof (value) / sizeof (uint16_t);
+    int_set_i(value, &i->bigInt);
+    return i;
+}
+
+ObjInt* newIntU(uint64_t value) {
+    ObjInt *i = (ObjInt *) allocateObject(sizeof (ObjInt) + 2 * sizeof (uint16_t), OBJ_INT);
+    i->isLiteral = false;
+    i->bigInt.m_ = sizeof (value) / sizeof (uint16_t);
+    int_set_u(value, &i->bigInt);
+    return i;
+}
+
 Value defaultIntValue() {
     ObjInt *intObj = (ObjInt *) allocateObject(sizeof (ObjInt) + 2 * sizeof (uint16_t), OBJ_INT);
     intObj->bigInt.m_ = 2;
@@ -177,6 +193,13 @@ Value defaultArrayValue(ObjConcreteYargType* type) {
     }
     
     return OBJ_VAL(newPackedUniformArray(arrayType));
+}
+
+ObjMap* newMap(ObjConcreteYargTypeMap* type) {
+    ObjMap* map = ALLOCATE_OBJ(ObjMap, OBJ_MAP);
+    map->type = type;
+    initTable(&map->entries);
+    return map;
 }
 
 ObjPackedPointer* newPointerForHeapCell(PackedValue location) {
@@ -506,6 +529,7 @@ void fprintObject(FILE* op, Value value) {
         case OBJ_YARGTYPE:
         case OBJ_YARGTYPE_ARRAY:
         case OBJ_YARGTYPE_STRUCT:
+        case OBJ_YARGTYPE_MAP:
             printType(op, AS_YARGTYPE(value));
             break;
         case OBJ_UNOWNED_PACKEDPOINTER:
@@ -522,7 +546,13 @@ void fprintObject(FILE* op, Value value) {
             char const* s = int_to_s(i, sb, INT_STRLEN_FOR_INT254);
             FPRINTMSG(op, "%s", s);
             break;
-    }
+        }
+        case OBJ_MAP:
+            FPRINTMSG(op, "<map ");
+            FPRINTMSG(op, "(%d) ", AS_MAP(value)->entries.count);
+            printType(op, (ObjConcreteYargType*)(AS_MAP(value)->type));
+            FPRINTMSG(op, " >");
+            break;
         default:
             FPRINTMSG(op, "<implementation object %d>", OBJ_TYPE(value));
             break;
