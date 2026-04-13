@@ -134,8 +134,11 @@ void initialisePackedValue(PackedValue packedValue) {
             case TypeFunction:
             case TypeRoutine:
             case TypeChannel:
-            case TypeYargType:
-                memcpy((char *)packedValue.storedValue, &(Obj *){0}, sizeof (Obj *)); break;
+            case TypeMap:
+            case TypeYargType: {
+                memcpy((char *)packedValue.storedValue, &(Obj *){0}, sizeof (Obj *));
+                break;
+            }
         }
     }
 }
@@ -177,6 +180,7 @@ Value unpackValue(PackedValue packedValue) {
             case TypeFunction:
             case TypeRoutine:
             case TypeChannel:
+            case TypeMap:
             case TypeYargType: {
                 if (packedValue.storedValue->as.obj) {
                     return OBJ_VAL(packedValue.storedValue->as.obj);
@@ -212,7 +216,11 @@ static void packValue(PackedValue packedStorageTarget, Value value) {
             case TypeRoutine:
             case TypeChannel:
             case TypeYargType:
-            case TypeInt: memcpy(packedStorageTarget.storedValue, &AS_OBJ(value), sizeof value.as.obj); break;
+            case TypeInt:
+            case TypeMap: {
+                memcpy(packedStorageTarget.storedValue, &AS_OBJ(value), sizeof value.as.obj);
+                break;
+            }
             case TypeStruct:
             case TypeArray:
                 break;

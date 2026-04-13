@@ -1,0 +1,32 @@
+const GPIO_FUNC_SIO = uint32(5);
+const NUM_BANK0_GPIOS = 30;
+
+// the memory locations we need.
+
+place struct {
+    struct {
+        uint32@0x004 set;
+        }@0x010 gpio_out;
+    struct {
+        uint32@0x004 set;
+        }@0x020 gpio_oe;
+    } @xd0000000 sio_hw;
+
+place struct {
+    struct {
+        uint32@0x004 ctrl;
+        }[NUM_BANK0_GPIOS] gpio;
+    } @x40014000 io_bank0;
+
+
+const pico_led = uint32(25);
+const gpio_field = uint32(0x1) << pico_led;
+
+
+// configure GPIO, assuming core was reset first.
+poke io_bank0.gpio[pico_led].ctrl, GPIO_FUNC_SIO; // expect: poke 0x400140cc, 0x00000005
+poke sio_hw.gpio_oe.set, gpio_field;              // expect: poke 0xd0000024, 0x02000000
+
+
+// turn the LED on.
+poke sio_hw.gpio_out.set, gpio_field;             // expect: poke 0xd0000014, 0x02000000

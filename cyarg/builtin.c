@@ -484,14 +484,20 @@ bool lenBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
 
     if (IS_STRING(arg)) {
         ObjString* string = AS_STRING(arg);
-        *result = UI32_VAL(string->length);
+        size_t length = string->length;
+        *result = OBJ_VAL(newIntU(length));
         return true;
     } else if (IS_UNIFORMARRAY(arg)) {
         ObjPackedUniformArray* array = AS_UNIFORMARRAY(arg);
-        *result = SIZE_T_UI_VAL(arrayCardinality(array->store));
+        *result = OBJ_VAL(newIntU(arrayCardinality(array->store)));
+        return true;
+    } else if (IS_MAP(arg)) {
+        ObjMap* map = AS_MAP(arg);
+        size_t count = map->entries.count;
+        *result = OBJ_VAL(newIntU(count));
         return true;
     } else {
-        runtimeError(routineContext, "Expected a string or array.");
+        runtimeError(routineContext, "Expected a string, array or map.");
         return false;
     }
 }
@@ -559,6 +565,15 @@ bool newBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
         case TypeArray: {
             *result = defaultValue(typeToCreate);
             return true;
+        }
+        case TypeMap: {
+            if (isSupportedMapKeyType(typeToCreate)) {
+                *result = OBJ_VAL(newMap((ObjConcreteYargTypeMap*)AS_YARGTYPE(typeToCreate)));
+                return true;
+            } else {
+                runtimeError(routineContext, "Unsupported map key type.");
+                return false;
+            }
         }
         case TypeInt:
         case TypeString:
@@ -883,7 +898,7 @@ bool uint8Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
         uint64_t i = strtoull(AS_CSTRING(arg), &end, 10);
         if (*end == 0 && i <= UINT8_MAX)
         {
-            *result = UI8_VAL((int8_t) i);
+            *result = UI8_VAL((uint8_t) i);
             return true;
         }
     }
@@ -953,12 +968,8 @@ bool intBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
     } else if (IS_UI32(arg)) {
         i = AS_UI32(arg);
     } else if (IS_UI64(arg)) {
-        uint64_t i = AS_UI64(arg);
-        ObjInt *newObj = (ObjInt *)allocateObject(sizeof (ObjInt) + sizeof i, OBJ_INT);
-        result->as.obj = &newObj->obj;
-        result->type = VAL_OBJ;
-        newObj->bigInt.m_ = sizeof i / sizeof (uint16_t);
-        int_set_u(i, &newObj->bigInt);
+        uint64_t u = AS_UI64(arg);
+        *result = OBJ_VAL(newIntU(u));
         return true;
     } else if (IS_STRING(arg)) {
         char *s = AS_CSTRING(arg);
@@ -983,11 +994,8 @@ bool intBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
     } else {
         return false;
     }
-    ObjInt *newObj = (ObjInt *)allocateObject(sizeof (ObjInt) + sizeof i, OBJ_INT);
-    result->as.obj = &newObj->obj;
-    result->type = VAL_OBJ;
-    newObj->bigInt.m_ = sizeof i / sizeof (uint16_t);
-    int_set_i(i, &newObj->bigInt);
+
+    *result = OBJ_VAL(newInt(i));
     return true;
 }
 
