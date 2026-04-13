@@ -75,7 +75,7 @@ typedef struct {
     uint16_t line;
 } ChunkSource;
 
-typedef struct {
+typedef struct Chunk {
     int count;
     int capacity;
     uint8_t* code;
@@ -118,7 +118,8 @@ typedef enum {
     BUILTIN_TS_SYNC,
     BUILTIN_INT,
     BUILTIN_MFLOAT64,
-    BUILTIN_STRING
+    BUILTIN_STRING,
+    BUILTIN_LOAD
 } BuiltinFn;
 
 typedef enum {

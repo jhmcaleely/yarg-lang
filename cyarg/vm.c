@@ -186,6 +186,7 @@ void freeVM() {
     freeTable(&vm.imports);
     vm.initString = NULL;
     vm.libraryPath = NULL;
+    collectGarbage();
     freeObjects();
 }
 
@@ -262,6 +263,8 @@ static InterpretResult callValue(ObjRoutine* routine, Value callee, int argCount
                     return importBuiltin(routine, argCount);
                 } else if (native == execBuiltinDummy) {
                     return execBuiltin(routine, argCount);
+                } else if (native == loadBuiltinDummy) {
+                    return loadBuiltin(routine, argCount);
                 } else {
                     Value result = NIL_VAL; 
                     if (native(routine, argCount, &result)) {
@@ -1221,7 +1224,7 @@ InterpretResult run(ObjRoutine* routine) {
                 ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
                 ObjClosure* closure = newClosure(function);
                 push(routine, OBJ_VAL(closure));
-                for (int i = 0; i < closure->upvalueCount; i++) {
+                for (int i = 0; i < closure->cUpvalueCount; i++) {
                     uint8_t isLocal = READ_BYTE();
                     uint8_t index = READ_BYTE();
                     if (isLocal) {
@@ -1430,9 +1433,15 @@ uint8_t compile_bootstrap[] = {
     OP_RETURN
 };
 
+uint8_t load_bootstrap[] = {
+    OP_GET_BUILTIN, BUILTIN_EXEC,
+    OP_CALL, 1,
+    OP_RETURN
+};
+
 static void installBootstrap(const uint8_t bootstrap[], ObjString* script) {
 
-    vm.bootFunction.name = copyString("boot", 4);
+    vm.bootFunction.fName = copyString("boot", 4);
 
     for (size_t i = 0; i < sizeof(exec_bootstrap); i++) {
         writeChunk(&vm.bootFunction.chunk, bootstrap[i], 0);
@@ -1461,6 +1470,16 @@ InterpretResult bootstrapVM(const uint8_t bootstrap[], Value* bootstrapResult, O
 }
 
 InterpretResult bootScript(const char* script, size_t length) {
+    ObjString* scriptObj = copyString(script, (int) length);
+    tempRootPush(OBJ_VAL(scriptObj));
+    // Yarg scripts have no mechanism to return a result, so we discard it (it will always be nil).
+    Value discardedResult;
+    InterpretResult result = bootstrapVM(exec_bootstrap, &discardedResult, scriptObj);
+    tempRootPop();
+    return result;
+}
+
+InterpretResult bootBinary(const char* script, size_t length) {
     ObjString* scriptObj = copyString(script, (int) length);
     tempRootPush(OBJ_VAL(scriptObj));
     // Yarg scripts have no mechanism to return a result, so we discard it (it will always be nil).

@@ -257,10 +257,10 @@ void runtimeError(ObjRoutine* routine, const char* format, ...) {
             line = function->chunk.lines[s].line;
         }
         PRINTERR("[line %d] in ", line);
-        if (function->name == NULL) {
+        if (function->fName == NULL) {
             PRINTERR("script\n");
         } else {
-            PRINTERR("%s()\n", function->name->chars);
+            PRINTERR("%s()\n", function->fName->chars);
         }
     }
 

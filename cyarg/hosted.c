@@ -69,6 +69,24 @@ int compileFile(const char* path, Value* compileResult) {
     }
 }
 
+int loadPackageFile(const char *path) {
+
+    ObjString* pathString = copyString(path, (int) strlen(path));
+    tempRootPush(OBJ_VAL(pathString));
+
+    Value loadResult;
+    InterpretResult result = bootstrapVM(load_bootstrap, &loadResult, pathString);
+
+    tempRootPop();
+    if (result == INTERPRET_FILE_ERROR) {
+        return EX_DATAERR;
+    } else if (result == INTERPRET_RUNTIME_ERROR) {
+        return EX_SOFTWARE;
+    } else {
+        return EX_OK;
+    }
+}
+
 int disassembleFile(const char* path) {
 
     Value result;
@@ -110,21 +128,8 @@ int packageBinary(const char *path, Value const *script) {
         assert(packagePath[len - 1] == 'a');
         packagePath[len - 1] = 'b';
 
-        FILE *file = fopen(packagePath, "wb");
-        r = packChunks(scriptFileName, &AS_CLOSURE(*script)->function->chunk, true, file);
-        fclose(file);
+        r = packScript(scriptFileName, &AS_CLOSURE(*script)->function->chunk, true, packagePath);
 
-        if (r != EX_OK) {
-            (void) remove(packagePath);
-        } else {
-            FILE *file = fopen(packagePath, "rb");
-            r = loadPackage(file);
-            fclose(file);
-        }
-
-        if (r == EX_OK) {
-//            runBinary();
-        }
-    }
+     }
     return r;
 }

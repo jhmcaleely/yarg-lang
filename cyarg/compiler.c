@@ -73,7 +73,7 @@ static void initCompiler(Compiler* compiler, FunctionType type, ObjString* name)
     compiler->function = newFunction();
 
     if (type != TYPE_SCRIPT) {
-        current->function->name = name;
+        current->function->fName = name;
     }
 
     Local* local = &current->locals[current->localCount++];
@@ -580,6 +580,7 @@ static void generateExprBuiltin(ObjExprBuiltin* fn) {
         case EXPR_BUILTIN_INT: emitBytes(OP_GET_BUILTIN, BUILTIN_INT); break;
         case EXPR_BUILTIN_MFLOAT64: emitBytes(OP_GET_BUILTIN, BUILTIN_MFLOAT64); break;
         case EXPR_BUILTIN_STRING: emitBytes(OP_GET_BUILTIN, BUILTIN_STRING); break;
+        case EXPR_BUILTIN_LOAD: emitBytes(OP_GET_BUILTIN, BUILTIN_LOAD); break;
     }
 }
 

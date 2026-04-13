@@ -14,5 +14,6 @@ int runFile(const char* libraryPath, const char* path);
 int compileFile(const char* path, Value* yargResult);
 int disassembleFile(const char* path);
 int packageBinary(const char *path, Value const *yargResult);
+int loadPackageFile(const char *path);
 
 #endif
