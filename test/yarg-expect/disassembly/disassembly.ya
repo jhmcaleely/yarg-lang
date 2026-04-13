@@ -159,7 +159,7 @@ eater.eat();           // expect: Eaten
 //0012    | OP_GET_BUILTIN   new
 //0014    | OP_NIL
 //0015    | OP_IMMEDIATE_P8    14
-//0017    | OP_TYPE_ARRAY
+//0017    | OP_TYPE_INDEXED_COLLECTION
 //0018    | OP_CALL             1
 //0020    | OP_IMMEDIATE_P8     0
 //0022    | OP_GET_BUILTIN   int8
@@ -258,88 +258,88 @@ eater.eat();           // expect: Eaten
 //0183    | OP_POP
 //0184   29 OP_GET_GLOBAL      16 string:'xa'
 //0186    | OP_PRINT
-//0187   30 OP_NIL
-//0188    | OP_NIL
-//0189    | OP_CONSTANT        18 string:'u'
-//0191    | OP_TYPE_LITERAL  bool
-//0193    | OP_NIL
-//0194    | OP_CONSTANT        19 string:'k'
-//0196    | OP_TYPE_LITERAL  int8
-//0198    | OP_NIL
-//0199    | OP_CONSTANT        20 string:'j'
-//0201    | OP_TYPE_LITERAL  int
-//0203    | OP_NIL
-//0204    | OP_CONSTANT        21 string:'i'
-//0206    | OP_TYPE_LITERAL  int8
-//0208    | OP_NIL
-//0209    | OP_CONSTANT        22 string:'g'
-//0211    | OP_TYPE_LITERAL  mfloat64
-//0213    | OP_NIL
-//0214    | OP_CONSTANT        23 string:'f'
-//0216    | OP_TYPE_LITERAL  int8
-//0218    | OP_NIL
-//0219    | OP_CONSTANT        24 string:'e'
-//0221    | OP_TYPE_LITERAL  uint64
-//0223    | OP_NIL
-//0224    | OP_CONSTANT        25 string:'ud'
-//0226    | OP_TYPE_LITERAL  uint32
-//0228    | OP_NIL
-//0229    | OP_CONSTANT        26 string:'uc'
-//0231    | OP_TYPE_LITERAL  uint16
-//0233    | OP_NIL
-//0234    | OP_CONSTANT        27 string:'ub'
-//0236    | OP_TYPE_LITERAL  uint8
-//0238    | OP_NIL
-//0239    | OP_CONSTANT        28 string:'ua'
-//0241    | OP_TYPE_LITERAL  int64
-//0243    | OP_NIL
-//0244    | OP_CONSTANT        29 string:'d'
-//0246    | OP_TYPE_LITERAL  int32
-//0248    | OP_NIL
-//0249    | OP_CONSTANT        30 string:'c'
-//0251    | OP_TYPE_LITERAL  int16
+//0187   31 OP_TYPE_LITERAL  bool
+//0189    | OP_NIL
+//0190    | OP_CONSTANT        18 string:'k'
+//0192    | OP_TYPE_LITERAL  int8
+//0194    | OP_NIL
+//0195    | OP_CONSTANT        19 string:'j'
+//0197    | OP_TYPE_LITERAL  int
+//0199    | OP_NIL
+//0200    | OP_CONSTANT        20 string:'i'
+//0202    | OP_TYPE_LITERAL  int8
+//0204    | OP_NIL
+//0205    | OP_CONSTANT        21 string:'g'
+//0207    | OP_TYPE_LITERAL  int8
+//0209    | OP_NIL
+//0210    | OP_CONSTANT        22 string:'e'
+//0212    | OP_TYPE_LITERAL  uint8
+//0214    | OP_NIL
+//0215    | OP_CONSTANT        23 string:'ua'
+//0217    | OP_TYPE_LITERAL  int8
+//0219    | OP_NIL
+//0220    | OP_CONSTANT        24 string:'a'
+//0222    | OP_TYPE_LITERAL  uint16
+//0224    | OP_NIL
+//0225    | OP_CONSTANT        25 string:'ub'
+//0227    | OP_TYPE_LITERAL  int16
+//0229    | OP_NIL
+//0230    | OP_CONSTANT        26 string:'b'
+//0232    | OP_TYPE_LITERAL  uint32
+//0234    | OP_NIL
+//0235    | OP_CONSTANT        27 string:'uc'
+//0237    | OP_TYPE_LITERAL  int32
+//0239    | OP_NIL
+//0240    | OP_CONSTANT        28 string:'c'
+//0242    | OP_TYPE_LITERAL  uint64
+//0244    | OP_NIL
+//0245    | OP_CONSTANT        29 string:'ud'
+//0247    | OP_TYPE_LITERAL  int64
+//0249    | OP_NIL
+//0250    | OP_CONSTANT        30 string:'d'
+//0252    | OP_NIL
 //0253    | OP_NIL
-//0254    | OP_CONSTANT        31 string:'b'
-//0256    | OP_TYPE_LITERAL  int8
+//0254    | OP_CONSTANT        31 string:'u'
+//0256    | OP_TYPE_LITERAL  mfloat64
 //0258    | OP_NIL
-//0259    | OP_CONSTANT        32 string:'a'
+//0259    | OP_CONSTANT        32 string:'f'
 //0261    | OP_TYPE_STRUCT     15
 //0263    | OP_TYPE_MODIFIER const
 //0265    | OP_SET_CELL_TYPE
 //0266    | OP_DEFINE_GLOBAL   17 string:'xy'
-//0268   31 OP_GET_GLOBAL      33 string:'xy'
+//0268   32 OP_GET_GLOBAL      33 string:'xy'
 //0270    | OP_PRINT
-//0271   32 OP_GET_GLOBAL      34 string:'xy'
+//0271   33 OP_GET_GLOBAL      34 string:'xy'
 //0273    | OP_GET_GLOBAL      36 string:'xa'
 //0275    | OP_IMMEDIATE_P8     0
 //0277    | OP_ELEMENT
 //0278    | OP_SET_PROPERTY    35 string:'a'
 //0280    | OP_POP
-//0281   33 OP_GET_GLOBAL      37 string:'xy'
+//0281   34 OP_GET_GLOBAL      37 string:'xy'
 //0283    | OP_GET_GLOBAL      39 string:'xa'
 //0285    | OP_IMMEDIATE_P8     1
 //0287    | OP_ELEMENT
 //0288    | OP_SET_PROPERTY    38 string:'b'
 //0290    | OP_POP
-//0291   34 OP_GET_GLOBAL      40 string:'xy'
+//0291   35 OP_GET_GLOBAL      40 string:'xy'
 //0293    | OP_GET_GLOBAL      42 string:'xa'
 //0295    | OP_IMMEDIATE_P8     2
 //0297    | OP_ELEMENT
 //0298    | OP_SET_PROPERTY    41 string:'c'
 //0300    | OP_POP
-//0301   35 OP_GET_GLOBAL      43 string:'xy'
+//0301   36 OP_GET_GLOBAL      43 string:'xy'
 //0303    | OP_GET_GLOBAL      45 string:'xa'
 //0305    | OP_IMMEDIATE_P8     3
 //0307    | OP_ELEMENT
 //0308    | OP_SET_PROPERTY    44 string:'d'
 //0310    | OP_POP
-//0311   36 OP_GET_GLOBAL      46 string:'xy'
+//0311   37 OP_GET_GLOBAL      46 string:'xy'
 //0313    | OP_GET_GLOBAL      48 string:'xa'
 //0315    | OP_IMMEDIATE_P8     4
 //0317    | OP_ELEMENT
 //0318    | OP_SET_PROPERTY    47 string:'ua'
 //0320    | OP_POP
-//0321   37 OP_GET_GLOBAL      49 string:'xy'
+//0321   38 OP_GET_GLOBAL      49 string:'xy'
 //0323    | OP_GET_BUILTIN   uint16
 //0325    | OP_GET_GLOBAL      51 string:'xa'
 //0327    | OP_IMMEDIATE_P8     1
@@ -347,7 +347,7 @@ eater.eat();           // expect: Eaten
 //0330    | OP_CALL             1
 //0332    | OP_SET_PROPERTY    50 string:'ub'
 //0334    | OP_POP
-//0335   38 OP_GET_GLOBAL      52 string:'xy'
+//0335   39 OP_GET_GLOBAL      52 string:'xy'
 //0337    | OP_GET_BUILTIN   uint32
 //0339    | OP_GET_GLOBAL      54 string:'xa'
 //0341    | OP_IMMEDIATE_P8     2
@@ -355,56 +355,56 @@ eater.eat();           // expect: Eaten
 //0344    | OP_CALL             1
 //0346    | OP_SET_PROPERTY    53 string:'uc'
 //0348    | OP_POP
-//0349   39 OP_GET_GLOBAL      55 string:'xy'
+//0349   40 OP_GET_GLOBAL      55 string:'xy'
 //0351    | OP_GET_GLOBAL      57 string:'xa'
 //0353    | OP_IMMEDIATE_P8     7
 //0355    | OP_ELEMENT
 //0356    | OP_SET_PROPERTY    56 string:'ud'
 //0358    | OP_POP
-//0359   40 OP_GET_GLOBAL      58 string:'xy'
+//0359   41 OP_GET_GLOBAL      58 string:'xy'
 //0361    | OP_GET_GLOBAL      60 string:'xa'
 //0363    | OP_IMMEDIATE_P8     8
 //0365    | OP_ELEMENT
 //0366    | OP_SET_PROPERTY    59 string:'e'
 //0368    | OP_POP
-//0369   41 OP_GET_GLOBAL      61 string:'xy'
+//0369   42 OP_GET_GLOBAL      61 string:'xy'
 //0371    | OP_GET_GLOBAL      63 string:'xa'
 //0373    | OP_IMMEDIATE_P8     9
 //0375    | OP_ELEMENT
 //0376    | OP_SET_PROPERTY    62 string:'f'
 //0378    | OP_POP
-//0379   42 OP_GET_GLOBAL      64 string:'xy'
+//0379   43 OP_GET_GLOBAL      64 string:'xy'
 //0381    | OP_GET_GLOBAL      66 string:'xa'
 //0383    | OP_IMMEDIATE_P8    10
 //0385    | OP_ELEMENT
 //0386    | OP_NEGATE
 //0387    | OP_SET_PROPERTY    65 string:'g'
 //0389    | OP_POP
-//0390   43 OP_GET_GLOBAL      67 string:'xy'
+//0390   44 OP_GET_GLOBAL      67 string:'xy'
 //0392    | OP_GET_GLOBAL      69 string:'xa'
 //0394    | OP_IMMEDIATE_P8    11
 //0396    | OP_ELEMENT
 //0397    | OP_SET_PROPERTY    68 string:'i'
 //0399    | OP_POP
-//0400   44 OP_GET_GLOBAL      70 string:'xy'
+//0400   45 OP_GET_GLOBAL      70 string:'xy'
 //0402    | OP_GET_GLOBAL      72 string:'xa'
 //0404    | OP_IMMEDIATE_P8    12
 //0406    | OP_ELEMENT
 //0407    | OP_SET_PROPERTY    71 string:'j'
 //0409    | OP_POP
-//0410   45 OP_GET_GLOBAL      73 string:'xy'
+//0410   46 OP_GET_GLOBAL      73 string:'xy'
 //0412    | OP_GET_GLOBAL      75 string:'xa'
 //0414    | OP_IMMEDIATE_P8    13
 //0416    | OP_ELEMENT
 //0417    | OP_SET_PROPERTY    74 string:'k'
 //0419    | OP_POP
-//0420   46 OP_GET_GLOBAL      76 string:'xy'
+//0420   47 OP_GET_GLOBAL      76 string:'xy'
 //0422    | OP_PRINT
-//0423   47 OP_GET_GLOBAL      77 string:'xy'
+//0423   48 OP_GET_GLOBAL      77 string:'xy'
 //0425    | OP_GET_BUILTIN   new
 //0427    | OP_NIL
 //0428    | OP_IMMEDIATE_P8     3
-//0430    | OP_TYPE_ARRAY
+//0430    | OP_TYPE_INDEXED_COLLECTION
 //0431    | OP_CALL             1
 //0433    | OP_IMMEDIATE_P8     0
 //0435    | OP_IMMEDIATE_P8     2
@@ -417,23 +417,23 @@ eater.eat();           // expect: Eaten
 //0447    | OP_SET_ELEMENT
 //0448    | OP_SET_PROPERTY    78 string:'u'
 //0450    | OP_POP
-//0451   48 OP_NIL
+//0451   49 OP_NIL
 //0452    | OP_SET_CELL_TYPE
 //0453    | OP_DEFINE_GLOBAL   79 string:'za'
-//0455   49 OP_GET_GLOBAL      81 string:'xa'
+//0455   50 OP_GET_GLOBAL      81 string:'xa'
 //0457    | OP_SET_GLOBAL      80 string:'za'
 //0459    | OP_POP
-//0460   50 OP_NIL
+//0460   51 OP_NIL
 //0461    | OP_SET_CELL_TYPE
 //0462    | OP_DEFINE_GLOBAL   82 string:'xz'
-//0464   51 OP_GET_GLOBAL      84 string:'xy'
+//0464   52 OP_GET_GLOBAL      84 string:'xy'
 //0466    | OP_SET_GLOBAL      83 string:'xz'
 //0468    | OP_POP
-//0469   52 OP_GET_GLOBAL      85 string:'za'
+//0469   53 OP_GET_GLOBAL      85 string:'za'
 //0471    | OP_PRINT
-//0472   53 OP_GET_GLOBAL      86 string:'xz'
+//0472   54 OP_GET_GLOBAL      86 string:'xz'
 //0474    | OP_PRINT
-//0475   55 OP_CLASS           87 string:'CheeseMaker'
+//0475   56 OP_CLASS           87 string:'CheeseMaker'
 //0477    | OP_DEFINE_GLOBAL   87 string:'CheeseMaker'
 //0479    | OP_GET_GLOBAL      88 string:'CheeseMaker'
 //0481    | OP_CLOSURE         90 <fn init>
@@ -441,7 +441,7 @@ eater.eat();           // expect: Eaten
 //0485    | OP_CLOSURE         92 <fn ripen>
 //0487    | OP_METHOD          91 string:'ripen'
 //0489    | OP_POP
-//0490   73 OP_CLASS           93 string:'CheeseEater'
+//0490   74 OP_CLASS           93 string:'CheeseEater'
 //0492    | OP_DEFINE_GLOBAL   93 string:'CheeseEater'
 //0494    | OP_GET_GLOBAL      94 string:'CheeseEater'
 //0496    | OP_CLOSURE         96 <fn init>
@@ -451,42 +451,42 @@ eater.eat();           // expect: Eaten
 //0504    | OP_CLOSURE        100 <fn eat>
 //0506    | OP_METHOD          99 string:'eat'
 //0508    | OP_POP
-//0509   95 OP_NIL
+//0509   96 OP_NIL
 //0510    | OP_SET_CELL_TYPE
 //0511    | OP_GET_GLOBAL     102 string:'CheeseMaker'
 //0513    | OP_CONSTANT       103 string:'cheddar'
 //0515    | OP_CALL             1
 //0517    | OP_INITIALISE
 //0518    | OP_DEFINE_GLOBAL  101 string:'maker'
-//0520   96 OP_NIL
+//0520   97 OP_NIL
 //0521    | OP_SET_CELL_TYPE
 //0522    | OP_GET_GLOBAL     105 string:'CheeseEater'
 //0524    | OP_CONSTANT       106 string:'cheddar'
 //0526    | OP_CALL             1
 //0528    | OP_INITIALISE
 //0529    | OP_DEFINE_GLOBAL  104 string:'eater'
-//0531   97 OP_NIL
+//0531   98 OP_NIL
 //0532    | OP_SET_CELL_TYPE
 //0533    | OP_GET_GLOBAL     108 string:'maker'
 //0535    | OP_INVOKE        (0 args)  109:'ripen'
 //0538    | OP_INITIALISE
 //0539    | OP_DEFINE_GLOBAL  107 string:'z'
-//0541  101 OP_GET_GLOBAL     110 string:'z'
+//0541  102 OP_GET_GLOBAL     110 string:'z'
 //0543    | OP_GET_PROPERTY   111 string:'i'
 //0545    | OP_PRINT
-//0546  102 OP_GET_GLOBAL     112 string:'maker'
+//0546  103 OP_GET_GLOBAL     112 string:'maker'
 //0548    | OP_GET_PROPERTY   113 string:'cheese'
 //0550    | OP_PRINT
-//0551  103 OP_NIL
+//0551  104 OP_NIL
 //0552    | OP_SET_CELL_TYPE
 //0553    | OP_GET_GLOBAL     115 string:'eater'
 //0555    | OP_INVOKE        (0 args)  116:'ripen'
 //0558    | OP_INITIALISE
 //0559    | OP_DEFINE_GLOBAL  114 string:'w'
-//0561  107 OP_GET_GLOBAL     117 string:'w'
+//0561  108 OP_GET_GLOBAL     117 string:'w'
 //0563    | OP_GET_PROPERTY   118 string:'i'
 //0565    | OP_PRINT
-//0566  108 OP_GET_GLOBAL     119 string:'eater'
+//0566  109 OP_GET_GLOBAL     119 string:'eater'
 //0568    | OP_INVOKE        (0 args)  120:'eat'
 //0571    | OP_POP
 //0572    | OP_NIL
@@ -503,7 +503,7 @@ eater.eat();           // expect: Eaten
 //0011    | OP_GET_BUILTIN   new
 //0013    | OP_NIL
 //0014    | OP_IMMEDIATE_P8     4
-//0016    | OP_TYPE_ARRAY
+//0016    | OP_TYPE_INDEXED_COLLECTION
 //0017    | OP_CALL             1
 //0019    | OP_IMMEDIATE_P8     0
 //0021    | OP_IMMEDIATE_P8     1
@@ -602,53 +602,53 @@ eater.eat();           // expect: Eaten
 //0054    | OP_RETURN
 //0055    | OP_NIL
 //0056    | OP_RETURN
-//== disassembly.ya/init(57) ==
-//0000   57 OP_GET_LOCAL        0
+//== disassembly.ya/init(58) ==
+//0000   58 OP_GET_LOCAL        0
 //0002    | OP_GET_LOCAL        1
 //0004    | OP_SET_PROPERTY     0 string:'cheese'
 //0006    | OP_POP
 //0007    | OP_GET_LOCAL        0
 //0009    | OP_RETURN
-//== disassembly.ya/ripen(61) ==
-//0000   61 OP_NIL
+//== disassembly.ya/ripen(62) ==
+//0000   62 OP_NIL
 //0001    | OP_SET_CELL_TYPE
 //0002    | OP_CONSTANT         0 string:'Enjoy ripened'
 //0004    | OP_INITIALISE
-//0005   62 OP_GET_LOCAL        1
+//0005   63 OP_GET_LOCAL        1
 //0007    | OP_SET_GLOBAL       1 string:'verb'
 //0009    | OP_POP
-//0010   63 OP_NIL
+//0010   64 OP_NIL
 //0011    | OP_SET_CELL_TYPE
 //0012    | OP_GET_BUILTIN   new
 //0014    | OP_NIL
 //0015    | OP_CALL             1
 //0017    | OP_INITIALISE
-//0018   64 OP_GET_LOCAL        2
+//0018   65 OP_GET_LOCAL        2
 //0020    | OP_GET_LOCAL        0
 //0022    | OP_GET_PROPERTY     2 string:'cheese'
 //0024    | OP_SET_PTR_TARGET
 //0025    | OP_POP
-//0026   65 OP_GET_LOCAL        2
+//0026   66 OP_GET_LOCAL        2
 //0028    | OP_DEREF_PTR
 //0029    | OP_PRINT
-//0030   66 OP_NIL
+//0030   67 OP_NIL
 //0031    | OP_SET_CELL_TYPE
 //0032    | OP_GET_GLOBAL       3 string:'do'
 //0034    | OP_GET_LOCAL        2
 //0036    | OP_CALL             1
 //0038    | OP_INITIALISE
-//0039   67 OP_GET_LOCAL        2
+//0039   68 OP_GET_LOCAL        2
 //0041    | OP_DEREF_PTR
 //0042    | OP_PRINT
-//0043   68 OP_GET_LOCAL        0
+//0043   69 OP_GET_LOCAL        0
 //0045    | OP_GET_PROPERTY     4 string:'cheese'
 //0047    | OP_PRINT
-//0048   69 OP_GET_LOCAL        3
+//0048   70 OP_GET_LOCAL        3
 //0050    | OP_RETURN
 //0051    | OP_NIL
 //0052    | OP_RETURN
-//== disassembly.ya/init(75) ==
-//0000   75 OP_GET_LOCAL        0
+//== disassembly.ya/init(76) ==
+//0000   76 OP_GET_LOCAL        0
 //0002    | OP_CONSTANT         1 string:'"'
 //0004    | OP_GET_LOCAL        1
 //0006    | OP_ADD
@@ -658,8 +658,8 @@ eater.eat();           // expect: Eaten
 //0012    | OP_POP
 //0013    | OP_GET_LOCAL        0
 //0015    | OP_RETURN
-//== disassembly.ya/ripen(79) ==
-//0000   79 OP_NIL
+//== disassembly.ya/ripen(80) ==
+//0000   80 OP_NIL
 //0001    | OP_SET_CELL_TYPE
 //0002    | OP_CONSTANT         0 string:'Already ripened '
 //0004    | OP_GET_BUILTIN   string
@@ -668,41 +668,41 @@ eater.eat();           // expect: Eaten
 //0010    | OP_CALL             1
 //0012    | OP_ADD
 //0013    | OP_INITIALISE
-//0014   80 OP_GET_LOCAL        1
+//0014   81 OP_GET_LOCAL        1
 //0016    | OP_SET_GLOBAL       3 string:'verb'
 //0018    | OP_POP
-//0019   81 OP_NIL
+//0019   82 OP_NIL
 //0020    | OP_SET_CELL_TYPE
 //0021    | OP_GET_BUILTIN   new
 //0023    | OP_NIL
 //0024    | OP_CALL             1
 //0026    | OP_INITIALISE
-//0027   82 OP_GET_LOCAL        2
+//0027   83 OP_GET_LOCAL        2
 //0029    | OP_GET_LOCAL        0
 //0031    | OP_GET_PROPERTY     4 string:'cheese'
 //0033    | OP_SET_PTR_TARGET
 //0034    | OP_POP
-//0035   83 OP_GET_LOCAL        2
+//0035   84 OP_GET_LOCAL        2
 //0037    | OP_DEREF_PTR
 //0038    | OP_PRINT
-//0039   84 OP_NIL
+//0039   85 OP_NIL
 //0040    | OP_SET_CELL_TYPE
 //0041    | OP_GET_GLOBAL       5 string:'do'
 //0043    | OP_GET_LOCAL        2
 //0045    | OP_CALL             1
 //0047    | OP_INITIALISE
-//0048   85 OP_GET_LOCAL        2
+//0048   86 OP_GET_LOCAL        2
 //0050    | OP_DEREF_PTR
 //0051    | OP_PRINT
-//0052   86 OP_GET_LOCAL        0
+//0052   87 OP_GET_LOCAL        0
 //0054    | OP_GET_PROPERTY     6 string:'cheese'
 //0056    | OP_PRINT
-//0057   87 OP_GET_LOCAL        3
+//0057   88 OP_GET_LOCAL        3
 //0059    | OP_RETURN
 //0060    | OP_NIL
 //0061    | OP_RETURN
-//== disassembly.ya/eat(91) ==
-//0000   91 OP_CONSTANT         0 string:'Eaten'
+//== disassembly.ya/eat(92) ==
+//0000   92 OP_CONSTANT         0 string:'Eaten'
 //0002    | OP_PRINT
 //0003    | OP_NIL
 //0004    | OP_RETURN

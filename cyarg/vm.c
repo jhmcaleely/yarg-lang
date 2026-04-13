@@ -186,7 +186,6 @@ void freeVM() {
     freeTable(&vm.imports);
     vm.initString = NULL;
     vm.libraryPath = NULL;
-    collectGarbage();
     freeObjects();
 }
 
