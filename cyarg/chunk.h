@@ -89,7 +89,6 @@ typedef struct Chunk {
 typedef enum {
     BUILTIN_IMPORT,
     BUILTIN_READ_SOURCE,
-    BUILTIN_EXEC,
     BUILTIN_COMPILE,
     BUILTIN_MAKE_ROUTINE,
     BUILTIN_MAKE_CHANNEL,
