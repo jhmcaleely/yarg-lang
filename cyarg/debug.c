@@ -140,6 +140,7 @@ static int builtinInstruction(const char* name, Chunk* chunk, int offset) {
         case BUILTIN_INT: printf("int"); break;
         case BUILTIN_MFLOAT64:  printf("mfloat64"); break;
         case BUILTIN_STRING: printf("string"); break;
+        case BUILTIN_LOAD: printf("load"); break;
         default: printf("<unknown %4d>", slot); break;
     }
     printf("\n");

@@ -1510,20 +1510,32 @@ uint8_t compile_bootstrap[] = {
 };
 
 uint8_t load_bootstrap[] = {
-    OP_GET_BUILTIN, BUILTIN_EXEC,
+    OP_GET_BUILTIN, BUILTIN_LOAD,
+    OP_CONSTANT, 0,
     OP_CALL, 1,
     OP_RETURN
 };
 
 static void installBootstrap(const uint8_t bootstrap[], ObjString* script) {
+    size_t sz, argLoc;
+    if (bootstrap == compile_bootstrap) {
+        sz = sizeof compile_bootstrap;
+        argLoc = 5;
+    } else if (bootstrap == exec_bootstrap) {
+        sz = sizeof exec_bootstrap;
+        argLoc = 5;
+    } else { // if (bootstrap == load_bootstrap)
+        sz = sizeof load_bootstrap;
+        argLoc = 3;
+    }
 
     vm.bootFunction.fName = copyString("boot", 4);
 
-    for (size_t i = 0; i < sizeof(exec_bootstrap); i++) {
+    for (size_t i = 0; i < sz; i++) {
         writeChunk(&vm.bootFunction.chunk, bootstrap[i], 0);
     }
     uint8_t constant = addConstant(&vm.bootFunction.chunk, OBJ_VAL(script));
-    assert(constant == vm.bootFunction.chunk.code[5]);
+    assert(constant == vm.bootFunction.chunk.code[argLoc]);
 }
 
 InterpretResult bootstrapVM(const uint8_t bootstrap[], Value* bootstrapResult, ObjString* script) {
@@ -1560,7 +1572,7 @@ InterpretResult bootBinary(const char* script, size_t length) {
     tempRootPush(OBJ_VAL(scriptObj));
     // Yarg scripts have no mechanism to return a result, so we discard it (it will always be nil).
     Value discardedResult;
-    InterpretResult result = bootstrapVM(exec_bootstrap, &discardedResult, scriptObj);
+    InterpretResult result = bootstrapVM(load_bootstrap, &discardedResult, scriptObj);
     tempRootPop();
     return result;
 }

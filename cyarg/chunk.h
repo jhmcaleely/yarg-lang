@@ -83,6 +83,7 @@ typedef struct Chunk {
     int lineCapacity;
     ChunkSource *lines;
     DynamicValueArray constants;
+    bool xip;
 } Chunk;
 
 typedef enum {

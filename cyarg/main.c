@@ -94,7 +94,7 @@ int main(int argc, const char* argv[]) {
     } else if (argc == 4 && strcmp(argv[1], "--lib") == 0) { // work around until yarg gets substring()
         char const *dotOn = strrchr(argv[3], '.');
         if (dotOn != 0 && strcmp(dotOn, ".yb") == 0) {
-            returnCode = runFile(libPath, "cyarg-hosted-binary.ya");
+            returnCode = loadPackageFile(argv[3]);
         } else {
             returnCode = runFile(libPath, "cyarg-hosted.ya");
        }
