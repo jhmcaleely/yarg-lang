@@ -172,7 +172,7 @@ static int typeLiteralInstruction(const char* name, Chunk* chunk, int offset) {
 int disassembleInstruction(Chunk* chunk, int offset) {
     printf("%04d ", offset);
     for (int s = 0;; s++) {
-        if (chunk->lines != 0 && chunk->lines[s].address == offset) {
+        if (s != chunk->numLines && chunk->lines != 0 && chunk->lines[s].address == offset) {
             printf("%4d ", chunk->lines[s].line);
             break;
         } else if (s == chunk->numLines || chunk->lines[s].address > offset) {

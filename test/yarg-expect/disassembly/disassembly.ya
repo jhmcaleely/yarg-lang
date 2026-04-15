@@ -27,8 +27,7 @@ xa[0] = int8(-127);
 xa[3] = int64(7777777666666555444);
 xa[11] = 6666666666555555555544488888888887777777777333;
 print xa;                                           // expect: Type:any[14]:[-127, 213, 222, 7777777666666555444, 127, 44444, 1111999900, 4445555666666677777, 0, 77.0000, 1, 6666666666555555555544488888888887777777777333, 2, true]
-//const struct { int8 a; int16 b; int32 c; int64 d; uint8 ua; uint16 ub; uint32 uc; uint64 ud; int8 e; mfloat64 f; int8 g; int i; int8 j; bool k; any u; } xy;
-const struct { mfloat64 f; any u; int64 d; uint64 ud; int32 c; uint32 uc; int16 b; uint16 ub; int8 a;  uint8 ua; int8 e; int8 g; int i; int8 j; bool k; } xy;
+const struct { int8 a; int16 b; int32 c; int64 d; uint8 ua; uint16 ub; uint32 uc; uint64 ud; int8 e; mfloat64 f; int8 g; int i; int8 j; bool k; any u; } xy;
 print xy;                                           // expect: struct{|15:89|0; 0; 0; 0; 0; 0; 0; 0; 0; 0.00000; 0; 0; 0; false; nil; }
 xy.a = xa[0];
 xy.b = xa[1];

@@ -1564,12 +1564,12 @@ InterpretResult bootScript(ObjString* script) {
     return runResult;
 }
 
-InterpretResult bootBinary(const char* script, size_t length) {
-    ObjString* scriptObj = copyString(script, (int) length);
-    tempRootPush(OBJ_VAL(scriptObj));
-    // Yarg scripts have no mechanism to return a result, so we discard it (it will always be nil).
+InterpretResult bootBinary(ObjString *script) {
+    bindBootstrapCode("boot", 4, load_bootstrap, sizeof(load_bootstrap), script, load_bootstrap_parameter_offset);
+
+    // Yarg scripts do not return values, so the bootstrap result is discarded.
     Value discardedResult;
-    InterpretResult result = bootstrapVM(&discardedResult, scriptObj);
+    InterpretResult result = bootstrapVM(&discardedResult, script);
     tempRootPop();
     return result;
 }

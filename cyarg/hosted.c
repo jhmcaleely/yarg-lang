@@ -86,7 +86,7 @@ int loadPackageFile(const char *path) {
     ObjString* pathString = copyString(path, (int) strlen(path));
     tempRootPush(OBJ_VAL(pathString));
 
-    InterpretResult result = bootScript(pathString);
+    InterpretResult result = bootBinary(pathString);
 
     tempRootPop();
     if (result == INTERPRET_FILE_ERROR) {

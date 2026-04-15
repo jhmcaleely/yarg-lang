@@ -167,7 +167,9 @@ Value unpackValue(PackedValue packedValue) {
                 return OBJ_VAL(newPackedUniformArrayAt(packedValue));
             }
             case TypeInt: {
-                if (packedValue.storedValue->as.obj) {
+                PackedValueStore s;
+                memcpy(&s, (char *)packedValue.storedValue, sizeof *packedValue.storedValue);
+                if (s.as.obj) {
                     return OBJ_VAL(packedValue.storedValue->as.obj);
                 } else {
                     return defaultIntValue();
