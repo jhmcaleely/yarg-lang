@@ -327,14 +327,13 @@ struct ObjFunction *loadPackage(char const *path) {
                 }
             }
         }
-        next += 3; // todo
+        next += 3;
     }
 
     names__ = next - body;
     if (h.numLines_ > 0) {
         for (int i = 0; i < h.numChunks_; i++) {
-//            functions[i]->fName = copyString((char *)next, (int)strlen((char *)next)); // should be able to shallow copy
-            functions[i]->fName = copyString("", 0); // should be able to shallow copy
+            functions[i]->fName = copyString((char *)next, (int)strlen((char *)next)); // should be able to shallow copy
             next += 16;
         }
     }

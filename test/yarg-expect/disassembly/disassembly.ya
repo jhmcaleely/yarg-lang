@@ -57,7 +57,7 @@ class CheeseMaker {
         this.cheese = cheese;
     }
 
-    ripen() {
+    ripenbergenhausenfloppen() {
         var n = "Enjoy ripened";
         verb = n;
         var tc = new(any);
@@ -94,7 +94,7 @@ class CheeseEater {
 
 var maker = CheeseMaker("cheddar");
 var eater = CheeseEater("cheddar");
-var z = maker.ripen(); // expect: cheddar
+var z = maker.ripenbergenhausenfloppen(); // expect: cheddar
                        // expect: Enjoy ripened 1 cheddar
                        // expect: nil
                        // expect: cheddar
