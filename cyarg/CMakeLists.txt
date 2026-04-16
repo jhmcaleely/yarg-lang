@@ -109,6 +109,8 @@ add_executable(cyarg
     platform_hal.c
     sync_group.h
     sync_group.c
+    pack.c
+    pack.h
     fs/fs.h
     big-int/big-int.h
     big-int/big-int.c
