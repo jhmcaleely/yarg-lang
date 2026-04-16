@@ -18,8 +18,9 @@ void usageMessage(FILE* destination) {
           "\tcyarg --lib <dir>\n"
           "\tLaunch a Yarg REPL, using <dir> as the root of the Yarg library.\n"
           "\n"
-          "\tcyarg --lib <dir> <path>\n"
+          "\tcyarg --lib <dir> <path> [-- [args]]\n"
           "\tRun a Yarg script at <path>, using <dir> as the root of the Yarg library.\n"
+          "\t\tOptional [args] following -- are available to the script in hostArgs.\n"
           "\n"
           "\tcyarg --help\n"
           "\tDisplay this help message.\n"
@@ -91,6 +92,8 @@ int main(int argc, const char* argv[]) {
     } else if (argc == 3 && strcmp(argv[1], "--disassemble") == 0) {
         returnCode = disassembleFile(argv[2]);
     } else if (argc == 3 && strcmp(argv[1], "--lib") == 0) {
+        returnCode = runHostedFile(libPath, "cyarg-hosted.ya");
+    } else if (argc > 4 && strcmp(argv[1], "--lib") == 0 && strcmp(argv[4], "--") == 0) {
         returnCode = runHostedFile(libPath, "cyarg-hosted.ya");
     } else if (argc == 4 && strcmp(argv[1], "--lib") == 0) { // work around until yarg gets substring()
         char const *dotOn = strrchr(argv[3], '.');
