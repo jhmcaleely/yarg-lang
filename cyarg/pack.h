@@ -3,10 +3,9 @@
 
 #include <stdbool.h>
 
-struct Chunk;
 struct ObjFunction;
 
-int packScript(char const *sourceFileName, struct Chunk const *chunk, bool includeLines, char const *path);
+int packScript(char const *sourceFileName, struct ObjFunction const *scriptFn, bool includeLines, char const *path);
 struct ObjFunction *loadPackage(char const *path);
 
 #endif

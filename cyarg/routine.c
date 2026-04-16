@@ -260,7 +260,7 @@ void runtimeError(ObjRoutine* routine, const char* format, ...) {
         if (function->fName == NULL) {
             PRINTERR("script\n");
         } else {
-            PRINTERR("%s()\n", function->fName->chars);
+            PRINTERR("%s()\n", function->fName->chars); // todo: if this is a synthetic fun e.g. boot or file.ya then don’t put parentheses
         }
     }
 

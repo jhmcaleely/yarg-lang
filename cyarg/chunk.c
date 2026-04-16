@@ -15,7 +15,9 @@ void initChunk(Chunk* chunk) {
 }
 
 void freeChunk(Chunk* chunk) {
-    FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);
+    if (!chunk->xip) {
+        FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);
+    }
     FREE_ARRAY(ChunkSource, chunk->lines, chunk->lineCapacity);
     freeDynamicValueArray(&chunk->constants);
     initChunk(chunk);

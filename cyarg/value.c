@@ -77,7 +77,9 @@ void markPackedContainer(PackedValue packedContainer) {
 void markPackedValue(PackedValue value) {
     if (value.storedValue == NULL) return;
     if (value.storedType == NULL) {
-        markValue(value.storedValue->asValue);
+        PackedValueStore aligned;
+        memcpy(&aligned, (char *)value.storedValue, sizeof aligned);
+        markValue(aligned.asValue);
         return;
     } else if (type_packs_as_container(value.storedType)) {
         markPackedContainer(value);

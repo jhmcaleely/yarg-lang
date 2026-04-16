@@ -149,7 +149,7 @@ int packageBinary(const char *path, Value const *script) {
         assert(packagePath[len - 1] == 'a');
         packagePath[len - 1] = 'b';
 
-        r = packScript(scriptFileName, &AS_CLOSURE(*script)->function->chunk, true, packagePath);
+        r = packScript(scriptFileName, AS_CLOSURE(*script)->function, true, packagePath);
 
      }
     return r;
