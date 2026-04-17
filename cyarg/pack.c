@@ -620,7 +620,6 @@ int pack(char const *sourceFileName, FlatFiles *f, FILE *file) {
     strings__ += offset__;
     size_t sourceFileNameLen = strlen(sourceFileName);
     char const *nullChar = &sourceFileName[sourceFileNameLen];
-    if (written != 1) return EX_SOFTWARE;
     for (int i = 0; i < f->stringsFile_.n_; i++) {
         ObjString *s = f->stringsFile_.i_[i].s_;
         written = fwrite__(s->chars, s->length, 1, file);
