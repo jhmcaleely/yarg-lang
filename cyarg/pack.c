@@ -379,12 +379,16 @@ struct ObjFunction *loadPackage(char const *path) {
                 ObjFunction *thisFun = functions[index];
                 Value value = OBJ_VAL(thisFun);
                 appendToDynamicValueArray(&currentFunction->chunk.constants, value);
-                char name[21];
-                int len = thisFun->fName->length;
-                len = len > 20 ? 20 : len;
-                memcpy(name, thisFun->fName->chars, len);
-                name[len] = '\0';
-                printf(":%s",name);
+                if (thisFun->fName != 0) {
+                    char name[21];
+                    int len = thisFun->fName->length;
+                    len = len > 20 ? 20 : len;
+                    memcpy(name, thisFun->fName->chars, len);
+                    name[len] = '\0';
+                    printf(":%s", name);
+                } else {
+                    printf(":<no name>");
+                }
                 break;
             }
             }
@@ -486,7 +490,12 @@ void flattenConstants(int chunkIndex, Chunk const *chunk, FlatFiles *f) {
 
     int endSubs = f->funsFile_.n_;
     for (int i = startSubs; i < endSubs; i++) {
-        printf("%s\n", f->funsFile_.i_[i].f_->fName->chars);
+        char nn[21];
+        int len = f->funsFile_.i_[i].f_->fName->length;
+        len = len > 20 ? 20 : len;
+        memcpy(nn, f->funsFile_.i_[i].f_->fName->chars, len);
+        nn[len] = 0;
+        printf("%s\n", nn);
         flattenConstants(i, &f->funsFile_.i_[i].f_->chunk, f);
     }
 }
@@ -501,21 +510,23 @@ void flattenLines(FlatFiles *f) {
         FlatChunk *cf = &f->funsFile_.i_[c].chunk_;
         Chunk const *chunk = &f->funsFile_.i_[c].f_->chunk;
 
-        int lastLine = chunk->lines[chunk->numLines - 1].line;
-        int flattenedLines = f->linesFile_.n_;
-
-        if (lastLine > flattenedLines) {
-            fileSet(&f->linesFile_, lastLine, sizeof *f->linesFile_.i_);
-            f->linesFile_.n_ = lastLine;
-            memset(&f->linesFile_.i_[flattenedLines], 0xff, sizeof (uint32_t) * (lastLine - flattenedLines));
-        }
-
-        for (int i = 0; i < chunk->numLines; i++) {
-            int a = chunk->lines[i].address;
-            int l = chunk->lines[i].line;
-            assert(l <= f->linesFile_.extent_);
-            if (l > f->linesFile_.n_) f->linesFile_.n_ = l;
-            f->linesFile_.i_[l - 1] = a + cf->codeOffset_;
+        if (chunk->numLines > 0) {
+            int lastLine = chunk->lines[chunk->numLines - 1].line;
+            int flattenedLines = f->linesFile_.n_;
+            
+            if (lastLine > flattenedLines) {
+                fileSet(&f->linesFile_, lastLine, sizeof *f->linesFile_.i_);
+                f->linesFile_.n_ = lastLine;
+                memset(&f->linesFile_.i_[flattenedLines], 0xff, sizeof (uint32_t) * (lastLine - flattenedLines));
+            }
+            
+            for (int i = 0; i < chunk->numLines; i++) {
+                int a = chunk->lines[i].address;
+                int l = chunk->lines[i].line;
+                assert(l <= f->linesFile_.extent_);
+                if (l > f->linesFile_.n_) f->linesFile_.n_ = l;
+                f->linesFile_.i_[l - 1] = a + cf->codeOffset_;
+            }
         }
     }
 }
