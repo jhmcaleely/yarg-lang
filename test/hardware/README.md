@@ -9,6 +9,7 @@ cheese.ya
 scone.ya
 ../../yarg/specimen/hello_led.ya
 ../../yarg/specimen/hello_button.ya
+interrupt.ya
 alarm.ya
 blinky.ya
 coroutine-flash.ya
