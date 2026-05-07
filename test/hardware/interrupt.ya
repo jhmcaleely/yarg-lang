@@ -1,0 +1,30 @@
+// start a recurring timer, and have it do work at the same time as the script.
+// should run cleanly to completion, without corrption present on the output.
+import("timer");
+
+fun maths(iterations, name) {
+    var a = new(int[1]);
+    for (var i = 0; i < iterations; i = i + 1)
+    {
+        print name + " maths: " + string(a[0]);
+        a[0] = a[0] + 1;
+    }
+    print name + " maths computed: " + string(a[0]);
+}
+
+fun start_interrupt1()
+{
+    fun interrupt_maths()
+    {
+        maths(5, "interrupt");
+    }
+    repeating_alarm_ms(0, 50, interrupt_maths);
+    return uint32(0);
+}
+maths(10, "pre-interrupt");
+
+var alarm = start_interrupt1();
+
+maths(1000, "interruptible");
+
+cancel_repeating_alarm(alarm);
