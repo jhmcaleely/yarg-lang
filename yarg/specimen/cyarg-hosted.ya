@@ -30,8 +30,13 @@ fun getBoolArgument(name) {
 }
 
 yarg_library_path = getRawHostArgument("--lib");
+if (yarg_library_path == nil) {
+    yarg_library_path = "";
+} else {
+    yarg_library_path = yarg_library_path + "/";
+}
 
-var yarg_source = read_source(yarg_library_path + "/yarg.ya");
+var yarg_source = read_source(yarg_library_path + "yarg.ya");
 compile(yarg_source)();
 
 if (int(host_argc()) == 4 or (int(host_argc()) > 4 and host_argn(4) == "--")) {
