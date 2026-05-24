@@ -256,6 +256,22 @@ func dispatchSubCommand(args []string) {
 		deviceLib := flags.String("lib", "", "library to include in test runs")
 		flags.Parse(args[1:])
 		hostyarg.CmdListDevices(*deviceInterpreter, *deviceLib)
+	case "buildlib":
+		libDir := flags.String("libdir", "", "directory containing library source files")
+		outputFile := flags.String("output", "", "output file for compiled library")
+		flags.Parse(args[1:])
+
+		if *libDir == "" {
+			exitWithUsageError("expect directory containing library source files")
+		}
+		if *outputFile == "" {
+			exitWithUsageError("expect output file for compiled library")
+		}
+
+		err := hostrunner.CmdBuildLib(*libDir, *outputFile)
+		if err != nil {
+			exitWithError(err.Error())
+		}
 	default:
 		exitWithUsageError("unknown command")
 	}
