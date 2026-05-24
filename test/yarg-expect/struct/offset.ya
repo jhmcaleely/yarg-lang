@@ -1,0 +1,10 @@
+// currently place is the only way to get the address of a struct & it's fields.
+place struct {
+    uint32 a;
+    uint16@11 b;
+    uint8@0xc c;
+} @xe0000000 test;
+
+peek(test.a);      // expect: peek(0xe0000000) -> a5a5a5
+peek(test.b);      // expect: peek(0xe000000b) -> a5a5a5
+peek(test.c);      // expect: peek(0xe000000c) -> a5a5a5
