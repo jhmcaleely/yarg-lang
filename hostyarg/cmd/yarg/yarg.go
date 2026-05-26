@@ -12,6 +12,7 @@ import (
 	"github.com/yarg-lang/yarg-lang/hostyarg/internal/deviceimage"
 	"github.com/yarg-lang/yarg-lang/hostyarg/internal/devicerunner"
 	"github.com/yarg-lang/yarg-lang/hostyarg/internal/deviceutil"
+	"github.com/yarg-lang/yarg-lang/hostyarg/internal/hostimage"
 	"github.com/yarg-lang/yarg-lang/hostyarg/internal/hostrunner"
 	"mellium.im/sysexit"
 )
@@ -268,7 +269,7 @@ func dispatchSubCommand(args []string) {
 			exitWithUsageError("expect output file for compiled library")
 		}
 
-		err := hostrunner.CmdBuildLib(*libDir, *outputFile)
+		err := hostimage.CmdBuildLib(*libDir, *outputFile)
 		if err != nil {
 			exitWithError(err.Error())
 		}
