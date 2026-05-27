@@ -7,25 +7,71 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"math"
 	"os"
 	"path/filepath"
+	"sort"
 )
 
 type LibraryImageEntry struct {
 	Name   string
-	Offset uint16
+	Offset uint32
 	Length uint16
+}
+
+type LibraryImage struct {
+	Entries []LibraryImageEntry
+	Data    [][]byte
+}
+
+func (e LibraryImageEntry) String() string {
+	return fmt.Sprintf("Name: %s, Offset: %d, Length: %d", e.Name, e.Offset, e.Length)
+}
+
+var endianness = binary.LittleEndian
+
+func (e LibraryImageEntry) writeTo(w io.Writer) (err error) {
+	if len(e.Name) > math.MaxUint8 {
+		return fmt.Errorf("file name '%s' is too long", e.Name)
+	}
+	err = binary.Write(w, endianness, uint8(len(e.Name)))
+	if err != nil {
+		return err
+	}
+	err = binary.Write(w, endianness, []byte(e.Name))
+	if err != nil {
+		return err
+	}
+
+	err = binary.Write(w, endianness, e.Length)
+	if err != nil {
+		return err
+	}
+	err = binary.Write(w, endianness, e.Offset)
+	return err
 }
 
 func writeLibraryImage(outputFile io.Writer, files map[string][]byte) error {
 
-	imageHeader := make(map[string]LibraryImageEntry)
+	libraryImage := LibraryImage{
+		Entries: make([]LibraryImageEntry, 0, len(files)),
+		Data:    make([][]byte, 0, len(files)),
+	}
 
-	for filename, data := range files {
-		if len(filename) > 255 {
+	keys := make([]string, 0, len(files))
+	for k := range files {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+
+	for _, filename := range keys {
+		data := files[filename]
+		if len(filename) > math.MaxUint8 {
 			return fmt.Errorf("file name '%s' is too long", filename)
 		}
-		if len(data) > 65535 {
+		if len(data) > math.MaxUint16 {
 			return fmt.Errorf("file '%s' is too large", filename)
 		}
 		imageentry := LibraryImageEntry{
@@ -33,7 +79,8 @@ func writeLibraryImage(outputFile io.Writer, files map[string][]byte) error {
 			Offset: 0, // Placeholder, will be updated later
 			Length: uint16(len(data)),
 		}
-		imageHeader[filename] = imageentry
+		libraryImage.Entries = append(libraryImage.Entries, imageentry)
+		libraryImage.Data = append(libraryImage.Data, data)
 	}
 
 	offsets := make(map[string]int)
@@ -54,20 +101,12 @@ func writeLibraryImage(outputFile io.Writer, files map[string][]byte) error {
 	b := bytes.Buffer{}
 	toc := bufio.NewWriter(&b)
 
-	for name, data := range files {
-		err := binary.Write(toc, binary.LittleEndian, uint8(len(name)))
-		if err != nil {
-			return err
-		}
-		_, err = toc.Write([]byte(name))
-		if err != nil {
-			return err
-		}
-		err = binary.Write(toc, binary.LittleEndian, uint16(len(data)))
-		if err != nil {
-			return err
-		}
-		err = binary.Write(toc, binary.LittleEndian, uint16(offsets[name]))
+	for index, entry := range libraryImage.Entries {
+		entry.Offset = uint32(offsets[entry.Name])
+		libraryImage.Entries[index] = entry
+	}
+	for _, entry := range libraryImage.Entries {
+		err := entry.writeTo(toc)
 		if err != nil {
 			return err
 		}
@@ -79,8 +118,8 @@ func writeLibraryImage(outputFile io.Writer, files map[string][]byte) error {
 		return err
 	}
 
-	for _, data := range files {
-		_, err := outputFile.Write(data)
+	for _, fileData := range libraryImage.Data {
+		_, err = outputFile.Write(fileData)
 		if err != nil {
 			return err
 		}
