@@ -69,7 +69,7 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
 
     void* result = o1heapReallocate(vm.heap_instance, pointer, newSize);
     if (result == NULL) {
-        PRINTERR("help! no memory.");
+        PRINTERR("help! no memory after %zu bytes.\n", vm.bytesAllocated);
         exit(1);
     }
     vm_mutex_exit(&vm.heap);
