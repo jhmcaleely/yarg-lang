@@ -166,6 +166,9 @@ void initVMRuntime() {
     
     vm.initString = copyString("init", 4);
 
+    defineNative("c_vm_bytesAllocated", vm_bytesAllocatedNative);
+    defineNative("c_vm_gc", vm_gcNative);
+
     defineNative("clock", clockNative);
     defineNative("c_clock_get_hz", clock_get_hzNative);
 
@@ -214,6 +217,19 @@ void markVMRoots() {
     markObject((Obj*)vm.libraryPath);
     markCellTable(&vm.globals);
     markObject((Obj*)vm.initString);
+}
+
+size_t vm_bytesAllocated() {
+    platform_critical_section_enter_blocking(&vm.heap);
+    size_t result = vm.bytesAllocated;
+    platform_critical_section_exit(&vm.heap);
+    return result;
+}
+
+void vm_gc() {
+    platform_critical_section_enter_blocking(&vm.heap);
+    collectGarbage();
+    platform_critical_section_exit(&vm.heap);
 }
 
 bool callfn(ObjRoutine* routine, ObjClosure* closure, int argCount) {

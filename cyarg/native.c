@@ -286,3 +286,23 @@ bool fileExistsNative(ObjRoutine* routine, int argCount, Value* result) {
     *result = BOOL_VAL(fileExists(path));
     return true;
 }
+
+bool vm_bytesAllocatedNative(ObjRoutine* routine, int argCount, Value* result) {
+    if (argCount != 0) {
+        runtimeError(routine, "Expected 0 arguments but got %d.", argCount);
+        return false;
+    }
+
+    *result = SIZE_T_UI_VAL(vm_bytesAllocated());
+    return true;
+}
+
+bool vm_gcNative(ObjRoutine* routine, int argCount, Value* result) {
+    if (argCount != 0) {
+        runtimeError(routine, "Expected 0 arguments but got %d.", argCount);
+        return false;
+    }
+    vm_gc();
+    *result = NIL_VAL;
+    return true;
+}

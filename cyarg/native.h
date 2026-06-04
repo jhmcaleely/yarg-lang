@@ -23,4 +23,7 @@ bool host_argnNative(ObjRoutine* routine, int argCount, Value* result);
 bool host_exitCodeNative(ObjRoutine* routine, int argCount, Value* result);
 #endif
 
+bool vm_bytesAllocatedNative(ObjRoutine* routine, int argCount, Value* result);
+bool vm_gcNative(ObjRoutine* routine, int argCount, Value* result);
+
 #endif

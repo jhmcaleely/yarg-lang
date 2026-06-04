@@ -51,6 +51,9 @@ void initVMRuntime();
 void freeVM();
 void markVMRoots();
 
+size_t vm_bytesAllocated();
+void vm_gc();
+
 InterpretResult bootYargSourceFile(ObjString* filename);
 InterpretResult compileScript(ObjString* filename, Value* compileResult);
 
