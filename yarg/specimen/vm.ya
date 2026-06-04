@@ -1,0 +1,11 @@
+fun vm_load_yarg_source(source) {
+    return read_yarg_source(source);
+}
+
+fun vm_gc() {
+    c_vm_gc();
+}
+
+fun vm_bytes_allocated() {
+    return int(c_vm_bytesAllocated());
+}
