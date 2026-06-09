@@ -9,3 +9,8 @@ fun vm_gc() {
 fun vm_bytes_allocated() {
     return int(c_vm_bytesAllocated());
 }
+
+fun vm_bytes_consumed() {
+    vm_gc();
+    return vm_bytes_allocated();
+}

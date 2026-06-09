@@ -1,3 +1,5 @@
+c_vm_gc();
+print "startup allocation" + string(c_vm_bytesAllocated()) + " bytes";
 var yarg_library_path = "";
 var int EX_DATAERR = 65;
 var hostArgs;

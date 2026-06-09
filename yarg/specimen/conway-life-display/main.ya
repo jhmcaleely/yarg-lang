@@ -1,8 +1,12 @@
 // Conway's Life displayed on a 4tronix CUBE:BIT LED cube driven
 // by a Raspberry Pi Pico.
 
-import("conway");
 import("cube_bit");
+print "imported cube_bit.ya";
+import("conway");
+print "imported conway.ya";
+
+print "Conway's Life on the CUBE:BIT LED cube";
 
 // The Life array for the CUBE:BIT Led Cube.
 var surface_world = make_world(56);

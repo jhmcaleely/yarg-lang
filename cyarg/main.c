@@ -60,7 +60,7 @@ int main() {
     initVMMemory();
     initVMRuntime();
 
-    const char script[] = "cyarg.ya";
+    const char script[] = "cyarg.yb";
     ObjString * scriptObj = copyString(script, sizeof(script) - 1);
     tempRootPush(OBJ_VAL(scriptObj));
     bootYargSourceFile(scriptObj);

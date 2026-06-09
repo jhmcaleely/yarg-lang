@@ -54,6 +54,7 @@ fun import(library) {
             print "Failed to import library: " + library;
         } else {
             lib();
+            print "Imported library: " + library + " " + string(c_vm_bytesAllocated()) + " bytes allocated.";
         }
     } else if (yarg_imports[library] == nil and library != "main") {
         print "Library search: " + yarg_library_path;

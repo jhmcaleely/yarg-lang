@@ -3,6 +3,7 @@
 // pin 12 (GPIO 18) of the 40-pin Pi connector.
 
 import("ws2812");
+print "imported ws2812.ya";
 
 var ws2812_pio = 0;
 var ws2812_sm = 0;
@@ -21,6 +22,7 @@ var surface_leds = [  0,  1,  2,  3,  4,  5,  6,  7,
                        48, 49, 50, 51, 52, 53, 54, 55,
                        56, 57, 58, 59, 60, 61, 62, 63 ];
 
+print "surface_leds:";
 
 // a topological map of the neighbours for each surface led.
 var surface_neighbourhoods = [ [  7,  6,  1,  7,  1, 29, 28, 27 ],  // Led: 0 (corner)
