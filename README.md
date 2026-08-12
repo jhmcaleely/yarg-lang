@@ -25,7 +25,7 @@ Building yarg from source is required for some ports of Yarg, and to contribute 
 
 ## Contributions
 
-Contribution guidelines are in the docs directory: [CONTRIBUTING.md](contrib)
+Contribution guidelines are in the docs directory: [CONTRIBUTING.md][contrib]
 
 ## Repository Structure
 
