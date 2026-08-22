@@ -724,21 +724,21 @@ char const *int_to_s(Int const *i, char *s, int n)
     char *out = &s[n - 1];
     *out = '\0';
 
-    IntConcrete254 v;
-    int_init_concrete254(&v);
+    IntConcrete254 v254;
+    Int* v = int_init_concrete254(&v254);
 
-    int_set_t(i, (Int *) &v);
-    v.neg_ = false;
+    int_set_t(i, v);
+    v->neg_ = false;
 
     static IntConcrete4 r;
     int_init_concrete4(&r);
 
-    while (!int_is_zero((Int *) &v))
+    while (!int_is_zero(v))
     {
-        int_div((Int *) &v, (Int *) &tenToTheNineteen, (Int *) &v, (Int *) &r);
+        int_div(v, (Int *) &tenToTheNineteen, v, (Int *) &r);
 
         FourDigits rem = {.l32_ = r.w_[0], .h32_ = r.d_ > 2 ? r.w_[1] : 0u};
-        bool leading = int_is_zero((Int *) &v);
+        bool leading = int_is_zero(v);
         for (int c = 0; c < 19 && out > s; c++)
         {
             char ch = (char) (rem.ull64_ % 10u + '0');
