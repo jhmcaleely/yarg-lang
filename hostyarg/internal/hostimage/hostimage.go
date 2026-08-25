@@ -16,7 +16,7 @@ import (
 type LibraryImageEntry struct {
 	Name   string
 	Offset uint32
-	Length uint16
+	Length uint32
 }
 
 type LibraryImage struct {
@@ -71,13 +71,13 @@ func writeLibraryImage(outputFile io.Writer, files map[string][]byte) error {
 		if len(filename) > math.MaxUint8 {
 			return fmt.Errorf("file name '%s' is too long", filename)
 		}
-		if len(data) > math.MaxUint16 {
+		if len(data) > math.MaxUint32 {
 			return fmt.Errorf("file '%s' is too large", filename)
 		}
 		imageentry := LibraryImageEntry{
 			Name:   filename,
 			Offset: 0, // Placeholder, will be updated later
-			Length: uint16(len(data)),
+			Length: uint32(len(data)),
 		}
 		libraryImage.Entries = append(libraryImage.Entries, imageentry)
 		libraryImage.Data = append(libraryImage.Data, data)
