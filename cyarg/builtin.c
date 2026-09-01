@@ -11,6 +11,7 @@
 #include "vm.h"
 #include "debug.h"
 #include "fs/fs.h"
+#include "fs/fs_library.h"
 #include "compiler.h"
 #include "channel.h"
 #include "yargtype.h"
@@ -63,6 +64,63 @@ bool readYargSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* resu
     else {
         // assume a text file
         char* source = readFile(filename);
+        if (source == NULL) {
+            runtimeError(routineContext, "Could not read source file '%s'.", filename);
+            return false;
+        }
+
+        ObjString* sourceString = copyString(source, (int)strlen(source));
+        free(source);
+
+        *result = OBJ_VAL(sourceString);
+    }
+    return true;
+}
+
+
+// read from the ROM image, into memory.
+// Long term, to be replaced with native yarg, and less
+// assumptions about where filesystems live.
+// reads:
+//  - yarg binary files (returned as uint8[])
+//  - text files (returned as string)
+// Both are suitable input to load().
+bool readYargROMSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
+    if (argCount != 1) {
+        runtimeError(routineContext, "Expected 1 argument but got %d.", argCount);
+        return false;
+    }
+    if (!IS_STRING(peek(routineContext, 0))) {
+        runtimeError(routineContext, "Argument to read_yarg_source must be string.");
+        return false;
+    }
+
+    const char* filename = AS_CSTRING(peek(routineContext, 0));
+    char const *dotOn = strrchr(filename, '.');
+    if (dotOn != 0 && strcmp(dotOn, ".yb") == 0) {
+
+        size_t romOffset = romOffsetForFile(filename);
+        size_t file_size = romFileSize(filename);
+
+        ObjConcreteYargType* byteType = newYargTypeFromType(TypeUint8);
+        push(routineContext, OBJ_VAL(byteType));
+
+        ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*)newYargArrayTypeFromType(OBJ_VAL(byteType));
+        push(routineContext, OBJ_VAL(arrayType));
+
+        PackedValue loc = romOffsetAsPackedValue(romOffset);
+        arrayType->cardinality = file_size;
+        ObjPackedUniformArray* array = newPackedUniformArrayAt(loc);
+        push(routineContext, OBJ_VAL(array));
+
+        *result = OBJ_VAL(array);
+
+        popN(routineContext, 3);
+    }
+    else {
+        size_t romOffset = romOffsetForFile(filename);
+        // assume a text file
+        char* source = romBaseAddress() + romOffset;
         if (source == NULL) {
             runtimeError(routineContext, "Could not read source file '%s'.", filename);
             return false;
@@ -962,7 +1020,7 @@ bool stringBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
 Value getBuiltin(uint8_t builtin) {
     switch (builtin) {
         case BUILTIN_PEEK: return OBJ_VAL(newBuiltin(peekBuiltin));
-        case BUILTIN_READ_YARG_SOURCE: return OBJ_VAL(newBuiltin(readYargSourceBuiltin));
+        case BUILTIN_READ_YARG_SOURCE: return OBJ_VAL(newBuiltin(readYargROMSourceBuiltin));
         case BUILTIN_COMPILE: return OBJ_VAL(newBuiltin(compileBuiltin));
         case BUILTIN_MAKE_ROUTINE: return OBJ_VAL(newBuiltin(makeRoutineBuiltin));
         case BUILTIN_RESUME: return OBJ_VAL(newBuiltin(resumeBuiltin));

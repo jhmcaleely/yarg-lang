@@ -1,7 +1,6 @@
 package hostimage
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/binary"
 	"fmt"
@@ -10,122 +9,115 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"sort"
 )
 
-type LibraryImageEntry struct {
-	Name   string
-	Offset uint32
-	Length uint32
+type LibraryImageHeader struct {
+	Version        uint32
+	Length         uint32
+	NodeZeroOffset uint32
 }
 
-type LibraryImage struct {
-	Entries []LibraryImageEntry
-	Data    [][]byte
+type LibraryNodeEntry struct {
+	Length    uint32
+	Alignment uint32
 }
 
-func (e LibraryImageEntry) String() string {
-	return fmt.Sprintf("Name: %s, Offset: %d, Length: %d", e.Name, e.Offset, e.Length)
+type LibraryWriter interface {
+	io.WriteSeeker
+	io.WriterAt
 }
+
+const version uint32 = 1
 
 var endianness = binary.LittleEndian
 
-func (e LibraryImageEntry) writeTo(w io.Writer) (err error) {
-	if len(e.Name) > math.MaxUint8 {
-		return fmt.Errorf("file name '%s' is too long", e.Name)
-	}
-	err = binary.Write(w, endianness, uint8(len(e.Name)))
+func binaryWriteAt(w io.WriterAt, order binary.ByteOrder, data interface{}, offset uint32) (err error) {
+	buf := new(bytes.Buffer)
+	err = binary.Write(buf, order, data)
 	if err != nil {
 		return err
 	}
-	err = binary.Write(w, endianness, []byte(e.Name))
-	if err != nil {
-		return err
-	}
-
-	err = binary.Write(w, endianness, e.Length)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(w, endianness, e.Offset)
+	_, err = w.WriteAt(buf.Bytes(), int64(offset))
 	return err
 }
 
-func writeLibraryImage(outputFile io.Writer, files map[string][]byte) error {
+func writeLibraryImageHeader(w io.WriterAt, length uint32) (err error) {
 
-	libraryImage := LibraryImage{
-		Entries: make([]LibraryImageEntry, 0, len(files)),
-		Data:    make([][]byte, 0, len(files)),
+	header := LibraryImageHeader{
+		Version:        version,
+		Length:         length,
+		NodeZeroOffset: uint32(binary.Size(LibraryImageHeader{})),
 	}
 
-	keys := make([]string, 0, len(files))
-	for k := range files {
-		keys = append(keys, k)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i] < keys[j]
-	})
-
-	for _, filename := range keys {
-		data := files[filename]
-		if len(filename) > math.MaxUint8 {
-			return fmt.Errorf("file name '%s' is too long", filename)
-		}
-		if len(data) > math.MaxUint32 {
-			return fmt.Errorf("file '%s' is too large", filename)
-		}
-		imageentry := LibraryImageEntry{
-			Name:   filename,
-			Offset: 0, // Placeholder, will be updated later
-			Length: uint32(len(data)),
-		}
-		libraryImage.Entries = append(libraryImage.Entries, imageentry)
-		libraryImage.Data = append(libraryImage.Data, data)
-	}
-
-	offsets := make(map[string]int)
-	currentOffset := 0
-	for name, data := range files {
-		offsets[name] = currentOffset
-		currentOffset += len(data)
-	}
-
-	err := binary.Write(outputFile, binary.LittleEndian, uint16(len(files)))
+	err = binaryWriteAt(w, endianness, header, 0)
 	if err != nil {
 		return err
 	}
-	if flusher, ok := outputFile.(interface{ Flush() error }); ok {
-		flusher.Flush()
-	}
-
-	b := bytes.Buffer{}
-	toc := bufio.NewWriter(&b)
-
-	for index, entry := range libraryImage.Entries {
-		entry.Offset = uint32(offsets[entry.Name])
-		libraryImage.Entries[index] = entry
-	}
-	for _, entry := range libraryImage.Entries {
-		err := entry.writeTo(toc)
-		if err != nil {
-			return err
-		}
-	}
-	toc.Flush()
-
-	_, err = outputFile.Write(b.Bytes())
-	if err != nil {
-		return err
-	}
-
-	for _, fileData := range libraryImage.Data {
-		_, err = outputFile.Write(fileData)
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
+}
+
+func nodePadding(startLen uint32, alignment uint) uint32 {
+	padding := uint32(alignment) - (startLen % uint32(alignment))
+	if padding == uint32(alignment) {
+		return 0
+	}
+	return padding
+}
+
+func writeLibraryPadding(w io.WriterAt, startLen uint32, alignment uint) (err error) {
+	padding := nodePadding(startLen, alignment)
+	if padding != 0 {
+		_, err = w.WriteAt(make([]byte, padding), int64(startLen))
+		return err
+	}
+	return nil
+}
+
+func writeLibraryNode(w LibraryWriter, node []byte, alignment uint) (err error) {
+	startLen64, err := w.Seek(0, io.SeekEnd)
+	if err != nil {
+		return err
+	}
+	startLen := uint32(startLen64)
+	err = writeLibraryPadding(w, startLen, alignment)
+	if err != nil {
+		return err
+	}
+	paddedStartLen64, err := w.Seek(0, io.SeekEnd)
+	if err != nil {
+		return err
+	}
+	paddedStartLen := uint32(paddedStartLen64)
+	dataLength := uint32(len(node))
+	_, err = w.Write(node)
+	err = writeLibraryImageHeader(w, paddedStartLen+dataLength)
+	return err
+}
+
+func writeLibraryIndex(w LibraryWriter, lengths []LibraryNodeEntry) (err error) {
+
+	indexNode := new(bytes.Buffer)
+	indexOffset := uint32(12)
+	indexLength := len(lengths)*8 + 8
+	indexOffset += nodePadding(indexOffset, 4)
+
+	binary.Write(indexNode, endianness, indexOffset)
+	binary.Write(indexNode, endianness, uint32(indexLength))
+
+	var offset uint32 = indexOffset + uint32(indexLength)
+	for _, length := range lengths {
+		err = binary.Write(indexNode, endianness, offset)
+		if err != nil {
+			return err
+		}
+		offset += length.Length
+		offset += nodePadding(offset, uint(length.Alignment))
+		err = binary.Write(indexNode, endianness, length.Length)
+		if err != nil {
+			return err
+		}
+	}
+	return writeLibraryNode(w, indexNode.Bytes(), 4)
 }
 
 func CmdBuildLib(libDir, outputFile string) error {
@@ -145,8 +137,7 @@ func CmdBuildLib(libDir, outputFile string) error {
 		return err
 	}
 
-	files := make(map[string][]byte)
-
+	lengths := make([]LibraryNodeEntry, 0)
 	for _, entry := range entries {
 		info, err := entry.Info()
 		if err != nil {
@@ -155,14 +146,42 @@ func CmdBuildLib(libDir, outputFile string) error {
 		if info.IsDir() {
 			continue
 		}
+		if info.Size() > math.MaxUint32 {
+			return fmt.Errorf("file %s is too large", entry.Name())
+		}
+		lengths = append(lengths, LibraryNodeEntry{Length: uint32(info.Size()), Alignment: 1})
+	}
+
+	err = writeLibraryImageHeader(libraryimage, uint32(binary.Size(LibraryImageHeader{})))
+	if err != nil {
+		return err
+	}
+	err = writeLibraryIndex(libraryimage, lengths)
+	if err != nil {
+		return err
+	}
+	lengthIndex := 0
+	for _, entry := range entries {
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			continue
+		}
+		if info.Size() > math.MaxUint32 {
+			return fmt.Errorf("file %s is too large", entry.Name())
+		}
 
 		data, err := fs.ReadFile(filesystem, entry.Name())
 		if err != nil {
 			return err
 		}
-		files[entry.Name()] = data
+		err = writeLibraryNode(libraryimage, data, uint(lengths[lengthIndex].Alignment))
+		if err != nil {
+			return err
+		}
+		lengthIndex++
 	}
-
-	return writeLibraryImage(libraryimage, files)
-
+	return nil
 }

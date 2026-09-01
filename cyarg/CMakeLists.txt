@@ -110,6 +110,8 @@ add_executable(cyarg
     sync_group.h
     sync_group.c
     fs/fs.h
+    fs/fs_library.c
+    fs/fs_library.h
     big-int/big-int.h
     big-int/big-int.c
     pack_load.c
@@ -203,3 +205,25 @@ if (YARG_DEVICE STREQUAL "GENERIC_HOST")
 # Add the math library for the definition of pow()
 target_link_libraries(cyarg m)
 endif()
+
+# Embed ../test.ylib as static bytes compiled into cyarg.
+set(TEST_YLIB_PATH ${CMAKE_SOURCE_DIR}/../test.ylib)
+set(TEST_YLIB_DATA_PATH ${CMAKE_SOURCE_DIR}/../hostyarg/testdata)
+set(TEST_YLIB_C ${CMAKE_CURRENT_BINARY_DIR}/embedded_test_ylib.c)
+
+add_custom_command(
+  OUTPUT ${TEST_YLIB_PATH}
+  COMMAND ../../../bin/yarg buildlib --libdir ${TEST_YLIB_DATA_PATH} --output ${TEST_YLIB_PATH}
+  VERBATIM
+)
+
+add_custom_command(
+  OUTPUT ${TEST_YLIB_C}
+  COMMAND xxd -i -n cyarg_test_ylib ${TEST_YLIB_PATH} > ${TEST_YLIB_C}
+  DEPENDS ${TEST_YLIB_PATH}
+  VERBATIM
+)
+
+target_sources(cyarg
+    PRIVATE
+      ${TEST_YLIB_C})
