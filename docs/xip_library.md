@@ -1,6 +1,6 @@
 # XIP Library Format
 
-cyarg targets microcontrollers which have read only formware storage that is memory mapped, and design for execute-in-place usage.
+cyarg targets microcontrollers which have read only firmware storage that is memory mapped, and design for execute-in-place usage.
 
 A 'file format' is needed to describe the location of yarg code and resources in this XIP memory, and also to be available as a file when cyarg runs on a host OS.
 
