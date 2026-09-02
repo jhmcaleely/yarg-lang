@@ -8,6 +8,8 @@ The file format consists of a set of concatenated nodes, with a header and index
 
 Within this format, the first node is guaranteed to be the index node.
 
-Future: Add fixed nodes for bootstrap yarg files, and a directory of names for the nodes.
-
 Nodes can be added with a guaranteed alignment. If needed padding will be inserted after the previous node to obtain this alignment.
+
+Node 1 is the root of the name/directory structure to lookup files with.
+
+Future: Add fixed nodes for bootstrap yarg files.
