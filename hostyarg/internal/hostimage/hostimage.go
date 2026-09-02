@@ -27,6 +27,11 @@ type LibraryWriter interface {
 	io.WriterAt
 }
 
+type LibraryDirEntry struct {
+	FileNode uint16
+	NameNode uint16
+}
+
 const version uint32 = 1
 
 var endianness = binary.LittleEndian
@@ -126,6 +131,21 @@ func writeLibraryIndex(w LibraryWriter, lengths []LibraryNodeEntry) (err error) 
 	return writeLibraryNode(w, indexNode.Bytes(), 4)
 }
 
+func writeDirectory(w LibraryWriter, directoryEntries []LibraryDirEntry) (err error) {
+	dirNode := new(bytes.Buffer)
+	for _, entry := range directoryEntries {
+		err = binary.Write(dirNode, endianness, entry.FileNode)
+		if err != nil {
+			return err
+		}
+		err = binary.Write(dirNode, endianness, entry.NameNode)
+		if err != nil {
+			return err
+		}
+	}
+	return writeLibraryNode(w, dirNode.Bytes(), 2)
+}
+
 func CmdBuildLib(libDir, outputFile string) error {
 	libDir = filepath.Clean(libDir)
 	outputFile = filepath.Clean(outputFile)
@@ -144,6 +164,8 @@ func CmdBuildLib(libDir, outputFile string) error {
 	}
 
 	lengths := make([]LibraryNodeEntry, 0)
+	directoryEntries := make([]LibraryDirEntry, 0)
+	nodeCursor := uint16(2)
 	for _, entry := range entries {
 		info, err := entry.Info()
 		if err != nil {
@@ -157,16 +179,29 @@ func CmdBuildLib(libDir, outputFile string) error {
 		}
 		lengths = append(lengths, LibraryNodeEntry{Length: uint32(info.Size()), Alignment: 1})
 		lengths = append(lengths, LibraryNodeEntry{Length: uint32(len(entry.Name()) + 1), Alignment: 1})
+		directoryEntries = append(directoryEntries, LibraryDirEntry{FileNode: nodeCursor, NameNode: nodeCursor + 1})
+		nodeCursor += 2
 	}
 
 	err = writeLibraryImageHeader(libraryimage, uint32(binary.Size(LibraryImageHeader{})))
 	if err != nil {
 		return err
 	}
-	err = writeLibraryIndex(libraryimage, lengths)
+
+	nodeLength := make([]LibraryNodeEntry, 0)
+	nodeLength = append(nodeLength, LibraryNodeEntry{Length: uint32(len(directoryEntries)) * uint32(binary.Size(LibraryDirEntry{})), Alignment: 2})
+	nodeLength = append(nodeLength, lengths...)
+
+	err = writeLibraryIndex(libraryimage, nodeLength)
 	if err != nil {
 		return err
 	}
+
+	err = writeDirectory(libraryimage, directoryEntries)
+	if err != nil {
+		return err
+	}
+
 	lengthIndex := 0
 	for _, entry := range entries {
 		info, err := entry.Info()

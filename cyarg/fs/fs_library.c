@@ -44,6 +44,21 @@ RomNode* indexedRomNode(uint16_t nodeIndex) {
     return (RomNode*)((const uintptr_t)romHeader + index->offset);
 }
 
+struct directoryEntry {
+    uint16_t fileNode;
+    uint16_t nameNode;
+};
+
+struct directoryEntry* directoryEntryRoot() {
+    RomNode* indexNode = indexedRomNode(1);
+    return (struct directoryEntry*)indexNode;
+}
+
+size_t directoryEntryCount() {
+    struct nodeIndex* index = nodeIndexForNode(1);
+    return index->length / sizeof(struct directoryEntry);
+}
+
 size_t romOffsetForFile(const char* filename) {
 
     return 0;
@@ -68,15 +83,18 @@ unsigned char* romBaseAddress() {
     for (uint16_t i = 0; i < nodeCount(); i++) {
         struct nodeIndex* index = nodeIndexForNode(i);
         length += index->length;
-        if (index->length < 26) {
-            char buffer[26];
-            RomNode* node = indexedRomNode(i);
-            char* nodeData = (char*)node;
-            memcpy(buffer, nodeData, index->length);
-            printf("Node %u: %s\n", i, buffer);
-        }
     }
     assert(length <= romHeader->length);
+
+    struct directoryEntry* dirEntries = directoryEntryRoot();
+    size_t dirEntryCount = directoryEntryCount();
+    printf("Directory Entry Count: %zu\n", dirEntryCount);
+    for (uint16_t i = 0; i < dirEntryCount; i++) {
+        struct directoryEntry* entry = &dirEntries[i];
+        RomNode* nameNode = indexedRomNode(entry->nameNode);
+        char* name = (char*)nameNode;
+        printf("Directory Entry %u: %s\n", i, name);
+    }
 
     return &cyarg_test_ylib[0];
 }
