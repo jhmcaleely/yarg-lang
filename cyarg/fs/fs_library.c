@@ -68,6 +68,13 @@ unsigned char* romBaseAddress() {
     for (uint16_t i = 0; i < nodeCount(); i++) {
         struct nodeIndex* index = nodeIndexForNode(i);
         length += index->length;
+        if (index->length < 26) {
+            char buffer[26];
+            RomNode* node = indexedRomNode(i);
+            char* nodeData = (char*)node;
+            memcpy(buffer, nodeData, index->length);
+            printf("Node %u: %s\n", i, buffer);
+        }
     }
     assert(length <= romHeader->length);
 

@@ -73,6 +73,12 @@ func writeLibraryPadding(w io.WriterAt, startLen uint32, alignment uint) (err er
 	return nil
 }
 
+func writeStringNode(w LibraryWriter, s string, alignment uint) (err error) {
+	c_string := append([]byte(s), 0)
+
+	return writeLibraryNode(w, c_string, alignment)
+}
+
 func writeLibraryNode(w LibraryWriter, node []byte, alignment uint) (err error) {
 	startLen64, err := w.Seek(0, io.SeekEnd)
 	if err != nil {
@@ -150,6 +156,7 @@ func CmdBuildLib(libDir, outputFile string) error {
 			return fmt.Errorf("file %s is too large", entry.Name())
 		}
 		lengths = append(lengths, LibraryNodeEntry{Length: uint32(info.Size()), Alignment: 1})
+		lengths = append(lengths, LibraryNodeEntry{Length: uint32(len(entry.Name()) + 1), Alignment: 1})
 	}
 
 	err = writeLibraryImageHeader(libraryimage, uint32(binary.Size(LibraryImageHeader{})))
@@ -178,6 +185,11 @@ func CmdBuildLib(libDir, outputFile string) error {
 			return err
 		}
 		err = writeLibraryNode(libraryimage, data, uint(lengths[lengthIndex].Alignment))
+		if err != nil {
+			return err
+		}
+		lengthIndex++
+		err = writeStringNode(libraryimage, entry.Name(), uint(lengths[lengthIndex].Alignment))
 		if err != nil {
 			return err
 		}
