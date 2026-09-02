@@ -126,8 +126,7 @@ bool readYargROMSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* r
             return false;
         }
 
-        ObjString* sourceString = copyString(source, (int)strlen(source));
-        free(source);
+        ObjString* sourceString = copyString(source, romFileSize(filename));
 
         *result = OBJ_VAL(sourceString);
     }

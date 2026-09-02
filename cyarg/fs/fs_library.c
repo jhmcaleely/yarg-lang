@@ -60,10 +60,32 @@ size_t directoryEntryCount() {
 }
 
 size_t romOffsetForFile(const char* filename) {
+    size_t entries = directoryEntryCount();
+    for (size_t i = 0; i < entries; i++) {
+        struct directoryEntry* entry = &directoryEntryRoot()[i];
+        RomNode* nameNode = indexedRomNode(entry->nameNode);
+        char* name = (char*)nameNode;
+        if (strcmp(name, filename) == 0) {
+            struct nodeIndex* fileIndex = nodeIndexForNode(entry->fileNode);
+            return fileIndex->offset;
+        }
+    }
 
     return 0;
 }
 size_t romFileSize(const char* filename) {
+
+    size_t entries = directoryEntryCount();
+    for (size_t i = 0; i < entries; i++) {
+        struct directoryEntry* entry = &directoryEntryRoot()[i];
+        RomNode* nameNode = indexedRomNode(entry->nameNode);
+        char* name = (char*)nameNode;
+        if (strcmp(name, filename) == 0) {
+            struct nodeIndex* fileIndex = nodeIndexForNode(entry->fileNode);
+            return fileIndex->length;
+        }
+    }
+
     return 0;
 }
 
