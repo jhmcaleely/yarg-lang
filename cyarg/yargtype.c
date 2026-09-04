@@ -18,6 +18,7 @@ ObjConcreteYargType* newYargTypeFromType(ConcreteYargType yt) {
         case TypeUint32:
         case TypeInt64:
         case TypeUint64:
+        case TypeAddress:
         case TypeString:
         case TypeClass:
         case TypeInstance:
@@ -170,6 +171,8 @@ Value concrete_typeof(Value a) {
         return OBJ_VAL(newYargTypeFromType(TypeChannel));
     } else if (IS_STRING(a)) {
         return OBJ_VAL(newYargTypeFromType(TypeString));
+    } else if (IS_ADDRESS(a)) {
+        return OBJ_VAL(newYargTypeFromType(TypeAddress));
     } else if (IS_UNIFORMARRAY(a)) {
         return OBJ_VAL(AS_UNIFORMARRAY(a)->store.storedType);
     } else if (IS_STRUCT(a)) {
@@ -200,6 +203,7 @@ bool type_packs_as_obj(ObjConcreteYargType* type) {
         case TypeUint32:
         case TypeInt64:
         case TypeUint64:
+        case TypeAddress:
         case TypeArray:
         case TypeStruct:
             return false;
@@ -231,6 +235,7 @@ bool type_packs_as_container(ObjConcreteYargType* type) {
         case TypeUint32:
         case TypeInt64:
         case TypeUint64:
+        case TypeAddress:
         case TypeString:
         case TypeClass:
         case TypeInstance:
@@ -265,6 +270,7 @@ bool is_nil_assignable_type(Value type) {
             case TypeInt64:
             case TypeUint64:
             case TypeStruct:
+            case TypeAddress:
                 return false;
             case TypeAny:
             case TypeString:
@@ -355,6 +361,8 @@ size_t yt_sizeof_type_storage(Value type) {
             return sizeof(int64_t);
         case TypeUint64:
             return sizeof(uint64_t);
+        case TypeAddress:
+            return sizeof(uintptr_t);
         case TypeStruct: {
             ObjConcreteYargTypeStruct* st = (ObjConcreteYargTypeStruct*)t;
             return st->storage_size;
@@ -395,6 +403,7 @@ Value defaultValue(Value type) {
             case TypeUint32: return UI32_VAL(0);
             case TypeInt64: return I64_VAL(0);
             case TypeUint64: return UI64_VAL(0);
+            case TypeAddress: return ADDRESS_VAL(0);
             case TypeStruct: return defaultStructValue(ct);
             case TypeArray: return defaultArrayValue(ct);
             case TypePointer:
@@ -563,6 +572,7 @@ static ObjString* typeLiteralToString(ObjConcreteYargType* type) {
         case TypeUint32: return copyString("uint32", 6);
         case TypeInt64: return copyString("int64", 5);
         case TypeUint64: return copyString("uint64", 6);
+        case TypeAddress: return copyString("address", 7);
         case TypeString: return copyString("string", 6);
         case TypeClass: return copyString("Class", 5);
         case TypeInstance: return copyString("Instance", 8);

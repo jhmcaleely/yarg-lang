@@ -488,6 +488,7 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
         }
         case TypeInt:
         case TypeString:
+        case TypeAddress:
         case TypeClass:
         case TypeInstance:
         case TypeFunction:

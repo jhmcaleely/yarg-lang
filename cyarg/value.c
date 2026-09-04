@@ -106,6 +106,7 @@ void initialisePackedValue(PackedValue packedValue) {
             case TypeUint32: packedValue.storedValue->as.ui32 = 0; break;
             case TypeInt64: packedValue.storedValue->as.i64 = 0; break;
             case TypeUint64: packedValue.storedValue->as.ui64 = 0; break;
+            case TypeAddress: packedValue.storedValue->as.address = 0; break;
             case TypeArray: {
                 ObjConcreteYargTypeArray* at = (ObjConcreteYargTypeArray*)packedValue.storedType;
                 if (at->cardinality > 0) {
@@ -157,6 +158,7 @@ Value unpackValue(PackedValue packedValue) {
             case TypeUint32: return UI32_VAL(packedValue.storedValue->as.ui32);
             case TypeInt64: return I64_VAL(packedValue.storedValue->as.i64);
             case TypeUint64: return UI64_VAL(packedValue.storedValue->as.ui64);
+            case TypeAddress: return ADDRESS_VAL(packedValue.storedValue->as.address);
             case TypeStruct: {
                 return OBJ_VAL(newPackedStructAt(packedValue));
             }
@@ -205,6 +207,7 @@ static void packValue(PackedValue packedStorageTarget, Value value) {
             case TypeUint32: packedStorageTarget.storedValue->as.ui32 = AS_UI32(value); break;
             case TypeInt64: packedStorageTarget.storedValue->as.i64 = AS_I64(value); break;
             case TypeUint64: packedStorageTarget.storedValue->as.ui64 = AS_UI64(value); break;
+            case TypeAddress: packedStorageTarget.storedValue->as.address = AS_ADDRESS(value); break;
             case TypePointer:
             case TypeString:
             case TypeClass:
