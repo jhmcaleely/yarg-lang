@@ -90,17 +90,15 @@ bool readYargROMSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* r
         runtimeError(routineContext, "Expected 1 argument but got %d.", argCount);
         return false;
     }
-    if (!IS_STRING(peek(routineContext, 0))) {
-        runtimeError(routineContext, "Argument to read_yarg_source must be string.");
+    if (!is_positive_integer32(peek(routineContext, 0))) {
+        runtimeError(routineContext, "Argument to read_yarg_source must be positive integer.");
         return false;
     }
 
-    const char* filename = AS_CSTRING(peek(routineContext, 0));
-    char const *dotOn = strrchr(filename, '.');
-    if (dotOn != 0 && strcmp(dotOn, ".yb") == 0) {
+    uint32_t romFileIndex = as_positive_integer32(peek(routineContext, 0));
 
-        size_t romOffset = romOffsetForFile(filename);
-        size_t file_size = romFileSize(filename);
+    size_t romOffset = romOffsetForFile(romFileIndex);
+    size_t file_size = romFileSize(romFileIndex);
 
         ObjConcreteYargType* byteType = newYargTypeFromType(TypeUint8);
         push(routineContext, OBJ_VAL(byteType));
@@ -116,20 +114,6 @@ bool readYargROMSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* r
         *result = OBJ_VAL(array);
 
         popN(routineContext, 3);
-    }
-    else {
-        size_t romOffset = romOffsetForFile(filename);
-        // assume a text file
-        char* source = romBaseAddress() + romOffset;
-        if (source == NULL) {
-            runtimeError(routineContext, "Could not read source file '%s'.", filename);
-            return false;
-        }
-
-        ObjString* sourceString = copyString(source, romFileSize(filename));
-
-        *result = OBJ_VAL(sourceString);
-    }
     return true;
 }
 
@@ -1019,7 +1003,8 @@ bool stringBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
 Value getBuiltin(uint8_t builtin) {
     switch (builtin) {
         case BUILTIN_PEEK: return OBJ_VAL(newBuiltin(peekBuiltin));
-        case BUILTIN_READ_YARG_SOURCE: return OBJ_VAL(newBuiltin(readYargROMSourceBuiltin));
+        case BUILTIN_READ_YARG_SOURCE: return OBJ_VAL(newBuiltin(readYargSourceBuiltin));
+        case BUILTIN_READ_XIP_FILE: return OBJ_VAL(newBuiltin(readYargROMSourceBuiltin));
         case BUILTIN_COMPILE: return OBJ_VAL(newBuiltin(compileBuiltin));
         case BUILTIN_MAKE_ROUTINE: return OBJ_VAL(newBuiltin(makeRoutineBuiltin));
         case BUILTIN_RESUME: return OBJ_VAL(newBuiltin(resumeBuiltin));

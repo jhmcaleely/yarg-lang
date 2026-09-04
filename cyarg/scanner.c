@@ -368,7 +368,14 @@ static TokenType identifierType() {
                 }
             }
             break;
-        case 'v': return checkKeyword(1, 2, "ar", TOKEN_VAR);
+        case 'v': 
+            if (scanner.current - scanner.start > 1) {
+                switch (scanner.start[1]) {
+                    case 'a': return checkKeyword(2, 1, "r", TOKEN_VAR);
+                    case 'm': return checkKeyword(2, 14, "_read_xip_file", TOKEN_VM_READ_XIP_FILE);
+                }
+            }
+            break;;
         case 'w': return checkKeyword(1, 4, "hile", TOKEN_WHILE);
         case 'y': return checkKeyword(1, 4, "ield", TOKEN_YIELD);
     }

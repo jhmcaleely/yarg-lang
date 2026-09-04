@@ -332,6 +332,7 @@ void printExprSuper(ObjExprSuper* expr) {
 void printExprBuiltin(ObjExprBuiltin* fn) {
     switch (fn->builtin) {
         case EXPR_BUILTIN_READ_YARG_SOURCE: printf("read_yarg_source"); break;
+        case EXPR_BUILTIN_READ_XIP_FILE: printf("vm_read_xip_file"); break;
         case EXPR_BUILTIN_COMPILE: printf("compile"); break;
         case EXPR_BUILTIN_MAKE_ROUTINE: printf("make_routine"); break;
         case EXPR_BUILTIN_MAKE_CHANNEL: printf("make_channel"); break;
