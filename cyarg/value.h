@@ -162,4 +162,6 @@ PackedValueStore* storedAddressof(Value value);
 
 uintptr_t pinUniformArray(ObjPackedUniformArray* array);
 
+PackedValue packUintptr(uintptr_t value);
+
 #endif

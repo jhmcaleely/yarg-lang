@@ -561,3 +561,10 @@ uintptr_t pinUniformArray(ObjPackedUniformArray* array) {
     pinObj((Obj*)array);
     return (uintptr_t) array->store.storedValue;
 }
+
+PackedValue packUintptr(uintptr_t value) {
+    PackedValue result;
+    result.storedValue->as.address = value;
+    result.storedType = newYargTypeFromType(TypeAddress);
+    return result;
+}
