@@ -18,6 +18,7 @@ typedef enum {
    TypeInt64,
    TypeUint64,
    TypeString,
+   TypeAddress,
    TypeClass,
    TypeInstance,
    TypeFunction,
