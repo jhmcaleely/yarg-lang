@@ -561,3 +561,15 @@ uintptr_t pinUniformArray(ObjPackedUniformArray* array) {
     pinObj((Obj*)array);
     return (uintptr_t) array->store.storedValue;
 }
+
+PackedValue packUintptr(uintptr_t value) {
+
+    ObjConcreteYargType* address_type = newYargTypeFromType(TypeAddress);
+    tempRootPush(OBJ_VAL(address_type));
+
+    PackedValue result = allocPackedValue(OBJ_VAL(address_type));
+    result.storedValue->as.address = value;
+
+    tempRootPop();
+    return result;
+}
