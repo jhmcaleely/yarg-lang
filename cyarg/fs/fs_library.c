@@ -97,7 +97,7 @@ PackedValue romOffsetAsPackedValue(size_t romOffset) {
     return pv;
 }
 
-unsigned char* romBaseAddress() {
+void ROMInvariantChecks() {
     assert(romHeader->version == 1);
     assert(romHeader->length == cyarg_test_ylib_len);
 
@@ -115,8 +115,23 @@ unsigned char* romBaseAddress() {
         struct directoryEntry* entry = &dirEntries[i];
         RomNode* nameNode = indexedRomNode(entry->nameNode);
         char* name = (char*)nameNode;
-        printf("Directory Entry %u: %s\n", i, name);
+        printf("Directory Entry %s, data %d\n", name, entry->fileNode);
     }
+}
+
+unsigned char* romBaseAddress() {
+    ROMInvariantChecks();
 
     return &cyarg_test_ylib[0];
+}
+
+
+
+void romDataForIndex(uint32_t romFileIndex, uint8_t** data, size_t* size) {
+    ROMInvariantChecks();
+
+    struct nodeIndex* fileIndex = nodeIndexForNode(romFileIndex);
+    *data = (uint8_t*)((const uintptr_t)romHeader + fileIndex->offset);
+    *size = fileIndex->length;
+
 }

@@ -86,34 +86,52 @@ bool readYargSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* resu
 //  - text files (returned as string)
 // Both are suitable input to load().
 bool readYargROMSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
-    if (argCount != 1) {
-        runtimeError(routineContext, "Expected 1 argument but got %d.", argCount);
+    if (argCount != 2) {
+        runtimeError(routineContext, "Expected 2 arguments but got %d.", argCount);
         return false;
     }
     if (!is_positive_integer32(peek(routineContext, 0))) {
-        runtimeError(routineContext, "Argument to read_yarg_source must be positive integer.");
+        runtimeError(routineContext, "First argument to read_yarg_source must be positive integer.");
+        return false;
+    }
+    if (!is_positive_integer32(peek(routineContext, 1))) {
+        runtimeError(routineContext, "Second argument to read_yarg_source must be positive integer.");
         return false;
     }
 
-    uint32_t romFileIndex = as_positive_integer32(peek(routineContext, 0));
+    uint32_t romFileIndex = as_positive_integer32(peek(routineContext, 1));
+    uint32_t format_requested = as_positive_integer32(peek(routineContext, 0));
 
-    size_t romOffset = romOffsetForFile(romFileIndex);
-    size_t file_size = romFileSize(romFileIndex);
+    size_t length;
+    uint8_t* data;
+    romDataForIndex(romFileIndex, &data, &length);
 
+    if (format_requested == 1) {
         ObjConcreteYargType* byteType = newYargTypeFromType(TypeUint8);
         push(routineContext, OBJ_VAL(byteType));
 
         ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*)newYargArrayTypeFromType(OBJ_VAL(byteType));
         push(routineContext, OBJ_VAL(arrayType));
 
-        PackedValue loc = romOffsetAsPackedValue(romOffset);
-        arrayType->cardinality = file_size;
+        PackedValue loc = romOffsetAsPackedValue(romFileIndex);
+        arrayType->cardinality = length;
         ObjPackedUniformArray* array = newPackedUniformArrayAt(loc);
         push(routineContext, OBJ_VAL(array));
 
         *result = OBJ_VAL(array);
 
         popN(routineContext, 3);
+    }
+    else if (format_requested == 2) {
+
+        ObjString* sourceString = copyString(data, (int)length);
+
+        *result = OBJ_VAL(sourceString);
+    }
+    else {
+        runtimeError(routineContext, "Unsupported format requested: %d.", format_requested);
+        return false;
+    }
     return true;
 }
 
