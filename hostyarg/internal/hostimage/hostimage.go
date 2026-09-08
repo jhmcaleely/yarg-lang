@@ -36,7 +36,7 @@ const version uint32 = 1
 
 var endianness = binary.LittleEndian
 
-func binaryWriteAt(w io.WriterAt, order binary.ByteOrder, data interface{}, offset uint32) (err error) {
+func binaryWriteAt(w io.WriterAt, order binary.ByteOrder, data any, offset uint32) (err error) {
 	buf := new(bytes.Buffer)
 	err = binary.Write(buf, order, data)
 	if err != nil {
