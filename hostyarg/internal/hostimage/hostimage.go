@@ -117,12 +117,12 @@ func writeLibraryIndex(w LibraryWriter, lengths []LibraryNodeEntry) (err error) 
 
 	var offset uint32 = indexOffset + uint32(indexLength)
 	for _, length := range lengths {
+		offset += nodePadding(offset, uint(length.Alignment))
 		err = binary.Write(indexNode, endianness, offset)
 		if err != nil {
 			return err
 		}
 		offset += length.Length
-		offset += nodePadding(offset, uint(length.Alignment))
 		err = binary.Write(indexNode, endianness, length.Length)
 		if err != nil {
 			return err
