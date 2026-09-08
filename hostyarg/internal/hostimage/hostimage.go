@@ -177,7 +177,7 @@ func CmdBuildLib(libDir, outputFile string) error {
 		if info.Size() > math.MaxUint32 {
 			return fmt.Errorf("file %s is too large", entry.Name())
 		}
-		lengths = append(lengths, LibraryNodeEntry{Length: uint32(info.Size()), Alignment: 1})
+		lengths = append(lengths, LibraryNodeEntry{Length: uint32(info.Size()), Alignment: 8})
 		lengths = append(lengths, LibraryNodeEntry{Length: uint32(len(entry.Name()) + 1), Alignment: 1})
 		directoryEntries = append(directoryEntries, LibraryDirEntry{FileNode: nodeCursor, NameNode: nodeCursor + 1})
 		nodeCursor += 2
