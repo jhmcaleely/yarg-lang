@@ -111,12 +111,18 @@ bool readYargROMSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* r
         push(routineContext, OBJ_VAL(byteType));
 
         ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*)newYargArrayTypeFromType(OBJ_VAL(byteType));
+        arrayType->cardinality = length;
         push(routineContext, OBJ_VAL(arrayType));
 
-        PackedValue loc = packUintptr((uintptr_t)data);
-        arrayType->cardinality = length;
-        ObjPackedUniformArray* array = newPackedUniformArrayAt(loc);
+        ObjPackedUniformArray* array = ALLOCATE_OBJ(ObjPackedUniformArray, OBJ_UNOWNED_UNIFORMARRAY);
         push(routineContext, OBJ_VAL(array));
+
+        PackedValue arrayStore;
+        arrayStore.storedType = (ObjConcreteYargType*) arrayType;
+        arrayStore.storedValue = (PackedValueStore*) data;
+
+        array->store = arrayStore;
+
 
         *result = OBJ_VAL(array);
 
