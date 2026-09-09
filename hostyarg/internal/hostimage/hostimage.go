@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"math"
 	"os"
 	"path/filepath"
@@ -122,7 +123,7 @@ func writeLibraryIndex(w LibraryWriter, lengths []LibraryNodeEntry) (err error) 
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Offset: %d, Length: %d (alignment: %d, test %d)\n", offset, length.Length, length.Alignment, offset%uint32(length.Alignment))
+		log.Printf("Offset: %d, Length: %d (alignment: %d, test %d)\n", offset, length.Length, length.Alignment, offset%uint32(length.Alignment))
 		offset += length.Length
 		err = binary.Write(indexNode, endianness, length.Length)
 		if err != nil {
