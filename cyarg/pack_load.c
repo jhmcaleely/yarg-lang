@@ -77,6 +77,7 @@ struct ObjFunction *loadPackageFromBuffer(uint8_t* buffer, size_t bufferSize) {
 
     for (int i = 0; i < h->numChunks_; i++) {
         functions[i] = newFunction();
+        tempRootPush(OBJ_VAL(functions[i]));
     }
 
     uint8_t const *startOfCode = next;
@@ -144,16 +145,20 @@ struct ObjFunction *loadPackageFromBuffer(uint8_t* buffer, size_t bufferSize) {
                 char *thisString = (char *)&stringFile[index];
                 ObjString *obj = copyString(thisString, (int)strlen(thisString)); // mark as xip
                 Value value = OBJ_VAL(obj);
+                tempRootPush(value);
                 appendToDynamicValueArray(&currentFunction->chunk.constants, value);
+                tempRootPop();
                 DP(printf(":\"%s\"", thisString));
                 break;
             }
             case PACK_CONST_TYPE_I: {
                 Int const *thisInt = (Int const *)&intFile[index];
                 ObjInt *obj = allocateIntObject(thisInt->d_);
+                tempRootPush(OBJ_VAL(obj));
                 memcpy(&obj->bigInt, thisInt, sizeof (Int) + obj->bigInt.m_ * sizeof (uint16_t)); // should be able to shallow copy
                 Value value = OBJ_VAL(obj);
                 appendToDynamicValueArray(&currentFunction->chunk.constants, value);
+                tempRootPop();
                 DP(printf(":");
                 int_print(thisInt));
                 break;
@@ -196,6 +201,9 @@ struct ObjFunction *loadPackageFromBuffer(uint8_t* buffer, size_t bufferSize) {
 exit:
     if (functions != 0) {
         currentFunction = functions[0];
+        for (int i = 0; i < h->numChunks_; i++) {
+            tempRootPop();
+        }
         free(functions);
     } else {
         currentFunction = 0;
