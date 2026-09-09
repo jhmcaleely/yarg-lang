@@ -14,8 +14,12 @@ typedef uint8_t RomNode;
 
 struct RomHeader *const romHeader = (struct RomHeader*)&cyarg_test_ylib[0];
 
-RomNode* nodeZero() {
-    return (RomNode*)((const uintptr_t)romHeader + romHeader->nodeZeroOffset);
+const RomNode* const nodeZero() {
+    const RomNode* const node = (RomNode*)((const uintptr_t)romHeader + romHeader->nodeZeroOffset);
+    const RomNode* const nodeAlt = &cyarg_test_ylib[romHeader->nodeZeroOffset];
+
+    assert(node == nodeAlt);
+    return node;
 }
 
 struct nodeIndex {
@@ -102,9 +106,12 @@ void ROMInvariantChecks() {
     assert(romHeader->length == cyarg_test_ylib_len);
 
     size_t length = 0;
+    uint16_t count = nodeCount();
+    printf("Node Count: %u\n", count);
     for (uint16_t i = 0; i < nodeCount(); i++) {
         struct nodeIndex* index = nodeIndexForNode(i);
         length += index->length;
+        printf("Node %u: offset %zu, length %zu\n", i, index->offset, index->length);
     }
     assert(length <= romHeader->length);
 

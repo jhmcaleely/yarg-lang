@@ -210,10 +210,11 @@ endif()
 set(TEST_YLIB_PATH ${CMAKE_SOURCE_DIR}/../test.ylib)
 set(TEST_YLIB_DATA_PATH ${CMAKE_SOURCE_DIR}/../hostyarg/testdata)
 set(TEST_YLIB_C ${CMAKE_CURRENT_BINARY_DIR}/embedded_test_ylib.c)
+set(YARG_BIN ${CMAKE_SOURCE_DIR}/../bin/yarg)
 
 add_custom_command(
   OUTPUT ${TEST_YLIB_PATH}
-  COMMAND ../../../bin/yarg buildlib --libdir ${TEST_YLIB_DATA_PATH} --output ${TEST_YLIB_PATH}
+  COMMAND ${YARG_BIN} buildlib --libdir ${TEST_YLIB_DATA_PATH} --output ${TEST_YLIB_PATH}
   VERBATIM
 )
 

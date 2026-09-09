@@ -234,7 +234,7 @@ func CmdBuildLib(libDir, outputFile, startupFile string) error {
 		return err
 	}
 
-	lengthIndex := 0
+	lengthIndex := 1
 	for _, entry := range entries {
 		info, err := entry.Info()
 		if err != nil {
