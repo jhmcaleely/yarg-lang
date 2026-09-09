@@ -10,13 +10,13 @@ struct RomHeader {
     uint32_t nodeZeroOffset;
 };
 
-typedef uint8_t RomNode;
 
-struct RomHeader *const romHeader = (struct RomHeader*)&cyarg_test_ylib[0];
+const struct RomHeader *const romHeader = (struct RomHeader*)&cyarg_test_ylib[0];
+const uint8_t* const romData = &cyarg_test_ylib[0];
 
-const RomNode* const nodeZero() {
-    const RomNode* const node = (RomNode*)((const uintptr_t)romHeader + romHeader->nodeZeroOffset);
-    const RomNode* const nodeAlt = &cyarg_test_ylib[romHeader->nodeZeroOffset];
+const uint8_t* const nodeZero() {
+    const uint8_t* const node = (const uint8_t*)((const uintptr_t)romHeader + romHeader->nodeZeroOffset);
+    const uint8_t* const nodeAlt = &romData[romHeader->nodeZeroOffset];
 
     assert(node == nodeAlt);
     return node;
@@ -27,14 +27,13 @@ struct nodeIndex {
     uint32_t length;
 };
 
-struct nodeIndex* nodeIndexForNode(uint16_t nodeIndex) {
-    uint8_t* indexBase = (uint8_t*)nodeZero();
-    struct nodeIndex* index = (struct nodeIndex*)indexBase;
-    return &index[nodeIndex];
+const struct nodeIndex* nodeIndex(uint16_t node) {
+    const struct nodeIndex* index = (const struct nodeIndex*)nodeZero();
+    return &index[node];
 }
 
-size_t nodeSize(uint16_t nodeIndex) {
-    struct nodeIndex* index = nodeIndexForNode(nodeIndex);
+size_t nodeSize(uint16_t node) {
+    const struct nodeIndex* index = nodeIndex(node);
     return index->length;
 }
 
@@ -43,9 +42,9 @@ uint16_t nodeCount() {
     return (uint16_t)(length / sizeof(struct nodeIndex));
 }
 
-RomNode* indexedRomNode(uint16_t nodeIndex) {
-    struct nodeIndex* index = nodeIndexForNode(nodeIndex);
-    return (RomNode*)((const uintptr_t)romHeader + index->offset);
+const uint8_t* nodeData(uint16_t node) {
+    const struct nodeIndex* index = nodeIndex(node);
+    return &romData[index->offset];
 }
 
 struct directoryEntry {
@@ -53,52 +52,50 @@ struct directoryEntry {
     uint16_t nameNode;
 };
 
-struct directoryEntry* directoryEntryRoot() {
-    RomNode* indexNode = indexedRomNode(2);
-    return (struct directoryEntry*)indexNode;
+const struct directoryEntry* directoryEntryRoot() {
+    const uint8_t* indexNode = nodeData(2);
+    return (const struct directoryEntry*)indexNode;
 }
 
 size_t directoryEntryCount() {
-    struct nodeIndex* index = nodeIndexForNode(2);
+    const struct nodeIndex* index = nodeIndex(2);
     return index->length / sizeof(struct directoryEntry);
 }
 
-size_t romOffsetForFile(const char* filename) {
+const struct directoryEntry* directoryEntryForFile(const char* filename) {
     size_t entries = directoryEntryCount();
     for (size_t i = 0; i < entries; i++) {
-        struct directoryEntry* entry = &directoryEntryRoot()[i];
-        RomNode* nameNode = indexedRomNode(entry->nameNode);
-        char* name = (char*)nameNode;
+        const struct directoryEntry* entry = &directoryEntryRoot()[i];
+        const uint8_t* nameNode = nodeData(entry->nameNode);
+        const char* name = (const char*)nameNode;
         if (strcmp(name, filename) == 0) {
-            struct nodeIndex* fileIndex = nodeIndexForNode(entry->fileNode);
-            return fileIndex->offset;
+            return entry;
         }
     }
 
-    return 0;
+    return NULL;
 }
+
+size_t romOffsetForFile(const char* filename) {
+
+    const struct directoryEntry* entry = directoryEntryForFile(filename);
+    if (!entry) {
+        return 0;
+    } else {
+        const struct nodeIndex* fileIndex = nodeIndex(entry->fileNode);
+        return fileIndex->offset;
+    }
+}
+
 size_t romFileSize(const char* filename) {
 
-    size_t entries = directoryEntryCount();
-    for (size_t i = 0; i < entries; i++) {
-        struct directoryEntry* entry = &directoryEntryRoot()[i];
-        RomNode* nameNode = indexedRomNode(entry->nameNode);
-        char* name = (char*)nameNode;
-        if (strcmp(name, filename) == 0) {
-            struct nodeIndex* fileIndex = nodeIndexForNode(entry->fileNode);
-            return fileIndex->length;
-        }
+    const struct directoryEntry* entry = directoryEntryForFile(filename);
+    if (!entry) {
+        return 0;
+    } else {
+        const struct nodeIndex* fileIndex = nodeIndex(entry->fileNode);
+        return fileIndex->length;
     }
-
-    return 0;
-}
-
-
-PackedValue romOffsetAsPackedValue(size_t romOffset) {
-    PackedValue pv;
-    pv.storedValue = NULL;
-    pv.storedType = NULL;
-    return pv;
 }
 
 void ROMInvariantChecks() {
@@ -109,36 +106,42 @@ void ROMInvariantChecks() {
     uint16_t count = nodeCount();
     printf("Node Count: %u\n", count);
     for (uint16_t i = 0; i < nodeCount(); i++) {
-        struct nodeIndex* index = nodeIndexForNode(i);
+        const struct nodeIndex* index = nodeIndex(i);
         length += index->length;
         printf("Node %u: offset %zu, length %zu\n", i, index->offset, index->length);
     }
     assert(length <= romHeader->length);
 
-    struct directoryEntry* dirEntries = directoryEntryRoot();
+    const struct directoryEntry* dirEntries = directoryEntryRoot();
     size_t dirEntryCount = directoryEntryCount();
     printf("Directory Entry Count: %zu\n", dirEntryCount);
     for (uint16_t i = 0; i < dirEntryCount; i++) {
-        struct directoryEntry* entry = &dirEntries[i];
-        RomNode* nameNode = indexedRomNode(entry->nameNode);
-        char* name = (char*)nameNode;
+        const struct directoryEntry* entry = &dirEntries[i];
+        const uint8_t* nameNode = nodeData(entry->nameNode);
+        const char* name = (const char*)nameNode;
         printf("Directory Entry %s, data %d\n", name, entry->fileNode);
     }
 }
 
-const unsigned char* romBaseAddress() {
+bool romReadRomFile(const char* filename, const uint8_t** data, size_t* size) {
     ROMInvariantChecks();
 
-    return &cyarg_test_ylib[0];
+    const struct directoryEntry* entry = directoryEntryForFile(filename);
+    if (!entry) {
+        return false;
+    }
+    *data = nodeData(entry->fileNode);
+    *size = nodeSize(entry->fileNode);
+    return true;
 }
 
-
-
-void romDataForIndex(uint32_t romFileIndex, uint8_t** data, size_t* size) {
+bool romReadNode(uint16_t node, const uint8_t** data, size_t* size) {
     ROMInvariantChecks();
-
-    struct nodeIndex* fileIndex = nodeIndexForNode(romFileIndex);
-    *data = (uint8_t*)((const uintptr_t)romHeader + fileIndex->offset);
-    *size = fileIndex->length;
-
+    if (node >= nodeCount()) {
+        return false;
+    } else {
+        *data = nodeData(node);
+        *size = nodeSize(node);
+        return true;
+    }
 }

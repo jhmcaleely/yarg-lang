@@ -102,9 +102,17 @@ bool readYargROMSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* r
     uint32_t romFileIndex = as_positive_integer32(peek(routineContext, 1));
     uint32_t format_requested = as_positive_integer32(peek(routineContext, 0));
 
+    if (romFileIndex > UINT16_MAX) {
+        runtimeError(routineContext, "ROM file index %d out of range.", romFileIndex);
+        return false;
+    }
+
     size_t length;
-    uint8_t* data;
-    romDataForIndex(romFileIndex, &data, &length);
+    const uint8_t* data;
+    if (!romReadNode(romFileIndex, &data, &length)) {
+        runtimeError(routineContext, "Failed to read ROM node %d.", romFileIndex);
+        return false;
+    }
 
     if (format_requested == 1) {
         ObjConcreteYargType* byteType = newYargTypeFromType(TypeUint8);
@@ -120,9 +128,7 @@ bool readYargROMSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* r
         PackedValue arrayStore;
         arrayStore.storedType = (ObjConcreteYargType*) arrayType;
         arrayStore.storedValue = (PackedValueStore*) data;
-
         array->store = arrayStore;
-
 
         *result = OBJ_VAL(array);
 
