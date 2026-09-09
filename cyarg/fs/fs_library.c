@@ -50,12 +50,12 @@ struct directoryEntry {
 };
 
 struct directoryEntry* directoryEntryRoot() {
-    RomNode* indexNode = indexedRomNode(1);
+    RomNode* indexNode = indexedRomNode(2);
     return (struct directoryEntry*)indexNode;
 }
 
 size_t directoryEntryCount() {
-    struct nodeIndex* index = nodeIndexForNode(1);
+    struct nodeIndex* index = nodeIndexForNode(2);
     return index->length / sizeof(struct directoryEntry);
 }
 

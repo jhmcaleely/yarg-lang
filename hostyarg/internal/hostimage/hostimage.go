@@ -147,7 +147,18 @@ func writeDirectory(w LibraryWriter, directoryEntries []LibraryDirEntry) (err er
 	return writeLibraryNode(w, dirNode.Bytes(), 2)
 }
 
-func CmdBuildLib(libDir, outputFile string) error {
+func writeStartupFile(w LibraryWriter, startupFile string, alignment uint) (err error) {
+	if startupFile == "" {
+		return nil
+	}
+	data, err := os.ReadFile(startupFile)
+	if err != nil {
+		return err
+	}
+	return writeLibraryNode(w, data, alignment)
+}
+
+func CmdBuildLib(libDir, outputFile, startupFile string) error {
 	libDir = filepath.Clean(libDir)
 	outputFile = filepath.Clean(outputFile)
 
@@ -165,8 +176,22 @@ func CmdBuildLib(libDir, outputFile string) error {
 	}
 
 	lengths := make([]LibraryNodeEntry, 0)
+
+	if startupFile != "" {
+		info, err := os.Stat(startupFile)
+		if err != nil {
+			return err
+		}
+		if info.Size() > math.MaxUint32 {
+			return fmt.Errorf("startup file %s is too large", startupFile)
+		}
+		lengths = append(lengths, LibraryNodeEntry{Length: uint32(info.Size()), Alignment: 8})
+	} else {
+		lengths = append(lengths, LibraryNodeEntry{Length: 0, Alignment: 1})
+	}
+
 	directoryEntries := make([]LibraryDirEntry, 0)
-	nodeCursor := uint16(2)
+	nodeCursor := uint16(3)
 	for _, entry := range entries {
 		info, err := entry.Info()
 		if err != nil {
@@ -190,10 +215,16 @@ func CmdBuildLib(libDir, outputFile string) error {
 	}
 
 	nodeLength := make([]LibraryNodeEntry, 0)
+	nodeLength = append(nodeLength, lengths[0])
 	nodeLength = append(nodeLength, LibraryNodeEntry{Length: uint32(len(directoryEntries)) * uint32(binary.Size(LibraryDirEntry{})), Alignment: 2})
-	nodeLength = append(nodeLength, lengths...)
+	nodeLength = append(nodeLength, lengths[1:]...)
 
 	err = writeLibraryIndex(libraryimage, nodeLength)
+	if err != nil {
+		return err
+	}
+
+	err = writeStartupFile(libraryimage, startupFile, uint(lengths[0].Alignment))
 	if err != nil {
 		return err
 	}

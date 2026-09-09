@@ -260,6 +260,7 @@ func dispatchSubCommand(args []string) {
 	case "buildlib":
 		libDir := flags.String("libdir", "", "directory containing library source files")
 		outputFile := flags.String("output", "", "output file for compiled library")
+		startupFile := flags.String("startup", "", "optional startup file to include in node 1")
 		flags.Parse(args[1:])
 
 		if *libDir == "" {
@@ -269,7 +270,7 @@ func dispatchSubCommand(args []string) {
 			exitWithUsageError("expect output file for compiled library")
 		}
 
-		err := hostimage.CmdBuildLib(*libDir, *outputFile)
+		err := hostimage.CmdBuildLib(*libDir, *outputFile, *startupFile)
 		if err != nil {
 			exitWithError(err.Error())
 		}
