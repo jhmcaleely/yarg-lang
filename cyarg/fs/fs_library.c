@@ -1,7 +1,7 @@
 #include "fs_library.h"
 #include <assert.h>
 
-extern unsigned char cyarg_test_ylib[];
+extern unsigned const char cyarg_test_ylib[];
 extern unsigned int cyarg_test_ylib_len;
 
 struct RomHeader {
@@ -119,7 +119,7 @@ void ROMInvariantChecks() {
     }
 }
 
-unsigned char* romBaseAddress() {
+const unsigned char* romBaseAddress() {
     ROMInvariantChecks();
 
     return &cyarg_test_ylib[0];

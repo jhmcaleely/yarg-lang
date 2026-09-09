@@ -219,7 +219,7 @@ add_custom_command(
 
 add_custom_command(
   OUTPUT ${TEST_YLIB_C}
-  COMMAND sh -c "xxd -i -n cyarg_test_ylib '${TEST_YLIB_PATH}' | sed 's/^unsigned char cyarg_test_ylib\\[\\] =/unsigned char cyarg_test_ylib[] __attribute__((aligned(256))) =/' > '${TEST_YLIB_C}'"
+  COMMAND sh -c "xxd -i -n cyarg_test_ylib '${TEST_YLIB_PATH}' | sed 's/^unsigned char cyarg_test_ylib\\[\\] =/alignas(8) const unsigned char cyarg_test_ylib[]=/' | awk 'BEGIN { print \"#include <stdalign.h>\" } { print }' > '${TEST_YLIB_C}'"
   DEPENDS ${TEST_YLIB_PATH}
   VERBATIM
 )
