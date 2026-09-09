@@ -554,6 +554,7 @@ static void generateExprCollectionElement(ObjExprCollectionElement* collection) 
 static void generateExprBuiltin(ObjExprBuiltin* fn) {
     switch(fn->builtin) {
         case EXPR_BUILTIN_READ_YARG_SOURCE: emitBytes(OP_GET_BUILTIN, BUILTIN_READ_YARG_SOURCE); break;
+        case EXPR_BUILTIN_READ_XIP_FILE: emitBytes(OP_GET_BUILTIN, BUILTIN_READ_XIP_FILE); break;
         case EXPR_BUILTIN_COMPILE: emitBytes(OP_GET_BUILTIN, BUILTIN_COMPILE); break;
         case EXPR_BUILTIN_MAKE_ROUTINE: emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_ROUTINE); break;
         case EXPR_BUILTIN_MAKE_CHANNEL: emitBytes(OP_GET_BUILTIN, BUILTIN_MAKE_CHANNEL); break;
