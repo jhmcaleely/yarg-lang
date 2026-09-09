@@ -1,26 +1,22 @@
 #include "fs_library.h"
 #include <assert.h>
 
+// interim hosting of the XIP library in .rodata.
 extern unsigned const char cyarg_test_ylib[];
 extern unsigned int cyarg_test_ylib_len;
 
-struct RomHeader {
+// the library is linearised a set of 'nodes', all concatenated in memory.
+// the tool creating the library will pad nodes as needed for alignment.
+// the first node (0) contains an index offset and length of all nodes, including itself.
+
+struct XIPLibHeader {
     uint32_t version;
     uint32_t length;
     uint32_t nodeZeroOffset;
 };
 
-
-const struct RomHeader *const romHeader = (struct RomHeader*)&cyarg_test_ylib[0];
-const uint8_t* const romData = &cyarg_test_ylib[0];
-
-const uint8_t* const nodeZero() {
-    const uint8_t* const node = (const uint8_t*)((const uintptr_t)romHeader + romHeader->nodeZeroOffset);
-    const uint8_t* const nodeAlt = &romData[romHeader->nodeZeroOffset];
-
-    assert(node == nodeAlt);
-    return node;
-}
+const struct XIPLibHeader *const xipLibHeader = (const struct XIPLibHeader*)&cyarg_test_ylib[0];
+const uint8_t* const xipLibraryBytes = &cyarg_test_ylib[0];
 
 struct nodeIndex {
     uint32_t offset;
@@ -28,7 +24,9 @@ struct nodeIndex {
 };
 
 const struct nodeIndex* nodeIndex(uint16_t node) {
-    const struct nodeIndex* index = (const struct nodeIndex*)nodeZero();
+    const uint8_t* const nodeZero = &xipLibraryBytes[xipLibHeader->nodeZeroOffset];
+    const struct nodeIndex* index = (const struct nodeIndex*)nodeZero;
+    assert(index[0].offset == xipLibHeader->nodeZeroOffset);
     return &index[node];
 }
 
@@ -44,8 +42,11 @@ uint16_t nodeCount() {
 
 const uint8_t* nodeData(uint16_t node) {
     const struct nodeIndex* index = nodeIndex(node);
-    return &romData[index->offset];
+    return &xipLibraryBytes[index->offset];
 }
+
+const uint16_t bootstrap_node = 1;
+const uint16_t root_directory_node = 2;
 
 struct directoryEntry {
     uint16_t fileNode;
@@ -53,12 +54,12 @@ struct directoryEntry {
 };
 
 const struct directoryEntry* directoryEntryRoot() {
-    const uint8_t* indexNode = nodeData(2);
+    const uint8_t* indexNode = nodeData(root_directory_node);
     return (const struct directoryEntry*)indexNode;
 }
 
 size_t directoryEntryCount() {
-    const struct nodeIndex* index = nodeIndex(2);
+    const struct nodeIndex* index = nodeIndex(root_directory_node);
     return index->length / sizeof(struct directoryEntry);
 }
 
@@ -76,31 +77,9 @@ const struct directoryEntry* directoryEntryForFile(const char* filename) {
     return NULL;
 }
 
-size_t romOffsetForFile(const char* filename) {
-
-    const struct directoryEntry* entry = directoryEntryForFile(filename);
-    if (!entry) {
-        return 0;
-    } else {
-        const struct nodeIndex* fileIndex = nodeIndex(entry->fileNode);
-        return fileIndex->offset;
-    }
-}
-
-size_t romFileSize(const char* filename) {
-
-    const struct directoryEntry* entry = directoryEntryForFile(filename);
-    if (!entry) {
-        return 0;
-    } else {
-        const struct nodeIndex* fileIndex = nodeIndex(entry->fileNode);
-        return fileIndex->length;
-    }
-}
-
-void ROMInvariantChecks() {
-    assert(romHeader->version == 1);
-    assert(romHeader->length == cyarg_test_ylib_len);
+void xipLibraryInvariant() {
+    assert(xipLibHeader->version == 1);
+    assert(xipLibHeader->length == cyarg_test_ylib_len);
 
     size_t length = 0;
     uint16_t count = nodeCount();
@@ -108,9 +87,9 @@ void ROMInvariantChecks() {
     for (uint16_t i = 0; i < nodeCount(); i++) {
         const struct nodeIndex* index = nodeIndex(i);
         length += index->length;
-        printf("Node %u: offset %zu, length %zu\n", i, index->offset, index->length);
+        printf("Node %u: offset %d, length %d\n", i, index->offset, index->length);
     }
-    assert(length <= romHeader->length);
+    assert(length <= xipLibHeader->length);
 
     const struct directoryEntry* dirEntries = directoryEntryRoot();
     size_t dirEntryCount = directoryEntryCount();
@@ -123,8 +102,8 @@ void ROMInvariantChecks() {
     }
 }
 
-bool romReadRomFile(const char* filename, const uint8_t** data, size_t* size) {
-    ROMInvariantChecks();
+bool xipLibraryReadFilename(const char* filename, const uint8_t** data, size_t* size) {
+    xipLibraryInvariant();
 
     const struct directoryEntry* entry = directoryEntryForFile(filename);
     if (!entry) {
@@ -135,8 +114,8 @@ bool romReadRomFile(const char* filename, const uint8_t** data, size_t* size) {
     return true;
 }
 
-bool romReadNode(uint16_t node, const uint8_t** data, size_t* size) {
-    ROMInvariantChecks();
+bool xipLibraryReadNode(uint16_t node, const uint8_t** data, size_t* size) {
+    xipLibraryInvariant();
     if (node >= nodeCount()) {
         return false;
     } else {

@@ -109,7 +109,7 @@ bool readYargROMSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* r
 
     size_t length;
     const uint8_t* data;
-    if (!romReadNode(romFileIndex, &data, &length)) {
+    if (!xipLibraryReadNode(romFileIndex, &data, &length)) {
         runtimeError(routineContext, "Failed to read ROM node %d.", romFileIndex);
         return false;
     }
