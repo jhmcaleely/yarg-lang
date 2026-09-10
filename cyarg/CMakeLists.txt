@@ -219,7 +219,7 @@ add_custom_command(
   OUTPUT ${CYARG_YLIB_PATH}
   COMMAND mkdir -p ${CYARG_YLIB_DATA_PATH}
   COMMAND cp ${CMAKE_SOURCE_DIR}/startup.yb ${CYARG_YLIB_DATA_PATH}
-  COMMAND ${YARG_BIN} buildlib --libdir ${CYARG_YLIB_DATA_PATH} --output ${CYARG_YLIB_PATH}
+  COMMAND ${YARG_BIN} buildlib --libdir ${CYARG_YLIB_DATA_PATH} --startup ${CYARG_YLIB_DATA_PATH}/startup.yb --output ${CYARG_YLIB_PATH}
   DEPENDS ${CMAKE_SOURCE_DIR}/startup.yb
   VERBATIM
 )
@@ -240,7 +240,7 @@ add_custom_command(
   OUTPUT ${CYARG_HOSTED_YLIB_PATH}
   COMMAND mkdir -p ${CYARG_HOSTED_YLIB_DATA_PATH}
   COMMAND cp ${CMAKE_SOURCE_DIR}/startup-hosted.yb ${CYARG_HOSTED_YLIB_DATA_PATH}
-  COMMAND ${YARG_BIN} buildlib --libdir ${CYARG_HOSTED_YLIB_DATA_PATH} --output ${CYARG_HOSTED_YLIB_PATH}
+  COMMAND ${YARG_BIN} buildlib --libdir ${CYARG_HOSTED_YLIB_DATA_PATH} --startup ${CYARG_HOSTED_YLIB_DATA_PATH}/startup-hosted.yb --output ${CYARG_HOSTED_YLIB_PATH}
   DEPENDS ${CMAKE_SOURCE_DIR}/startup-hosted.yb
   VERBATIM
 )
