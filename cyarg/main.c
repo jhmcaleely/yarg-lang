@@ -103,9 +103,9 @@ int main(int argc, const char* argv[]) {
     } else if (argc == 3 && strcmp(argv[1], "--disassemble") == 0) {
         returnCode = disassembleFile(argv[2]);
     } else if ((argc == 3 || argc == 4) && strcmp(argv[1], "--lib") == 0) {
-        returnCode = runHostedFile(libPath, "cyarg-hosted.ya");
+        returnCode = runXIPStartup();
     } else if (argc > 4 && strcmp(argv[1], "--lib") == 0 && strcmp(argv[4], "--") == 0) {
-        returnCode = runHostedFile(libPath, "cyarg-hosted.ya");
+        returnCode = runXIPStartup();
     } else {
         usageMessage(stderr);
         returnCode = EX_USAGE;

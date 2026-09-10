@@ -95,6 +95,7 @@ void xipLibraryInvariant() {
     assert(xipLibHeader->length == cyarg_hosted_ylib_len);
 #endif
 
+#if 0
     size_t length = 0;
     uint16_t count = nodeCount();
     printf("Node Count: %u\n", count);
@@ -114,6 +115,7 @@ void xipLibraryInvariant() {
         const char* name = (const char*)nameNode;
         printf("Directory Entry %s, data %d\n", name, entry->fileNode);
     }
+#endif
 }
 
 bool xipLibraryReadFilename(const char* filename, const uint8_t** data, size_t* size) {

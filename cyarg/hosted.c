@@ -52,6 +52,18 @@ int runHostedFile(const char* libraryPath, const char* path) {
     }
 }
 
+int runXIPStartup() {
+    vmHost.exitCode = EX_OK;
+
+    InterpretResult result = bootXIP();
+
+    if (result == INTERPRET_RUNTIME_ERROR) {
+        return EX_SOFTWARE;
+    } else {
+        return vmHost.exitCode;
+    }
+}
+
 int compileFile(const char* path, const char* outputPath) {
 
     ObjString* pathString = copyString(path, (int) strlen(path));
