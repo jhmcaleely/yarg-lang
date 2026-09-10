@@ -2,8 +2,13 @@
 #include <assert.h>
 
 // interim hosting of the XIP library in .rodata.
-extern unsigned const char cyarg_test_ylib[];
-extern unsigned int cyarg_test_ylib_len;
+#ifdef CYARG_SELF_HOSTED
+extern unsigned const char cyarg_ylib[];
+extern unsigned int cyarg_ylib_len;
+#else
+extern unsigned const char cyarg_hosted_ylib[];
+extern unsigned int cyarg_hosted_ylib_len;
+#endif
 
 // the library is linearised a set of 'nodes', all concatenated in memory.
 // the tool creating the library will pad nodes as needed for alignment.
@@ -15,8 +20,13 @@ struct XIPLibHeader {
     uint32_t nodeZeroOffset;
 };
 
-const struct XIPLibHeader *const xipLibHeader = (const struct XIPLibHeader*)&cyarg_test_ylib[0];
-const uint8_t* const xipLibraryBytes = &cyarg_test_ylib[0];
+#ifdef CYARG_SELF_HOSTED
+const struct XIPLibHeader *const xipLibHeader = (const struct XIPLibHeader*)&cyarg_ylib[0];
+const uint8_t* const xipLibraryBytes = &cyarg_ylib[0];
+#else
+const struct XIPLibHeader *const xipLibHeader = (const struct XIPLibHeader*)&cyarg_hosted_ylib[0];
+const uint8_t* const xipLibraryBytes = &cyarg_hosted_ylib[0];
+#endif
 
 struct nodeIndex {
     uint32_t offset;
@@ -79,7 +89,11 @@ const struct directoryEntry* directoryEntryForFile(const char* filename) {
 
 void xipLibraryInvariant() {
     assert(xipLibHeader->version == 1);
-    assert(xipLibHeader->length == cyarg_test_ylib_len);
+#ifdef CYARG_SELF_HOSTED
+    assert(xipLibHeader->length == cyarg_ylib_len);
+#else
+    assert(xipLibHeader->length == cyarg_hosted_ylib_len);
+#endif
 
     size_t length = 0;
     uint16_t count = nodeCount();
