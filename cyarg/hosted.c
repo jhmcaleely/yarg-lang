@@ -12,39 +12,11 @@
 
 Host vmHost;
 
-static char* libraryNameFor(const char* importname, const char* libraryPath) {
-    size_t namelen = strlen(importname);
-    size_t pathlen = 0;
-    if (libraryPath) {
-        pathlen = strlen(libraryPath);
-    }
-    char* filename = malloc(pathlen + 1 + namelen + 1);
-    if (filename) {
-        if (libraryPath) {
-            strcpy(filename, libraryPath);
-            if (libraryPath[pathlen - 1] != '/') {
-                strcat(filename, "/");
-            }
-        } else {
-            strcpy(filename, "");
-        }
-        strcat(filename, importname);
-    }
-    return filename;
-}
-
-int runHostedFile(const char* libraryPath, const char* path) {
-
-    char* replPath = libraryNameFor(path, libraryPath);
-    ObjString* replPathString = copyString(replPath, (int) strlen(replPath));
-    tempRootPush(OBJ_VAL(replPathString));
-    free(replPath);
-
+int bootHosted() {
     vmHost.exitCode = EX_OK;
 
-    InterpretResult result = bootYargSourceFile(replPathString);
+    InterpretResult result = bootXIP();
 
-    tempRootPop();
     if (result == INTERPRET_RUNTIME_ERROR) {
         return EX_SOFTWARE;
     } else {
@@ -52,11 +24,16 @@ int runHostedFile(const char* libraryPath, const char* path) {
     }
 }
 
-int runXIPStartup() {
+int bootstrapHostedFile(const char* path) {
+
     vmHost.exitCode = EX_OK;
 
-    InterpretResult result = bootXIP();
+    ObjString* pathString = copyString(path, (int) strlen(path));
+    tempRootPush(OBJ_VAL(pathString));
 
+    InterpretResult result = bootScript(pathString);
+
+    tempRootPop();
     if (result == INTERPRET_RUNTIME_ERROR) {
         return EX_SOFTWARE;
     } else {

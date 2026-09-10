@@ -51,7 +51,7 @@ void initVMRuntime();
 void freeVM();
 void markVMRoots();
 
-InterpretResult bootYargSourceFile(ObjString* filename);
+InterpretResult bootScript(ObjString* filename);
 InterpretResult compileScript(ObjString* filename, Value* compileResult);
 InterpretResult bootXIP();
 

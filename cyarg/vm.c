@@ -1556,8 +1556,8 @@ InterpretResult bootstrapVM(Value* bootstrapResult, ObjString* script) {
     return result;
 }
 
-InterpretResult bootYargSourceFile(ObjString* filename) {
-    bindBootstrapScript("boot", 4, bootstrap, sizeof(bootstrap), filename, bootstrap_parameter_offset);
+InterpretResult bootScript(ObjString* filename) {
+    bindBootstrapScript("script-boot", 11, bootstrap, sizeof(bootstrap), filename, bootstrap_parameter_offset);
 
     // Yarg scripts do not return values, so the bootstrap result is discarded.
     Value discardedResult;
@@ -1574,7 +1574,7 @@ InterpretResult compileScript(ObjString* filename, Value* result) {
 }
 
 InterpretResult bootXIP() {
-    bindBootstrapCode("xip-boot", 8, xip_bootstrap, sizeof(xip_bootstrap));
+    bindBootstrapCode("boot", 4, xip_bootstrap, sizeof(xip_bootstrap));
     Value discardedResult;
     InterpretResult runResult = bootstrapVM(&discardedResult, NULL);
     return runResult;
