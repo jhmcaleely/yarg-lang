@@ -209,6 +209,7 @@ endif()
 # Embed cyarg.ylib as static bytes compiled into cyarg.
 # two variants of cyarg.lib - hosted and self-hosted.
 set(YARG_BIN ${CMAKE_SOURCE_DIR}/../bin/yarg)
+set(YARG_LANG_DIR ${CMAKE_SOURCE_DIR}/../yarg/lang)
 
 # self hosted variant of cyarg.ylib
 set(CYARG_YLIB_PATH ${CMAKE_CURRENT_BINARY_DIR}/cyarg.ylib)
@@ -219,8 +220,10 @@ add_custom_command(
   OUTPUT ${CYARG_YLIB_PATH}
   COMMAND mkdir -p ${CYARG_YLIB_DATA_PATH}
   COMMAND cp ${CMAKE_SOURCE_DIR}/startup.yb ${CYARG_YLIB_DATA_PATH}
+  COMMAND cp ${YARG_LANG_DIR}/yarg.yb ${CYARG_YLIB_DATA_PATH}
   COMMAND ${YARG_BIN} buildlib --libdir ${CYARG_YLIB_DATA_PATH} --startup ${CYARG_YLIB_DATA_PATH}/startup.yb --output ${CYARG_YLIB_PATH}
   DEPENDS ${CMAKE_SOURCE_DIR}/startup.yb
+  DEPENDS ${YARG_LANG_DIR}/yarg.yb
   VERBATIM
 )
 
@@ -240,8 +243,10 @@ add_custom_command(
   OUTPUT ${CYARG_HOSTED_YLIB_PATH}
   COMMAND mkdir -p ${CYARG_HOSTED_YLIB_DATA_PATH}
   COMMAND cp ${CMAKE_SOURCE_DIR}/startup-hosted.yb ${CYARG_HOSTED_YLIB_DATA_PATH}
+  COMMAND cp ${YARG_LANG_DIR}/yarg.yb ${CYARG_HOSTED_YLIB_DATA_PATH}
   COMMAND ${YARG_BIN} buildlib --libdir ${CYARG_HOSTED_YLIB_DATA_PATH} --startup ${CYARG_HOSTED_YLIB_DATA_PATH}/startup-hosted.yb --output ${CYARG_HOSTED_YLIB_PATH}
   DEPENDS ${CMAKE_SOURCE_DIR}/startup-hosted.yb
+  DEPENDS ${YARG_LANG_DIR}/yarg.yb
   VERBATIM
 )
 
