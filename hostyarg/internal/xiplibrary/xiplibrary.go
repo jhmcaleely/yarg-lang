@@ -637,11 +637,9 @@ func (s State) String() string {
 }
 
 type tokeniser struct {
-	scanner  *bufio.Reader
-	current  State
-	lastRune rune
-	lastErr  error
-	token    TokenInfo
+	scanner *bufio.Reader
+	current State
+	token   TokenInfo
 }
 
 func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
@@ -651,24 +649,18 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 		switch sm.current {
 		case ReadNext:
 			r, size, e := scanner.ReadRune()
-			if e != nil {
-				if e == io.EOF {
-					sm.current = LastLine
-					break
-				}
+			switch {
+			case e != nil && e == io.EOF:
+				sm.current = End
+			case e != nil:
 				sm.current = Error
-				break
-			}
-			if r == '\ufffd' && size == 1 {
+			case r == '\ufffd' && size == 1:
 				sm.current = Error
-				break
-			}
-			switch r {
-			case '\u000A', '\u000D':
+			case r == '\u000A', r == '\u000D':
 				sm.token.Type = TokenNewLine
 				sm.token.Value = string(r)
 				sm.current = ReadNewLine
-			case '\u000C', '\u000B', '\u0085', '\u2028', '\u2029':
+			case r == '\u000C', r == '\u000B', r == '\u0085', r == '\u2028', r == '\u2029':
 				sm.token.Type = TokenNewLine
 				sm.token.Value = string(r)
 				sm.current = DispatchToken
@@ -695,20 +687,15 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 				sm.current = DispatchToken
 			}
 		case ReadLine:
-			r, _, e := scanner.ReadRune()
-			if e != nil {
-				if e == io.EOF {
-					sm.current = LastLine
-					break
-				}
-				sm.current = Error
-				break
-			}
-			switch r {
-			case '\u000A', '\u000D':
-				scanner.UnreadRune()
+			r, size, e := scanner.ReadRune()
+			switch {
+			case e != nil && e == io.EOF:
 				sm.current = DispatchToken
-			case '\u000C', '\u000B', '\u0085', '\u2028', '\u2029':
+			case e != nil:
+				sm.current = Error
+			case r == '\ufffd' && size == 1:
+				sm.current = Error
+			case r == '\u000A', r == '\u000D', r == '\u000C', r == '\u000B', r == '\u0085', r == '\u2028', r == '\u2029':
 				scanner.UnreadRune()
 				sm.current = DispatchToken
 			default:
@@ -724,11 +711,6 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 			sm.token.Value = ""
 			tokens = append(tokens, sm.token)
 			return tokens, nil
-		case LastLine:
-			if sm.token.Type == TokenLine {
-				tokens = append(tokens, sm.token)
-			}
-			sm.current = End
 		case End:
 			tokens = append(tokens, TokenInfo{Type: TokenEOF, Value: ""})
 			return tokens, nil

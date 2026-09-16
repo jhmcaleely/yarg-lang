@@ -149,6 +149,14 @@ var tokenTestCases = []TokenTestCase{
 			{Type: TokenEOF, Value: ""},
 		},
 	},
+	{
+		input: string([]byte{'h', 'e', 'l', 'l', 'o', '\r', '\n', 'w', 'o', 'r', 'l', 'd', 0xa0, 'y', 'a', 'r', 'g'}),
+		expected: []TokenInfo{
+			{Type: TokenLine, Value: "hello"},
+			{Type: TokenNewLine, Value: "\r\n"},
+			{Type: TokenError, Value: ""},
+		},
+	},
 }
 
 func TestTokeniseString(t *testing.T) {
