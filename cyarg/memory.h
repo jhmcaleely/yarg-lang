@@ -1,6 +1,8 @@
 #ifndef cyarg_memory_h
 #define cyarg_memory_h
 
+/* see object.h for memory management details */
+
 #include "common.h"
 #include "object.h"
 
@@ -8,7 +10,7 @@ typedef struct O1HeapInstance O1HeapInstance;
 
 void init_heap_instance(O1HeapInstance** instance);
 
-#define TEMP_ROOTS_MAX 16
+#define TEMP_ROOTS_MAX 8
 #define FIRST_GC_AT 50 * 1024
 #define ALWAYS_GC_ABOVE 100 * 1024
 
