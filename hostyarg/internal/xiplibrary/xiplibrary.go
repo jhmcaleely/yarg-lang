@@ -1,6 +1,7 @@
 package xiplibrary
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/binary"
 	"fmt"
@@ -10,12 +11,17 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 )
 
+// note ordering and size are designed with alignment on ARM in mind.
 type LibraryImageHeader struct {
-	Magic          [6]byte
+	Magic          [4]byte
+	Endianness     uint16
 	Version        uint16
 	Length         uint32
+	DirectoryNode  uint16
 	NodeZeroOffset uint8
 }
 
@@ -34,9 +40,11 @@ type LibraryDirEntry struct {
 	NameNode uint16
 }
 
-var packageMagic = [6]byte{0x79, 0x0a, 0x72, 0x67, 0xff, 0x43}
+var packageMagic = [4]byte{'y', 0x0a, 'r', 'g'}
 
-const packageVersion uint16 = 0x2600
+const endiannessMarker uint16 = 0xff43
+
+const packageVersion uint16 = 0x2601
 
 var endianness = binary.LittleEndian
 
@@ -51,6 +59,9 @@ func readLibraryImageHeader(data []byte) (header LibraryImageHeader, err error) 
 	}
 	if header.Magic != packageMagic {
 		return header, fmt.Errorf("invalid magic: %v", header.Magic)
+	}
+	if header.Endianness != endiannessMarker {
+		return header, fmt.Errorf("invalid endianness marker: %v", header.Endianness)
 	}
 	if header.Version != packageVersion {
 		return header, fmt.Errorf("invalid version: %v", header.Version)
@@ -72,7 +83,7 @@ func binaryWriteAt(w io.WriterAt, order binary.ByteOrder, data any, offset uint3
 	return err
 }
 
-func writeLibraryImageHeader(w io.WriterAt, length uint32) (err error) {
+func writeLibraryImageHeader(w io.WriterAt, length uint32, directoryNode uint16) (err error) {
 
 	headerSize := uint32(binary.Size(LibraryImageHeader{}))
 	nodeZeroOffset := nodePadding(headerSize, nodeZeroAlignment) + headerSize
@@ -82,9 +93,11 @@ func writeLibraryImageHeader(w io.WriterAt, length uint32) (err error) {
 
 	header := LibraryImageHeader{
 		Magic:          packageMagic,
+		Endianness:     endiannessMarker,
 		Version:        packageVersion,
 		Length:         length,
 		NodeZeroOffset: uint8(nodeZeroOffset),
+		DirectoryNode:  directoryNode,
 	}
 
 	err = binaryWriteAt(w, endianness, header, 0)
@@ -134,7 +147,7 @@ func writeLibraryNode(w LibraryWriter, node []byte, alignment uint) (err error) 
 	paddedStartLen := uint32(paddedStartLen64)
 	dataLength := uint32(len(node))
 	_, err = w.Write(node)
-	err = writeLibraryImageHeader(w, paddedStartLen+dataLength)
+	err = writeLibraryImageHeader(w, paddedStartLen+dataLength, 0)
 	return err
 }
 
@@ -242,7 +255,7 @@ func CmdBuildLib(libDir, outputFile, startupFile string) error {
 		nodeCursor += 2
 	}
 
-	err = writeLibraryImageHeader(libraryimage, uint32(binary.Size(LibraryImageHeader{})))
+	err = writeLibraryImageHeader(libraryimage, uint32(binary.Size(LibraryImageHeader{})), 2)
 	if err != nil {
 		return err
 	}
@@ -349,12 +362,39 @@ func nodeCount(data []byte) (int, error) {
 	return len(index) / 8, nil
 }
 
+func directoryNode(data []byte) (uint16, error) {
+	header, err := readLibraryImageHeader(data)
+	if err != nil {
+		return 0, err
+	}
+	if header.DirectoryNode == 0 {
+		log.Print("no directory node present")
+	}
+	nodes, err := nodeCount(data)
+	if err != nil {
+		return 0, err
+	}
+	if int(header.DirectoryNode) >= nodes {
+		return 0, fmt.Errorf("directory node %d out of range", header.DirectoryNode)
+	}
+	return header.DirectoryNode, nil
+}
+
 func directories(data []byte) (dirs []LibraryDirEntry, err error) {
 	numNodes, err := nodeCount(data)
 	if err != nil {
 		return nil, err
 	}
-	dirData, err := nodeData(data, 2)
+
+	dirNode, err := directoryNode(data)
+	if err != nil {
+		return nil, err
+	}
+	if dirNode == 0 {
+		return nil, nil
+	}
+
+	dirData, err := nodeData(data, dirNode)
 	if err != nil {
 		return nil, err
 	}
@@ -498,6 +538,237 @@ func CmdFsInfo(fsFilename string) (e error) {
 		fmt.Printf("Node 1 (Startup File) Size: %d bytes\n", len(nodeOne))
 	} else {
 		fmt.Printf("Node 1 (Startup File) not present\n")
+	}
+
+	return nil
+}
+
+type Token int
+
+const (
+	TokenPath Token = iota
+	TokenComment
+	TokenNode
+	TokenFile
+	TokenTextFile
+	TokenIndexFile
+	TokenBootfile
+	TokenNewLine
+	TokenLine
+	TokenEOF
+	TokenError
+)
+
+type TokenInfo struct {
+	Type  Token
+	Value string
+}
+
+func commentToken(line string) TokenInfo {
+	return TokenInfo{Type: TokenComment, Value: line}
+}
+
+func stringToken(line string) TokenInfo {
+	for _, r := range line {
+		if r == '"' {
+			return TokenInfo{Type: TokenTextFile, Value: line}
+		}
+	}
+	return TokenInfo{Type: TokenError, Value: line}
+}
+
+func readNewLineToken(input *bufio.Reader) TokenInfo {
+	r, _, e := input.ReadRune()
+	if e != nil {
+		return TokenInfo{Type: TokenError, Value: ""}
+	}
+	r2, _, e := input.ReadRune()
+	if e != nil {
+		if e == io.EOF {
+			return TokenInfo{Type: TokenEOF, Value: ""}
+		}
+		return TokenInfo{Type: TokenError, Value: ""}
+	}
+	if r == '\u000D' && r2 == '\u000A' {
+		return TokenInfo{Type: TokenNewLine, Value: string(r) + string(r2)}
+	} else if r == '\u000A' && r2 == '\u000D' {
+		return TokenInfo{Type: TokenNewLine, Value: string(r) + string(r2)}
+	} else {
+		input.UnreadRune() // put back the second rune if it's not part of a newline sequence
+		return TokenInfo{Type: TokenNewLine, Value: string(r)}
+	}
+}
+
+func (T TokenInfo) String() string {
+	return fmt.Sprintf("Type: %v, Value: %s", T.Type, strconv.Quote(T.Value))
+}
+
+type State int
+
+const (
+	ReadNext State = iota
+	ReadNewLine
+	ReadLine
+	DispatchToken
+	Error
+	LastLine
+	End
+)
+
+func (s State) String() string {
+	switch s {
+	case ReadNext:
+		return "ReadNext"
+	case ReadNewLine:
+		return "ReadNewLine"
+	case ReadLine:
+		return "ReadLine"
+	case DispatchToken:
+		return "DispatchToken"
+	case Error:
+		return "Error"
+	case LastLine:
+		return "LastLine"
+	case End:
+		return "End"
+	default:
+		return "Unknown"
+	}
+}
+
+type tokeniser struct {
+	scanner  *bufio.Reader
+	current  State
+	lastRune rune
+	lastErr  error
+	token    TokenInfo
+}
+
+func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
+	sm := tokeniser{scanner: scanner, current: ReadNext}
+	tokens := []TokenInfo{}
+	for {
+		switch sm.current {
+		case ReadNext:
+			r, size, e := scanner.ReadRune()
+			if e != nil {
+				if e == io.EOF {
+					sm.current = LastLine
+					break
+				}
+				sm.current = Error
+				break
+			}
+			if r == '\ufffd' && size == 1 {
+				sm.current = Error
+				break
+			}
+			switch r {
+			case '\u000A', '\u000D':
+				sm.token.Type = TokenNewLine
+				sm.token.Value = string(r)
+				sm.current = ReadNewLine
+			case '\u000C', '\u000B', '\u0085', '\u2028', '\u2029':
+				sm.token.Type = TokenNewLine
+				sm.token.Value = string(r)
+				sm.current = DispatchToken
+			default:
+				sm.token.Type = TokenLine
+				sm.token.Value = string(r)
+				sm.current = ReadLine
+			}
+		case ReadNewLine:
+			r, _, e := scanner.ReadRune()
+			switch {
+			case e != nil && e == io.EOF:
+				sm.current = End
+			case e != nil:
+				sm.current = Error
+			case r == '\r' && sm.token.Value == string('\n'):
+				sm.token.Value += string(r)
+				sm.current = DispatchToken
+			case r == '\n' && sm.token.Value == string('\r'):
+				sm.token.Value += string(r)
+				sm.current = DispatchToken
+			default:
+				scanner.UnreadRune()
+				sm.current = DispatchToken
+			}
+		case ReadLine:
+			r, _, e := scanner.ReadRune()
+			if e != nil {
+				if e == io.EOF {
+					sm.current = LastLine
+					break
+				}
+				sm.current = Error
+				break
+			}
+			switch r {
+			case '\u000A', '\u000D':
+				scanner.UnreadRune()
+				sm.current = DispatchToken
+			case '\u000C', '\u000B', '\u0085', '\u2028', '\u2029':
+				scanner.UnreadRune()
+				sm.current = DispatchToken
+			default:
+				sm.token.Value += string(r)
+				sm.current = ReadLine
+			}
+		case DispatchToken:
+			tokens = append(tokens, sm.token)
+			sm.token = TokenInfo{}
+			sm.current = ReadNext
+		case Error:
+			sm.token.Type = TokenError
+			sm.token.Value = ""
+			tokens = append(tokens, sm.token)
+			return tokens, nil
+		case LastLine:
+			if sm.token.Type == TokenLine {
+				tokens = append(tokens, sm.token)
+			}
+			sm.current = End
+		case End:
+			tokens = append(tokens, TokenInfo{Type: TokenEOF, Value: ""})
+			return tokens, nil
+		}
+	}
+}
+
+func tokeniseFile(filePath string) ([]TokenInfo, error) {
+	file, e := os.Open(filePath)
+	if e != nil {
+		return nil, e
+	}
+	defer file.Close()
+
+	scanner := bufio.NewReader(file)
+
+	return tokenise(scanner)
+}
+
+func tokeniseString(input string) ([]TokenInfo, error) {
+	scanner := bufio.NewReader(strings.NewReader(input))
+	return tokenise(scanner)
+}
+
+func CmdBuildWithContents(libContents string, outputFile string, startupFile string) (e error) {
+	stat, e := os.Stat(libContents)
+	if e != nil {
+		return e
+	}
+	if stat.IsDir() {
+		return fmt.Errorf("libContents should be a file, not a directory")
+	}
+
+	lines, e := tokeniseFile(libContents)
+	if e != nil {
+		return e
+	}
+
+	for _, token := range lines {
+		fmt.Println(token)
 	}
 
 	return nil

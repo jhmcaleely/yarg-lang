@@ -261,18 +261,25 @@ func dispatchSubCommand(args []string) {
 		libDir := flags.String("libdir", "", "directory containing library source files")
 		outputFile := flags.String("output", "", "output file for compiled library")
 		startupFile := flags.String("startup", "", "optional startup file to include in node 1")
+		libContents := flags.String("contents", "", "contents of the library to include")
 		flags.Parse(args[1:])
 
-		if *libDir == "" {
-			exitWithUsageError("expect directory containing library source files")
+		if *libDir == "" && *libContents == "" {
+			exitWithUsageError("expect directory containing library source files or library contents")
 		}
 		if *outputFile == "" {
 			exitWithUsageError("expect output file for compiled library")
 		}
-
-		err := xiplibrary.CmdBuildLib(*libDir, *outputFile, *startupFile)
-		if err != nil {
-			exitWithError(err.Error())
+		if *libContents != "" {
+			err := xiplibrary.CmdBuildWithContents(*libContents, *outputFile, *startupFile)
+			if err != nil {
+				exitWithError(err.Error())
+			}
+		} else {
+			err := xiplibrary.CmdBuildLib(*libDir, *outputFile, *startupFile)
+			if err != nil {
+				exitWithError(err.Error())
+			}
 		}
 	default:
 		exitWithUsageError("unknown command")
