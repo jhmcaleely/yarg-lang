@@ -648,7 +648,7 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 	for {
 		switch sm.current {
 		case ReadNext:
-			r, size, e := scanner.ReadRune()
+			r, size, e := sm.scanner.ReadRune()
 			switch {
 			case e != nil && e == io.EOF:
 				sm.current = End
@@ -670,7 +670,7 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 				sm.current = ReadLine
 			}
 		case ReadNewLine:
-			r, _, e := scanner.ReadRune()
+			r, _, e := sm.scanner.ReadRune()
 			switch {
 			case e != nil && e == io.EOF:
 				sm.current = End
@@ -683,11 +683,11 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 				sm.token.Value += string(r)
 				sm.current = DispatchToken
 			default:
-				scanner.UnreadRune()
+				sm.scanner.UnreadRune()
 				sm.current = DispatchToken
 			}
 		case ReadLine:
-			r, size, e := scanner.ReadRune()
+			r, size, e := sm.scanner.ReadRune()
 			switch {
 			case e != nil && e == io.EOF:
 				sm.current = DispatchToken
@@ -696,7 +696,7 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 			case r == '\ufffd' && size == 1:
 				sm.current = Error
 			case r == '\u000A', r == '\u000D', r == '\u000C', r == '\u000B', r == '\u0085', r == '\u2028', r == '\u2029':
-				scanner.UnreadRune()
+				sm.scanner.UnreadRune()
 				sm.current = DispatchToken
 			default:
 				sm.token.Value += string(r)
