@@ -677,7 +677,6 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 	current := ReadNext
 	var r rune
 	var lastRuneSize int
-	var token TokenInfo
 
 	readRune := func(next State, eof State) {
 		rn, size, e := scanner.ReadRune()
@@ -696,6 +695,7 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 		}
 	}
 
+	var token TokenInfo
 	tokens := []TokenInfo{}
 	line, column := 1, 1
 
@@ -736,7 +736,7 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 			readRune(AddRuneToIdentifier, DispatchToken)
 		case AddRuneToIdentifier:
 			switch {
-			case isNewLineComponent(r), isWhitespace(r):
+			case isNewLineComponent(r), isWhitespace(r), isCommentStart(r):
 				scanner.UnreadRune()
 				cursor -= lastRuneSize
 				current = DispatchToken

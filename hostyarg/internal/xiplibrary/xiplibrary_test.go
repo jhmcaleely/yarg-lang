@@ -205,6 +205,15 @@ var tokenTestCases = []TokenTestCase{
 			{Type: TokenEOF, Value: ""},
 		},
 	},
+	{
+		input: "\nid#comment",
+		expected: []TokenInfo{
+			{Type: TokenNewLine, Value: "\n"},
+			{Type: TokenIdentifier, Value: "id"},
+			{Type: TokenComment, Value: "#comment"},
+			{Type: TokenEOF, Value: ""},
+		},
+	},
 }
 
 func executeTestCase(t *testing.T, i int) {
