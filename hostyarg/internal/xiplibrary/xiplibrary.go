@@ -702,6 +702,8 @@ func isEscape(r rune) bool {
 	}
 }
 
+// a tokeniser for utf-8 line-oriented command scripts.
+// supports "strings" (with escape sequences) and #comments
 func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 
 	cursor := 0
