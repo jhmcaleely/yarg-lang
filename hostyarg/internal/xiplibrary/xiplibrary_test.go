@@ -83,7 +83,7 @@ var tokenTestCases = []TokenTestCase{
 	{
 		input: "t",
 		expected: []TokenInfo{
-			{Type: TokenLine, Value: "t"},
+			{Type: TokenIdentifier, Value: "t"},
 			{Type: TokenEOF, Value: ""},
 		},
 	},
@@ -96,14 +96,14 @@ var tokenTestCases = []TokenTestCase{
 	{
 		input: "t\r",
 		expected: []TokenInfo{
-			{Type: TokenLine, Value: "t"},
+			{Type: TokenIdentifier, Value: "t"},
 			{Type: TokenEOF, Value: ""},
 		},
 	},
 	{
 		input: "t\n\n",
 		expected: []TokenInfo{
-			{Type: TokenLine, Value: "t"},
+			{Type: TokenIdentifier, Value: "t"},
 			{Type: TokenNewLine, Value: "\n"},
 			{Type: TokenEOF, Value: ""},
 		},
@@ -111,20 +111,50 @@ var tokenTestCases = []TokenTestCase{
 	{
 		input: "test input string\n\rtest\r\n\u2028test\n",
 		expected: []TokenInfo{
-			{Type: TokenLine, Value: "test input string"},
+			{Type: TokenIdentifier, Value: "test"},
+			{Type: TokenIdentifier, Value: "input"},
+			{Type: TokenIdentifier, Value: "string"},
 			{Type: TokenNewLine, Value: "\n\r"},
-			{Type: TokenLine, Value: "test"},
+			{Type: TokenIdentifier, Value: "test"},
 			{Type: TokenNewLine, Value: "\r\n"},
 			{Type: TokenNewLine, Value: "\u2028"},
-			{Type: TokenLine, Value: "test"},
+			{Type: TokenIdentifier, Value: "test"},
 			{Type: TokenEOF, Value: ""},
 		},
 	},
 	{
 		input: "single line without newline",
 		expected: []TokenInfo{
-			{Type: TokenLine, Value: "single line without newline"},
+			{Type: TokenIdentifier, Value: "single"},
+			{Type: TokenIdentifier, Value: "line"},
+			{Type: TokenIdentifier, Value: "without"},
+			{Type: TokenIdentifier, Value: "newline"},
 			{Type: TokenEOF, Value: ""},
+		},
+	},
+	{
+		input: "three line\nwith several\nnewline\n",
+		expected: []TokenInfo{
+			{Type: TokenIdentifier, Value: "three"},
+			{Type: TokenIdentifier, Value: "line"},
+			{Type: TokenNewLine, Value: "\n"},
+			{Type: TokenIdentifier, Value: "with"},
+			{Type: TokenIdentifier, Value: "several"},
+			{Type: TokenNewLine, Value: "\n"},
+			{Type: TokenIdentifier, Value: "newline"},
+			{Type: TokenEOF, Value: ""},
+		},
+	},
+	{
+		input: "three line\nwith several\nnew" + string([]byte{0xa0}) + "line\n",
+		expected: []TokenInfo{
+			{Type: TokenIdentifier, Value: "three"},
+			{Type: TokenIdentifier, Value: "line"},
+			{Type: TokenNewLine, Value: "\n"},
+			{Type: TokenIdentifier, Value: "with"},
+			{Type: TokenIdentifier, Value: "several"},
+			{Type: TokenNewLine, Value: "\n"},
+			{Type: TokenError, Value: "cursor: 27, line: 3, column: 4"},
 		},
 	},
 	{
@@ -146,14 +176,14 @@ var tokenTestCases = []TokenTestCase{
 			{Type: TokenNewLine, Value: "\u0085"},
 			{Type: TokenNewLine, Value: "\u2028"},
 			{Type: TokenNewLine, Value: "\u2029"},
-			{Type: TokenLine, Value: "test"},
+			{Type: TokenIdentifier, Value: "test"},
 			{Type: TokenEOF, Value: ""},
 		},
 	},
 	{
 		input: string([]byte{'h', 'e', 'l', 'l', 'o', '\r', '\n', 'w', 'o', 'r', 'l', 'd', 0xa0, 'y', 'a', 'r', 'g'}),
 		expected: []TokenInfo{
-			{Type: TokenLine, Value: "hello"},
+			{Type: TokenIdentifier, Value: "hello"},
 			{Type: TokenNewLine, Value: "\r\n"},
 			{Type: TokenError, Value: "cursor: 12, line: 2, column: 6"},
 		},

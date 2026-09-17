@@ -554,10 +554,39 @@ const (
 	TokenIndexFile
 	TokenBootfile
 	TokenNewLine
-	TokenLine
+	TokenIdentifier
 	TokenEOF
 	TokenError
 )
+
+func (t Token) String() string {
+	switch t {
+	case TokenPath:
+		return "TokenPath"
+	case TokenComment:
+		return "TokenComment"
+	case TokenNode:
+		return "TokenNode"
+	case TokenFile:
+		return "TokenFile"
+	case TokenTextFile:
+		return "TokenTextFile"
+	case TokenIndexFile:
+		return "TokenIndexFile"
+	case TokenBootfile:
+		return "TokenBootfile"
+	case TokenNewLine:
+		return "TokenNewLine"
+	case TokenIdentifier:
+		return "TokenIdentifier"
+	case TokenEOF:
+		return "TokenEOF"
+	case TokenError:
+		return "TokenError"
+	default:
+		return "Unknown"
+	}
+}
 
 type TokenInfo struct {
 	Type  Token
@@ -574,8 +603,8 @@ const (
 	ReadNext State = iota
 	ReadNewLine
 	ReadNewLine2
-	ReadRuneLine
-	ReadLine
+	ReadRuneIdentifier
+	AddRuneToIdentifier
 	DispatchNewLine
 	DispatchRune
 	DispatchToken
@@ -592,10 +621,10 @@ func (s State) String() string {
 		return "ReadNewLine"
 	case ReadNewLine2:
 		return "ReadNewLine2"
-	case ReadRuneLine:
-		return "ReadRuneLine"
-	case ReadLine:
-		return "ReadLine"
+	case ReadRuneIdentifier:
+		return "ReadRuneIdentifier"
+	case AddRuneToIdentifier:
+		return "AddRuneToIdentifier"
 	case DispatchNewLine:
 		return "DispatchNewLine"
 	case DispatchRune:
@@ -616,6 +645,15 @@ func (s State) String() string {
 func isNewLineComponent(r rune) bool {
 	switch r {
 	case '\u000A', '\u000D', '\u000C', '\u000B', '\u0085', '\u2028', '\u2029':
+		return true
+	default:
+		return false
+	}
+}
+
+func isWhitespace(r rune) bool {
+	switch r {
+	case ' ', '\t':
 		return true
 	default:
 		return false
@@ -661,9 +699,11 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 			case isNewLineComponent(r):
 				token.Type = TokenNewLine
 				current = ReadNewLine
+			case isWhitespace(r):
+				current = ReadNext
 			default:
-				token.Type = TokenLine
-				current = ReadRuneLine
+				token.Type = TokenIdentifier
+				current = ReadRuneIdentifier
 			}
 		case ReadNewLine:
 			readRune(ReadNewLine2, End)
@@ -678,18 +718,18 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 				cursor -= lastRuneSize
 				current = DispatchNewLine
 			}
-		case ReadRuneLine:
-			readRune(ReadLine, DispatchToken)
-		case ReadLine:
+		case ReadRuneIdentifier:
+			readRune(AddRuneToIdentifier, DispatchToken)
+		case AddRuneToIdentifier:
 			switch {
-			case isNewLineComponent(r):
+			case isNewLineComponent(r), isWhitespace(r):
 				scanner.UnreadRune()
 				cursor -= lastRuneSize
 				current = DispatchToken
 			default:
 				column += 1
 				token.Value += string(r)
-				current = ReadRuneLine
+				current = ReadRuneIdentifier
 			}
 		case DispatchNewLine:
 			column = 1
