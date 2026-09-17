@@ -188,6 +188,23 @@ var tokenTestCases = []TokenTestCase{
 			{Type: TokenError, Value: "cursor: 12, line: 2, column: 6"},
 		},
 	},
+	{
+		input: "# this is a comment\nidentifier",
+		expected: []TokenInfo{
+			{Type: TokenComment, Value: "# this is a comment"},
+			{Type: TokenNewLine, Value: "\n"},
+			{Type: TokenIdentifier, Value: "identifier"},
+			{Type: TokenEOF, Value: ""},
+		},
+	},
+	{
+		input: "\n#comment",
+		expected: []TokenInfo{
+			{Type: TokenNewLine, Value: "\n"},
+			{Type: TokenComment, Value: "#comment"},
+			{Type: TokenEOF, Value: ""},
+		},
+	},
 }
 
 func executeTestCase(t *testing.T, i int) {

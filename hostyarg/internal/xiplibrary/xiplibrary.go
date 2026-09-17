@@ -605,6 +605,8 @@ const (
 	ReadNewLine2
 	ReadRuneIdentifier
 	AddRuneToIdentifier
+	ReadComment
+	AddRuneToComment
 	DispatchNewLine
 	DispatchRune
 	DispatchToken
@@ -660,6 +662,15 @@ func isWhitespace(r rune) bool {
 	}
 }
 
+func isCommentStart(r rune) bool {
+	switch r {
+	case '#':
+		return true
+	default:
+		return false
+	}
+}
+
 func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 
 	cursor := 0
@@ -701,6 +712,9 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 				current = ReadNewLine
 			case isWhitespace(r):
 				current = ReadNext
+			case isCommentStart(r):
+				token.Type = TokenComment
+				current = ReadComment
 			default:
 				token.Type = TokenIdentifier
 				current = ReadRuneIdentifier
@@ -730,6 +744,19 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 				column += 1
 				token.Value += string(r)
 				current = ReadRuneIdentifier
+			}
+		case ReadComment:
+			readRune(AddRuneToComment, DispatchToken)
+		case AddRuneToComment:
+			switch {
+			case isNewLineComponent(r):
+				scanner.UnreadRune()
+				cursor -= lastRuneSize
+				current = DispatchToken
+			default:
+				column += 1
+				token.Value += string(r)
+				current = ReadComment
 			}
 		case DispatchNewLine:
 			column = 1
