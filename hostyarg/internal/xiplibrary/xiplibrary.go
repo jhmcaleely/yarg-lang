@@ -607,6 +607,10 @@ const (
 	AddRuneToIdentifier
 	ReadComment
 	AddRuneToComment
+	ReadString
+	AddRuneToString
+	ReadEscape
+	AddEscapeToString
 	DispatchNewLine
 	DispatchRune
 	DispatchToken
@@ -671,6 +675,33 @@ func isCommentStart(r rune) bool {
 	}
 }
 
+func isStringStart(r rune) bool {
+	switch r {
+	case '"':
+		return true
+	default:
+		return false
+	}
+}
+
+func isStringEnd(r rune) bool {
+	switch r {
+	case '"':
+		return true
+	default:
+		return false
+	}
+}
+
+func isEscape(r rune) bool {
+	switch r {
+	case '\\':
+		return true
+	default:
+		return false
+	}
+}
+
 func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 
 	cursor := 0
@@ -715,6 +746,10 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 			case isCommentStart(r):
 				token.Type = TokenComment
 				current = ReadComment
+			case isStringStart(r):
+				token.Type = TokenIdentifier
+				token.Value = ""
+				current = ReadString
 			default:
 				token.Type = TokenIdentifier
 				current = ReadRuneIdentifier
@@ -736,7 +771,7 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 			readRune(AddRuneToIdentifier, DispatchToken)
 		case AddRuneToIdentifier:
 			switch {
-			case isNewLineComponent(r), isWhitespace(r), isCommentStart(r):
+			case isNewLineComponent(r), isWhitespace(r), isCommentStart(r), isStringStart(r):
 				scanner.UnreadRune()
 				cursor -= lastRuneSize
 				current = DispatchToken
@@ -757,6 +792,32 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 				column += 1
 				token.Value += string(r)
 				current = ReadComment
+			}
+		case ReadString:
+			readRune(AddRuneToString, DispatchToken)
+		case AddRuneToString:
+			switch {
+			case isStringEnd(r):
+				cursor -= lastRuneSize
+				current = DispatchToken
+			case isEscape(r):
+				column += 1
+				current = ReadEscape
+			default:
+				column += 1
+				token.Value += string(r)
+				current = ReadString
+			}
+		case ReadEscape:
+			readRune(AddEscapeToString, DispatchToken)
+		case AddEscapeToString:
+			column += 1
+			switch {
+			case r == '"':
+				token.Value += string(r)
+				current = ReadString
+			default:
+				current = Error
 			}
 		case DispatchNewLine:
 			column = 1

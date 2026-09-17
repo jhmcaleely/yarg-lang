@@ -214,6 +214,41 @@ var tokenTestCases = []TokenTestCase{
 			{Type: TokenEOF, Value: ""},
 		},
 	},
+	{
+		input: "\"string\"",
+		expected: []TokenInfo{
+			{Type: TokenIdentifier, Value: "string"},
+			{Type: TokenEOF, Value: ""},
+		},
+	},
+	{
+		input: "hello\n\"hello world\" yarg",
+		expected: []TokenInfo{
+			{Type: TokenIdentifier, Value: "hello"},
+			{Type: TokenNewLine, Value: "\n"},
+			{Type: TokenIdentifier, Value: "hello world"},
+			{Type: TokenIdentifier, Value: "yarg"},
+			{Type: TokenEOF, Value: ""},
+		},
+	},
+	{
+		input: "hello\nprint\"hello\nworld\"yarg",
+		expected: []TokenInfo{
+			{Type: TokenIdentifier, Value: "hello"},
+			{Type: TokenNewLine, Value: "\n"},
+			{Type: TokenIdentifier, Value: "print"},
+			{Type: TokenIdentifier, Value: "hello\nworld"},
+			{Type: TokenIdentifier, Value: "yarg"},
+			{Type: TokenEOF, Value: ""},
+		},
+	},
+	{
+		input: "\"string\\\"symbol\"",
+		expected: []TokenInfo{
+			{Type: TokenIdentifier, Value: "string\"symbol"},
+			{Type: TokenEOF, Value: ""},
+		},
+	},
 }
 
 func executeTestCase(t *testing.T, i int) {
