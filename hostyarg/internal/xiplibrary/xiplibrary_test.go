@@ -183,5 +183,5 @@ func TestTokeniseString(t *testing.T) {
 }
 
 func TestACase(t *testing.T) {
-	executeTestCase(t, 8)
+	executeTestCase(t, 5)
 }

@@ -573,8 +573,11 @@ type State int
 const (
 	ReadNext State = iota
 	ReadNewLine
+	ReadNewLine2
+	ReadRuneLine
 	ReadLine
 	DispatchNewLine
+	DispatchRune
 	DispatchToken
 	Error
 	LastLine
@@ -587,10 +590,16 @@ func (s State) String() string {
 		return "ReadNext"
 	case ReadNewLine:
 		return "ReadNewLine"
+	case ReadNewLine2:
+		return "ReadNewLine2"
+	case ReadRuneLine:
+		return "ReadRuneLine"
 	case ReadLine:
 		return "ReadLine"
 	case DispatchNewLine:
 		return "DispatchNewLine"
+	case DispatchRune:
+		return "DispatchRune"
 	case DispatchToken:
 		return "DispatchToken"
 	case Error:
@@ -604,12 +613,6 @@ func (s State) String() string {
 	}
 }
 
-type tokeniser struct {
-	scanner *bufio.Reader
-	current State
-	token   TokenInfo
-}
-
 func isNewLineComponent(r rune) bool {
 	switch r {
 	case '\u000A', '\u000D', '\u000C', '\u000B', '\u0085', '\u2028', '\u2029':
@@ -620,82 +623,86 @@ func isNewLineComponent(r rune) bool {
 }
 
 func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
-	sm := tokeniser{scanner: scanner, current: ReadNext}
+
+	cursor := 0
+	current := ReadNext
+	var r rune
+	var lastRuneSize int
+	var token TokenInfo
+
+	readRune := func(next State, eof State) {
+		rn, size, e := scanner.ReadRune()
+		r = rn
+		switch {
+		case e != nil && e == io.EOF:
+			current = eof
+		case e != nil:
+			current = Error
+		case r == '\ufffd' && size == 1:
+			current = Error
+		default:
+			cursor += size
+			lastRuneSize = size
+			current = next
+		}
+	}
+
 	tokens := []TokenInfo{}
-	cursor, line, column := 0, 1, 1
+	line, column := 1, 1
+
 	for {
-		switch sm.current {
+		switch current {
 		case ReadNext:
-			r, size, e := sm.scanner.ReadRune()
+			readRune(DispatchRune, End)
+		case DispatchRune:
+			column += 1
+			token.Value = string(r)
 			switch {
-			case e != nil && e == io.EOF:
-				sm.current = End
-			case e != nil:
-				sm.current = Error
-			case r == '\ufffd' && size == 1:
-				sm.current = Error
 			case isNewLineComponent(r):
-				cursor += size
-				column += size
-				sm.token.Type = TokenNewLine
-				sm.token.Value = string(r)
-				sm.current = ReadNewLine
+				token.Type = TokenNewLine
+				current = ReadNewLine
 			default:
-				cursor += size
-				column += size
-				sm.token.Type = TokenLine
-				sm.token.Value = string(r)
-				sm.current = ReadLine
+				token.Type = TokenLine
+				current = ReadRuneLine
 			}
 		case ReadNewLine:
-			r, size, e := sm.scanner.ReadRune()
+			readRune(ReadNewLine2, End)
+		case ReadNewLine2:
 			switch {
-			case e != nil && e == io.EOF:
-				sm.current = End
-			case e != nil:
-				sm.current = Error
-			case r == '\r' && sm.token.Value == string('\n'):
-				cursor += size
-				sm.token.Value += string(r)
-				sm.current = DispatchNewLine
-			case r == '\n' && sm.token.Value == string('\r'):
-				cursor += size
-				sm.token.Value += string(r)
-				sm.current = DispatchNewLine
+			case r == '\r' && token.Value == string('\n'),
+				r == '\n' && token.Value == string('\r'):
+				token.Value += string(r)
+				current = DispatchNewLine
 			default:
-				sm.scanner.UnreadRune()
-				sm.current = DispatchNewLine
+				scanner.UnreadRune()
+				cursor -= lastRuneSize
+				current = DispatchNewLine
 			}
+		case ReadRuneLine:
+			readRune(ReadLine, DispatchToken)
 		case ReadLine:
-			r, size, e := sm.scanner.ReadRune()
 			switch {
-			case e != nil && e == io.EOF:
-				sm.current = DispatchToken
-			case e != nil:
-				sm.current = Error
-			case r == '\ufffd' && size == 1:
-				sm.current = Error
 			case isNewLineComponent(r):
-				sm.scanner.UnreadRune()
-				sm.current = DispatchToken
+				scanner.UnreadRune()
+				cursor -= lastRuneSize
+				current = DispatchToken
 			default:
-				cursor += size
-				column += size
-				sm.token.Value += string(r)
-				sm.current = ReadLine
+				column += 1
+				token.Value += string(r)
+				current = ReadRuneLine
 			}
 		case DispatchNewLine:
 			column = 1
 			line += 1
-			sm.current = DispatchToken
+			current = DispatchToken
 		case DispatchToken:
-			tokens = append(tokens, sm.token)
-			sm.token = TokenInfo{}
-			sm.current = ReadNext
+			tokens = append(tokens, token)
+			token = TokenInfo{}
+			current = ReadNext
 		case Error:
-			sm.token.Type = TokenError
-			sm.token.Value = fmt.Sprintf("cursor: %d, line: %d, column: %d", cursor, line, column)
-			tokens = append(tokens, sm.token)
+			token.Type = TokenError
+			token.Value = fmt.Sprintf("cursor: %d, line: %d, column: %d", cursor, line, column)
+			tokens = append(tokens, token)
 			return tokens, nil
 		case End:
 			tokens = append(tokens, TokenInfo{Type: TokenEOF, Value: ""})
