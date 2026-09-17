@@ -77,7 +77,7 @@ var tokenTestCases = []TokenTestCase{
 	{
 		input: string([]byte{0xDD, 0xdd}),
 		expected: []TokenInfo{
-			{Type: TokenError, Value: ""},
+			{Type: TokenError, Value: "cursor: 0, line: 1, column: 1"},
 		},
 	},
 	{
@@ -137,7 +137,7 @@ var tokenTestCases = []TokenTestCase{
 		},
 	},
 	{
-		input: "\u000A\u000C\u000D\u000B\u0085\u2028\u2029",
+		input: "\u000A\u000C\u000D\u000B\u0085\u2028\u2029test",
 		expected: []TokenInfo{
 			{Type: TokenNewLine, Value: "\n"},
 			{Type: TokenNewLine, Value: "\u000C"},
@@ -146,6 +146,7 @@ var tokenTestCases = []TokenTestCase{
 			{Type: TokenNewLine, Value: "\u0085"},
 			{Type: TokenNewLine, Value: "\u2028"},
 			{Type: TokenNewLine, Value: "\u2029"},
+			{Type: TokenLine, Value: "test"},
 			{Type: TokenEOF, Value: ""},
 		},
 	},
@@ -154,24 +155,33 @@ var tokenTestCases = []TokenTestCase{
 		expected: []TokenInfo{
 			{Type: TokenLine, Value: "hello"},
 			{Type: TokenNewLine, Value: "\r\n"},
-			{Type: TokenError, Value: ""},
+			{Type: TokenError, Value: "cursor: 12, line: 2, column: 6"},
 		},
 	},
 }
 
-func TestTokeniseString(t *testing.T) {
-	for i, testCase := range tokenTestCases {
-		tokens, err := tokeniseString(testCase.input)
-		if err != nil {
-			t.Errorf("test case %d: tokeniseString failed: %v", i, err)
-		}
-		if len(tokens) != len(testCase.expected) {
-			t.Errorf("test case %d: expected %d tokens, got %d", i, len(testCase.expected), len(tokens))
-		}
-		for j, token := range tokens {
-			if token != testCase.expected[j] {
-				t.Errorf("test case %d: expected token %v at index %d, got %v", i, testCase.expected[j], j, token)
-			}
+func executeTestCase(t *testing.T, i int) {
+	tokens, err := tokeniseString(tokenTestCases[i].input)
+	if err != nil {
+		t.Errorf("test case %d: tokeniseString failed: %v", i, err)
+	}
+	if len(tokens) != len(tokenTestCases[i].expected) {
+		t.Errorf("test case %d: expected %d tokens, got %d", i, len(tokenTestCases[i].expected), len(tokens))
+	}
+	for j, token := range tokens {
+		if token != tokenTestCases[i].expected[j] {
+			t.Errorf("test case %d: expected token %v at index %d, got %v", i, tokenTestCases[i].expected[j], j, token)
 		}
 	}
+
+}
+
+func TestTokeniseString(t *testing.T) {
+	for i := range tokenTestCases {
+		executeTestCase(t, i)
+	}
+}
+
+func TestACase(t *testing.T) {
+	executeTestCase(t, 8)
 }

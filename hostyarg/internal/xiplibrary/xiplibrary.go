@@ -564,41 +564,6 @@ type TokenInfo struct {
 	Value string
 }
 
-func commentToken(line string) TokenInfo {
-	return TokenInfo{Type: TokenComment, Value: line}
-}
-
-func stringToken(line string) TokenInfo {
-	for _, r := range line {
-		if r == '"' {
-			return TokenInfo{Type: TokenTextFile, Value: line}
-		}
-	}
-	return TokenInfo{Type: TokenError, Value: line}
-}
-
-func readNewLineToken(input *bufio.Reader) TokenInfo {
-	r, _, e := input.ReadRune()
-	if e != nil {
-		return TokenInfo{Type: TokenError, Value: ""}
-	}
-	r2, _, e := input.ReadRune()
-	if e != nil {
-		if e == io.EOF {
-			return TokenInfo{Type: TokenEOF, Value: ""}
-		}
-		return TokenInfo{Type: TokenError, Value: ""}
-	}
-	if r == '\u000D' && r2 == '\u000A' {
-		return TokenInfo{Type: TokenNewLine, Value: string(r) + string(r2)}
-	} else if r == '\u000A' && r2 == '\u000D' {
-		return TokenInfo{Type: TokenNewLine, Value: string(r) + string(r2)}
-	} else {
-		input.UnreadRune() // put back the second rune if it's not part of a newline sequence
-		return TokenInfo{Type: TokenNewLine, Value: string(r)}
-	}
-}
-
 func (T TokenInfo) String() string {
 	return fmt.Sprintf("Type: %v, Value: %s", T.Type, strconv.Quote(T.Value))
 }
@@ -609,6 +574,7 @@ const (
 	ReadNext State = iota
 	ReadNewLine
 	ReadLine
+	DispatchNewLine
 	DispatchToken
 	Error
 	LastLine
@@ -623,6 +589,8 @@ func (s State) String() string {
 		return "ReadNewLine"
 	case ReadLine:
 		return "ReadLine"
+	case DispatchNewLine:
+		return "DispatchNewLine"
 	case DispatchToken:
 		return "DispatchToken"
 	case Error:
@@ -642,9 +610,19 @@ type tokeniser struct {
 	token   TokenInfo
 }
 
+func isNewLineComponent(r rune) bool {
+	switch r {
+	case '\u000A', '\u000D', '\u000C', '\u000B', '\u0085', '\u2028', '\u2029':
+		return true
+	default:
+		return false
+	}
+}
+
 func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 	sm := tokeniser{scanner: scanner, current: ReadNext}
 	tokens := []TokenInfo{}
+	cursor, line, column := 0, 1, 1
 	for {
 		switch sm.current {
 		case ReadNext:
@@ -656,35 +634,37 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 				sm.current = Error
 			case r == '\ufffd' && size == 1:
 				sm.current = Error
-			case r == '\u000A', r == '\u000D':
+			case isNewLineComponent(r):
+				cursor += size
+				column += size
 				sm.token.Type = TokenNewLine
 				sm.token.Value = string(r)
 				sm.current = ReadNewLine
-			case r == '\u000C', r == '\u000B', r == '\u0085', r == '\u2028', r == '\u2029':
-				sm.token.Type = TokenNewLine
-				sm.token.Value = string(r)
-				sm.current = DispatchToken
 			default:
+				cursor += size
+				column += size
 				sm.token.Type = TokenLine
 				sm.token.Value = string(r)
 				sm.current = ReadLine
 			}
 		case ReadNewLine:
-			r, _, e := sm.scanner.ReadRune()
+			r, size, e := sm.scanner.ReadRune()
 			switch {
 			case e != nil && e == io.EOF:
 				sm.current = End
 			case e != nil:
 				sm.current = Error
 			case r == '\r' && sm.token.Value == string('\n'):
+				cursor += size
 				sm.token.Value += string(r)
-				sm.current = DispatchToken
+				sm.current = DispatchNewLine
 			case r == '\n' && sm.token.Value == string('\r'):
+				cursor += size
 				sm.token.Value += string(r)
-				sm.current = DispatchToken
+				sm.current = DispatchNewLine
 			default:
 				sm.scanner.UnreadRune()
-				sm.current = DispatchToken
+				sm.current = DispatchNewLine
 			}
 		case ReadLine:
 			r, size, e := sm.scanner.ReadRune()
@@ -695,20 +675,26 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 				sm.current = Error
 			case r == '\ufffd' && size == 1:
 				sm.current = Error
-			case r == '\u000A', r == '\u000D', r == '\u000C', r == '\u000B', r == '\u0085', r == '\u2028', r == '\u2029':
+			case isNewLineComponent(r):
 				sm.scanner.UnreadRune()
 				sm.current = DispatchToken
 			default:
+				cursor += size
+				column += size
 				sm.token.Value += string(r)
 				sm.current = ReadLine
 			}
+		case DispatchNewLine:
+			column = 1
+			line += 1
+			sm.current = DispatchToken
 		case DispatchToken:
 			tokens = append(tokens, sm.token)
 			sm.token = TokenInfo{}
 			sm.current = ReadNext
 		case Error:
 			sm.token.Type = TokenError
-			sm.token.Value = ""
+			sm.token.Value = fmt.Sprintf("cursor: %d, line: %d, column: %d", cursor, line, column)
 			tokens = append(tokens, sm.token)
 			return tokens, nil
 		case End:
