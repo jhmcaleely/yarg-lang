@@ -864,7 +864,6 @@ func tokeniseString(input string) ([]TokenInfo, error) {
 
 type XIPLibrary struct {
 	CommandPath  string
-	TargetPath   string
 	indexedFiles []Command
 	namedFiles   []Command
 }
@@ -1064,9 +1063,9 @@ func parse(tokens []TokenInfo) ([]Command, error) {
 	}
 }
 
-func writeLibrary(lib *XIPLibrary) error {
-	fmt.Printf("Writing library to %s\n", lib.TargetPath)
-	libraryimage, err := os.Create(lib.TargetPath)
+func writeLibrary(lib *XIPLibrary, TargetPath string) error {
+	fmt.Printf("Writing library to %s\n", TargetPath)
+	libraryimage, err := os.Create(TargetPath)
 	if err != nil {
 		return err
 	}
@@ -1175,14 +1174,14 @@ func CmdBuildWithContents(libContents string, outputFile string) (e error) {
 		return e
 	}
 
-	lib := &XIPLibrary{TargetPath: outputFile, CommandPath: libContents}
+	lib := &XIPLibrary{CommandPath: libContents}
 
 	for _, command := range commands {
 		command.Execute(lib)
 		fmt.Printf("%s\n", command)
 	}
 
-	err := writeLibrary(lib)
+	err := writeLibrary(lib, outputFile)
 	if err != nil {
 		return err
 	}
