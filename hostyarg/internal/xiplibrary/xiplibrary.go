@@ -860,7 +860,9 @@ func tokeniseString(input string) ([]TokenInfo, error) {
 }
 
 type XIPLibrary struct {
-	TargetPath string
+	TargetPath   string
+	indexedFiles []Command
+	namedFiles   []Command
 }
 
 type Command interface {
@@ -904,6 +906,8 @@ func (c *FileCommand) Execute(lib *XIPLibrary) error {
 	c.Length = info.Size()
 	c.Alignment = DefaultAlignment(c.SourcePath)
 
+	lib.namedFiles = append(lib.namedFiles, c)
+
 	return nil
 }
 
@@ -934,6 +938,8 @@ func (c *IndexFileCommand) Execute(lib *XIPLibrary) error {
 		return err
 	}
 	c.Length = info.Size()
+
+	lib.indexedFiles = append(lib.indexedFiles, c)
 	return nil
 }
 
@@ -1054,6 +1060,11 @@ func parse(tokens []TokenInfo) ([]Command, error) {
 	}
 }
 
+func writeLibrary(lib *XIPLibrary) error {
+	fmt.Printf("Writing library to %s\n", lib.TargetPath)
+	return nil
+}
+
 func CmdBuildWithContents(libContents string, outputFile string, startupFile string) (e error) {
 	stat, e := os.Stat(libContents)
 	if e != nil {
@@ -1082,6 +1093,11 @@ func CmdBuildWithContents(libContents string, outputFile string, startupFile str
 	for _, command := range commands {
 		command.Execute(lib)
 		fmt.Printf("%s\n", command)
+	}
+
+	err := writeLibrary(lib)
+	if err != nil {
+		return err
 	}
 	return nil
 }
