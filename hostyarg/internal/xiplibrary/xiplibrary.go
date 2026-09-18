@@ -148,7 +148,7 @@ func writeLibraryNode(w LibraryWriter, node []byte, alignment uint) (err error) 
 	paddedStartLen := uint32(paddedStartLen64)
 	dataLength := uint32(len(node))
 	_, err = w.Write(node)
-	err = writeLibraryImageHeader(w, paddedStartLen+dataLength, 0)
+	err = writeLibraryImageHeader(w, paddedStartLen+dataLength, 3)
 	return err
 }
 
@@ -256,7 +256,7 @@ func CmdBuildLib(libDir, outputFile, startupFile string) error {
 		nodeCursor += 2
 	}
 
-	err = writeLibraryImageHeader(libraryimage, uint32(binary.Size(LibraryImageHeader{})), 2)
+	err = writeLibraryImageHeader(libraryimage, uint32(binary.Size(LibraryImageHeader{})), 3)
 	if err != nil {
 		return err
 	}
@@ -468,6 +468,7 @@ type FsInfo struct {
 	NodeCount        uint16
 	UsefulLength     uint32
 	DirectoryEntries uint16
+	IndexedEntries   uint16
 }
 
 func readFsInfo(data []byte) (FsInfo, error) {
@@ -504,11 +505,12 @@ func readFsInfo(data []byte) (FsInfo, error) {
 
 	info.UsefulLength = uint32(usefulLength)
 
-	nodeTwo, e := nodeData(data, 2)
+	nodeDir, e := nodeData(data, header.DirectoryNode)
 	if e != nil {
 		return FsInfo{}, e
 	}
-	info.DirectoryEntries = uint16(len(nodeTwo) / 4)
+	info.DirectoryEntries = uint16(len(nodeDir) / 4)
+	info.IndexedEntries = uint16(header.DirectoryNode - 1)
 
 	return info, nil
 }
@@ -530,15 +532,15 @@ func CmdFsInfo(fsFilename string) (e error) {
 	fmt.Printf("Node Data: %d bytes\n", info.UsefulLength)
 	fmt.Printf("Library Overhead: %d bytes\n", int(info.Size)-int(info.UsefulLength))
 	fmt.Printf("Directory Entries: %d\n", info.DirectoryEntries)
+	fmt.Printf("Indexed Entries: %d\n", info.IndexedEntries)
 
-	nodeOne, e := nodeData(data, 1)
-	if e != nil {
-		return e
-	}
-	if len(nodeOne) > 0 {
-		fmt.Printf("Node 1 (Startup File) Size: %d bytes\n", len(nodeOne))
-	} else {
-		fmt.Printf("Node 1 (Startup File) not present\n")
+	for i := uint16(0); i < info.IndexedEntries; i++ {
+		node := i + 1
+		data, e := nodeData(data, node)
+		if e != nil {
+			return e
+		}
+		fmt.Printf("Indexed Node %d Size: %d bytes\n", node, len(data))
 	}
 
 	return nil
@@ -861,6 +863,7 @@ func tokeniseString(input string) ([]TokenInfo, error) {
 }
 
 type XIPLibrary struct {
+	CommandPath  string
 	TargetPath   string
 	indexedFiles []Command
 	namedFiles   []Command
@@ -882,7 +885,7 @@ func (c *FileCommand) String() string {
 }
 
 func CanonicalSource(lib *XIPLibrary, sourcePath string) string {
-	dir := filepath.Dir(lib.TargetPath)
+	dir := filepath.Dir(lib.CommandPath)
 	target := filepath.Join(dir, sourcePath)
 	return filepath.Clean(target)
 }
@@ -1087,6 +1090,10 @@ func writeLibrary(lib *XIPLibrary) error {
 			Length:    uint32(c.Length),
 			Alignment: uint32(c.Alignment),
 		})
+		lengths = append(lengths, LibraryNodeEntry{
+			Length:    uint32(len(c.TargetPath) + 1),
+			Alignment: 1,
+		})
 		directoryEntries = append(directoryEntries, LibraryDirEntry{
 			FileNode: nodeCursor,
 			NameNode: nodeCursor + 1,
@@ -1145,7 +1152,7 @@ func writeLibrary(lib *XIPLibrary) error {
 	return nil
 }
 
-func CmdBuildWithContents(libContents string, outputFile string, startupFile string) (e error) {
+func CmdBuildWithContents(libContents string, outputFile string) (e error) {
 	stat, e := os.Stat(libContents)
 	if e != nil {
 		return e
@@ -1168,7 +1175,7 @@ func CmdBuildWithContents(libContents string, outputFile string, startupFile str
 		return e
 	}
 
-	lib := &XIPLibrary{TargetPath: outputFile}
+	lib := &XIPLibrary{TargetPath: outputFile, CommandPath: libContents}
 
 	for _, command := range commands {
 		command.Execute(lib)

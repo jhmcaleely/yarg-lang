@@ -60,9 +60,7 @@ func TestHeaderPacking(t *testing.T) {
 func TestCmdBuildWithContents(t *testing.T) {
 	libContents := "../../testdata/test.yarglib"
 	outputFile := "../../testdata/test.ylib"
-	startupFile := "teststartupfile"
-
-	err := CmdBuildWithContents(libContents, outputFile, startupFile)
+	err := CmdBuildWithContents(libContents, outputFile)
 	if err != nil {
 		t.Fatalf("CmdBuildWithContents failed: %v", err)
 	}
