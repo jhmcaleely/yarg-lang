@@ -704,7 +704,9 @@ func isEscape(r rune) bool {
 
 // a tokeniser for utf-8 line-oriented command scripts.
 // supports "strings" (with escape sequences) and #comments
-func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
+func tokenise(rd io.Reader) []TokenInfo {
+
+	scanner := bufio.NewReader(rd)
 
 	cursor := 0
 	current := ReadNext
@@ -833,10 +835,10 @@ func tokenise(scanner *bufio.Reader) ([]TokenInfo, error) {
 			token.Type = TokenError
 			token.Value = fmt.Sprintf("cursor: %d, line: %d, column: %d", cursor, line, column)
 			tokens = append(tokens, token)
-			return tokens, nil
+			return tokens
 		case End:
 			tokens = append(tokens, TokenInfo{Type: TokenEOF, Value: ""})
-			return tokens, nil
+			return tokens
 		}
 	}
 }
@@ -848,14 +850,171 @@ func tokeniseFile(filePath string) ([]TokenInfo, error) {
 	}
 	defer file.Close()
 
-	scanner := bufio.NewReader(file)
-
-	return tokenise(scanner)
+	return tokenise(file), nil
 }
 
 func tokeniseString(input string) ([]TokenInfo, error) {
-	scanner := bufio.NewReader(strings.NewReader(input))
-	return tokenise(scanner)
+	reader := strings.NewReader(input)
+
+	return tokenise(reader), nil
+}
+
+type Command interface {
+	Execute() error
+}
+
+type FileCommand struct {
+	SourcePath string
+	TargetPath string
+}
+
+func (c *FileCommand) String() string {
+	return fmt.Sprintf("file \"%s\" \"%s\"", c.SourcePath, c.TargetPath)
+}
+
+func (c *FileCommand) Execute() error {
+	// Implement the file command execution logic here
+	return nil
+}
+
+type TextFileCommand struct {
+	FileCommand
+}
+
+func (c *TextFileCommand) String() string {
+	return fmt.Sprintf("txtfile \"%s\" \"%s\"", c.SourcePath, c.TargetPath)
+}
+
+func (c *TextFileCommand) Execute() error {
+	// Implement the textfile command execution logic here
+	return nil
+}
+
+type IndexFileCommand struct {
+	SourcePath string
+	Index      uint16
+}
+
+func (c *IndexFileCommand) Execute() error {
+	// Implement the indexfile command execution logic here
+	return nil
+}
+
+func (c *IndexFileCommand) String() string {
+	return fmt.Sprintf("indexfile \"%s\" %d", c.SourcePath, c.Index)
+}
+
+type ErrorCommand struct {
+	Message string
+}
+
+func (c *ErrorCommand) Execute() error {
+	return fmt.Errorf("%s", c.Message)
+}
+
+func (c *ErrorCommand) String() string {
+	return fmt.Sprintf("error \"%s\"", c.Message)
+}
+
+func parseACommand(commandTokens []TokenInfo) Command {
+	switch commandTokens[0].Type {
+	case TokenIdentifier:
+		switch commandTokens[0].Value {
+		case "file", "txtfile":
+			if len(commandTokens) < 2 {
+				// Handle error: not enough arguments for file command
+				return &ErrorCommand{Message: "not enough arguments for file command"}
+			}
+			fileSource := commandTokens[1].Value
+			targetPath := ""
+			if len(commandTokens) == 3 {
+				targetPath = commandTokens[2].Value
+			}
+			fmt.Printf("file command: source=%s, target=%s\n", fileSource, targetPath)
+			if commandTokens[0].Value == "txtfile" {
+				return &TextFileCommand{FileCommand: FileCommand{SourcePath: fileSource, TargetPath: targetPath}}
+			}
+			return &FileCommand{SourcePath: fileSource, TargetPath: targetPath}
+		case "bootfile":
+			if len(commandTokens) < 2 {
+				// Handle error: not enough arguments for bootfile command
+				return &ErrorCommand{Message: "not enough arguments for bootfile command"}
+			}
+			bootSource := commandTokens[1].Value
+			fmt.Printf("bootfile command: source=%s\n", bootSource)
+			return &IndexFileCommand{SourcePath: bootSource, Index: 1}
+		case "indexfile":
+			if len(commandTokens) < 3 {
+				// Handle error: not enough arguments for indexfile command
+				return &ErrorCommand{Message: "not enough arguments for indexfile command"}
+			}
+			indexSource := commandTokens[1].Value
+			indexValue, err := strconv.Atoi(commandTokens[2].Value)
+			if err != nil {
+				return &ErrorCommand{Message: "invalid index value for indexfile command"}
+			}
+			if indexValue < 0 || indexValue > 65535 {
+				return &ErrorCommand{Message: "index value out of range for indexfile command"}
+			}
+			fmt.Printf("indexfile command: source=%s, index=%d\n", indexSource, indexValue)
+			return &IndexFileCommand{SourcePath: indexSource, Index: uint16(indexValue)}
+		default:
+			return &ErrorCommand{Message: fmt.Sprintf("unknown command: %s", commandTokens[0].Value)}
+		}
+	}
+	return &ErrorCommand{Message: "invalid command"}
+}
+
+func parseCommand(token TokenInfo, tokens []TokenInfo) (Command, int) {
+	consumed := 0
+	commandTokens := []TokenInfo{}
+
+	for {
+		switch token.Type {
+		case TokenComment:
+			// skip
+		case TokenNewLine:
+			if len(commandTokens) > 0 {
+				return parseACommand(commandTokens), consumed
+			}
+		case TokenEOF:
+			if len(commandTokens) > 0 {
+				return parseACommand(commandTokens), consumed - 1
+			}
+		default:
+			commandTokens = append(commandTokens, token)
+		}
+		consumed++
+		if len(tokens) == 0 {
+			break
+		}
+		token = tokens[0]
+		tokens = tokens[1:]
+	}
+	return &ErrorCommand{Message: "unexpected end of input"}, consumed
+}
+
+func parse(tokens []TokenInfo) ([]Command, error) {
+
+	commands := []Command{}
+
+	for {
+		token := tokens[0]
+		tokens = tokens[1:]
+		switch {
+		case token.Type == TokenComment:
+			// Skip comments
+			continue
+		case token.Type == TokenEOF:
+			return commands, nil
+		case token.Type == TokenIdentifier:
+			command, consumed := parseCommand(token, tokens)
+			if command != nil {
+				commands = append(commands, command)
+			}
+			tokens = tokens[consumed:]
+		}
+	}
 }
 
 func CmdBuildWithContents(libContents string, outputFile string, startupFile string) (e error) {
@@ -876,5 +1035,13 @@ func CmdBuildWithContents(libContents string, outputFile string, startupFile str
 		fmt.Println(token)
 	}
 
+	commands, e := parse(lines)
+	if e != nil {
+		return e
+	}
+
+	for _, command := range commands {
+		fmt.Printf("%s\n", command)
+	}
 	return nil
 }
