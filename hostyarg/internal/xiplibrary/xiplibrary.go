@@ -11,6 +11,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -1062,6 +1063,85 @@ func parse(tokens []TokenInfo) ([]Command, error) {
 
 func writeLibrary(lib *XIPLibrary) error {
 	fmt.Printf("Writing library to %s\n", lib.TargetPath)
+	libraryimage, err := os.Create(lib.TargetPath)
+	if err != nil {
+		return err
+	}
+	defer libraryimage.Close()
+
+	lengths := make([]LibraryNodeEntry, 0)
+	directoryEntries := make([]LibraryDirEntry, 0)
+	nodeCursor := uint16(1)
+	for _, indexedFile := range lib.indexedFiles {
+		c := indexedFile.(*IndexFileCommand)
+		lengths = append(lengths, LibraryNodeEntry{Length: uint32(c.Length), Alignment: uint32(c.Alignment)})
+		nodeCursor++
+	}
+	lengths = append(lengths,
+		LibraryNodeEntry{Length: uint32(len(lib.namedFiles)) *
+			uint32(binary.Size(LibraryDirEntry{})), Alignment: 2})
+	nodeCursor++
+	for _, namedFile := range lib.namedFiles {
+		c := namedFile.(*FileCommand)
+		lengths = append(lengths, LibraryNodeEntry{
+			Length:    uint32(c.Length),
+			Alignment: uint32(c.Alignment),
+		})
+		directoryEntries = append(directoryEntries, LibraryDirEntry{
+			FileNode: nodeCursor,
+			NameNode: nodeCursor + 1,
+		})
+		nodeCursor += 2
+	}
+
+	err = writeLibraryImageHeader(libraryimage, uint32(binary.Size(LibraryImageHeader{})), 3)
+	if err != nil {
+		return err
+	}
+	err = writeLibraryIndex(libraryimage, lengths)
+	if err != nil {
+		return err
+	}
+	sortedIndexedFiles := make([]Command, len(lib.indexedFiles))
+	copy(sortedIndexedFiles, lib.indexedFiles)
+	sort.Slice(sortedIndexedFiles, func(i, j int) bool {
+		iCommand := sortedIndexedFiles[i].(*IndexFileCommand)
+		jCommand := sortedIndexedFiles[j].(*IndexFileCommand)
+		return iCommand.Index < jCommand.Index
+	})
+	for _, indexedFile := range sortedIndexedFiles {
+		c := indexedFile.(*IndexFileCommand)
+		data, err := os.ReadFile(c.SourcePath)
+		if err != nil {
+			return err
+		}
+		err = writeLibraryNode(libraryimage, data, uint(c.Alignment))
+		if err != nil {
+			return err
+		}
+	}
+
+	err = writeDirectory(libraryimage, directoryEntries)
+	if err != nil {
+		return err
+	}
+	for _, file := range lib.namedFiles {
+		c := file.(*FileCommand)
+		data, err := os.ReadFile(c.SourcePath)
+		if err != nil {
+			return err
+		}
+
+		err = writeLibraryNode(libraryimage, data, uint(c.Alignment))
+		if err != nil {
+			return err
+		}
+		err = writeStringNode(libraryimage, c.TargetPath, 1)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
