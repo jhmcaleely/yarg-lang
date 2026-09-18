@@ -64,6 +64,7 @@ func TestCmdBuildWithContents(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CmdBuildWithContents failed: %v", err)
 	}
+	os.Remove(outputFile)
 }
 
 type TokenTestCase struct {
