@@ -859,21 +859,51 @@ func tokeniseString(input string) ([]TokenInfo, error) {
 	return tokenise(reader), nil
 }
 
+type XIPLibrary struct {
+	TargetPath string
+}
+
 type Command interface {
-	Execute() error
+	Execute(*XIPLibrary) error
 }
 
 type FileCommand struct {
 	SourcePath string
 	TargetPath string
+	Length     int64
+	Alignment  int
 }
 
 func (c *FileCommand) String() string {
-	return fmt.Sprintf("file \"%s\" \"%s\"", c.SourcePath, c.TargetPath)
+	return fmt.Sprintf("file \"%s\" \"%s\" (%d|%d)", c.SourcePath, c.TargetPath, c.Length, c.Alignment)
 }
 
-func (c *FileCommand) Execute() error {
-	// Implement the file command execution logic here
+func CanonicalSource(lib *XIPLibrary, sourcePath string) string {
+	dir := filepath.Dir(lib.TargetPath)
+	target := filepath.Join(dir, sourcePath)
+	return filepath.Clean(target)
+}
+
+func DefaultAlignment(sourcePath string) int {
+	if filepath.Ext(sourcePath) == ".yb" {
+		return 8
+	}
+	return 1
+}
+
+func (c *FileCommand) Execute(lib *XIPLibrary) error {
+	c.SourcePath = CanonicalSource(lib, c.SourcePath)
+	if c.TargetPath == "" {
+		c.TargetPath = filepath.Base(c.SourcePath)
+	}
+
+	info, err := os.Stat(c.SourcePath)
+	if err != nil {
+		return err
+	}
+	c.Length = info.Size()
+	c.Alignment = DefaultAlignment(c.SourcePath)
+
 	return nil
 }
 
@@ -882,33 +912,40 @@ type TextFileCommand struct {
 }
 
 func (c *TextFileCommand) String() string {
-	return fmt.Sprintf("txtfile \"%s\" \"%s\"", c.SourcePath, c.TargetPath)
+	return fmt.Sprintf("txtfile \"%s\" -> \"%s\" (%d|%d)", c.SourcePath, c.TargetPath, c.Length, c.Alignment)
 }
 
-func (c *TextFileCommand) Execute() error {
-	// Implement the textfile command execution logic here
-	return nil
+func (c *TextFileCommand) Execute(lib *XIPLibrary) error {
+	return c.FileCommand.Execute(lib)
 }
 
 type IndexFileCommand struct {
 	SourcePath string
+	Alignment  int
+	Length     int64
 	Index      uint16
 }
 
-func (c *IndexFileCommand) Execute() error {
-	// Implement the indexfile command execution logic here
+func (c *IndexFileCommand) Execute(lib *XIPLibrary) error {
+	c.SourcePath = CanonicalSource(lib, c.SourcePath)
+	c.Alignment = DefaultAlignment(c.SourcePath)
+	info, err := os.Stat(c.SourcePath)
+	if err != nil {
+		return err
+	}
+	c.Length = info.Size()
 	return nil
 }
 
 func (c *IndexFileCommand) String() string {
-	return fmt.Sprintf("indexfile \"%s\" %d", c.SourcePath, c.Index)
+	return fmt.Sprintf("indexfile \"%s\" %d (%d|%d)", c.SourcePath, c.Index, c.Length, c.Alignment)
 }
 
 type ErrorCommand struct {
 	Message string
 }
 
-func (c *ErrorCommand) Execute() error {
+func (c *ErrorCommand) Execute(lib *XIPLibrary) error {
 	return fmt.Errorf("%s", c.Message)
 }
 
@@ -1040,7 +1077,10 @@ func CmdBuildWithContents(libContents string, outputFile string, startupFile str
 		return e
 	}
 
+	lib := &XIPLibrary{TargetPath: outputFile}
+
 	for _, command := range commands {
+		command.Execute(lib)
 		fmt.Printf("%s\n", command)
 	}
 	return nil

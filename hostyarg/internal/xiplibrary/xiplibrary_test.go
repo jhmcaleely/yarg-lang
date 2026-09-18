@@ -59,7 +59,7 @@ func TestHeaderPacking(t *testing.T) {
 
 func TestCmdBuildWithContents(t *testing.T) {
 	libContents := "../../testdata/test.yarglib"
-	outputFile := "testoutputfile"
+	outputFile := "../../testdata/test.ylib"
 	startupFile := "teststartupfile"
 
 	err := CmdBuildWithContents(libContents, outputFile, startupFile)
