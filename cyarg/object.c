@@ -473,6 +473,7 @@ static ObjString* arrayToString(ObjPackedUniformArray* array) {
     for (int i = 0; i < arrayType->cardinality; i++) {
         PackedValue element = arrayElement(array->store, i);
         Value unpackedValue = unpackValue(element);
+        tempRootPush(unpackedValue);
         ObjString* candidate = valueToString(unpackedValue);
         snprintf(buffer + cursor, sizeof(buffer) - cursor, "%s", candidate->chars);
         cursor = strlen(buffer);
@@ -480,6 +481,7 @@ static ObjString* arrayToString(ObjPackedUniformArray* array) {
             snprintf(buffer + cursor, sizeof(buffer) - cursor, ", ");
             cursor = strlen(buffer);
         }
+        tempRootPop();
     }
     snprintf(buffer + cursor, sizeof(buffer) - cursor, "]");
     return copyString(buffer, (int)strlen(buffer));
