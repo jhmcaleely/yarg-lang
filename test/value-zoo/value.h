@@ -12,6 +12,11 @@ typedef struct {
     AnyValue as;
 } Value;
 
+typedef struct ObjValue {
+    Obj   core;
+    Value value;
+} ObjValue;
+
 #if defined(__LP64__) || defined(_WIN64) || defined(__x86_64__) || defined(__aarch64__)
 #define IS_64BIT 1
 #define IS_32BIT 0

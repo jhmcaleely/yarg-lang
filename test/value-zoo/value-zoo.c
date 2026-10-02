@@ -89,17 +89,21 @@ void sprintValue(Value v, char* buffer, size_t bufferSize) {
     }
 }
 
-ObjYarg* newYargObject(const ObjYargType* type) {
-    if (is_value_type(type->yt) && is_placeable_yargtype(type)) {
+ObjYarg* builtin_new(const ObjYargType* type) {
+    if (type == NULL) {
+        ObjValue* obj = ALLOCATE_OBJ(ObjValue, OBJ_ANYVALUE);
+        ObjYargPointer* pointer = newYargPointerToObjVal(obj);
+        return (ObjYarg*)pointer;
+    } else if (is_value_type(type->yt) && is_placeable_yargtype(type)) {
         void* memory = malloc(storage_size_of_yargtype(type));
         ObjYargPointer* pointer = newYargPointerToPlaceable(type, memory);
         return (ObjYarg*)pointer;
     } else if (is_value_type(type->yt)) {
-        ObjYarg* obj = allocateYargObject(type);
+        ObjYarg* obj = (ObjYarg*) allocateYargObject(type);
         ObjYargPointer* pointer = newYargPointerToObj(obj);
         return (ObjYarg*)pointer;
     } else {
-        return allocateYargObject(type);
+        return (ObjYarg*)allocateYargObject(type);
     }
 }
 
@@ -175,7 +179,7 @@ int main(void) {
     sprintValue(z, buffer, sizeof(buffer));
     printf("%s\n", buffer);
 
-    Value firstElement = YARG_OBJ_VAL(arrayElement(array, 0));
+    Value firstElement = YARG_OBJ_VAL(arrayElement(array, 3));
     sprintValue(firstElement, buffer, sizeof(buffer));
     printf("%s\n", buffer);
 
@@ -189,12 +193,12 @@ int main(void) {
         printf("z is an array\n");
     }
 
-    ObjYarg* something = newYargObject(&yargTypes.boolean);
+    ObjYarg* something = builtin_new(&yargTypes.boolean);
     Value w = YARG_OBJ_VAL(something);
     sprintValue(w, buffer, sizeof(buffer));
     printf("%s\n", buffer);
 
-    ObjYarg* another = newYargObject(&yargTypes.int8);
+    ObjYarg* another = builtin_new(&yargTypes.int8);
     Value u = YARG_OBJ_VAL(another);
     sprintValue(u, buffer, sizeof(buffer));
     printf("%s\n", buffer);

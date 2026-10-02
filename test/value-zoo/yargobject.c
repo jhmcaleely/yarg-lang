@@ -7,22 +7,32 @@
 #include "yarg-runtime.h"
 
 
-ObjYarg* allocateYargObject(const ObjYargType* type) {
+Obj* allocateYargObject(const ObjYargType* type) {
     if (type->yt == TypeArray) {
         ObjYargTypeArray* array_type = (ObjYargTypeArray*)type;
 
         ObjArray* array = ALLOCATE_OBJ(ObjArray, OBJ_PACKEDUNIFORMARRAY);
         array->yarg.type = type;
+        if (array_type->element_type == NULL) {
+            size_t element_size = sizeof(Value);
+            array->elements = malloc(element_size * array_type->cardinality);
+            memset(array->elements, 0, element_size * array_type->cardinality);            
+        }
+        if (is_placeable_yargtype(array_type->element_type)) {
+            size_t element_size = storage_size_of_type(array_type->element_type->yt);
 
-        size_t element_size = storage_size_of_type(array_type->element_type->yt);
-
-        array->elements = malloc(element_size * array_type->cardinality);
-        memset(array->elements, 0, element_size * array_type->cardinality);
-        return (ObjYarg*)array;
+            array->elements = malloc(element_size * array_type->cardinality);
+            memset(array->elements, 0, element_size * array_type->cardinality);
+        } else {
+            size_t element_size = sizeof(AnyValue);
+            array->elements = malloc(element_size * array_type->cardinality);
+            memset(array->elements, 0, element_size * array_type->cardinality);
+        }
+        return (Obj*)array;
     } else if (type->yt == TypeBool) {
-        ObjYargValue* boolean_value = ALLOCATE_OBJ(ObjYargValue, OBJ_ANYVALUE);
-        boolean_value->yarg.type = type;
-        return (ObjYarg*)boolean_value;
+        ObjValue* boolean_value = ALLOCATE_OBJ(ObjValue, OBJ_ANYVALUE);
+        boolean_value->value = BOOL_VAL(false);
+        return (Obj*)boolean_value;
     }
     panic();
     return NULL;
@@ -35,7 +45,18 @@ ObjYargPointer* newYargPointerToObj(ObjYarg* target) {
     pointer_type->target_type = target->type;
     pointer->yarg.type = (ObjYargType*)pointer_type;
     pointer->target = target;
-    pointer->owner = target;
+    pointer->owner = (Obj*)target;
+    return pointer;
+}
+
+ObjYargPointer* newYargPointerToObjVal(ObjValue* target) {
+    ObjYargPointer* pointer = ALLOCATE_OBJ(ObjYargPointer, OBJ_PACKEDPOINTER);
+    ObjYargTypePointer* pointer_type = ALLOCATE_OBJ(ObjYargTypePointer, OBJ_YARGTYPE_POINTER);
+    pointer_type->core.yt = TypePointer;
+    pointer_type->target_type = target->value.type;
+    pointer->yarg.type = (ObjYargType*)pointer_type;
+    pointer->target = &target->value;
+    pointer->owner = (Obj*)target;
     return pointer;
 }
 
@@ -52,6 +73,10 @@ ObjYargPointer* newYargPointerToPlaceable(const ObjYargType* targetType, void* m
 
 void setPointerTarget(ObjYargPointer* pointer, Value newVal) {
     ObjYargTypePointer* pointer_type = (ObjYargTypePointer*)pointer->yarg.type;
+    if (pointer_type->target_type == NULL) {
+        *(Value*)pointer->target = newVal;
+        return;
+    }
     if (pointer_type->target_type->yt != newVal.type->yt) {
         panic();
     }
@@ -97,15 +122,27 @@ void setPointerTarget(ObjYargPointer* pointer, Value newVal) {
 
 ObjYargPointer* arrayElement(ObjArray* array, size_t index) {
     ObjYargTypeArray* array_type = (ObjYargTypeArray*)array->yarg.type;
-    size_t element_size = storage_size_of_type(array_type->element_type->yt);
+    size_t element_size = sizeof(AnyValue);
+    if (array_type->element_type == NULL) {
+        element_size = sizeof(Value);
+    } else if (is_placeable_yargtype(array_type->element_type)) {
+        element_size = storage_size_of_yargtype(array_type->element_type);
+    }
 
     ObjYargPointer* pointer = ALLOCATE_OBJ(ObjYargPointer, OBJ_PACKEDPOINTER);
     ObjYargTypePointer* pointer_type = ALLOCATE_OBJ(ObjYargTypePointer, OBJ_YARGTYPE_POINTER);
     pointer_type->core.yt = TypePointer;
-    pointer_type->target_type = array_type->element_type;
     pointer->yarg.type = (ObjYargType*)pointer_type;
     pointer->target = (char*)array->elements + index * element_size;
-    pointer->owner = (ObjYarg*)array;
+    pointer->owner = (Obj*)array;
+
+    if (array_type->element_type == NULL) {
+        Value* value_ptr = (Value*)pointer->target;
+        pointer_type->target_type = value_ptr->type;
+    } else {
+        pointer_type->target_type = array_type->element_type;
+    }
+ 
 
     return pointer;
 }
