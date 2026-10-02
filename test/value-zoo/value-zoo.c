@@ -1,5 +1,6 @@
 #include "value.h"
 #include "yargtype.h"
+#include "yargobject.h"
 
 #include "packed-value.h"
 #include "yarg-runtime.h"
@@ -20,6 +21,25 @@ void sprintValueValue(Value v, char* buffer, size_t bufferSize) {
             case TypeInt8: snprintf(buffer, bufferSize, "%d", v.as.i8); break;
             case TypeUint32: snprintf(buffer, bufferSize, "%u", v.as.ui32); break;
             case TypeAddress: snprintf(buffer, bufferSize, "%p", (void*)v.as.address); break;
+            case TypeArray: {
+                ObjArray* array = (ObjArray*)v.as.obj;
+                ObjYargTypeArray* array_type  = (ObjYargTypeArray*) array->core.type;
+                size_t increment = storage_size_of_type(array->core.type->yt);
+                uintptr_t elems = (uintptr_t) array->elements;
+                strcpy(buffer, "");
+                for (size_t i = 0; i < array_type->cardinality; i++){
+                    uintptr_t offset = elems + increment * i;
+                    PackedValue pv = createPackedValue(offset, array_type->element_type);
+                    Value x = unpackValue(pv);
+                    char elem[100];
+                    sprintValueValue(x, elem, 100);
+                    strcat(buffer, elem);
+                    if (i < array_type->cardinality - 1) {
+                        strcat(buffer, ", ");
+                    }
+                }
+            }
+                break;
             default:
                 snprintf(buffer, bufferSize, "unknown value");
                 break;
@@ -27,7 +47,7 @@ void sprintValueValue(Value v, char* buffer, size_t bufferSize) {
     }
 }
 
-void sprintYargType(ObjYargType* t, char* buffer, size_t bufferSize) {
+void sprintYargType(const ObjYargType* t, char* buffer, size_t bufferSize) {
     switch (t->yt) {
         case TypeInt8: snprintf(buffer, bufferSize, "int8"); break;
         case TypeUint8: snprintf(buffer, bufferSize, "uint8"); break;
@@ -134,6 +154,10 @@ int main(void) {
 
     sprintValue(z, buffer, sizeof(buffer));
     printf("%s\n", buffer);
-    
+
+    if (IS_ARRAY(z)) {
+        printf("z is an array\n");
+    }
+
     return 0;
 }

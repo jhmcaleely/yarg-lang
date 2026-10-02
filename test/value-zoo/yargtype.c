@@ -4,20 +4,19 @@
 #include <string.h>
 #include <stdlib.h>
 
-ObjYargType boolType = { .obj = {0}, .yt = TypeBool };
-ObjYargType uint32Type = { .obj = {0}, .yt = TypeUint32 };
-ObjYargType addressType = { .obj = {0}, .yt = TypeAddress };
-
-
-ObjYarg* allocateYargObject(ObjYargType* type) {
-    if (type->yt == TypeArray) {
-        ObjArray* array = ALLOCATE_OBJ(ObjArray, OBJ_PACKEDUNIFORMARRAY);
-        array->core.type = type;
-            // allocate memory for the array elements 
-        return (ObjYarg*)array;
-    }
-    return NULL;
-}
+const SimpleYargTypes yargTypes = {
+    .boolean = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeBool },
+    .address = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeAddress },
+    .dbl = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeDouble },
+    .int8 = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeInt8 },
+    .uint8 = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeUint8 },
+    .int16 = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeInt16 },
+    .uint16 = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeUint16 },
+    .int32 = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeInt32 },
+    .uint32 = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeUint32 },
+    .int64 = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeInt64 },
+    .uint64 = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeUint64 }
+};
 
 ObjYargType* newYargTypeFromType(YargType yt) {
     ObjYargType* type = (ObjYargType*)malloc(sizeof(ObjYargType));
@@ -33,4 +32,39 @@ ObjYargTypeArray* newYargArrayTypeFromType(ObjYargType* elementType, size_t card
     arrayType->cardinality = cardinality;
 
     return arrayType;
+}
+
+bool is_placeable_type(YargType yt) {
+    switch (yt) {
+    case TypeDouble:
+    case TypeInt8:
+    case TypeUint8:
+    case TypeInt16:
+    case TypeUint16:
+    case TypeInt32:
+    case TypeUint32:
+    case TypeInt64:
+    case TypeUint64:
+    case TypeAddress:
+        return true;
+    default:
+        return false;
+    }
+}
+
+size_t storage_size_of_type(YargType yt) {
+    switch (yt) {
+    case TypeDouble: return sizeof(double);
+    case TypeInt8: return sizeof(int8_t);
+    case TypeUint8: return sizeof(uint8_t);
+    case TypeInt16: return sizeof(int16_t);
+    case TypeUint16: return sizeof(uint16_t);
+    case TypeInt32: return sizeof(int32_t);
+    case TypeUint32: return sizeof(uint32_t);
+    case TypeInt64: return sizeof(int64_t);
+    case TypeUint64: return sizeof(uint64_t);
+    case TypeAddress: return sizeof(uintptr_t);
+    default:
+        return 0;
+    }
 }

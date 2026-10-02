@@ -40,14 +40,29 @@ typedef enum {
    TypeStruct,
 } YargType;
 
+bool is_placeable_type(YargType yt);
+size_t storage_size_of_type(YargType yt);
+
 typedef struct ObjYargType {
     Obj obj;
     YargType yt;
 } ObjYargType;
 
-extern ObjYargType boolType;
-extern ObjYargType uint32Type;
-extern ObjYargType addressType;
+typedef struct {
+    ObjYargType boolean;
+    ObjYargType address;
+    ObjYargType dbl;
+    ObjYargType int8;
+    ObjYargType uint8;
+    ObjYargType int16;
+    ObjYargType uint16;
+    ObjYargType int32;
+    ObjYargType uint32;
+    ObjYargType int64;
+    ObjYargType uint64;
+} SimpleYargTypes;
+
+extern const SimpleYargTypes yargTypes;
 
 typedef struct ObjYargTypeArray {
     ObjYargType core;
@@ -70,6 +85,5 @@ ObjYargType* newYargTypeFromType(YargType yt);
 
 ObjYargTypeArray* newYargArrayTypeFromType(ObjYargType* elementType, size_t cardinality);
 ObjYargTypePointer* newYargPointerType(ObjYargType* targetType);
-
 
 #endif

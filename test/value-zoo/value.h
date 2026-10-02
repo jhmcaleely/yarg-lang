@@ -23,7 +23,7 @@ typedef union {
 } AnyValue;
 
 typedef struct {
-    ObjYargType* type;
+    const ObjYargType* type;
     AnyValue as;
 } Value;
 
@@ -47,7 +47,8 @@ typedef struct {
 #define IS_UI64(value)     ((value).type->yt == TypeUint64)
 #define IS_I64(value)      ((value).type->yt == TypeInt64)
 #define IS_ADDRESS(value)  ((value).type->yt == TypeAddress)
-#define IS_OBJ(value)      ((value).type == VAL_OBJ)
+#define IS_OBJ(value)      ((value).type == NULL && (value).as.obj != NULL)
+#define IS_ARRAY(value)    ((value).type != NULL && (value).as.obj != NULL && ((ObjArray*)(value).as.obj)->core.type == (value).type && ((ObjArray*)(value).as.obj)->core.type->yt == TypeArray)
 #define IS_INT(value)      ((value).type == VAL_OBJ && (value).as.obj->type == OBJ_INT)
 
 #define AS_OBJ(value)      ((value).as.obj)
@@ -63,18 +64,18 @@ typedef struct {
 #define AS_ADDRESS(value)  ((value).as.address)
 #define AS_DOUBLE(value)   ((value).as.dbl)
 
-#define BOOL_VAL(value)     ((Value){.type = &boolType, .as.boolean = value })
+#define BOOL_VAL(value)     ((Value){.type = &yargTypes.boolean, .as.boolean = value })
 #define NIL_VAL             ((Value){.type = NULL, .as.i32 = 0 })
-#define DOUBLE_VAL(value)   ((Value){VAL_DOUBLE, {.dbl = value }})
-#define I8_VAL(value)       ((Value){VAL_I8, {.i8 = value}})
-#define UI8_VAL(value)      ((Value){VAL_UI8, {.ui8 = value}})
-#define I16_VAL(value)      ((Value){VAL_I16, {.i16 = value}})
-#define UI16_VAL(value)     ((Value){VAL_UI16, {.ui16 = value}})
-#define I32_VAL(value)      ((Value){VAL_I32, {.i32 = value }})
-#define UI32_VAL(value)     ((Value){.type = &uint32Type, .as.ui32 = value })
-#define I64_VAL(a)          ((Value){VAL_I64, {.i64 = a}})
-#define UI64_VAL(a)         ((Value){VAL_UI64, {.ui64 = a}})
-#define ADDRESS_VAL(value)  ((Value){.type = &addressType, .as.address = value })
+#define DOUBLE_VAL(value)   ((Value){.type = &yargTypes.dbl, {.dbl = value }})
+#define I8_VAL(value)       ((Value){.type = &yargTypes.int8, .as.i8 = value})
+#define UI8_VAL(value)      ((Value){.type = &yargTypes.uint8, .as.ui8 = value})
+#define I16_VAL(value)      ((Value){.type = &yargTypes.int16, .as.i16 = value})
+#define UI16_VAL(value)     ((Value){.type = &yargTypes.uint16, .as.ui16 = value})
+#define I32_VAL(value)      ((Value){.type = &yargTypes.int32, .as.i32 = value })
+#define UI32_VAL(value)     ((Value){.type = &yargTypes.uint32, .as.ui32 = value })
+#define I64_VAL(a)          ((Value){.type = &yargTypes.int64, .as.i64 = a})
+#define UI64_VAL(a)         ((Value){.type = &yargTypes.uint64, .as.ui64 = a})
+#define ADDRESS_VAL(value)  ((Value){.type = &yargTypes.address, .as.address = value })
 #define OBJ_VAL(object)     ((Value){.type = NULL, {.obj = (Obj*)object}})
 #define ARRAY_VAL(array)    ((Value){.type = array->core.type, .as.obj = (Obj*)array})
 

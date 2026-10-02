@@ -10,7 +10,6 @@ typedef struct ObjYarg {
 
 typedef struct ObjArray {
     ObjYarg core;
-    size_t  cardinality;
     void*   elements;
 } ObjArray;
 
