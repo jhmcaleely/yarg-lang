@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 typedef struct Obj Obj;
-typedef struct ObjConcreteYargType ObjConcreteYargType;
+typedef struct ObjYargType ObjYargType;
 
 typedef union {
     bool boolean;
@@ -112,7 +112,7 @@ typedef union PackedValueStore {
 
 typedef struct {
     PackedValueStore* storedValue;
-    ObjConcreteYargType* storedType;
+    ObjYargType* storedType;
 } PackedValue;
 
 

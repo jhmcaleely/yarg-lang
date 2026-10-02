@@ -27,7 +27,7 @@ void sprintValueValue(Value v, char* buffer, size_t bufferSize) {
     }
 }
 
-ConcreteYargType ValueType2(Value v) {
+YargType ValueType2(Value v) {
     switch (v.type) {
         case VAL_BOOL:
             return TypeBool;
@@ -40,7 +40,7 @@ ConcreteYargType ValueType2(Value v) {
     }
 }
 
-void sprintConcreteYargType(ConcreteYargType t, char* buffer, size_t bufferSize) {
+void sprintConcreteYargType(YargType t, char* buffer, size_t bufferSize) {
     switch (t) {
         case TypeBool:
             snprintf(buffer, bufferSize, "bool");
@@ -61,7 +61,7 @@ void sprintValue(Value v, char* buffer, size_t bufferSize) {
     sprintValueValue(v, buffer, bufferSize);
     if (!valuesEqual(v, NIL_VAL)) {
         snprintf(buffer + strlen(buffer), bufferSize - strlen(buffer), " : ");
-        ConcreteYargType t = ValueType2(v);
+        YargType t = ValueType2(v);
         sprintConcreteYargType(t, buffer + strlen(buffer), bufferSize - strlen(buffer));
     }
 }
@@ -76,7 +76,7 @@ int main(void) {
     printf("sizeof(Value) = %zu\n", sizeof(Value));
     printf("sizeof(Value.as) = %zu\n", sizeof(v.as));
     printf("sizeof(Value.type) = %zu\n", sizeof(v.type));
-    printf("sizeof(ConcreteYargType) = %zu\n", sizeof(ConcreteYargType));
+    printf("sizeof(YargType) = %zu\n", sizeof(YargType));
     printf("sizeof(bool) = %zu\n", sizeof(v.as.boolean));
     printf("sizeof(Value.as.obj) = %zu\n", sizeof(v.as.obj));
     printf("sizeof(address) = %zu\n", sizeof(v.as.address));
@@ -125,6 +125,14 @@ int main(void) {
     Value y = unpackValue(pv);
     sprintValue(y, buffer, sizeof(buffer));
     printf("%s\n", buffer);
+
+    ObjYargType* element = newYargTypeFromType(TypeInt);
+
+    ObjYargTypeArray* arrayType = newYargArrayTypeFromType(element);
+    arrayType->cardinality = 10;
+
+    ObjArray* array = (ObjArray*)allocateYargObject((ObjYargType*)arrayType);
+    
 
     return 0;
 }

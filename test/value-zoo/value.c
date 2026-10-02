@@ -6,7 +6,6 @@ Value unpackValue(PackedValue packedValue) {
         return packedValue.storedValue->asValue;
     } else {
         switch (packedValue.storedType->yt) {
-            case TypeAny: return packedValue.storedValue->asValue;
             case TypeBool: return packedValue.storedValue->asValue;
             case TypeDouble: return packedValue.storedValue->asValue;
             case TypeInt8: return I8_VAL(packedValue.storedValue->as.i8);
@@ -46,7 +45,6 @@ void initialisePackedValue(PackedValue packedValue) {
         packedValue.storedValue->asValue = NIL_VAL;
     } else {
         switch (packedValue.storedType->yt) {
-            case TypeAny: packedValue.storedValue->asValue = NIL_VAL; break;
             case TypeBool: packedValue.storedValue->asValue = BOOL_VAL(false); break;
             case TypeDouble: packedValue.storedValue->asValue = DOUBLE_VAL(0); break;
             case TypeInt8: packedValue.storedValue->as.i8 = 0; break;
@@ -84,7 +82,6 @@ void packValue(PackedValue packedStorageTarget, Value value) {
         packedStorageTarget.storedValue->asValue = value;
     } else {
         switch (packedStorageTarget.storedType->yt) {
-            case TypeAny: packedStorageTarget.storedValue->asValue = value; break;
             case TypeBool: packedStorageTarget.storedValue->asValue = value; break;
             case TypeDouble: packedStorageTarget.storedValue->asValue = value; break;
             case TypeInt8: packedStorageTarget.storedValue->as.i8 = AS_I8(value); break;

@@ -26,13 +26,12 @@
  *
  */
 
-#include <stdbool.h>
+#include "value.h"
 
-typedef struct ObjConcreteYargType ObjConcreteYargType;
-typedef struct ObjConcreteYargTypeArray ObjConcreteYargTypeArray;
-typedef struct ObjConcreteYargTypeStruct ObjConcreteYargTypeStruct;
-typedef struct ObjConcreteYargTypePointer ObjConcreteYargTypePointer;
-typedef struct ObjConcreteYargTypeMap ObjConcreteYargTypeMap;
+#include <stdbool.h>
+#include <stddef.h>
+
+typedef struct ObjYargType ObjYargType;
 
 #define OBJ_TYPE(value)     (AS_OBJ(value)->type)
 
@@ -138,10 +137,25 @@ typedef enum {
     OBJ_INT
 } ObjType;
 
-struct Obj {
+typedef struct Obj {
     ObjType type;
     bool isMarked;
     struct Obj* next;
-};
+} Obj;
+
+typedef struct ObjArray {
+    Obj core;
+    size_t cardinality;
+    union {
+        Value** elements;
+        void* placedElements;
+    };
+} ObjArray;
+
+Obj* allocateYargObject(ObjYargType* type);
+Obj* allocateImplementationObject(size_t size, ObjType objectType);
+
+#define ALLOCATE_OBJ(type, objectType) \
+    (type*)allocateImplementationObject(sizeof(type), objectType)
 
 #endif
