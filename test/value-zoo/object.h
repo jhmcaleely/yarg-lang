@@ -88,7 +88,8 @@ typedef enum {
     OBJ_EXPR_TYPE,
     OBJ_EXPR_TYPE_STRUCT,
     OBJ_EXPR_TYPE_INDEXED_COLLECTION,
-    OBJ_INT
+    OBJ_INT,
+    OBJ_ANYVALUE
 } ObjType;
 
 typedef struct Obj {

@@ -1,6 +1,8 @@
 #include "yargtype.h"
 #include "yargobject.h"
 
+#include "yarg-runtime.h"
+
 #include <string.h>
 #include <stdlib.h>
 
@@ -52,6 +54,38 @@ bool is_placeable_type(YargType yt) {
     }
 }
 
+bool is_value_type(YargType yt) {
+    switch (yt) {
+    case TypeBool:
+    case TypeInt:
+    case TypePointer:
+    case TypeDouble:
+    case TypeInt8:
+    case TypeUint8:
+    case TypeInt16:
+    case TypeUint16:
+    case TypeInt32:
+    case TypeUint32:
+    case TypeInt64:
+    case TypeUint64:
+    case TypeAddress:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool is_placeable_yargtype(const ObjYargType* type) {
+    if (type->yt == TypeArray) {
+        ObjYargTypeArray* arrayType = (ObjYargTypeArray*)type;
+        return is_placeable_yargtype(arrayType->element_type);
+    } else {
+        return is_placeable_type(type->yt);
+    }
+}
+
+
+
 size_t storage_size_of_type(YargType yt) {
     switch (yt) {
     case TypeDouble: return sizeof(double);
@@ -64,7 +98,15 @@ size_t storage_size_of_type(YargType yt) {
     case TypeInt64: return sizeof(int64_t);
     case TypeUint64: return sizeof(uint64_t);
     case TypeAddress: return sizeof(uintptr_t);
-    default:
-        return 0;
+    default: panic(); return 0;
+    }
+}
+
+size_t storage_size_of_yargtype(const ObjYargType* type) {
+    if (type->yt == TypeArray) {
+        ObjYargTypeArray* arrayType = (ObjYargTypeArray*)type;
+        return storage_size_of_yargtype(arrayType->element_type) * arrayType->cardinality;
+    } else {
+        return storage_size_of_type(type->yt);
     }
 }

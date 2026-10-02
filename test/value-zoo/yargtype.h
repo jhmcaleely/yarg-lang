@@ -4,8 +4,10 @@
 #include "object.h"
 
 #include <stddef.h>
+#include <stdint.h>
 
 typedef struct ObjString ObjString;
+typedef struct ObjYarg ObjYarg;
 
 typedef enum {
    // Yarg types with implementation defined storage
@@ -41,12 +43,18 @@ typedef enum {
 } YargType;
 
 bool is_placeable_type(YargType yt);
+bool is_value_type(YargType yt);
 size_t storage_size_of_type(YargType yt);
+
 
 typedef struct ObjYargType {
     Obj obj;
     YargType yt;
 } ObjYargType;
+
+bool is_placeable_yargtype(const ObjYargType* type);
+size_t storage_size_of_yargtype(const ObjYargType* type);
+
 
 typedef struct {
     ObjYargType boolean;
@@ -72,7 +80,7 @@ typedef struct ObjYargTypeArray {
 
 typedef struct ObjYargTypePointer {
     ObjYargType core;
-    ObjYargType* target_type;
+    const ObjYargType* target_type;
 } ObjYargTypePointer;
 
 typedef struct ObjYargTypeMap {
@@ -84,6 +92,21 @@ typedef struct ObjYargTypeMap {
 ObjYargType* newYargTypeFromType(YargType yt);
 
 ObjYargTypeArray* newYargArrayTypeFromType(ObjYargType* elementType, size_t cardinality);
-ObjYargTypePointer* newYargPointerType(ObjYargType* targetType);
+
+typedef union {
+    bool boolean;
+    double dbl;
+    uint8_t ui8;
+    int8_t i8;
+    uint16_t ui16;
+    int16_t i16;
+    uint32_t ui32;
+    int32_t i32;
+    uint64_t ui64;
+    int64_t i64;
+    uintptr_t address;
+    Obj* obj;
+} AnyValue;
+
 
 #endif

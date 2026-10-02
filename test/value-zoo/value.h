@@ -7,21 +7,6 @@
 #include "yargtype.h"
 #include "yargobject.h"
 
-typedef union {
-    bool boolean;
-    double dbl;
-    uint8_t ui8;
-    int8_t i8;
-    uint16_t ui16;
-    int16_t i16;
-    uint32_t ui32;
-    int32_t i32;
-    uint64_t ui64;
-    int64_t i64;
-    uintptr_t address;
-    Obj* obj;
-} AnyValue;
-
 typedef struct {
     const ObjYargType* type;
     AnyValue as;
@@ -47,9 +32,9 @@ typedef struct {
 #define IS_UI64(value)     ((value).type->yt == TypeUint64)
 #define IS_I64(value)      ((value).type->yt == TypeInt64)
 #define IS_ADDRESS(value)  ((value).type->yt == TypeAddress)
-#define IS_OBJ(value)      ((value).type == NULL && (value).as.obj != NULL)
-#define IS_ARRAY(value)    ((value).type != NULL && (value).as.obj != NULL && ((ObjArray*)(value).as.obj)->core.type == (value).type && ((ObjArray*)(value).as.obj)->core.type->yt == TypeArray)
-#define IS_INT(value)      ((value).type == VAL_OBJ && (value).as.obj->type == OBJ_INT)
+#define IS_IMPL_OBJ(value) ((value).type == NULL && (value).as.obj != NULL)
+#define IS_ARRAY(value)    ((value).type != NULL && (value).as.obj != NULL && ((ObjArray*)(value).as.obj)->yarg.type == (value).type && ((ObjArray*)(value).as.obj)->yarg.type->yt == TypeArray)
+#define IS_INT(value)      ((value).type->yt == TypeInt && (value).as.obj->type == OBJ_INT)
 
 #define AS_OBJ(value)      ((value).as.obj)
 #define AS_BOOL(value)     ((value).as.boolean)
@@ -76,8 +61,9 @@ typedef struct {
 #define I64_VAL(a)          ((Value){.type = &yargTypes.int64, .as.i64 = a})
 #define UI64_VAL(a)         ((Value){.type = &yargTypes.uint64, .as.ui64 = a})
 #define ADDRESS_VAL(value)  ((Value){.type = &yargTypes.address, .as.address = value })
-#define OBJ_VAL(object)     ((Value){.type = NULL, {.obj = (Obj*)object}})
-#define ARRAY_VAL(array)    ((Value){.type = array->core.type, .as.obj = (Obj*)array})
+#define IMPL_OBJ_VAL(object) ((Value){.type = NULL, {.obj = (Obj*)object}})
+#define YARG_OBJ_VAL(object) ((Value){.type = ((ObjYarg*)(object))->type, .as.obj = (Obj*)object})
+#define ARRAY_VAL(array)    ((Value){.type = array->yarg.type, .as.obj = (Obj*)array})
 
 #if IS_64BIT
 #define SIZE_T_UI_VAL(value)   UI64_VAL(value)
@@ -91,5 +77,8 @@ uint32_t as_positive_integer32(Value a);
 bool valuesEqual(Value a, Value b);
 
 Value duplicateValue(Value src);
+
+typedef struct ObjYargPointer ObjYargPointer;
+void setPointerTarget(ObjYargPointer* pointer, Value newVal);
 
 #endif

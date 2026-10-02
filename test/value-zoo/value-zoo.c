@@ -23,8 +23,8 @@ void sprintValueValue(Value v, char* buffer, size_t bufferSize) {
             case TypeAddress: snprintf(buffer, bufferSize, "%p", (void*)v.as.address); break;
             case TypeArray: {
                 ObjArray* array = (ObjArray*)v.as.obj;
-                ObjYargTypeArray* array_type  = (ObjYargTypeArray*) array->core.type;
-                size_t increment = storage_size_of_type(array->core.type->yt);
+                ObjYargTypeArray* array_type  = (ObjYargTypeArray*) array->yarg.type;
+                size_t increment = storage_size_of_type(array_type->element_type->yt);
                 uintptr_t elems = (uintptr_t) array->elements;
                 strcpy(buffer, "");
                 for (size_t i = 0; i < array_type->cardinality; i++){
@@ -40,6 +40,7 @@ void sprintValueValue(Value v, char* buffer, size_t bufferSize) {
                 }
             }
                 break;
+            case TypePointer: snprintf(buffer, bufferSize, "<pointer>"); break;
             default:
                 snprintf(buffer, bufferSize, "unknown value");
                 break;
@@ -69,6 +70,12 @@ void sprintYargType(const ObjYargType* t, char* buffer, size_t bufferSize) {
             snprintf(&buffer[offset], (bufferSize - offset), "[%zu]", array->cardinality);
             break;
         }
+        case TypePointer: {
+            ObjYargTypePointer* pointer = (ObjYargTypePointer*)t;
+            sprintYargType(pointer->target_type, buffer, bufferSize);
+            snprintf(buffer + strlen(buffer), bufferSize - strlen(buffer), "*");
+            break;
+        }
         default:
             panic();
     }
@@ -79,6 +86,20 @@ void sprintValue(Value v, char* buffer, size_t bufferSize) {
     if (!valuesEqual(v, NIL_VAL)) {
         snprintf(buffer + strlen(buffer), bufferSize - strlen(buffer), " : ");
         sprintYargType(v.type, buffer + strlen(buffer), bufferSize - strlen(buffer));
+    }
+}
+
+ObjYarg* newYargObject(const ObjYargType* type) {
+    if (is_value_type(type->yt) && is_placeable_yargtype(type)) {
+        void* memory = malloc(storage_size_of_yargtype(type));
+        ObjYargPointer* pointer = newYargPointerToPlaceable(type, memory);
+        return (ObjYarg*)pointer;
+    } else if (is_value_type(type->yt)) {
+        ObjYarg* obj = allocateYargObject(type);
+        ObjYargPointer* pointer = newYargPointerToObj(obj);
+        return (ObjYarg*)pointer;
+    } else {
+        return allocateYargObject(type);
     }
 }
 
@@ -151,13 +172,32 @@ int main(void) {
     ObjArray* array = (ObjArray*)allocateYargObject((ObjYargType*)arrayType);
 
     Value z = ARRAY_VAL(array);
-
     sprintValue(z, buffer, sizeof(buffer));
     printf("%s\n", buffer);
+
+    Value firstElement = YARG_OBJ_VAL(arrayElement(array, 0));
+    sprintValue(firstElement, buffer, sizeof(buffer));
+    printf("%s\n", buffer);
+
+    setPointerTarget((ObjYargPointer*)AS_OBJ(firstElement), ADDRESS_VAL((uintptr_t)(void*)99));
+    sprintValue(z, buffer, sizeof(buffer));
+    printf("%s\n", buffer);
+
+
 
     if (IS_ARRAY(z)) {
         printf("z is an array\n");
     }
+
+    ObjYarg* something = newYargObject(&yargTypes.boolean);
+    Value w = YARG_OBJ_VAL(something);
+    sprintValue(w, buffer, sizeof(buffer));
+    printf("%s\n", buffer);
+
+    ObjYarg* another = newYargObject(&yargTypes.int8);
+    Value u = YARG_OBJ_VAL(another);
+    sprintValue(u, buffer, sizeof(buffer));
+    printf("%s\n", buffer);
 
     return 0;
 }
