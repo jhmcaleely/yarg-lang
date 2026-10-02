@@ -26,54 +26,8 @@
  *
  */
 
-#include "value.h"
-
 #include <stdbool.h>
 #include <stddef.h>
-
-typedef struct ObjYargType ObjYargType;
-
-#define OBJ_TYPE(value)     (AS_OBJ(value)->type)
-
-#define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
-#define IS_CLASS(value)        isObjType(value, OBJ_CLASS)
-#define IS_CLOSURE(value)      isObjType(value, OBJ_CLOSURE)
-#define IS_FUNCTION(value)     isObjType(value, OBJ_FUNCTION)
-#define IS_INSTANCE(value)     isObjType(value, OBJ_INSTANCE)
-#define IS_NATIVE(value)       isObjType(value, OBJ_NATIVE)
-#define IS_BUILTIN(value)      isObjType(value, OBJ_BUILTIN)
-#define IS_BLOB(value)         isObjType(value, OBJ_BLOB)
-#define IS_ROUTINE(value)      isObjType(value, OBJ_ROUTINE)
-#define IS_CHANNEL(value)      isObjType(value, OBJ_CHANNELCONTAINER)
-#define IS_STRING(value)       isObjType(value, OBJ_STRING)
-#define IS_UNIFORMARRAY(value) (isObjType(value, OBJ_PACKEDUNIFORMARRAY)|| isObjType(value, OBJ_UNOWNED_UNIFORMARRAY))
-#define IS_YARGTYPE(value)     (isObjType(value, OBJ_YARGTYPE) || isObjType(value, OBJ_YARGTYPE_ARRAY) || isObjType(value, OBJ_YARGTYPE_STRUCT) || isObjType(value, OBJ_YARGTYPE_POINTER) || isObjType(value, OBJ_YARGTYPE_MAP))
-#define IS_POINTER(value)      (isObjType(value, OBJ_PACKEDPOINTER) || isObjType(value, OBJ_UNOWNED_PACKEDPOINTER))
-#define IS_STRUCT(value)       (isObjType(value, OBJ_PACKEDSTRUCT) || isObjType(value, OBJ_UNOWNED_PACKEDSTRUCT))
-#define IS_SYNCGROUP(value)    isObjType(value, OBJ_SYNCGROUP)
-#define IS_MAP(value)          isObjType(value, OBJ_MAP)
-
-#define AS_BOUND_METHOD(value) ((ObjBoundMethod*)AS_OBJ(value))
-#define AS_CLASS(value)        ((ObjClass*)AS_OBJ(value))
-#define AS_CLOSURE(value)      ((ObjClosure*)AS_OBJ(value))
-#define AS_FUNCTION(value)     ((ObjFunction*)AS_OBJ(value))
-#define AS_INSTANCE(value)     ((ObjInstance*)AS_OBJ(value))
-#define AS_NATIVE(value) \
-    (((ObjNative*)AS_OBJ(value))->function)
-#define AS_BUILTIN(value) \
-    (((ObjBuiltin*)AS_OBJ(value))->function)
-#define AS_ROUTINE(value)      ((ObjRoutine*)AS_OBJ(value))
-#define AS_CHANNEL(value)      ((ObjChannelContainer*)AS_OBJ(value))
-#define AS_STRING(value)       ((ObjString*)AS_OBJ(value))
-#define AS_CSTRING(value)      (((ObjString*)AS_OBJ(value))->chars)
-#define AS_UNIFORMARRAY(value) ((ObjPackedUniformArray*)AS_OBJ(value))
-#define AS_YARGTYPE(value)     ((ObjConcreteYargType*)AS_OBJ(value))
-#define AS_POINTER(value)      ((ObjPackedPointer*)AS_OBJ(value))
-#define AS_STRUCT(value)       ((ObjPackedStruct*)AS_OBJ(value))
-#define AS_SYNCGROUP(value)    ((ObjSyncGroup*)AS_OBJ(value))
-#define AS_INTOBJ(value)       ((ObjInt*)AS_OBJ(value))
-#define AS_INT(value)          (&(AS_INTOBJ(value)->bigInt))
-#define AS_MAP(value)          ((ObjMap*)AS_OBJ(value))
 
 typedef enum {
     OBJ_BOUND_METHOD,
@@ -143,19 +97,11 @@ typedef struct Obj {
     struct Obj* next;
 } Obj;
 
-typedef struct ObjArray {
-    Obj core;
-    size_t cardinality;
-    union {
-        Value** elements;
-        void* placedElements;
-    };
-} ObjArray;
-
-Obj* allocateYargObject(ObjYargType* type);
-Obj* allocateImplementationObject(size_t size, ObjType objectType);
+Obj* allocateObject(size_t size, ObjType objectType);
 
 #define ALLOCATE_OBJ(type, objectType) \
-    (type*)allocateImplementationObject(sizeof(type), objectType)
+    (type*)allocateObject(sizeof(type), objectType)
+
+void freeObject(Obj* object);
 
 #endif

@@ -2,58 +2,55 @@
 #include "yargtype.h"
 
 #include "packed-value.h"
+#include "yarg-runtime.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 void sprintValueValue(Value v, char* buffer, size_t bufferSize) {
-    switch (v.type) {
-        case VAL_NIL:
-            snprintf(buffer, bufferSize, "nil");
-            break;
-        case VAL_BOOL:
-            snprintf(buffer, bufferSize, v.as.boolean ? "true" : "false");
-            break;
-        case VAL_UI32:
-            snprintf(buffer, bufferSize, "%u", v.as.ui32);
-            break;
-        case VAL_ADDRESS:
-            snprintf(buffer, bufferSize, "%p", (void*)v.as.address);
-            break;
-        default:
-            snprintf(buffer, bufferSize, "unknown value type");
-            break;
+
+    if (IS_NIL(v)) {
+        snprintf(buffer, bufferSize, "nil");
+        return;
+    }
+    else {
+        switch (v.type->yt) {
+            case TypeBool: snprintf(buffer, bufferSize, v.as.boolean ? "true" : "false"); break;
+            case TypeInt8: snprintf(buffer, bufferSize, "%d", v.as.i8); break;
+            case TypeUint32: snprintf(buffer, bufferSize, "%u", v.as.ui32); break;
+            case TypeAddress: snprintf(buffer, bufferSize, "%p", (void*)v.as.address); break;
+            default:
+                snprintf(buffer, bufferSize, "unknown value");
+                break;
+        }
     }
 }
 
-YargType ValueType2(Value v) {
-    switch (v.type) {
-        case VAL_BOOL:
-            return TypeBool;
-        case VAL_UI32:
-            return TypeUint32;
-        case VAL_ADDRESS:
-            return TypeAddress;
-        default:
-            exit(1); // or handle the error appropriately
-    }
-}
+void sprintYargType(ObjYargType* t, char* buffer, size_t bufferSize) {
+    switch (t->yt) {
+        case TypeInt8: snprintf(buffer, bufferSize, "int8"); break;
+        case TypeUint8: snprintf(buffer, bufferSize, "uint8"); break;
+        case TypeInt16: snprintf(buffer, bufferSize, "int16"); break;
+        case TypeUint16: snprintf(buffer, bufferSize, "uint16"); break;
+        case TypeInt32: snprintf(buffer, bufferSize, "int32"); break;
+        case TypeUint32: snprintf(buffer, bufferSize, "uint32"); break;
+        case TypeInt64: snprintf(buffer, bufferSize, "int64"); break;
+        case TypeUint64: snprintf(buffer, bufferSize, "uint64"); break;
+        case TypeDouble: snprintf(buffer, bufferSize, "mfloat64"); break;
+        case TypeAddress: snprintf(buffer, bufferSize, "address"); break;
 
-void sprintConcreteYargType(YargType t, char* buffer, size_t bufferSize) {
-    switch (t) {
-        case TypeBool:
-            snprintf(buffer, bufferSize, "bool");
+        case TypeBool: snprintf(buffer, bufferSize, "bool"); break;
+        case TypeChannel: snprintf(buffer, bufferSize, "channel"); break;
+        case TypeArray: {
+            ObjYargTypeArray* array = (ObjYargTypeArray*)t;
+            sprintYargType(array->element_type, buffer, bufferSize);
+            size_t offset = strlen(buffer);
+            snprintf(&buffer[offset], (bufferSize - offset), "[%zu]", array->cardinality);
             break;
-        case TypeUint32:
-            snprintf(buffer, bufferSize, "uint32");
-            break;
-        case TypeAddress:
-            snprintf(buffer, bufferSize, "address");
-            break;
+        }
         default:
-            snprintf(buffer, bufferSize, "unknown type");
-            break;
+            panic();
     }
 }
 
@@ -61,8 +58,7 @@ void sprintValue(Value v, char* buffer, size_t bufferSize) {
     sprintValueValue(v, buffer, bufferSize);
     if (!valuesEqual(v, NIL_VAL)) {
         snprintf(buffer + strlen(buffer), bufferSize - strlen(buffer), " : ");
-        YargType t = ValueType2(v);
-        sprintConcreteYargType(t, buffer + strlen(buffer), bufferSize - strlen(buffer));
+        sprintYargType(v.type, buffer + strlen(buffer), bufferSize - strlen(buffer));
     }
 }
 
@@ -114,25 +110,29 @@ int main(void) {
     sprintValue(v, buffer, sizeof(buffer));
     printf("%s\n", buffer);
 
-    PackedValue pv;
-    initialisePackedValue(pv);
+    ObjYargType* element = newYargTypeFromType(TypeInt8);
+
+    PackedValue pv = allocPackedValue(element);
     Value x = unpackValue(pv);
     sprintValue(x, buffer, sizeof(buffer));
     printf("%s\n", buffer);
 
+    element = newYargTypeFromType(TypeAddress);
+
+    pv = allocPackedValue(element);
     packValue(pv, ADDRESS_VAL((uintptr_t)(void*)&main));
 
     Value y = unpackValue(pv);
     sprintValue(y, buffer, sizeof(buffer));
     printf("%s\n", buffer);
 
-    ObjYargType* element = newYargTypeFromType(TypeInt);
 
-    ObjYargTypeArray* arrayType = newYargArrayTypeFromType(element);
-    arrayType->cardinality = 10;
-
+    ObjYargTypeArray* arrayType = newYargArrayTypeFromType(element, 10);
     ObjArray* array = (ObjArray*)allocateYargObject((ObjYargType*)arrayType);
-    
 
+    Value z = ARRAY_VAL(array);
+
+    sprintValue(z, buffer, sizeof(buffer));
+    printf("%s\n", buffer);
     return 0;
 }

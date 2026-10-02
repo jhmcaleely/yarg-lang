@@ -1,13 +1,9 @@
 #ifndef PACKED_VALUE_H
 #define PACKED_VALUE_H
 
-#include "../../cyarg/value.h"
-
-void packValue(PackedValue packedStorageTarget, Value value);
+#include "value.h"
 
 typedef union {
-    Obj** obj;
-    bool* boolean;
     double* dbl;
     int8_t* i8;
     uint8_t* ui8;
@@ -22,10 +18,12 @@ typedef union {
 
 typedef struct {
     ValuePtr valuePtr;
-    ValueType type;
-} PackedValue2;
+    ObjYargType* type;
+} PackedValue;
 
 void initialisePackedValue(PackedValue packedValue);
+PackedValue allocPackedValue(ObjYargType* type);
+void packValue(PackedValue packedStorageTarget, Value value);
 Value unpackValue(PackedValue packedValue);
 
 #endif // PACKED_VALUE_H

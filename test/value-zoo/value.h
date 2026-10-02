@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef struct Obj Obj;
-typedef struct ObjYargType ObjYargType;
+#include "yargtype.h"
+#include "yargobject.h"
 
 typedef union {
     bool boolean;
@@ -22,24 +22,8 @@ typedef union {
     Obj* obj;
 } AnyValue;
 
-typedef enum {
-    VAL_BOOL,
-    VAL_NIL,
-    VAL_DOUBLE,
-    VAL_I8,
-    VAL_UI8,
-    VAL_I16,
-    VAL_UI16,
-    VAL_I32,
-    VAL_UI32,
-    VAL_UI64,
-    VAL_I64,
-    VAL_ADDRESS,
-    VAL_OBJ,
-} ValueType;
-
 typedef struct {
-    ValueType type;
+    ObjYargType* type;
     AnyValue as;
 } Value;
 
@@ -51,18 +35,18 @@ typedef struct {
 #define IS_32BIT 1
 #endif
 
-#define IS_BOOL(value)     ((value).type == VAL_BOOL)
-#define IS_NIL(value)      ((value).type == VAL_NIL)
-#define IS_DOUBLE(value)   ((value).type == VAL_DOUBLE)
-#define IS_I8(value)       ((value).type == VAL_I8)
-#define IS_UI8(value)      ((value).type == VAL_UI8)
-#define IS_I16(value)      ((value).type == VAL_I16)
-#define IS_UI16(value)     ((value).type == VAL_UI16)
-#define IS_I32(value)      ((value).type == VAL_I32)
-#define IS_UI32(value)     ((value).type == VAL_UI32)
-#define IS_UI64(value)     ((value).type == VAL_UI64)
-#define IS_I64(value)      ((value).type == VAL_I64)
-#define IS_ADDRESS(value)  ((value).type == VAL_ADDRESS)
+#define IS_BOOL(value)     ((value).type->yt == TypeBool)
+#define IS_NIL(value)      ((value).type == NULL && (value).as.i32 == 0)
+#define IS_DOUBLE(value)   ((value).type->yt == TypeDouble)
+#define IS_I8(value)       ((value).type->yt == TypeInt8)
+#define IS_UI8(value)      ((value).type->yt == TypeUint8)
+#define IS_I16(value)      ((value).type->yt == TypeInt16)
+#define IS_UI16(value)     ((value).type->yt == TypeUint16)
+#define IS_I32(value)      ((value).type->yt == TypeInt32)
+#define IS_UI32(value)     ((value).type->yt == TypeUint32)
+#define IS_UI64(value)     ((value).type->yt == TypeUint64)
+#define IS_I64(value)      ((value).type->yt == TypeInt64)
+#define IS_ADDRESS(value)  ((value).type->yt == TypeAddress)
 #define IS_OBJ(value)      ((value).type == VAL_OBJ)
 #define IS_INT(value)      ((value).type == VAL_OBJ && (value).as.obj->type == OBJ_INT)
 
@@ -79,19 +63,20 @@ typedef struct {
 #define AS_ADDRESS(value)  ((value).as.address)
 #define AS_DOUBLE(value)   ((value).as.dbl)
 
-#define BOOL_VAL(value)     ((Value){VAL_BOOL, {.boolean = value }})
-#define NIL_VAL             ((Value){VAL_NIL, {.i32 = 0 }})
+#define BOOL_VAL(value)     ((Value){.type = &boolType, .as.boolean = value })
+#define NIL_VAL             ((Value){.type = NULL, .as.i32 = 0 })
 #define DOUBLE_VAL(value)   ((Value){VAL_DOUBLE, {.dbl = value }})
 #define I8_VAL(value)       ((Value){VAL_I8, {.i8 = value}})
 #define UI8_VAL(value)      ((Value){VAL_UI8, {.ui8 = value}})
 #define I16_VAL(value)      ((Value){VAL_I16, {.i16 = value}})
 #define UI16_VAL(value)     ((Value){VAL_UI16, {.ui16 = value}})
 #define I32_VAL(value)      ((Value){VAL_I32, {.i32 = value }})
-#define UI32_VAL(value)     ((Value){VAL_UI32, {.ui32 = value }})
+#define UI32_VAL(value)     ((Value){.type = &uint32Type, .as.ui32 = value })
 #define I64_VAL(a)          ((Value){VAL_I64, {.i64 = a}})
 #define UI64_VAL(a)         ((Value){VAL_UI64, {.ui64 = a}})
-#define ADDRESS_VAL(value)  ((Value){VAL_ADDRESS, { .address = value}})
-#define OBJ_VAL(object)     ((Value){VAL_OBJ, {.obj = (Obj*)object}})
+#define ADDRESS_VAL(value)  ((Value){.type = &addressType, .as.address = value })
+#define OBJ_VAL(object)     ((Value){.type = NULL, {.obj = (Obj*)object}})
+#define ARRAY_VAL(array)    ((Value){.type = array->core.type, .as.obj = (Obj*)array})
 
 #if IS_64BIT
 #define SIZE_T_UI_VAL(value)   UI64_VAL(value)
@@ -103,20 +88,6 @@ bool is_positive_integer32(Value a);
 uint32_t as_positive_integer32(Value a);
 
 bool valuesEqual(Value a, Value b);
-
-typedef union PackedValueStore {
-    AnyValue as;
-    Value asValue;
-} PackedValueStore;
-
-
-typedef struct {
-    PackedValueStore* storedValue;
-    ObjYargType* storedType;
-} PackedValue;
-
-
-
 
 Value duplicateValue(Value src);
 

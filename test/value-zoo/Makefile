@@ -1,2 +1,2 @@
-a.out: value-zoo.c value.c packed-value.c object.c object.h packed-value.h value.h yargtype.c yargtype.h
-	cc value-zoo.c value.c packed-value.c object.c yargtype.c -o a.out
+a.out: value-zoo.c value.c packed-value.c object.c object.h packed-value.h value.h yargtype.c yargtype.h yargobject.c yargobject.h yarg-runtime.c yarg-runtime.h
+	cc value-zoo.c value.c packed-value.c object.c yargtype.c yargobject.c yarg-runtime.c -o a.out
