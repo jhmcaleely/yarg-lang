@@ -9,6 +9,10 @@ typedef struct ObjYarg {
     const ObjYargType* type;
 } ObjYarg;
 
+#define YARG_OBJ_VAL(object) ((Value){.type = ((const ObjYarg*)(object))->type, .as.obj = (Obj*)object})
+
+#define ARRAY_VAL(array)    YARG_OBJ_VAL(array)
+
 typedef struct ObjYargPointer {
     ObjYarg  yarg;
     Obj* owner;
@@ -19,8 +23,6 @@ typedef struct ObjArray {
     ObjYarg yarg;
     void*   elements;
 } ObjArray;
-
-typedef struct ObjValue ObjValue;
 
 Obj* allocateYargObject(const ObjYargType* type);
 

@@ -5,11 +5,12 @@
 #include <stdint.h>
 
 #include "yargtype.h"
-#include "yargobject.h"
+#include "object.h"
 
 typedef struct {
     const ObjYargType* type;
     AnyValue as;
+    bool type_assignable;
 } Value;
 
 typedef struct ObjValue {
@@ -17,16 +18,11 @@ typedef struct ObjValue {
     Value value;
 } ObjValue;
 
-#if defined(__LP64__) || defined(_WIN64) || defined(__x86_64__) || defined(__aarch64__)
-#define IS_64BIT 1
-#define IS_32BIT 0
-#else
-#define IS_64BIT 0
-#define IS_32BIT 1
-#endif
+#define IS_NIL(value)      ((value).type == NULL && (value).as.obj == NULL)
+#define IS_IMPL_OBJ(value) ((value).type == NULL && (value).as.obj != NULL)
 
 #define IS_BOOL(value)     ((value).type->yt == TypeBool)
-#define IS_NIL(value)      ((value).type == NULL && (value).as.i32 == 0)
+#define IS_INT(value)      ((value).type->yt == TypeInt && (value).as.obj->type == OBJ_INT)
 #define IS_DOUBLE(value)   ((value).type->yt == TypeDouble)
 #define IS_I8(value)       ((value).type->yt == TypeInt8)
 #define IS_UI8(value)      ((value).type->yt == TypeUint8)
@@ -37,11 +33,19 @@ typedef struct ObjValue {
 #define IS_UI64(value)     ((value).type->yt == TypeUint64)
 #define IS_I64(value)      ((value).type->yt == TypeInt64)
 #define IS_ADDRESS(value)  ((value).type->yt == TypeAddress)
-#define IS_IMPL_OBJ(value) ((value).type == NULL && (value).as.obj != NULL)
-#define IS_ARRAY(value)    ((value).type != NULL && (value).as.obj != NULL && ((ObjArray*)(value).as.obj)->yarg.type == (value).type && ((ObjArray*)(value).as.obj)->yarg.type->yt == TypeArray)
-#define IS_INT(value)      ((value).type->yt == TypeInt && (value).as.obj->type == OBJ_INT)
+#define IS_YARGTYPE(value) ((value).type->yt == TypeYargType)
+#define IS_ARRAY(value)    ((value).type->yt == TypeArray && (value).as.obj->type == OBJ_PACKEDUNIFORMARRAY)
+#define IS_STRUCT(value)   ((value).type->yt == TypeStruct && (value).as.obj->type == OBJ_PACKEDSTRUCT)
+#define IS_FUNCTION(value) ((value).type->yt == TypeFunction && (value).as.obj->type == OBJ_FUNCTION)
+#define IS_ROUTINE(value)  ((value).type->yt == TypeRoutine && (value).as.obj->type == OBJ_ROUTINE)
+#define IS_CHANNEL(value)  ((value).type->yt == TypeChannel && (value).as.obj->type == OBJ_CHANNELCONTAINER)
+#define IS_MAP(value)      ((value).type->yt == TypeMap && (value).as.obj->type == OBJ_MAP)
+#define IS_INSTANCE(value) ((value).type->yt == TypeInstance && (value).as.obj->type == OBJ_INSTANCE)
+#define IS_CLASS(value)    ((value).type->yt == TypeClass && (value).as.obj->type == OBJ_CLASS)
+#define IS_STRING(value)   ((value).type->yt == TypeString && (value).as.obj->type == OBJ_STRING)
 
 #define AS_OBJ(value)      ((value).as.obj)
+
 #define AS_BOOL(value)     ((value).as.boolean)
 #define AS_I8(value)       ((value).as.i8)
 #define AS_UI8(value)      ((value).as.ui8)
@@ -54,8 +58,9 @@ typedef struct ObjValue {
 #define AS_ADDRESS(value)  ((value).as.address)
 #define AS_DOUBLE(value)   ((value).as.dbl)
 
+#define NIL_VAL             ((Value){.type = NULL, .as.obj = NULL })
+
 #define BOOL_VAL(value)     ((Value){.type = &yargTypes.boolean, .as.boolean = value })
-#define NIL_VAL             ((Value){.type = NULL, .as.i32 = 0 })
 #define DOUBLE_VAL(value)   ((Value){.type = &yargTypes.dbl, {.dbl = value }})
 #define I8_VAL(value)       ((Value){.type = &yargTypes.int8, .as.i8 = value})
 #define UI8_VAL(value)      ((Value){.type = &yargTypes.uint8, .as.ui8 = value})
@@ -66,9 +71,8 @@ typedef struct ObjValue {
 #define I64_VAL(a)          ((Value){.type = &yargTypes.int64, .as.i64 = a})
 #define UI64_VAL(a)         ((Value){.type = &yargTypes.uint64, .as.ui64 = a})
 #define ADDRESS_VAL(value)  ((Value){.type = &yargTypes.address, .as.address = value })
+
 #define IMPL_OBJ_VAL(object) ((Value){.type = NULL, {.obj = (Obj*)object}})
-#define YARG_OBJ_VAL(object) ((Value){.type = ((ObjYarg*)(object))->type, .as.obj = (Obj*)object})
-#define ARRAY_VAL(array)    ((Value){.type = array->yarg.type, .as.obj = (Obj*)array})
 
 #if IS_64BIT
 #define SIZE_T_UI_VAL(value)   UI64_VAL(value)

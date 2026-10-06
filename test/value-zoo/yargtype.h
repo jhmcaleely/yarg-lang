@@ -85,6 +85,14 @@ typedef union {
     Obj* obj;
 } AnyValue;
 
+#if defined(__LP64__) || defined(_WIN64) || defined(__x86_64__) || defined(__aarch64__)
+#define IS_64BIT 1
+#define IS_32BIT 0
+#else
+#define IS_64BIT 0
+#define IS_32BIT 1
+#endif
+
 typedef struct ObjString ObjString;
 typedef struct ObjYarg ObjYarg;
 
