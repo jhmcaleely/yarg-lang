@@ -18,8 +18,8 @@ typedef struct ObjValue {
     Value value;
 } ObjValue;
 
-#define IS_NIL(value)      ((value).type == NULL && (value).as.obj == NULL)
 #define IS_IMPL_OBJ(value) ((value).type == NULL && (value).as.obj != NULL)
+#define IS_NIL(value)      is_nil(value)
 
 #define IS_BOOL(value)     ((value).type->yt == TypeBool)
 #define IS_INT(value)      ((value).type->yt == TypeInt && (value).as.obj->type == OBJ_INT)
@@ -79,6 +79,8 @@ typedef struct ObjValue {
 #elif IS_32BIT
 #define SIZE_T_UI_VAL(value)   UI32_VAL(value)
 #endif
+
+bool is_nil(Value value);
 
 bool is_positive_integer(Value a);
 size_t as_positive_integer(Value a);

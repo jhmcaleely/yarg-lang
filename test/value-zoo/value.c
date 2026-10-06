@@ -1,7 +1,27 @@
 #include "value.h"
 
+#include <assert.h>
+
 #include "yarg-runtime.h"
 #include "yargobject.h"
+
+bool is_nil(Value value) {
+    if (value.type == NULL && value.as.obj == NULL) return true;
+    assert(value.type != NULL);
+    switch (value.type->yt) {
+        case TypePointer:
+        case TypeClass:
+        case TypeInstance:
+        case TypeFunction:
+        case TypeRoutine:
+        case TypeChannel:
+        case TypeMap:
+        case TypeString:
+            return value.as.obj == NULL;
+        default:
+            return false;
+    }
+}
 
 bool is_positive_integer(Value a) {
     if (IS_I8(a)) return AS_I8(a) > 0;
@@ -38,7 +58,7 @@ size_t as_positive_integer(Value a) {
 
 bool valuesEqual(Value a, Value b) {
     if (a.type != b.type) return false;
-    if (a.type == NULL && a.as.obj == NULL) return true; // NIL_VAL
+    if (is_nil(a) && is_nil(b)) return true;
 
     switch (a.type->yt) {
         case TypeBool:     return AS_BOOL(a) == AS_BOOL(b);
