@@ -27,7 +27,6 @@ bool is_value_type(YargType yt) {
     switch (yt) {
     case TypeBool:
     case TypeInt:
-    case TypePointer:
     case TypeDouble:
     case TypeInt8:
     case TypeUint8:

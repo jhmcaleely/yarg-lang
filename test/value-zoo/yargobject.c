@@ -145,3 +145,63 @@ ObjYargPointer* arrayElement(ObjArray* array, size_t index) {
 
     return pointer;
 }
+
+bool arraysEqual(const ObjArray* a, const ObjArray* b) {
+    if (a == b) return true;
+    if (a->yarg.type != b->yarg.type) return false;
+
+    return memcmp(a->elements, b->elements, storage_size_of_yargtype(a->yarg.type)) == 0;
+}
+
+bool structsEqual(const ObjStruct* a, const ObjStruct* b) {
+    if (a == b) return true;
+    if (a->yarg.type != b->yarg.type) return false;
+
+    return memcmp(a->fields, b->fields, storage_size_of_yargtype(a->yarg.type)) == 0;
+}
+
+bool typesEqual(const ObjYargType* a, const ObjYargType* b) {
+    if (a == b) return true;
+    switch (a->yt) {
+        case TypeInt:
+        case TypeInt8:
+        case TypeUint8:
+        case TypeInt16:
+        case TypeUint16:
+        case TypeInt32:
+        case TypeUint32:
+        case TypeInt64:
+        case TypeUint64:
+        case TypeDouble:
+        case TypeAddress:
+        case TypeClass:
+            return a->yt == b->yt;
+        case TypePointer: {
+            ObjYargTypePointer* pointer_a = (ObjYargTypePointer*)a;
+            ObjYargTypePointer* pointer_b = (ObjYargTypePointer*)b;
+            return typesEqual(pointer_a->target_type, pointer_b->target_type);
+        }
+        case TypeArray: {
+            ObjYargTypeArray* array_a = (ObjYargTypeArray*)a;
+            ObjYargTypeArray* array_b = (ObjYargTypeArray*)b;
+            return typesEqual(array_a->element_type, array_b->element_type) && array_a->cardinality == array_b->cardinality;
+        }
+        default:
+            return false;
+    }
+    return a->yt == b->yt; // Simplistic check, may need to be expanded for complex types
+}
+
+bool pointersEqual(const ObjYargPointer* a, const ObjYargPointer* b) {
+    if (a == b) return true;
+    if (a->yarg.type != b->yarg.type) return false;
+
+    return a->target == b->target;
+}
+
+bool intsEqual(const ObjInt* a, const ObjInt* b) {
+    if (a == b) return true;
+    if (a->yarg.type != b->yarg.type) return false;
+
+    return a->value == b->value;
+}

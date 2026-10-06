@@ -80,8 +80,8 @@ typedef struct ObjValue {
 #define SIZE_T_UI_VAL(value)   UI32_VAL(value)
 #endif
 
-bool is_positive_integer32(Value a);
-uint32_t as_positive_integer32(Value a);
+bool is_positive_integer(Value a);
+size_t as_positive_integer(Value a);
 
 bool valuesEqual(Value a, Value b);
 

@@ -9,7 +9,7 @@
 //               | Value | Placeable | Container | Parameterised | Obj |
 // TypeBool      | x     |           |           |               |     |
 // TypeInt       | x     |           |           |               | x   |
-// TypePointer   | x     |           | x         | x             | x   |
+// TypePointer   |       |           | x         | x             | x   |
 // TypeClass     |       |           |           |               | x   |
 // TypeInstance  |       |           |           | x             | x   |
 // TypeFunction  |       |           |           | x             | x   |
