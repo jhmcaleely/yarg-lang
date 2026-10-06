@@ -6,11 +6,44 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef struct ObjString ObjString;
-typedef struct ObjYarg ObjYarg;
+//               | Value | Placeable | Container | Parameterised | Obj |
+// TypeBool      | x     |           |           |               |     |
+// TypeInt       | x     |           |           |               | x   |
+// TypePointer   | x     |           | x         | x             | x   |
+// TypeClass     |       |           |           |               | x   |
+// TypeInstance  |       |           |           | x             | x   |
+// TypeFunction  |       |           |           | x             | x   |
+// TypeRoutine   |       |           | %         | x             | x   |
+// TypeChannel   |       |           | x         | x             | x   |
+// TypeMap       |       |           | x         | x             | x   |
+// TypeYargType  |       |           |           |               | x   |
+// TypeDouble    | x     | x         |           |               |     |
+// TypeInt8      | x     | x         |           |               |     |
+// TypeUint8     | x     | x         |           |               |     |
+// TypeInt16     | x     | x         |           |               |     |
+// TypeUint16    | x     | x         |           |               |     |
+// TypeInt32     | x     | x         |           |               |     |
+// TypeUint32    | x     | x         |           |               |     |
+// TypeInt64     | x     | x         |           |               |     |
+// TypeUint64    | x     | x         |           |               |     |
+// TypeAddress   | x     | x         |           |               |     |
+// TypeString    |       | !         |           |               | x   |
+// TypeArray     | x     | *         | x         | x             | x   |
+// TypeStruct    | x     | *         | x         | x             | x   |
+//
+// Value - values are copied when passed. other types are 'pass by reference'
+// Placeable - has a platform defined layout in memory. Container types
+//             occupy linear memory suffient for all elements
+// Container - storage for one-or-more elements of another type.
+// Parameterised - requires information to fully define the type, eg the
+//                 size of an array, or the types of its elements.
+// Obj - Always stored as a heap Obj(ect).
+//
+// ! will have a c-style string available
+// * placeable if it's contained types are placeable
+// % routines contain only functions
 
 typedef enum {
-   // Yarg types with implementation defined storage
    TypeBool,
    TypeInt,
    TypePointer,
@@ -21,8 +54,6 @@ typedef enum {
    TypeChannel,
    TypeMap,
    TypeYargType,
-
-   // Yarg types which have platform defined storage
    TypeDouble,
    TypeInt8,
    TypeUint8,
@@ -33,65 +64,11 @@ typedef enum {
    TypeInt64,
    TypeUint64,
    TypeAddress,
-
-   // Yarg types with partially platform defined storage
-   TypeString, // will contain a 'c' style \0 terminated string
-
-   // Container Types that can have defined storage, if they contain elements with defined storage
+   TypeString,
    TypeArray,
    TypeStruct,
 } YargType;
 
-bool is_placeable_type(YargType yt);
-bool is_value_type(YargType yt);
-size_t storage_size_of_type(YargType yt);
-
-
-typedef struct ObjYargType {
-    Obj obj;
-    YargType yt;
-} ObjYargType;
-
-bool is_placeable_yargtype(const ObjYargType* type);
-size_t storage_size_of_yargtype(const ObjYargType* type);
-
-
-typedef struct {
-    ObjYargType boolean;
-    ObjYargType address;
-    ObjYargType dbl;
-    ObjYargType int8;
-    ObjYargType uint8;
-    ObjYargType int16;
-    ObjYargType uint16;
-    ObjYargType int32;
-    ObjYargType uint32;
-    ObjYargType int64;
-    ObjYargType uint64;
-} SimpleYargTypes;
-
-extern const SimpleYargTypes yargTypes;
-
-typedef struct ObjYargTypeArray {
-    ObjYargType core;
-    size_t cardinality;
-    ObjYargType* element_type;
-} ObjYargTypeArray;
-
-typedef struct ObjYargTypePointer {
-    ObjYargType core;
-    const ObjYargType* target_type;
-} ObjYargTypePointer;
-
-typedef struct ObjYargTypeMap {
-    ObjYargType core;
-    ObjYargType* key_type;
-    ObjYargType* value_type;
-} ObjYargTypeMap;
-
-ObjYargType* newYargTypeFromType(YargType yt);
-
-ObjYargTypeArray* newYargArrayTypeFromType(ObjYargType* elementType, size_t cardinality);
 
 typedef union {
     bool boolean;
@@ -107,6 +84,94 @@ typedef union {
     uintptr_t address;
     Obj* obj;
 } AnyValue;
+
+typedef struct ObjString ObjString;
+typedef struct ObjYarg ObjYarg;
+
+bool is_value_type(YargType yt);
+bool is_placeable_type(YargType yt);
+bool is_container_type(YargType yt);
+bool is_parameterised_type(YargType yt);
+bool is_obj_type(YargType yt);
+
+size_t storage_size_of_type(YargType yt);
+
+typedef struct ObjYargType {
+    Obj obj;
+    YargType yt;
+} ObjYargType;
+
+bool is_value_yargtype(const ObjYargType* type);
+bool is_placeable_yargtype(const ObjYargType* type);
+bool is_container_yargtype(const ObjYargType* type);
+bool is_parameterised_yargtype(const ObjYargType* type);
+bool is_obj_yargtype(const ObjYargType* type);
+
+size_t storage_size_of_yargtype(const ObjYargType* type);
+
+typedef struct {
+    ObjYargType boolean;
+    ObjYargType address;
+    ObjYargType dbl;
+    ObjYargType int8;
+    ObjYargType uint8;
+    ObjYargType int16;
+    ObjYargType uint16;
+    ObjYargType int32;
+    ObjYargType uint32;
+    ObjYargType int64;
+    ObjYargType uint64;
+    ObjYargType type;
+    ObjYargType class_;
+} SimpleYargTypes;
+
+extern const SimpleYargTypes yargTypes;
+
+typedef struct ObjYargTypeArray {
+    ObjYargType core;
+    size_t cardinality;
+    const ObjYargType* element_type;
+} ObjYargTypeArray;
+
+typedef struct ObjYargTypePointer {
+    ObjYargType core;
+    const ObjYargType* target_type;
+} ObjYargTypePointer;
+
+typedef struct ObjYargTypeMap {
+    ObjYargType core;
+    const ObjYargType* key_type;
+    const ObjYargType* value_type;
+} ObjYargTypeMap;
+
+typedef struct ObjYargTypeFunction {
+    ObjYargType core;
+    size_t param_count;
+} ObjYargTypeFunction;
+
+typedef struct ObjYargTypeChannel {
+    ObjYargType core;
+    const ObjYargType* element_type;
+} ObjYargTypeChannel;
+
+typedef struct ObjYargTypeInstance {
+    ObjYargType core;
+    const ObjYargType* class_type;
+} ObjYargTypeInstance;
+
+typedef struct ObjYargTypeStruct {
+    ObjYargType core;
+    // todo.
+} ObjYargTypeStruct;
+
+typedef struct ObjYargTypeRoutine {
+    ObjYargType core;
+    const ObjYargType* entry_function_type;
+} ObjYargTypeRoutine;
+
+const ObjYargType* newYargTypeFromType(YargType yt);
+
+const ObjYargTypeArray* newYargArrayTypeFromType(const ObjYargType* elementType, size_t cardinality);
 
 
 #endif

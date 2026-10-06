@@ -5,6 +5,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 
 const SimpleYargTypes yargTypes = {
     .boolean = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeBool },
@@ -17,42 +18,10 @@ const SimpleYargTypes yargTypes = {
     .int32 = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeInt32 },
     .uint32 = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeUint32 },
     .int64 = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeInt64 },
-    .uint64 = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeUint64 }
+    .uint64 = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeUint64 },
+    .type = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeYargType },
+    .class_ = { .obj.isMarked = true, .obj.next = NULL, .obj.type = OBJ_YARGTYPE, .yt = TypeClass },
 };
-
-ObjYargType* newYargTypeFromType(YargType yt) {
-    ObjYargType* type = (ObjYargType*)malloc(sizeof(ObjYargType));
-    memset(type, 0, sizeof(ObjYargType));
-    type->yt = yt;
-    return type;
-}
-
-ObjYargTypeArray* newYargArrayTypeFromType(ObjYargType* elementType, size_t cardinality) {
-    ObjYargTypeArray* arrayType = ALLOCATE_OBJ(ObjYargTypeArray, OBJ_YARGTYPE_ARRAY);
-    arrayType->core.yt = TypeArray;
-    arrayType->element_type = elementType;
-    arrayType->cardinality = cardinality;
-
-    return arrayType;
-}
-
-bool is_placeable_type(YargType yt) {
-    switch (yt) {
-    case TypeDouble:
-    case TypeInt8:
-    case TypeUint8:
-    case TypeInt16:
-    case TypeUint16:
-    case TypeInt32:
-    case TypeUint32:
-    case TypeInt64:
-    case TypeUint64:
-    case TypeAddress:
-        return true;
-    default:
-        return false;
-    }
-}
 
 bool is_value_type(YargType yt) {
     switch (yt) {
@@ -69,11 +38,106 @@ bool is_value_type(YargType yt) {
     case TypeInt64:
     case TypeUint64:
     case TypeAddress:
+    case TypeArray:
+    case TypeStruct:
         return true;
     default:
         return false;
     }
 }
+
+bool is_placeable_type(YargType yt) {
+    switch (yt) {
+    case TypeDouble:
+    case TypeInt8:
+    case TypeUint8:
+    case TypeInt16:
+    case TypeUint16:
+    case TypeInt32:
+    case TypeUint32:
+    case TypeInt64:
+    case TypeUint64:
+    case TypeAddress:
+        return true;
+    case TypeArray:
+    case TypeStruct:
+        panic(); return false;
+    default:
+        return false;
+    }
+}
+
+bool is_container_type(YargType yt) {
+    switch (yt) {
+    case TypeArray:
+    case TypeStruct:
+    case TypeMap:
+    case TypeChannel:
+    case TypeRoutine:
+    case TypePointer:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool is_parameterised_type(YargType yt) {
+    switch (yt) {
+    case TypePointer:
+    case TypeInstance:
+    case TypeFunction:
+    case TypeRoutine:
+    case TypeChannel:
+    case TypeMap:
+    case TypeArray:
+    case TypeStruct:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool is_obj_type(YargType yt) {
+    switch (yt) {
+    case TypeInt:
+    case TypePointer:
+    case TypeClass:
+    case TypeInstance:
+    case TypeFunction:
+    case TypeRoutine:
+    case TypeChannel:
+    case TypeMap:
+    case TypeYargType:
+    case TypeString:
+    case TypeArray:
+    case TypeStruct:
+        return true;
+    default:
+        return false;
+    }
+}
+
+const ObjYargType* newYargTypeFromType(YargType yt) {
+    switch (yt) {
+    case TypeBool: return &yargTypes.boolean;
+    case TypeDouble: return &yargTypes.dbl;
+    case TypeInt8: return &yargTypes.int8;
+    case TypeUint8: return &yargTypes.uint8;
+    case TypeInt16: return &yargTypes.int16;
+    case TypeUint16: return &yargTypes.uint16;
+    case TypeInt32: return &yargTypes.int32;
+    case TypeUint32: return &yargTypes.uint32;
+    case TypeInt64: return &yargTypes.int64;
+    case TypeUint64: return &yargTypes.uint64;
+    case TypeAddress: return &yargTypes.address;
+    case TypeYargType: return &yargTypes.type;
+    default:
+        // parameterised types should not be created with this function
+        assert(is_parameterised_type(yt));
+        panic(); return NULL;
+    }
+}
+
 
 bool is_placeable_yargtype(const ObjYargType* type) {
     if (type->yt == TypeArray) {
@@ -84,7 +148,21 @@ bool is_placeable_yargtype(const ObjYargType* type) {
     }
 }
 
+bool is_container_yargtype(const ObjYargType* type) {
+    return is_container_type(type->yt);
+}
 
+bool is_parameterised_yargtype(const ObjYargType* type) {
+    return is_parameterised_type(type->yt);
+}
+
+bool is_value_yargtype(const ObjYargType* type) {
+    return is_value_type(type->yt);
+}
+
+bool is_obj_yargtype(const ObjYargType* type) {
+    return is_obj_type(type->yt);
+}
 
 size_t storage_size_of_type(YargType yt) {
     switch (yt) {
@@ -109,4 +187,13 @@ size_t storage_size_of_yargtype(const ObjYargType* type) {
     } else {
         return storage_size_of_type(type->yt);
     }
+}
+
+const ObjYargTypeArray* newYargArrayTypeFromType(const ObjYargType* elementType, size_t cardinality) {
+    ObjYargTypeArray* arrayType = ALLOCATE_OBJ(ObjYargTypeArray, OBJ_YARGTYPE_ARRAY);
+    arrayType->core.yt = TypeArray;
+    arrayType->element_type = elementType;
+    arrayType->cardinality = cardinality;
+
+    return arrayType;
 }

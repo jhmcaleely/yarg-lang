@@ -18,13 +18,13 @@ typedef union {
 
 typedef struct {
     ValuePtr valuePtr;
-    ObjYargType* type;
+    const ObjYargType* type;
 } PackedValue;
 
 void initialisePackedValue(PackedValue packedValue);
-PackedValue allocPackedValue(ObjYargType* type);
+PackedValue allocPackedValue(const ObjYargType* type);
 void packValue(PackedValue packedStorageTarget, Value value);
 Value unpackValue(PackedValue packedValue);
-PackedValue createPackedValue(uintptr_t ptr, ObjYargType* type);
+PackedValue createPackedValue(uintptr_t ptr, const ObjYargType* type);
 
 #endif // PACKED_VALUE_H

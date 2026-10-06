@@ -155,7 +155,7 @@ int main(void) {
     sprintValue(v, buffer, sizeof(buffer));
     printf("%s\n", buffer);
 
-    ObjYargType* element = newYargTypeFromType(TypeInt8);
+    const ObjYargType* element = newYargTypeFromType(TypeInt8);
 
     PackedValue pv = allocPackedValue(element);
     Value x = unpackValue(pv);
@@ -172,7 +172,7 @@ int main(void) {
     printf("%s\n", buffer);
 
 
-    ObjYargTypeArray* arrayType = newYargArrayTypeFromType(element, 10);
+    const ObjYargTypeArray* arrayType = newYargArrayTypeFromType(element, 10);
     ObjArray* array = (ObjArray*)allocateYargObject((ObjYargType*)arrayType);
 
     Value z = ARRAY_VAL(array);

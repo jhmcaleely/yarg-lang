@@ -26,7 +26,7 @@ void initialisePackedValue(PackedValue packedValue) {
     }
 }
 
-PackedValue createPackedValue(uintptr_t ptr, ObjYargType* type) {
+PackedValue createPackedValue(uintptr_t ptr, const ObjYargType* type) {
     PackedValue packedValue;
     packedValue.type = type;
     switch (packedValue.type->yt) {
@@ -45,7 +45,7 @@ PackedValue createPackedValue(uintptr_t ptr, ObjYargType* type) {
     return packedValue;
 } 
 
-PackedValue allocPackedValue(ObjYargType* type) {
+PackedValue allocPackedValue(const ObjYargType* type) {
     PackedValue packedValue;
     packedValue.type = type;
     switch (type->yt) {
