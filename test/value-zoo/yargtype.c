@@ -116,6 +116,10 @@ bool is_obj_type(YargType yt) {
     }
 }
 
+bool is_nil_assignable(YargType yt) {
+    return !is_placeable_type(yt);
+}
+
 const ObjYargType* newYargTypeFromType(YargType yt) {
     switch (yt) {
     case TypeBool: return &yargTypes.boolean;
@@ -139,6 +143,7 @@ const ObjYargType* newYargTypeFromType(YargType yt) {
 
 
 bool is_placeable_yargtype(const ObjYargType* type) {
+    assert(type != NULL);
     if (type->yt == TypeArray) {
         ObjYargTypeArray* arrayType = (ObjYargTypeArray*)type;
         return is_placeable_yargtype(arrayType->element_type);
@@ -148,19 +153,29 @@ bool is_placeable_yargtype(const ObjYargType* type) {
 }
 
 bool is_container_yargtype(const ObjYargType* type) {
+    assert(type != NULL);
     return is_container_type(type->yt);
 }
 
 bool is_parameterised_yargtype(const ObjYargType* type) {
+    assert(type != NULL);
     return is_parameterised_type(type->yt);
 }
 
 bool is_value_yargtype(const ObjYargType* type) {
+    assert(type != NULL);
     return is_value_type(type->yt);
 }
 
 bool is_obj_yargtype(const ObjYargType* type) {
+    assert(type != NULL);
     return is_obj_type(type->yt);
+}
+
+bool is_nil_assignable_yargtype(const ObjYargType* type) {
+    if (type == NULL) return true;
+
+    return is_nil_assignable(type->yt);
 }
 
 size_t storage_size_of_type(YargType yt) {

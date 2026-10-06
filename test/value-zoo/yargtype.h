@@ -6,30 +6,34 @@
 #include <stddef.h>
 #include <stdint.h>
 
-//               | Value | Placeable | Container | Parameterised | Obj |
-// TypeBool      | x     |           |           |               |     |
-// TypeInt       | x     |           |           |               | x   |
-// TypePointer   |       |           | x         | x             | x   |
-// TypeClass     |       |           |           |               | x   |
-// TypeInstance  |       |           |           | x             | x   |
-// TypeFunction  |       |           |           | x             | x   |
-// TypeRoutine   |       |           | %         | x             | x   |
-// TypeChannel   |       |           | x         | x             | x   |
-// TypeMap       |       |           | x         | x             | x   |
-// TypeYargType  |       |           |           |               | x   |
-// TypeDouble    | x     | x         |           |               |     |
-// TypeInt8      | x     | x         |           |               |     |
-// TypeUint8     | x     | x         |           |               |     |
-// TypeInt16     | x     | x         |           |               |     |
-// TypeUint16    | x     | x         |           |               |     |
-// TypeInt32     | x     | x         |           |               |     |
-// TypeUint32    | x     | x         |           |               |     |
-// TypeInt64     | x     | x         |           |               |     |
-// TypeUint64    | x     | x         |           |               |     |
-// TypeAddress   | x     | x         |           |               |     |
-// TypeString    |       | !         |           |               | x   |
-// TypeArray     | x     | *         | x         | x             | x   |
-// TypeStruct    | x     | *         | x         | x             | x   |
+//               | Value | Placeable | Container | Parameterised | Obj | nil |
+// TypeBool      | x     |           |           |               |     |     |
+// TypeInt       | x     |           |           |               | x   |     |
+// TypePointer   |       |           | x         | x             | x   | x   |
+// TypeClass     |       |           |           |               | x   | x   |
+// TypeInstance  |       |           |           | x             | x   | x   |
+// TypeFunction  |       |           |           | x             | x   | x   |
+// TypeRoutine   |       |           | %         | x             | x   | x   |
+// TypeChannel   |       |           | x         | x             | x   | x   |
+// TypeMap       |       |           | x         | x             | x   | x   |
+// TypeYargType  |       |           |           |               | x   | x   |
+// TypeDouble    | x     | x         |           |               |     |     |
+// TypeInt8      | x     | x         |           |               |     |     |
+// TypeUint8     | x     | x         |           |               |     |     |
+// TypeInt16     | x     | x         |           |               |     |     |
+// TypeUint16    | x     | x         |           |               |     |     |
+// TypeInt32     | x     | x         |           |               |     |     |
+// TypeUint32    | x     | x         |           |               |     |     |
+// TypeInt64     | x     | x         |           |               |     |     |
+// TypeUint64    | x     | x         |           |               |     |     |
+// TypeAddress   | x     | x         |           |               |     | $   |
+// TypeString    |       | !         |           |               | x   | x   |
+// TypeArray     | x     | *         | x         | x             | x   |     |
+// TypeStruct    | x     | *         | x         | x             | x   |     |
+//
+// nil exists outside the set of types as an untyped special value. A location
+// that can contain any type can contain nil, and the 'nil' types above can also
+// take nil as a valid value.
 //
 // Value - values are copied when passed. other types are 'pass by reference'
 // Placeable - has a platform defined layout in memory. Container types
@@ -42,6 +46,7 @@
 // ! will have a c-style string available
 // * placeable if it's contained types are placeable
 // % routines contain only functions
+// $ address 0 is distinct from nil, and nil cannot be assigned to address.
 
 typedef enum {
    TypeBool,
@@ -101,6 +106,7 @@ bool is_placeable_type(YargType yt);
 bool is_container_type(YargType yt);
 bool is_parameterised_type(YargType yt);
 bool is_obj_type(YargType yt);
+bool is_nil_assignable(YargType yt);
 
 size_t storage_size_of_type(YargType yt);
 
@@ -114,6 +120,7 @@ bool is_placeable_yargtype(const ObjYargType* type);
 bool is_container_yargtype(const ObjYargType* type);
 bool is_parameterised_yargtype(const ObjYargType* type);
 bool is_obj_yargtype(const ObjYargType* type);
+bool is_nil_assignable_yargtype(const ObjYargType* type);
 
 size_t storage_size_of_yargtype(const ObjYargType* type);
 
