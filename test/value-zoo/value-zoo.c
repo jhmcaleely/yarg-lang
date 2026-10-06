@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "yarg-runtime.h"
+#include "vm.h"
 
 void sprintValueValue(Value v, char* buffer, size_t bufferSize) {
 
@@ -88,24 +89,6 @@ void sprintValue(Value v, char* buffer, size_t bufferSize) {
     }
 }
 
-ObjYarg* builtin_new(const ObjYargType* type) {
-    if (type == NULL) {
-        ObjValue* obj = ALLOCATE_OBJ(ObjValue, OBJ_ANYVALUE);
-        ObjYargPointer* pointer = newYargPointerToObjVal(obj);
-        return (ObjYarg*)pointer;
-    } else if (is_value_type(type->yt) && is_placeable_yargtype(type)) {
-        void* memory = malloc(storage_size_of_yargtype(type));
-        ObjYargPointer* pointer = newYargPointerToPlaceable(type, memory);
-        return (ObjYarg*)pointer;
-    } else if (is_value_type(type->yt)) {
-        ObjYarg* obj = (ObjYarg*) allocateYargObject(type);
-        ObjYargPointer* pointer = newYargPointerToObj(obj);
-        return (ObjYarg*)pointer;
-    } else {
-        return (ObjYarg*)allocateYargObject(type);
-    }
-}
-
 int main(void) {
     char buffer[256];
 
@@ -178,11 +161,15 @@ int main(void) {
     sprintValue(z, buffer, sizeof(buffer));
     printf("%s\n", buffer);
 
-    Value firstElement = YARG_OBJ_VAL(arrayElement(array, 3));
-    sprintValue(firstElement, buffer, sizeof(buffer));
+    ObjLocation* firstElement = arrayElement(array, 3);
+    Value firstElementValue = getLocationValue(firstElement);
+
+
+    sprintValue(firstElementValue, buffer, sizeof(buffer));
     printf("%s\n", buffer);
 
-    setPointerTarget((ObjYargPointer*)AS_OBJ(firstElement), ADDRESS_VAL((uintptr_t)(void*)99));
+    setLocationValue(firstElement, ADDRESS_VAL((uintptr_t)(void*)99));
+
     sprintValue(z, buffer, sizeof(buffer));
     printf("%s\n", buffer);
 

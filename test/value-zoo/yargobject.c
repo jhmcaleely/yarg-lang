@@ -2,7 +2,9 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 
+#include "placed-value.h"
 #include "yarg-runtime.h"
 
 
@@ -119,31 +121,35 @@ void setPointerTarget(ObjYargPointer* pointer, Value newVal) {
     }
 }
 
-ObjYargPointer* arrayElement(ObjArray* array, size_t index) {
+ObjLocation* arrayElement(ObjArray* array, size_t index) {
+    ObjLocation* location = ALLOCATE_OBJ(ObjLocation, OBJ_LOCATION);
+
     ObjYargTypeArray* array_type = (ObjYargTypeArray*)array->yarg.type;
     size_t element_size = sizeof(AnyValue);
     if (array_type->element_type == NULL) {
         element_size = sizeof(Value);
     } else if (is_placeable_yargtype(array_type->element_type)) {
+        assert(array_type->element_type != NULL);
+        location->loc.placed = true;
         element_size = storage_size_of_yargtype(array_type->element_type);
     }
-
-    ObjYargPointer* pointer = ALLOCATE_OBJ(ObjYargPointer, OBJ_PACKEDPOINTER);
-    ObjYargTypePointer* pointer_type = ALLOCATE_OBJ(ObjYargTypePointer, OBJ_YARGTYPE_POINTER);
-    pointer_type->core.yt = TypePointer;
-    pointer->yarg.type = (ObjYargType*)pointer_type;
-    pointer->target = (char*)array->elements + index * element_size;
-    pointer->owner = (Obj*)array;
-
-    if (array_type->element_type == NULL) {
-        Value* value_ptr = (Value*)pointer->target;
-        pointer_type->target_type = value_ptr->type;
+    
+    if (location->loc.placed) {
+        size_t offset = index * element_size;
+        uintptr_t element_address = (uintptr_t)((char*)array->elements + offset);
+        location->loc.placedValue = createPlacedValue(element_address, array_type->element_type);
     } else {
-        pointer_type->target_type = array_type->element_type;
+        size_t offset = index * element_size;
+        Value* element = (Value*)((char*)array->elements + offset);
+        location->loc.valuePtr = element;
+        if (array_type->element_type == NULL) {
+            location->loc.valuePtr->type_assignable = true;
+        }
     }
- 
 
-    return pointer;
+    location->owner = (ObjYarg*)array;
+
+    return location;
 }
 
 bool arraysEqual(const ObjArray* a, const ObjArray* b) {

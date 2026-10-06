@@ -21,10 +21,27 @@ typedef struct {
     const ObjYargType* type;
 } PlacedValue;
 
+typedef struct ValueLocation {
+    bool placed;
+    union {
+        PlacedValue placedValue;
+        Value* valuePtr;
+    };
+} ValueLocation;
+
+typedef struct ObjLocation {
+    Obj obj;
+    const ObjYarg* owner;
+    ValueLocation loc;
+} ObjLocation;
+
 PlacedValue allocPlacedValue(const ObjYargType* type);
 PlacedValue createPlacedValue(uintptr_t ptr, const ObjYargType* type);
 
 void placeValue(PlacedValue placedStorage, Value value);
 Value getPlacedValue(PlacedValue placedStorage);
+
+Value getLocationValue(ObjLocation* location);
+void setLocationValue(ObjLocation* location, Value value);
 
 #endif // PLACED_VALUE_H

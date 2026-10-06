@@ -9,6 +9,8 @@ typedef struct ObjYarg {
     const ObjYargType* type;
 } ObjYarg;
 
+typedef struct ObjLocation ObjLocation;
+
 #define AS_YARG_OBJ(value) ((ObjYarg*)(AS_OBJ(value)))
 #define AS_ARRAY(value) ((ObjArray*)(AS_YARG_OBJ(value)))
 #define AS_STRUCT(value) ((ObjStruct*)(AS_YARG_OBJ(value)))
@@ -53,7 +55,7 @@ ObjYargPointer* newYargPointerToObj(ObjYarg* target);
 ObjYargPointer* newYargPointerToObjVal(ObjValue* target);
 ObjYargPointer* newYargPointerToPlaceable(const ObjYargType* targetType, void* memory);
 
-ObjYargPointer* arrayElement(ObjArray* array, size_t index);
+ObjLocation* arrayElement(ObjArray* array, size_t index);
 
 bool arraysEqual(const ObjArray* a, const ObjArray* b);
 bool structsEqual(const ObjStruct* a, const ObjStruct* b);

@@ -4,6 +4,7 @@
 #include <sysexits.h>
 
 #include "yarg-runtime.h"
+#include "yargobject.h"
 
 static void initialisePlacedValue(PlacedValue placedStorage) {
     if (placedStorage.type) {
@@ -124,4 +125,32 @@ Value getPlacedValue(PlacedValue packedStorage) {
         default: panic(); break;
     }
     return value;
+}
+
+Value getLocationValue(ObjLocation* location) {
+    if (location->loc.placed) {
+        return getPlacedValue(location->loc.placedValue);
+    } else {
+        return *location->loc.valuePtr;
+    }
+}
+
+void setLocationValue(ObjLocation* location, Value value) {
+    if (location->loc.placed) {
+        if (typesEqual(location->loc.placedValue.type, value.type)) {
+            placeValue(location->loc.placedValue, value);
+        } else {
+            panic();
+        }
+    } else {
+        if (location->loc.valuePtr->type_assignable) {
+            *location->loc.valuePtr = value;
+        } else if (typesEqual(location->loc.valuePtr->type, value.type)) {
+            *location->loc.valuePtr = value;
+        } else {
+            // could assign error, ie
+            // *location->objValue = errorValue;
+            panic();
+        }
+    }
 }
