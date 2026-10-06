@@ -1,4 +1,3 @@
-#include "yargtype.h"
 #include "yargobject.h"
 
 #include <string.h>

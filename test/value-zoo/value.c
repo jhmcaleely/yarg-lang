@@ -1,9 +1,8 @@
 #include "value.h"
-#include "yargtype.h"
 
 bool valuesEqual(Value a, Value b) {
     if (a.type != b.type) return false;
-    if (a.type == 0 && a.as.ui32 == 0) return true; // NIL_VAL
+    if (a.type == NULL && a.as.obj == NULL) return true; // NIL_VAL
 
     switch (a.type->yt) {
         case TypeBool:     return AS_BOOL(a) == AS_BOOL(b);

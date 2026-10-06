@@ -1,13 +1,12 @@
 #include "value.h"
-#include "yargtype.h"
-#include "yargobject.h"
-
 #include "placed-value.h"
-#include "yarg-runtime.h"
+#include "yargobject.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "yarg-runtime.h"
 
 void sprintValueValue(Value v, char* buffer, size_t bufferSize) {
 
@@ -29,8 +28,8 @@ void sprintValueValue(Value v, char* buffer, size_t bufferSize) {
                 strcpy(buffer, "");
                 for (size_t i = 0; i < array_type->cardinality; i++){
                     uintptr_t offset = elems + increment * i;
-                    PackedValue pv = createPackedValue(offset, array_type->element_type);
-                    Value x = unpackValue(pv);
+                    PlacedValue pv = createPlacedValue(offset, array_type->element_type);
+                    Value x = getPlacedValue(pv);
                     char elem[100];
                     sprintValueValue(x, elem, 100);
                     strcat(buffer, elem);
@@ -157,17 +156,17 @@ int main(void) {
 
     const ObjYargType* element = newYargTypeFromType(TypeInt8);
 
-    PackedValue pv = allocPackedValue(element);
-    Value x = unpackValue(pv);
+    PlacedValue pv = allocPlacedValue(element);
+    Value x = getPlacedValue(pv);
     sprintValue(x, buffer, sizeof(buffer));
     printf("%s\n", buffer);
 
     element = newYargTypeFromType(TypeAddress);
 
-    pv = allocPackedValue(element);
-    packValue(pv, ADDRESS_VAL((uintptr_t)(void*)&main));
+    pv = allocPlacedValue(element);
+    placeValue(pv, ADDRESS_VAL((uintptr_t)(void*)&main));
 
-    Value y = unpackValue(pv);
+    Value y = getPlacedValue(pv);
     sprintValue(y, buffer, sizeof(buffer));
     printf("%s\n", buffer);
 

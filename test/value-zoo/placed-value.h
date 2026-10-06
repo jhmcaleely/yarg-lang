@@ -1,5 +1,5 @@
-#ifndef PACKED_VALUE_H
-#define PACKED_VALUE_H
+#ifndef PLACED_VALUE_H
+#define PLACED_VALUE_H
 
 #include "value.h"
 
@@ -13,18 +13,18 @@ typedef union {
     uint32_t* ui32;
     int64_t* i64;
     uint64_t* ui64;
-    uintptr_t* uiptr;
-} ValuePtr;
+    uintptr_t* address;
+} PlacedValuePtr;
 
 typedef struct {
-    ValuePtr valuePtr;
+    PlacedValuePtr valuePtr;
     const ObjYargType* type;
-} PackedValue;
+} PlacedValue;
 
-void initialisePackedValue(PackedValue packedValue);
-PackedValue allocPackedValue(const ObjYargType* type);
-void packValue(PackedValue packedStorageTarget, Value value);
-Value unpackValue(PackedValue packedValue);
-PackedValue createPackedValue(uintptr_t ptr, const ObjYargType* type);
+PlacedValue allocPlacedValue(const ObjYargType* type);
+PlacedValue createPlacedValue(uintptr_t ptr, const ObjYargType* type);
 
-#endif // PACKED_VALUE_H
+void placeValue(PlacedValue placedStorage, Value value);
+Value getPlacedValue(PlacedValue placedStorage);
+
+#endif // PLACED_VALUE_H
