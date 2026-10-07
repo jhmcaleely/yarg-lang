@@ -118,8 +118,8 @@ size_t addFieldType(ObjConcreteYargTypeStruct* st, size_t index, size_t fieldOff
         if (alignment > st->alignment) {
             st->alignment = alignment;
         }
-    } else if (is_positive_integer32(offset)) {
-        fieldOffset = as_positive_integer32(offset);
+    } else if (is_positive_integer(offset)) {
+        fieldOffset = as_positive_integer(offset);
         st->field_indexes[index] = fieldOffset;
     }
     st->storage_size = fieldOffset + alignmentPadding + yt_sizeof_type_storage(type);

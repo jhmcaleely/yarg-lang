@@ -37,20 +37,20 @@ bool irq_add_shared_handlerNative(ObjRoutine* routine, int argCount, Value* resu
         runtimeError(routine, "Expected an address.");
         return false;
     }
-    if (!is_positive_integer32(numVal)) {
+    if (!is_positive_integer(numVal)) {
         runtimeError(routine, "Expected an a positive integer.");
         return false;
     }
-    if (!is_positive_integer32(prioVal)) {
+    if (!is_positive_integer(prioVal)) {
         runtimeError(routine, "Expected an a positive integer for priority.");
         return false;
     }        
 
-    unsigned int num = as_positive_integer32(numVal);
+    size_t num = as_positive_integer(numVal);
     uintptr_t isrRoutine = AS_ADDRESS(address);
 
 #if defined(CYARG_PICO_SDK_TARGET)
-    unsigned int prio = as_positive_integer32(prioVal);
+    size_t prio = as_positive_integer(prioVal);
     irq_add_shared_handler(num, (irq_handler_t) isrRoutine, prio);
 #elif defined(CYARG_FEATURE_TEST_SYSTEM)
     tsAddInterruptHandler(num, (void *) isrRoutine);
@@ -70,12 +70,12 @@ bool irq_remove_handlerNative(ObjRoutine* routine, int argCount, Value* result) 
         runtimeError(routine, "Expected an address.");
         return false;
     }
-    if (!is_positive_integer32(numVal)) {
+    if (!is_positive_integer(numVal)) {
         runtimeError(routine, "Expected an a positive integer.");
         return false;
     }
 
-    unsigned int num = as_positive_integer32(numVal);
+    size_t num = as_positive_integer(numVal);
     uintptr_t isrRoutine = AS_ADDRESS(address);
 
 #if defined(CYARG_PICO_SDK_TARGET)
@@ -108,18 +108,18 @@ bool clock_get_hzNative(ObjRoutine* routine, int argCount, Value* result) {
     }
     Value numVal = nativeArgument(routine, argCount, 0);
 
-    if (!is_positive_integer32(numVal)) {
+    if (!is_positive_integer(numVal)) {
         runtimeError(routine, "Argument must be a positive integer");
         return false;
     }
 
-    uint32_t res = 0;
+    size_t res = 0;
 
 #ifdef CYARG_PICO_SDK_TARGET
-    res = clock_get_hz(as_positive_integer32(numVal));
+    res = clock_get_hz(as_positive_integer(numVal));
 #endif
 
-    *result = UI32_VAL(res);
+    *result = SIZE_T_UI_VAL(res);
     return true;
 }
 
@@ -187,11 +187,11 @@ bool host_argnNative(ObjRoutine* routine, int argCount, Value* result) {
     }
 
     Value indexVal = nativeArgument(routine, argCount, 0);
-    if (!is_positive_integer32(indexVal)) {
+    if (!is_positive_integer(indexVal)) {
         runtimeError(routine, "Expected a positive integer.");
         return false;
     }
-    uint32_t index = as_positive_integer32(indexVal);
+    size_t index = as_positive_integer(indexVal);
     if (index >= vmHost.argc) {
         runtimeError(routine, "Argument index out of range.");
         return false;
@@ -208,11 +208,11 @@ bool host_exitCodeNative(ObjRoutine* routine, int argCount, Value* result) {
     }
 
     Value codeVal = nativeArgument(routine, argCount, 0);
-    if (!is_positive_integer32(codeVal)) {
+    if (!is_positive_integer(codeVal)) {
         runtimeError(routine, "Expected a positive integer.");
         return false;
     }
-    uint32_t code = as_positive_integer32(codeVal);
+    size_t code = as_positive_integer(codeVal);
     vmHost.exitCode = (int) code;
     *result = NIL_VAL;
     return true;
@@ -229,7 +229,7 @@ bool readFileIntoBufferNative(ObjRoutine* routine, int argCount, Value* result) 
     Value bufferVal = nativeArgument(routine, argCount, 1);
     Value bufferSizeVal = nativeArgument(routine, argCount, 2);
 
-    if (!is_positive_integer32(bufferSizeVal)) {
+    if (!is_positive_integer(bufferSizeVal)) {
         runtimeError(routine, "Expected a positive integer for the buffer size.");
         return false;
     }
@@ -244,7 +244,7 @@ bool readFileIntoBufferNative(ObjRoutine* routine, int argCount, Value* result) 
     }
 
     const char* path = AS_CSTRING(pathVal);
-    size_t bufferSize = as_positive_integer32(bufferSizeVal);
+    size_t bufferSize = as_positive_integer(bufferSizeVal);
     uint8_t* buf = (uint8_t*) AS_ADDRESS(bufferVal);
 
     readFileIntoBuffer(path, buf, bufferSize);
@@ -296,12 +296,12 @@ bool vm_xip_string_nodeNative(ObjRoutine* routine, int argCount, Value* result) 
     }
 
     Value nodeVal = nativeArgument(routine, argCount, 0);
-    if (!is_positive_integer32(nodeVal)) {
+    if (!is_positive_integer(nodeVal)) {
         runtimeError(routine, "Expected a positive integer for the node.");
         return false;
     }
 
-    uint32_t node = as_positive_integer32(nodeVal);
+    size_t node = as_positive_integer(nodeVal);
     if (node > UINT16_MAX) {
         runtimeError(routine, "Node value out of range.");
         return false;

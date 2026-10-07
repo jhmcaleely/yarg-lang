@@ -398,11 +398,11 @@ static void defineMethod(ObjRoutine* routine, ObjString* name) {
 }
 
 static bool derefArrayElement(ObjRoutine* routine) {
-    if (!is_positive_integer32(peek(routine, 0))) {
+    if (!is_positive_integer(peek(routine, 0))) {
         runtimeError(routine, "Expected an array and a positive or unsigned integer.");
         return false;
     }
-    size_t index = as_positive_integer32(peek(routine, 0));
+    size_t index = as_positive_integer(peek(routine, 0));
     Value result = NIL_VAL;
 
     if (IS_UNIFORMARRAY(peek(routine, 1))) {
@@ -466,12 +466,12 @@ static bool derefElement(ObjRoutine* routine) {
 
 static bool setArrayElement(ObjRoutine* routine, ObjPackedUniformArray* array, Value indexVal, Value rhs) {
 
-    if (!is_positive_integer32(indexVal)) {
+    if (!is_positive_integer(indexVal)) {
         runtimeError(routine, "Expected an array and a positive or unsigned integer.");
         return false;
     }
 
-    uint32_t index = as_positive_integer32(indexVal);
+    size_t index = as_positive_integer(indexVal);
 
     if (index >= arrayCardinality(array->store)) {
         runtimeError(routine, "Array index %d out of bounds (0:%d)", index, arrayCardinality(array->store) - 1);
@@ -1210,7 +1210,7 @@ InterpretResult run(ObjRoutine* routine) {
                     runtimeError(routine, "Location must be a pointer to an uint32 or address.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                if (!is_positive_integer32(assignment) && !is_stored_type(assignment_type)) {
+                if (!is_positive_integer(assignment) && !is_stored_type(assignment_type)) {
                     tempRootPop();
                     runtimeError(routine, "Value must be a positive integer or a placeable type.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -1232,17 +1232,12 @@ InterpretResult run(ObjRoutine* routine) {
                 volatile uint32_t* reg = (volatile uint32_t*) nominal_address;
 #endif
 
-                uint32_t val = 0;
+                size_t val = 0;
 
-                if (is_positive_integer32(assignment)) {
-                    val = as_positive_integer32(assignment);
+                if (is_positive_integer(assignment)) {
+                    val = as_positive_integer(assignment);
                 } else if (is_stored_type(assignment_type)) {
-#if IS_32BIT
                     val = (uintptr_t)storedAddressof(assignment);
-#elif IS_64BIT
-                    // this is a bug on a 64bit addressed image.
-                    val = (uint32_t)(uintptr_t)storedAddressof(assignment);
-#endif
                 }
 
 #if defined (CYARG_SELF_HOSTED)
@@ -1251,7 +1246,7 @@ InterpretResult run(ObjRoutine* routine) {
 #if defined(CYARG_FEATURE_TEST_SYSTEM)
                 tsWrite((uint32_t)nominal_address, val);
 #endif
-                printf("poke 0x%08lx, 0x%08x\n", nominal_address, val);
+                printf("poke 0x%08lx, 0x%08zx\n", nominal_address, val);
 #endif
                 tempRootPop();
                 pop(routine);
@@ -1435,8 +1430,8 @@ InterpretResult run(ObjRoutine* routine) {
                     }
                     typeObject = (ObjConcreteYargType*) mapType;
                     tempRootPop();
-                } else if (is_positive_integer32(indexer)) {
-                    uint32_t cardinality = as_positive_integer32(indexer);
+                } else if (is_positive_integer(indexer)) {
+                    size_t cardinality = as_positive_integer(indexer);
                     if (cardinality == 0) {
                         runtimeError(routine, "Array cardinality must be non zero.");
                         return INTERPRET_RUNTIME_ERROR;

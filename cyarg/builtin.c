@@ -94,27 +94,27 @@ bool readYargROMSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* r
         runtimeError(routineContext, "Expected 2 arguments but got %d.", argCount);
         return false;
     }
-    if (!is_positive_integer32(peek(routineContext, 0))) {
+    if (!is_positive_integer(peek(routineContext, 0))) {
         runtimeError(routineContext, "First argument to read_yarg_source must be positive integer.");
         return false;
     }
-    if (!is_positive_integer32(peek(routineContext, 1))) {
+    if (!is_positive_integer(peek(routineContext, 1))) {
         runtimeError(routineContext, "Second argument to read_yarg_source must be positive integer.");
         return false;
     }
 
-    uint32_t romFileIndex = as_positive_integer32(peek(routineContext, 1));
-    uint32_t format_requested = as_positive_integer32(peek(routineContext, 0));
+    size_t romFileIndex = as_positive_integer(peek(routineContext, 1));
+    size_t format_requested = as_positive_integer(peek(routineContext, 0));
 
     if (romFileIndex > UINT16_MAX) {
-        runtimeError(routineContext, "ROM file index %d out of range.", romFileIndex);
+        runtimeError(routineContext, "ROM file index %zu out of range.", romFileIndex);
         return false;
     }
 
     size_t length;
     const uint8_t* data;
     if (!xipLibraryReadNode(romFileIndex, &data, &length)) {
-        runtimeError(routineContext, "Failed to read ROM node %d.", romFileIndex);
+        runtimeError(routineContext, "Failed to read ROM node %zu.", romFileIndex);
         return false;
     }
 
@@ -214,14 +214,14 @@ bool makeChannelBuiltin(ObjRoutine* routine, int argCount, Value* result) {
         valCapacity = UI32_VAL(1);
     } else {
         Value arg1 = peek(routine, 0);
-        if (!is_positive_integer32(arg1)) {
+        if (!is_positive_integer(arg1)) {
             runtimeError(routine, "Expected a positive integer");
             return false;
         }
         valCapacity = arg1;
     }
 
-    size_t capacity = as_positive_integer32(valCapacity);
+    size_t capacity = as_positive_integer(valCapacity);
 
     ObjChannelContainer* channel = newChannel(routine, capacity);
 

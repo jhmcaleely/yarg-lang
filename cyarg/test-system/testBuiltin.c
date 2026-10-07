@@ -115,9 +115,9 @@ bool interruptBuiltin(ObjRoutine *routineContext, int argCount, Value *result) {
     if (argCount == 1)
     {
         Value arg0 = peek(routineContext, 0);
-        if (is_positive_integer32(arg0))
+        if (is_positive_integer(arg0))
         {
-            uint32_t interruptNumber = as_positive_integer32(arg0);
+            size_t interruptNumber = as_positive_integer(arg0);
             ok = testIntrinsicsTriggerInterrupt(interruptNumber);
         }
         else if (IS_STRING(arg0))

@@ -533,10 +533,8 @@ bool valuesEqual(Value a, Value b) {
     }
 }
 
-bool is_positive_integer32(Value a) {
+bool is_positive_integer(Value a) {
     if (IS_UI32(a) || IS_UI16(a) || IS_UI8(a)) {
-        return true;
-    } else if (IS_UI64(a) && AS_UI64(a) <= UINT32_MAX) {
         return true;
     } else if (IS_I32(a) && AS_I32(a) >= 0) {
         return true;
@@ -544,29 +542,55 @@ bool is_positive_integer32(Value a) {
         return true;
     } else if (IS_I8(a) && AS_I8(a) >= 0) {
         return true;
+#ifdef IS_64BIT
+    } else if (IS_UI64(a)) {
+        return true;
+    } else if (IS_I64(a) && AS_I64(a) >= 0) {
+        return true;
+    } else if (IS_INT(a)) {
+        return int_is_range(AS_INT(a), 0, UINT64_MAX) == INT_WITHIN;
+    }
+#else
+    } else if (IS_UI64(a) && AS_UI64(a) <= UINT32_MAX) {
+        return true;
     } else if (IS_I64(a) && AS_I64(a) >= 0 && AS_I64(a) <= UINT32_MAX) {
         return true;
     } else if (IS_INT(a)) {
         return int_is_range(AS_INT(a), 0, UINT32_MAX) == INT_WITHIN;
     }
+#endif
     return false;
 }
 
-uint32_t as_positive_integer32(Value a) {
+size_t as_positive_integer(Value a) {
     if (IS_I32(a)) {
         return AS_I32(a);
     } else if (IS_I8(a)) {
         return AS_I8(a);
     } else if (IS_I16(a)) {
         return AS_I16(a);
+#ifdef IS_64BIT
+    } else if (IS_I64(a)) {
+        return AS_I64(a);
+#else
     } else if (IS_I64(a) && AS_I64(a) <= UINT32_MAX) {
         return (uint32_t) AS_I64(a);
+#endif
     } else if (IS_UI32(a)) {
         return AS_UI32(a);
     } else if (IS_UI8(a)) {
         return AS_UI8(a);
     } else if (IS_UI16(a)) {
         return AS_UI16(a);
+#ifdef IS_64BIT
+    } else if (IS_UI64(a)) {
+        return AS_UI64(a);
+    } else if (IS_INT(a)) {
+        if (int_is_range(AS_INT(a), 0, UINT64_MAX) == INT_WITHIN) {
+            return int_to_u64(AS_INT(a));
+        }
+    }
+#else
     } else if (IS_UI64(a) && AS_UI64(a) <= UINT32_MAX) {
         return (uint32_t) AS_UI64(a);
     } else if (IS_INT(a)) {
@@ -574,6 +598,7 @@ uint32_t as_positive_integer32(Value a) {
             return int_to_u32(AS_INT(a));
         }
     }
+#endif
     return 0;
 }
 
