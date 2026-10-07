@@ -110,6 +110,7 @@ ObjMap* newMap(ObjConcreteYargTypeMap* type);
 ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);
 ObjString* copyStringWithEscapes(const char* chars, int length);
+ObjString* concatenateStrings(ObjString* a, ObjString* b);
 ObjInt* newInt(int64_t value);
 ObjInt* newIntU(uint64_t value);
 
@@ -129,10 +130,7 @@ Value placeObjectAt(Value type, Value location);
 
 ObjString* objectToString(Value value);
 
-bool isAddressValue(Value value);
-
 bool isArrayPointer(Value value);
 bool isStructPointer(Value value);
-
 
 #endif

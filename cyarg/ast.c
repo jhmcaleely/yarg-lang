@@ -9,6 +9,8 @@
 #include "big-int/big-int.h"
 #include "yargobject.h"
 
+#include "debug.h"
+
 ObjAst* newObjAst() {
     ObjAst* ast = ALLOCATE_OBJ(ObjAst, OBJ_AST);
     return ast;

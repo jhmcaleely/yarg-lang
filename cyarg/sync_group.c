@@ -1,6 +1,7 @@
 #include "sync_group.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #include "common.h"
 #include "value.h"

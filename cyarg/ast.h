@@ -5,6 +5,8 @@
 #include "value.h"
 #include "big-int/big-int.h"
 
+#include <stdio.h>
+
 typedef struct ObjStmt ObjStmt;
 
 typedef struct ObjStmt {

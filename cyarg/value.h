@@ -1,11 +1,9 @@
 #ifndef cyarg_value_h
 #define cyarg_value_h
 
-#include <string.h>
-#include <stdio.h>
-
-#include "common.h"
-#include "big-int/big-int.h"
+#include <stdbool.h>
+#include <stdint.h>
+#include <stddef.h>
 
 typedef struct Obj Obj;
 typedef struct ObjString ObjString;
@@ -110,10 +108,6 @@ size_t as_positive_integer(Value a);
 
 bool valuesEqual(Value a, Value b);
 
-ObjString* concatenateStrings(ObjString* a, ObjString* b);
-
-void printValue(Value value);
-void fprintValue(FILE* op, Value value);
 ObjString* valueToString(Value value);
 
 typedef struct {
@@ -144,9 +138,5 @@ uintptr_t pinUniformArray(ObjPackedUniformArray* array);
 Value duplicateValue(Value src);
 
 bool isAddressValue(Value value);
-
-bool isArrayPointer(Value value);
-bool isStructPointer(Value value);
-
 
 #endif

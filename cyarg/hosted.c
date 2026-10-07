@@ -1,9 +1,11 @@
+#include "hosted.h"
+
 #include <stdlib.h>
 #include <sysexits.h>
 #include <assert.h>
+#include <string.h>
 
 #include "common.h"
-#include "hosted.h"
 #include "object.h"
 #include "memory.h"
 #include "debug.h"

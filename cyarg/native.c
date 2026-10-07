@@ -1,10 +1,12 @@
+#include "native.h"
+
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
 
 #include "common.h"
 #include "object.h"
 #include "value.h"
-#include "native.h"
 #include "routine.h"
 #include "vm.h"
 #include "fs/fs.h"

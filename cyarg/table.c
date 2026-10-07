@@ -8,6 +8,7 @@
 #include "value.h"
 #include "yargtype.h"
 #include "yargobject.h"
+#include "debug.h"
 
 #define TABLE_MAX_LOAD 0.75
 

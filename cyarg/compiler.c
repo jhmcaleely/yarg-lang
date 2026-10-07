@@ -1,9 +1,11 @@
+#include "compiler.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
 #include "common.h"
-#include "compiler.h"
 #include "parser.h"
 #include "ast.h"
 #include "chunk.h"

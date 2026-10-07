@@ -8,6 +8,8 @@
 #include "testBuiltin.h"
 #include "testIntrinsics.h"
 
+#include <string.h>
+
 #include "../chunk.h"
 #include "../object.h"
 #include "../routine.h"

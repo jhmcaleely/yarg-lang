@@ -1,7 +1,8 @@
 #include "yargtype.h"
 
-#include "common.h"
+#include <string.h>
 
+#include "common.h"
 #include "memory.h"
 #include "vm.h"
 #include "vmobject.h"

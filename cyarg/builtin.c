@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <inttypes.h>
+#include <string.h>
 
 #include "common.h"
 #include "object.h"

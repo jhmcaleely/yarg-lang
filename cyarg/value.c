@@ -502,17 +502,6 @@ ObjString* valueToString(Value value) {
     return string;
 }
 
-void printValue(Value value) {
-    fprintValue(stdout, value);
-}
-
-void fprintValue(FILE* op, Value value) {
-    ObjString* string = valueToString(value);
-    tempRootPush(OBJ_VAL(string));
-    FPRINTMSG(op, "%s", string->chars);
-    tempRootPop();
-}
-
 bool valuesEqual(Value a, Value b) {
     if (a.type != b.type) return false;
     switch (a.type) {

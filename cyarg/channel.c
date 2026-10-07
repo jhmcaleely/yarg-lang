@@ -1,14 +1,15 @@
+#include "channel.h"
+
 #include <stdio.h>
 #ifdef CYARG_PTHREADS_SYNC
 #include <semaphore.h>
 #include <fcntl.h>   // for O_CREAT
 #include <sys/stat.h> // for S_IRUSR and S_IWUSR
 #endif
+#include <string.h>
 
 #include "common.h"
 #include "vm_mutex.h"
-
-#include "channel.h"
 #include "memory.h"
 #include "vm.h"
 #include "debug.h"

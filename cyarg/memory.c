@@ -12,6 +12,7 @@
 #include "channel.h"
 #include "sync_group.h"
 #include "vm_mutex.h"
+#include "debug.h"
 
 #include "yargobject.h"
 #include "packed_value.h"

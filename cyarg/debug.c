@@ -1,13 +1,27 @@
+#include "debug.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
-#include "debug.h"
 #include "object.h"
 #include "yargobject.h"
 #include "value.h"
 #include "yargtype.h"
 #include "routine.h"
+#include "memory.h"
+
+void printValue(Value value) {
+    fprintValue(stdout, value);
+}
+
+void fprintValue(FILE* op, Value value) {
+    ObjString* string = valueToString(value);
+    tempRootPush(OBJ_VAL(string));
+    FPRINTMSG(op, "%s", string->chars);
+    tempRootPop();
+}
 
 void disassembleChunk(Chunk* chunk, const char* name) {
     printf("== %s ==\n", name);

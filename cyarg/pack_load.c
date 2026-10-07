@@ -1,14 +1,14 @@
 #include "pack.h"
-#include "pack_format.h"
-
-#include "object.h"
-#include "memory.h"
-#include "routine.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
+#include "pack_format.h"
+#include "object.h"
+#include "memory.h"
+#include "routine.h"
 #include "yargobject.h"
 
 enum { PACKAGE_OK = 0, PACKAGE_DATAERR = 65, PACKAGE_PROTOCOL = 71, PACKAGE_SOFTWARE = 70 };

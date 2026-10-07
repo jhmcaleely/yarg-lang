@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <sysexits.h>
 #include <assert.h>
+#include <string.h>
 
 #include "pack_format.h"
 
