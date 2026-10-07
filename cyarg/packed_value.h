@@ -1,6 +1,8 @@
 #ifndef cyarg_packed_value_h
 #define cyarg_packed_value_h
 
+#include "value.h"
+
 typedef union PackedValueStore PackedValueStore;
 
 typedef struct {

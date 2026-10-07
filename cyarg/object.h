@@ -26,10 +26,8 @@
  *
  */
 
-#include "common.h"
-#include "chunk.h"
-#include "table.h"
 #include "value.h"
+#include <stdbool.h>
 
 typedef struct ObjString ObjString;
 
@@ -97,11 +95,11 @@ typedef enum {
     OBJ_INT
 } ObjType;
 
-struct Obj {
+typedef struct Obj {
     ObjType type;
     bool isMarked;
-    struct Obj* next;
-};
+    Obj* next;
+} Obj;
 
 typedef struct {
     Obj* stash;

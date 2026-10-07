@@ -5,6 +5,8 @@
 #include "big-int/big-int.h"
 #include "packed_value.h"
 #include "value.h"
+#include "chunk.h"
+#include "table.h"
 
 typedef struct ObjConcreteYargType ObjConcreteYargType;
 typedef struct ObjConcreteYargTypeArray ObjConcreteYargTypeArray;

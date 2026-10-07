@@ -2,7 +2,8 @@
 #define cyarg_yargtype_h
 
 #include "object.h"
-#include "stdio.h"
+#include "value.h"
+#include "table.h"
 
 typedef enum {
    TypeAny,

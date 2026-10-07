@@ -6,6 +6,7 @@
 #include "compiler.h"
 #include "parser.h"
 #include "ast.h"
+#include "chunk.h"
 #include "memory.h"
 #include "object.h"
 #include "yargobject.h"

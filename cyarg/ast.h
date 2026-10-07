@@ -2,6 +2,8 @@
 #define cyarg_ast_h
 
 #include "object.h"
+#include "value.h"
+#include "big-int/big-int.h"
 
 typedef struct ObjStmt ObjStmt;
 

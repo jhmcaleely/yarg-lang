@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "object.h"
+#include "value.h"
 
 typedef struct ObjFunction ObjFunction;
 typedef struct O1HeapInstance O1HeapInstance;
