@@ -95,6 +95,8 @@ add_executable(cyarg
     scanner.c
     object.h
     object.c
+    yargobject.h
+    vmobject.h
     table.h
     table.c
     native.h

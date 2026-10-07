@@ -1,3 +1,5 @@
+#include "routine.h"
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,11 +8,11 @@
 
 #include "common.h"
 
-#include "routine.h"
-
 #include "memory.h"
 #include "vm.h"
 #include "debug.h"
+#include "yargobject.h"
+#include "vmobject.h"
 
 bool addSlice(ObjRoutine* routine);
 

@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "yargobject.h"
+
 enum { PACKAGE_OK = 0, PACKAGE_DATAERR = 65, PACKAGE_PROTOCOL = 71, PACKAGE_SOFTWARE = 70 };
 
 int8_t const packageMagic[PACKAGE_MAGIC_LEN] = {0x79, 0x0a, 0x72, 0x67, 0xff, 0x42};

@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "pack.h"
 #include "vm.h"
+#include "vmobject.h"
 
 Host vmHost;
 

@@ -14,6 +14,8 @@
 #include "../yargtype.h"
 #include "../object.h"
 #include "../memory.h"
+#include "../builtin.h"
+#include "../yargobject.h"
 
 static bool setBuiltin(ObjRoutine *, int, Value *);
 static bool readBuiltin(ObjRoutine *, int, Value *);

@@ -4,12 +4,16 @@
 
 #include "memory.h"
 #include "object.h"
+#include "yargobject.h"
+#include "vmobject.h"
 #include "table.h"
 #include "value.h"
 #include "vm.h"
 #include "yargtype.h"
 #include "channel.h"
 #include "sync_group.h"
+
+#include "builtin.h"
 
 #define ALLOCATE_OBJ(type, objectType) \
     (type*)allocateObject(sizeof(type), objectType)

@@ -2,6 +2,7 @@
 #define cyarg_vm_h
 
 #include "object.h"
+#include "yargobject.h"
 #include "table.h"
 #include "value.h"
 #include "vm-result.h"

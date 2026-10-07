@@ -1,11 +1,15 @@
+#include "builtin.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <inttypes.h>
 
 #include "common.h"
 #include "object.h"
+#include "yargobject.h"
+#include "vmobject.h"
+
 #include "value.h"
-#include "builtin.h"
 #include "native.h"
 #include "routine.h"
 #include "vm.h"

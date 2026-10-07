@@ -7,6 +7,9 @@
 #define FRAMES_MAX 20
 #define SLICE_MAX 64
 
+typedef struct ObjClosure ObjClosure;
+typedef struct ObjUpvalue ObjUpvalue;
+
 typedef struct {
     ObjClosure* closure;
     uint8_t* ip;

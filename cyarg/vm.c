@@ -15,6 +15,8 @@
 #include "compiler.h"
 #include "debug.h"
 #include "object.h"
+#include "yargobject.h"
+#include "vmobject.h"
 #include "memory.h"
 #include "vm.h"
 #include "native.h"

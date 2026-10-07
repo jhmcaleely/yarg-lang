@@ -6,6 +6,7 @@
 #include "common.h"
 #include "object.h"
 
+typedef struct ObjFunction ObjFunction;
 typedef struct O1HeapInstance O1HeapInstance;
 
 void init_heap_instance(O1HeapInstance** instance);

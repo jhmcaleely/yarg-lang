@@ -4,6 +4,7 @@
 
 #include "debug.h"
 #include "object.h"
+#include "yargobject.h"
 #include "value.h"
 #include "yargtype.h"
 #include "routine.h"

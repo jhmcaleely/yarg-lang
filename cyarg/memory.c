@@ -12,6 +12,10 @@
 #include "sync_group.h"
 #include "vm_mutex.h"
 
+#include "yargobject.h"
+#include "vmobject.h"
+#include "builtin.h"
+
 #include "../external/o1heap/o1heap/o1heap.h"
 
 #ifdef DEBUG_LOG_GC

@@ -6,6 +6,7 @@
 #include "memory.h"
 #include "value.h"
 #include "yargtype.h"
+#include "yargobject.h"
 
 typedef union PackedValueStore {
     AnyValue as;

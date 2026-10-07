@@ -1,12 +1,13 @@
-#include <stdio.h>
-
 #include "sync_group.h"
+
+#include <stdio.h>
 
 #include "common.h"
 #include "value.h"
 #include "object.h"
 #include "channel.h"
 #include "yargtype.h"
+#include "yargobject.h"
 #include "routine.h"
 #include "memory.h"
 

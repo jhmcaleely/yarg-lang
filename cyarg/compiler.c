@@ -8,6 +8,7 @@
 #include "ast.h"
 #include "memory.h"
 #include "object.h"
+#include "yargobject.h"
 #include "scanner.h"
 
 static void generateExpr(ObjExpr* expr);

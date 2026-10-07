@@ -154,145 +154,25 @@ typedef struct {
     int objectCount;
 } DynamicObjArray;
 
-typedef struct ObjFunction {
-    Obj obj;
-    int arity;
-    int upvalueCount;
-    Chunk chunk;
-    ObjString* fName;
-} ObjFunction;
-
-typedef bool (*NativeFn)(ObjRoutine* routine, int argCount, Value* result);
-
-typedef struct {
-    Obj obj;
-    NativeFn function;
-} ObjNative;
-
-typedef bool (*BuiltinFun)(ObjRoutine* routine, int argCount, Value* result);
-
-typedef struct {
-    Obj obj;
-    BuiltinFun function;
-} ObjBuiltin;
-
-struct ObjString {
-    Obj obj;
-    int length;
-    char* chars;
-    uint32_t hash;
-};
-
-typedef struct ObjInt {
-    Obj obj;
-    bool isLiteral;
-    Int bigInt;
-} ObjInt;
-
-typedef struct ObjUpvalue {
-    Obj obj;
-    ValueCell* contents;
-    size_t stackOffset;
-    ValueCell closed;
-    struct ObjUpvalue* next;
-} ObjUpvalue;
-
-typedef struct ObjClosure {
-    Obj obj;
-    ObjFunction* function;
-    ObjUpvalue** upvalues;
-    int cUpvalueCount;
-} ObjClosure;
-
-typedef struct {
-    Obj obj;
-    ObjString* name;
-    ValueTable methods;
-} ObjClass;
-
-typedef struct {
-    Obj obj;
-    ObjClass* klass;
-    ValueTable fields;
-} ObjInstance;
-
-typedef struct {
-    Obj obj;
-    Value reciever;
-    ObjClosure* method;
-} ObjBoundMethod;
-
-typedef struct ObjPackedUniformArray {
-    Obj obj;
-    PackedValue store;
-} ObjPackedUniformArray;
-
-typedef struct {
-    Obj obj;
-    ObjConcreteYargTypePointer* type;
-    PackedValueStore* destination;
-} ObjPackedPointer;
-
-typedef struct {
-    Obj obj;
-    PackedValue store;
-} ObjPackedStruct;
-
-typedef struct {
-    Obj obj;
-    ObjConcreteYargTypeMap* type;
-    ValueTable entries;
-} ObjMap;
 
 #define ALLOCATE_OBJ(type, objectType) \
     (type*)allocateObject(sizeof(type), objectType)
 
 Obj* allocateObject(size_t size, ObjType type);
-ObjInt* allocateIntObject(size_t numDigits);
 
 void initDynamicObjArray(DynamicObjArray* array);
 void freeDynamicObjArray(DynamicObjArray* array);
 void appendToDynamicObjArray(DynamicObjArray* array, Obj* obj);
 Obj* removeLastFromDynamicObjArray(DynamicObjArray* array);
 
-ObjBoundMethod* newBoundMethod(Value receiver, 
-                               ObjClosure* method);
-ObjClass* newClass(ObjString* name);
-ObjClosure* newClosure(ObjFunction* function);
-ObjFunction* newFunction();
-void initFunction(ObjFunction* function);
-ObjInstance* newInstance(ObjClass* klass);
-ObjNative* newNative(NativeFn function);
-ObjBuiltin* newBuiltin(BuiltinFun function);
-ObjPackedUniformArray* newPackedUniformArray(ObjConcreteYargTypeArray* type);
-ObjMap* newMap(ObjConcreteYargTypeMap* type);
-ObjString* takeString(char* chars, int length);
-ObjString* copyString(const char* chars, int length);
-ObjString* copyStringWithEscapes(const char* chars, int length);
-ObjUpvalue* newUpvalue(ValueCell* slot, size_t stackOffset);
-ObjInt* newInt(int64_t value);
-ObjInt* newIntU(uint64_t value);
-
 PackedValue arrayElement(PackedValue array, size_t index);
 size_t arrayCardinality(PackedValue array);
 
 PackedValue structField(PackedValue struct_, size_t index);
 bool structFieldIndex(ObjConcreteYargType* type, ObjString* name, size_t* index);
-ObjPackedStruct* newPackedStructAt(PackedValue location);
 
-ObjPackedPointer* newPointerForHeapCell(PackedValue location);
-ObjPackedPointer* newPointerAtHeapCell(PackedValue location);
 
 Obj* destinationObject(Value pointer);
-void offsetPointerDestination(ObjPackedPointer* pointer, size_t offset);
-
-ObjPackedUniformArray* newPackedUniformArrayAt(PackedValue location);
-
-Value defaultIntValue();
-Value defaultArrayValue(ObjConcreteYargType* type);
-Value defaultStructValue(ObjConcreteYargType* type);
-
-Value placeObjectAt(Value type, Value location);
 
 ObjString* objectToString(Value value);
 
