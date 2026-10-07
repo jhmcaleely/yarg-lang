@@ -531,7 +531,7 @@ bool is_positive_integer(Value a) {
         return true;
     } else if (IS_I8(a) && AS_I8(a) >= 0) {
         return true;
-#ifdef IS_64BIT
+#if IS_64BIT
     } else if (IS_UI64(a)) {
         return true;
     } else if (IS_I64(a) && AS_I64(a) >= 0) {
@@ -558,7 +558,7 @@ size_t as_positive_integer(Value a) {
         return AS_I8(a);
     } else if (IS_I16(a)) {
         return AS_I16(a);
-#ifdef IS_64BIT
+#if IS_64BIT
     } else if (IS_I64(a)) {
         return AS_I64(a);
 #else
@@ -571,7 +571,7 @@ size_t as_positive_integer(Value a) {
         return AS_UI8(a);
     } else if (IS_UI16(a)) {
         return AS_UI16(a);
-#ifdef IS_64BIT
+#if IS_64BIT
     } else if (IS_UI64(a)) {
         return AS_UI64(a);
     } else if (IS_INT(a)) {
