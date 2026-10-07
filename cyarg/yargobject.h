@@ -5,6 +5,12 @@
 #include "big-int/big-int.h"
 #include "packed_value.h"
 
+typedef struct ObjConcreteYargType ObjConcreteYargType;
+typedef struct ObjConcreteYargTypeArray ObjConcreteYargTypeArray;
+typedef struct ObjConcreteYargTypeStruct ObjConcreteYargTypeStruct;
+typedef struct ObjConcreteYargTypePointer ObjConcreteYargTypePointer;
+typedef struct ObjConcreteYargTypeMap ObjConcreteYargTypeMap;
+
 struct ObjString {
     Obj obj;
     int length;

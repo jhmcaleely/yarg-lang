@@ -31,11 +31,7 @@
 #include "table.h"
 #include "value.h"
 
-typedef struct ObjConcreteYargType ObjConcreteYargType;
-typedef struct ObjConcreteYargTypeArray ObjConcreteYargTypeArray;
-typedef struct ObjConcreteYargTypeStruct ObjConcreteYargTypeStruct;
-typedef struct ObjConcreteYargTypePointer ObjConcreteYargTypePointer;
-typedef struct ObjConcreteYargTypeMap ObjConcreteYargTypeMap;
+typedef struct ObjString ObjString;
 
 #define OBJ_TYPE(value)     (AS_OBJ(value)->type)
 
