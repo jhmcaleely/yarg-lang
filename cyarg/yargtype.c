@@ -1,9 +1,10 @@
-#include "common.h"
-
 #include "yargtype.h"
+
+#include "common.h"
 
 #include "memory.h"
 #include "vm.h"
+#include "vmobject.h"
 
 ObjConcreteYargType* newYargTypeFromType(ConcreteYargType yt) {
     switch (yt) {

@@ -2,6 +2,19 @@
 #define cyarg_vmobject_h
 
 #include "object.h"
+#include "value.h"
+
+#define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
+#define IS_CLOSURE(value)      isObjType(value, OBJ_CLOSURE)
+#define IS_NATIVE(value)       isObjType(value, OBJ_NATIVE)
+#define IS_BUILTIN(value)      isObjType(value, OBJ_BUILTIN)
+
+#define AS_BOUND_METHOD(value) ((ObjBoundMethod*)AS_OBJ(value))
+#define AS_CLOSURE(value)      ((ObjClosure*)AS_OBJ(value))
+#define AS_NATIVE(value) \
+    (((ObjNative*)AS_OBJ(value))->function)
+#define AS_BUILTIN(value) \
+    (((ObjBuiltin*)AS_OBJ(value))->function)
 
 typedef struct ObjUpvalue {
     Obj obj;
