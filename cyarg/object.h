@@ -165,24 +165,11 @@ void freeDynamicObjArray(DynamicObjArray* array);
 void appendToDynamicObjArray(DynamicObjArray* array, Obj* obj);
 Obj* removeLastFromDynamicObjArray(DynamicObjArray* array);
 
-PackedValue arrayElement(PackedValue array, size_t index);
-size_t arrayCardinality(PackedValue array);
-
-PackedValue structField(PackedValue struct_, size_t index);
-bool structFieldIndex(ObjConcreteYargType* type, ObjString* name, size_t* index);
-
-
 Obj* destinationObject(Value pointer);
-
 ObjString* objectToString(Value value);
 
 static inline bool isObjType(Value value, ObjType type) {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;
 }
-
-bool isAddressValue(Value value);
-
-bool isArrayPointer(Value value);
-bool isStructPointer(Value value);
 
 #endif

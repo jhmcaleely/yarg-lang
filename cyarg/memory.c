@@ -1,10 +1,11 @@
+#include "memory.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdalign.h>
 #include <assert.h>
 
 #include "compiler.h"
-#include "memory.h"
 #include "vm.h"
 #include "yargtype.h"
 #include "ast.h"
@@ -13,6 +14,7 @@
 #include "vm_mutex.h"
 
 #include "yargobject.h"
+#include "packed_value.h"
 #include "vmobject.h"
 #include "builtin.h"
 

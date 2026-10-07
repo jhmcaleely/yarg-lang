@@ -86,6 +86,8 @@ bool is_stored_type(Value type);
 size_t yt_sizeof_type_storage(Value type);
 size_t yt_alignmentfor_type_storage(Value type);
 
+bool structFieldIndex(ObjConcreteYargType* type, ObjString* name, size_t* index);
+
 Value defaultValue(Value type);
 
 bool isInitialisableType(ObjConcreteYargType* lhsType, Value rhsValue, Value *promotedRhs); // promotedRhs will be VAL_NIL if no promotion

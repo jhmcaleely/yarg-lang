@@ -1,11 +1,13 @@
+#include "object.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
 #include "memory.h"
-#include "object.h"
 #include "yargobject.h"
 #include "vmobject.h"
+#include "packed_value.h"
 #include "table.h"
 #include "value.h"
 #include "vm.h"

@@ -97,6 +97,7 @@ add_executable(cyarg
     object.c
     yargobject.h
     vmobject.h
+    packed_value.h
     table.h
     table.c
     native.h

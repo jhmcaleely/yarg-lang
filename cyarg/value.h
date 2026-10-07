@@ -116,25 +116,6 @@ void printValue(Value value);
 void fprintValue(FILE* op, Value value);
 ObjString* valueToString(Value value);
 
-typedef union PackedValueStore PackedValueStore;
-
-typedef struct {
-    PackedValueStore* storedValue;
-    ObjConcreteYargType* storedType;
-} PackedValue;
-
-void initialisePackedValue(PackedValue packedValue);
-Value unpackValue(PackedValue packedValue);
-PackedValue allocPackedValue(Value type);
-void markPackedValue(PackedValue packedValue);
-
-bool assignToPackedValue(PackedValue lhs, Value rhsValue);
-
-bool is_uniformarray(PackedValue val);
-bool is_struct(PackedValue val);
-bool is_nil(PackedValue val);
-bool is_channel(PackedValue val);
-
 typedef struct {
     Value value;
     ObjConcreteYargType* cellType;
@@ -158,12 +139,14 @@ void initDynamicValueArray(DynamicValueArray* array);
 void appendToDynamicValueArray(DynamicValueArray* array, Value value);
 void freeDynamicValueArray(DynamicValueArray* array);
 
-PackedValueStore* storedAddressof(Value value);
-
 uintptr_t pinUniformArray(ObjPackedUniformArray* array);
 
-PackedValue packUintptr(uintptr_t value);
-
 Value duplicateValue(Value src);
+
+bool isAddressValue(Value value);
+
+bool isArrayPointer(Value value);
+bool isStructPointer(Value value);
+
 
 #endif

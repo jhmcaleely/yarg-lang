@@ -1,3 +1,5 @@
+#include "vm.h"
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,12 +20,12 @@
 #include "yargobject.h"
 #include "vmobject.h"
 #include "memory.h"
-#include "vm.h"
 #include "native.h"
 #include "builtin.h"
 #include "routine.h"
 #include "channel.h"
 #include "yargtype.h"
+#include "packed_value.h"
 #include "xip_library.h"
 
 VM vm;

@@ -3,6 +3,7 @@
 
 #include "object.h"
 #include "big-int/big-int.h"
+#include "packed_value.h"
 
 struct ObjString {
     Obj obj;
