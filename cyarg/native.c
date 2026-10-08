@@ -141,7 +141,7 @@ bool stdin_getsNative(ObjRoutine* routine, int argCount, Value* result) {
         buffer[length - 1] = '\0';
         length--;
     }
-    *result = OBJ_VAL(copyString(buffer, (int) length));
+    *result = STRING_VAL(copyString(buffer, (int) length));
     return true;
 }
 
@@ -199,7 +199,7 @@ bool host_argnNative(ObjRoutine* routine, int argCount, Value* result) {
         return false;
     }
 
-    *result = OBJ_VAL(copyString(vmHost.argv[index], (int) strlen(vmHost.argv[index])));
+    *result = STRING_VAL(copyString(vmHost.argv[index], (int) strlen(vmHost.argv[index])));
     return true;
 }
 
@@ -316,7 +316,7 @@ bool vm_xip_string_nodeNative(ObjRoutine* routine, int argCount, Value* result) 
         return false;
     }
 
-    Value stringVal = OBJ_VAL(copyString(string, strlen(string)));
+    Value stringVal = STRING_VAL(copyString(string, strlen(string)));
     *result = stringVal;
     return true;
 }

@@ -3,12 +3,44 @@
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
+#include <assert.h>
 
 #include "object.h"
 #include "memory.h"
 #include "packed_value.h"
 #include "yargtype.h"
 #include "yargobject.h"
+#include "yargstructtype.h"
+
+bool isObjValue(Value value) {
+    if (is_obj_yargtype(value.type) && value.as.obj != NULL) return true;
+    else if (value.type == &yargTypes.implementation_obj && value.as.obj != NULL) return true;
+    return false;
+}
+
+bool isObjType(Value value, ObjType type) {
+    return isObjValue(value) && AS_OBJ(value)->type == type;
+}
+
+bool is_nil(Value value) {
+    if (value.type == NULL && value.as.obj == NULL) return true;
+    if (value.type == &yargTypes.implementation_obj && value.as.obj != NULL) return false;
+    assert(value.type != NULL);
+    switch (value.type->yt) {
+        case TypePointer:
+        case TypeClass:
+        case TypeInstance:
+        case TypeFunction:
+        case TypeRoutine:
+        case TypeChannel:
+        case TypeSyncGroup:
+        case TypeMap:
+        case TypeString:
+            return value.as.obj == NULL;
+        default:
+            return false;
+    }
+}
 
 typedef union PackedValueStore {
     AnyValue as;
@@ -18,7 +50,7 @@ typedef union PackedValueStore {
 static void packValue(PackedValue packedStorageTarget, Value value);
 
 PackedValue allocPackedValue(Value type) {
-    void* dest = reallocate(NULL, 0, yt_sizeof_type_storage(type));
+    void* dest = reallocate(NULL, 0, yt_sizeof_type_storage(AS_YARGTYPE(type)));
 
     ObjConcreteYargType* ct = IS_NIL(type) ? NULL : AS_YARGTYPE(type);
     PackedValue value = { .storedType = ct, .storedValue = dest };
@@ -98,7 +130,6 @@ void initialisePackedValue(PackedValue packedValue) {
         packedValue.storedValue->asValue = NIL_VAL;
     } else {
         switch (packedValue.storedType->yt) {
-            case TypeAny: packedValue.storedValue->asValue = NIL_VAL; break;
             case TypeBool: packedValue.storedValue->asValue = BOOL_VAL(false); break;
             case TypeDouble: packedValue.storedValue->asValue = DOUBLE_VAL(0); break;
             case TypeInt8: packedValue.storedValue->as.i8 = 0; break;
@@ -136,6 +167,7 @@ void initialisePackedValue(PackedValue packedValue) {
             case TypeFunction:
             case TypeRoutine:
             case TypeChannel:
+            case TypeSyncGroup:
             case TypeMap:
             case TypeYargType: {
                 packedValue.storedValue->as.obj = NULL;
@@ -150,7 +182,6 @@ Value unpackValue(PackedValue packedValue) {
         return packedValue.storedValue->asValue;
     } else {
         switch (packedValue.storedType->yt) {
-            case TypeAny: return packedValue.storedValue->asValue;
             case TypeBool: return packedValue.storedValue->asValue;
             case TypeDouble: return packedValue.storedValue->asValue;
             case TypeInt8: return I8_VAL(packedValue.storedValue->as.i8);
@@ -163,14 +194,14 @@ Value unpackValue(PackedValue packedValue) {
             case TypeUint64: return UI64_VAL(packedValue.storedValue->as.ui64);
             case TypeAddress: return ADDRESS_VAL(packedValue.storedValue->as.address);
             case TypeStruct: {
-                return OBJ_VAL(newPackedStructAt(packedValue));
+                return STRUCT_VAL(newPackedStructAt(packedValue));
             }
             case TypeArray: {
-                return OBJ_VAL(newPackedUniformArrayAt(packedValue));
+                return ARRAY_VAL(newPackedUniformArrayAt(packedValue));
             }
             case TypeInt: {
                 if (packedValue.storedValue->as.obj) {
-                    return OBJ_VAL(packedValue.storedValue->as.obj);
+                    return INTOBJ_VAL(packedValue.storedValue->as.obj);
                 } else {
                     return defaultIntValue();
                 }
@@ -182,10 +213,12 @@ Value unpackValue(PackedValue packedValue) {
             case TypeFunction:
             case TypeRoutine:
             case TypeChannel:
+            case TypeSyncGroup:
             case TypeMap:
             case TypeYargType: {
                 if (packedValue.storedValue->as.obj) {
-                    return OBJ_VAL(packedValue.storedValue->as.obj);
+                    // TODO: remove!
+                    return IMPL_OBJ_VAL(packedValue.storedValue->as.obj);
                 } else {
                     return NIL_VAL;
                 }
@@ -199,7 +232,6 @@ static void packValue(PackedValue packedStorageTarget, Value value) {
         packedStorageTarget.storedValue->asValue = value;
     } else {
         switch (packedStorageTarget.storedType->yt) {
-            case TypeAny: packedStorageTarget.storedValue->asValue = value; break;
             case TypeBool: packedStorageTarget.storedValue->asValue = value; break;
             case TypeDouble: packedStorageTarget.storedValue->asValue = value; break;
             case TypeInt8: packedStorageTarget.storedValue->as.i8 = AS_I8(value); break;
@@ -218,6 +250,7 @@ static void packValue(PackedValue packedStorageTarget, Value value) {
             case TypeFunction:
             case TypeRoutine:
             case TypeChannel:
+            case TypeSyncGroup:
             case TypeYargType:
             case TypeInt:
             case TypeMap: {
@@ -248,7 +281,7 @@ bool assignToPackedValue(PackedValue lhs, Value rhsValue) {
     } else {
         Value promoted;
         if (isInitialisableType(lhs.storedType, rhsValue, &promoted)) {
-            if (promoted.type == VAL_NIL)
+            if (promoted.type == NULL)
             {
                 noLongerLiteralInt(&rhsValue);
                 packValue(lhs, rhsValue);
@@ -272,7 +305,7 @@ bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
     } else {
         Value promoted;
         if (isInitialisableType(lhs.cellType, rhsValue, &promoted)) {
-            if (promoted.type == VAL_NIL)
+            if (promoted.type == NULL)
             {
                 noLongerLiteralInt(&rhsValue);
                 *(lhs.value) = rhsValue;
@@ -296,7 +329,7 @@ bool initialiseValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
     } else {
         Value promoted;
         if (isInitialisableType(lhs.cellType, rhsValue, &promoted)) {
-            if (promoted.type == VAL_NIL)
+            if (promoted.type == NULL)
             {
                 noLongerLiteralInt(&rhsValue);
                 *(lhs.value) = rhsValue;
@@ -313,11 +346,11 @@ bool initialiseValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
 }
 
 void duplicatePackedValue(PackedValue* dest, PackedValue src) {
-    *dest = allocPackedValue(OBJ_VAL(src.storedType));
+    *dest = allocPackedValue(YARGTYPE_VAL(src.storedType));
     uint8_t* dest_bytes = (uint8_t*) dest->storedValue;
     uint8_t* src_bytes = (uint8_t*) src.storedValue;
 
-    memcpy(dest_bytes, src_bytes, yt_sizeof_type_storage(OBJ_VAL(src.storedType)));
+    memcpy(dest_bytes, src_bytes, yt_sizeof_type_storage(src.storedType));
 }
 
 Value duplicateValue(Value src) {
@@ -330,14 +363,14 @@ Value duplicateValue(Value src) {
         lhs->bigInt.neg_ = rhs->bigInt.neg_;
         lhs->bigInt.d_ = rhs->bigInt.d_;
         lhs->isLiteral = rhs->isLiteral;
-        return OBJ_VAL(lhs);
+        return INTOBJ_VAL(lhs);
     } else if (IS_STRUCT(src)) {
         ObjPackedStruct* lhs = ALLOCATE_OBJ(ObjPackedStruct, OBJ_PACKEDSTRUCT);
-        tempRootPush(OBJ_VAL(lhs));
+        tempObjRootPush((Obj*)lhs);
         ObjPackedStruct* rhs = AS_STRUCT(src);
         duplicatePackedValue(&lhs->store, rhs->store);
         tempRootPop();
-        return OBJ_VAL(lhs);
+        return STRUCT_VAL(lhs);
     } else {
         return src;
     }
@@ -357,19 +390,6 @@ bool is_struct(PackedValue val) {
     if (val.storedType == NULL) {
         return IS_STRUCT(val.storedValue->asValue);
     } else if (val.storedType->yt == TypeStruct) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-bool is_nil(PackedValue val) {
-    if (val.storedType == NULL) {
-        return IS_NIL(val.storedValue->asValue);
-    } else if (val.storedType->yt == TypeAny) {
-        return IS_NIL(val.storedValue->asValue);
-    } else if (type_packs_as_obj(val.storedType)
-               && val.storedValue == NULL) {
         return true;
     } else {
         return false;
@@ -482,44 +502,77 @@ ObjString* addressToString(uintptr_t value) {
 
 ObjString* valueToString(Value value) {
     ObjString* string = NULL;
-    switch (value.type) {
-        case VAL_BOOL:
-            string = AS_BOOL(value) ? copyString("true", 4) : copyString("false", 5);
-            break;
-        case VAL_NIL: string = copyString("nil", 3); break;
-        case VAL_DOUBLE: string = doubleToString(AS_DOUBLE(value)); break;
-        case VAL_I8: string = i8ToString(AS_I8(value)); break;
-        case VAL_UI8: string = ui8ToString(AS_UI8(value)); break;
-        case VAL_I16: string = i16ToString(AS_I16(value)); break;
-        case VAL_UI16: string = ui16ToString(AS_UI16(value)); break;
-        case VAL_I32: string = i32ToString(AS_I32(value)); break;
-        case VAL_UI32: string = ui32ToString(AS_UI32(value)); break;
-        case VAL_I64: string = i64ToString(AS_I64(value)); break;
-        case VAL_UI64: string = ui64ToString(AS_UI64(value)); break;
-        case VAL_ADDRESS: string = addressToString(AS_ADDRESS(value)); break;
-        case VAL_OBJ: string = objectToString(value); break;
+
+    if (is_nil(value)) {
+        return copyString("nil", 3);
+    } else if (value.type == &yargTypes.implementation_obj) {
+        // implementation object
+        return objectToString(value.as.obj);
+    } else {
+        switch (value.type->yt) {
+            case TypeBool:     return copyString(AS_BOOL(value) ? "true" : "false", AS_BOOL(value) ? 4 : 5);
+            case TypeDouble:   return doubleToString(AS_DOUBLE(value));
+            case TypeInt8:     return i8ToString(AS_I8(value));
+            case TypeUint8:    return ui8ToString(AS_UI8(value));
+            case TypeInt16:    return i16ToString(AS_I16(value));
+            case TypeUint16:   return ui16ToString(AS_UI16(value));
+            case TypeInt32:    return i32ToString(AS_I32(value));
+            case TypeUint32:   return ui32ToString(AS_UI32(value));
+            case TypeInt64:    return i64ToString(AS_I64(value));
+            case TypeUint64:   return ui64ToString(AS_UI64(value));
+            case TypeAddress:  return addressToString(AS_ADDRESS(value));
+            case TypeArray:    return objectToString(value.as.obj);
+            case TypeStruct:   return objectToString(value.as.obj);
+            case TypeYargType: return objectToString(value.as.obj);
+            case TypePointer:  return objectToString(value.as.obj);
+            case TypeInt:      return objectToString(value.as.obj);
+            case TypeMap:      return objectToString(value.as.obj);
+            case TypeString:   return objectToString(value.as.obj);
+            case TypeRoutine:  return objectToString(value.as.obj);
+            case TypeClass:    return objectToString(value.as.obj);
+            case TypeInstance: return objectToString(value.as.obj);
+            case TypeFunction: return objectToString(value.as.obj);
+            case TypeChannel:  return objectToString(value.as.obj);
+            case TypeSyncGroup: return objectToString(value.as.obj);
+        }
     }
-    return string;
+    return NULL;
 }
 
 bool valuesEqual(Value a, Value b) {
     if (a.type != b.type) return false;
-    switch (a.type) {
-        case VAL_BOOL:     return AS_BOOL(a) == AS_BOOL(b);
-        case VAL_NIL:      return true;
-        case VAL_DOUBLE:   return AS_DOUBLE(a) == AS_DOUBLE(b);
-        case VAL_I8:       return AS_I8(a) == AS_I8(b);
-        case VAL_UI8:      return AS_UI8(a) == AS_UI8(b);
-        case VAL_I16:      return AS_I16(a) == AS_I16(b);
-        case VAL_UI16:     return AS_UI16(a) == AS_UI16(b);
-        case VAL_I32:      return AS_I32(a) == AS_I32(b);
-        case VAL_UI32:     return AS_UI32(a) == AS_UI32(b);
-        case VAL_I64:      return AS_I64(a) == AS_I64(b);
-        case VAL_UI64:     return AS_UI64(a) == AS_UI64(b);
-        case VAL_ADDRESS:  return AS_ADDRESS(a) == AS_ADDRESS(b);
-        case VAL_OBJ:      return AS_OBJ(a) == AS_OBJ(b);
-        default:           return false; // Unreachable.
+    if (is_nil(a) && is_nil(b)) return true;
+
+    switch (a.type->yt) {
+        case TypeBool:     return AS_BOOL(a) == AS_BOOL(b);
+        case TypeDouble:   return AS_DOUBLE(a) == AS_DOUBLE(b);
+        case TypeInt8:     return AS_I8(a) == AS_I8(b);
+        case TypeUint8:    return AS_UI8(a) == AS_UI8(b);
+        case TypeInt16:    return AS_I16(a) == AS_I16(b);
+        case TypeUint16:   return AS_UI16(a) == AS_UI16(b);
+        case TypeInt32:    return AS_I32(a) == AS_I32(b);
+        case TypeUint32:   return AS_UI32(a) == AS_UI32(b);
+        case TypeInt64:    return AS_I64(a) == AS_I64(b);
+        case TypeUint64:   return AS_UI64(a) == AS_UI64(b);
+        case TypeAddress:  return AS_ADDRESS(a) == AS_ADDRESS(b);
+        case TypeArray:    return arraysEqual(AS_UNIFORMARRAY(a), AS_UNIFORMARRAY(b));
+        case TypeStruct:   return structsEqual(AS_STRUCT(a), AS_STRUCT(b));
+        case TypeYargType: return typesEqual(AS_YARGTYPE(a), AS_YARGTYPE(b));
+        case TypePointer:  return pointersEqual(AS_POINTER(a), AS_POINTER(b));
+        case TypeInt:      return intsEqual(AS_INTOBJ(a), AS_INTOBJ(b));
+
+        case TypeMap:
+        case TypeString:
+        case TypeRoutine:
+        case TypeClass:
+        case TypeInstance:
+        case TypeFunction:
+        case TypeChannel:
+        case TypeSyncGroup:
+            return AS_OBJ(a) == AS_OBJ(b);
     }
+    assert(false && "Unhandled value type in valuesEqual");
+    return false;
 }
 
 bool is_positive_integer(Value a) {
@@ -613,9 +666,9 @@ uintptr_t pinUniformArray(ObjPackedUniformArray* array) {
 PackedValue packUintptr(uintptr_t value) {
 
     ObjConcreteYargType* address_type = newYargTypeFromType(TypeAddress);
-    tempRootPush(OBJ_VAL(address_type));
+    tempObjRootPush((Obj*)address_type);
 
-    PackedValue result = allocPackedValue(OBJ_VAL(address_type));
+    PackedValue result = allocPackedValue(YARGTYPE_VAL(address_type));
     result.storedValue->as.address = value;
 
     tempRootPop();

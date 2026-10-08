@@ -26,12 +26,11 @@
  *
  */
 
-#include "value.h"
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 typedef struct ObjString ObjString;
-
-#define OBJ_TYPE(value)     (AS_OBJ(value)->type)
 
 typedef enum {
     OBJ_BOUND_METHOD,
@@ -95,6 +94,8 @@ typedef enum {
     OBJ_INT
 } ObjType;
 
+typedef struct Obj Obj;
+
 typedef struct Obj {
     ObjType type;
     bool isMarked;
@@ -114,16 +115,11 @@ typedef struct {
 
 Obj* allocateObject(size_t size, ObjType type);
 
+ObjString* objectToString(const Obj* value);
+
 void initDynamicObjArray(DynamicObjArray* array);
 void freeDynamicObjArray(DynamicObjArray* array);
 void appendToDynamicObjArray(DynamicObjArray* array, Obj* obj);
 Obj* removeLastFromDynamicObjArray(DynamicObjArray* array);
-
-Obj* destinationObject(Value pointer);
-ObjString* objectToString(Value value);
-
-static inline bool isObjType(Value value, ObjType type) {
-    return IS_OBJ(value) && AS_OBJ(value)->type == type;
-}
 
 #endif

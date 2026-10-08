@@ -33,7 +33,7 @@ typedef struct ObjChannelContainer {
 
 ObjChannelContainer* newChannel(ObjRoutine* routine, size_t capacity) {
     ObjChannelContainer* channel = ALLOCATE_OBJ(ObjChannelContainer, OBJ_CHANNELCONTAINER);
-    tempRootPush(OBJ_VAL(channel));
+    tempObjRootPush((Obj*)channel);
     channel->overflow = false;
 
     channel->buffer = ALLOCATE(Value, capacity);
@@ -66,7 +66,7 @@ void freeChannelObject(Obj* object) {
     FREE(ObjChannelContainer, object); 
 }
 
-size_t readCursor(ObjChannelContainer* channel) {
+size_t readCursor(const ObjChannelContainer* channel) {
     size_t count = channel->occupied;
     size_t size = channel->bufferSize;
     size_t cursor = (channel->writeCursor + size - count) % size;
@@ -91,7 +91,7 @@ void markChannel(ObjChannelContainer* channel) {
     }
 }
 
-ObjString* channelToString(ObjChannelContainer* channel) {
+ObjString* channelToString(const ObjChannelContainer* channel) {
     char buffer[256];
     snprintf(buffer, sizeof(buffer), "channel{");
     size_t string_cursor = strlen(buffer);

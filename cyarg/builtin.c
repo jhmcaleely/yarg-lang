@@ -51,18 +51,18 @@ bool readYargSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* resu
         size_t file_size = fileSize(filename);
 
         ObjConcreteYargType* byteType = newYargTypeFromType(TypeUint8);
-        push(routineContext, OBJ_VAL(byteType));
+        push(routineContext, YARGTYPE_VAL(byteType));
 
-        ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*)newYargArrayTypeFromType(OBJ_VAL(byteType));
-        push(routineContext, OBJ_VAL(arrayType));
+        ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*)newYargArrayTypeFromType(byteType);
+        push(routineContext, YARGTYPE_VAL(arrayType));
 
         arrayType->cardinality = file_size;
         ObjPackedUniformArray* array = newPackedUniformArray(arrayType);
-        push(routineContext, OBJ_VAL(array));
+        push(routineContext, ARRAY_VAL(array));
 
         readFileIntoBuffer(filename, (uint8_t*)array->store.storedValue, file_size);
 
-        *result = OBJ_VAL(array);
+        *result = ARRAY_VAL(array);
 
         popN(routineContext, 3);
     }
@@ -77,7 +77,7 @@ bool readYargSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* resu
         ObjString* sourceString = copyString(source, (int)strlen(source));
         free(source);
 
-        *result = OBJ_VAL(sourceString);
+        *result = STRING_VAL(sourceString);
     }
     return true;
 }
@@ -121,28 +121,28 @@ bool readYargROMSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* r
 
     if (format_requested == 1) {
         ObjConcreteYargType* byteType = newYargTypeFromType(TypeUint8);
-        push(routineContext, OBJ_VAL(byteType));
+        push(routineContext, YARGTYPE_VAL(byteType));
 
-        ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*)newYargArrayTypeFromType(OBJ_VAL(byteType));
+        ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*)newYargArrayTypeFromType(byteType);
         arrayType->cardinality = length;
-        push(routineContext, OBJ_VAL(arrayType));
+        push(routineContext, YARGTYPE_VAL(arrayType));
 
         ObjPackedUniformArray* array = ALLOCATE_OBJ(ObjPackedUniformArray, OBJ_UNOWNED_UNIFORMARRAY);
-        push(routineContext, OBJ_VAL(array));
+        push(routineContext, ARRAY_VAL(array));
 
         PackedValue arrayStore;
         arrayStore.storedType = (ObjConcreteYargType*) arrayType;
         arrayStore.storedValue = (PackedValueStore*) data;
         array->store = arrayStore;
 
-        *result = OBJ_VAL(array);
+        *result = ARRAY_VAL(array);
 
         popN(routineContext, 3);
     }
     else if (format_requested == 2) {
         const char* string = (const char*) data;
         ObjString* sourceString = copyString(string, (int)length);
-        *result = OBJ_VAL(sourceString);
+        *result = STRING_VAL(sourceString);
     }
     else {
         runtimeError(routineContext, "Unsupported format requested: %d.", format_requested);
@@ -166,10 +166,10 @@ bool compileBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
     if (function == NULL) {
         *result = NIL_VAL;
     } else {
-        push(routineContext, OBJ_VAL(function));
+        push(routineContext, FUNCTION_VAL(function));
         ObjClosure* closure = newClosure(function);
         pop(routineContext);
-        *result = OBJ_VAL(closure);
+        *result = CLOSURE_VAL(closure);
     }
     return true;
 }
@@ -197,9 +197,9 @@ bool loadBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
     if (function == NULL) {
         *result = NIL_VAL;
     } else {
-        push(routineContext, OBJ_VAL(function));
+        push(routineContext, FUNCTION_VAL(function));
         ObjClosure* closure = newClosure(function);
-        *result = OBJ_VAL(closure);
+        *result = CLOSURE_VAL(closure);
         pop(routineContext);
     }
     return true;
@@ -226,7 +226,7 @@ bool makeChannelBuiltin(ObjRoutine* routine, int argCount, Value* result) {
 
     ObjChannelContainer* channel = newChannel(routine, capacity);
 
-    *result = OBJ_VAL((Obj*)channel);
+    *result = CHANNEL_VAL((Obj*)channel);
     return true;
 }
 
@@ -317,7 +317,7 @@ bool makeSyncGroupBuiltin(ObjRoutine* routineContext, int argCount, Value* resul
 
     ObjSyncGroup* group = newSyncGroup(routineContext, AS_UNIFORMARRAY(items));
 
-    *result = OBJ_VAL((Obj*)group);
+    *result = SYNCGROUP_VAL((Obj*)group);
     return true;
 }
 
@@ -335,7 +335,7 @@ bool makeRoutineBuiltin(ObjRoutine* routineContext, int argCount, Value* result)
     ObjRoutine* routine = newRoutine();
 
     if (bindEntryFn(routine, closure)) {
-        *result = OBJ_VAL(routine);
+        *result = ROUTINE_VAL(routine);
         return true;
     }
     else {
@@ -466,16 +466,16 @@ bool lenBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
     if (IS_STRING(arg)) {
         ObjString* string = AS_STRING(arg);
         size_t length = string->length;
-        *result = OBJ_VAL(newIntU(length));
+        *result = INTOBJ_VAL(newIntU(length));
         return true;
     } else if (IS_UNIFORMARRAY(arg)) {
-        ObjPackedUniformArray* array = AS_UNIFORMARRAY(arg);
-        *result = OBJ_VAL(newIntU(arrayCardinality(array->store)));
+        ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) AS_UNIFORMARRAY(arg)->store.storedType;
+        *result = INTOBJ_VAL(newIntU(arrayType->cardinality));
         return true;
     } else if (IS_MAP(arg)) {
         ObjMap* map = AS_MAP(arg);
         size_t count = map->entries.count;
-        *result = OBJ_VAL(newIntU(count));
+        *result = INTOBJ_VAL(newIntU(count));
         return true;
     } else {
         runtimeError(routineContext, "Expected a string, array or map.");
@@ -523,10 +523,13 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
         && IS_YARGTYPE(peek(routineContext, 0))) {
         typeToCreate = peek(routineContext, 0);
     }
+    if (IS_NIL(typeToCreate)) {
+        runtimeError(routineContext, "Expected a type to create.");
+        return false;
+    }
 
-    ConcreteYargType typeRequested = IS_NIL(typeToCreate) ? TypeAny : AS_YARGTYPE(typeToCreate)->yt;
+    ConcreteYargType typeRequested = AS_YARGTYPE(typeToCreate)->yt;
     switch (typeRequested) {
-        case TypeAny:    // fall through
         case TypeBool:
         case TypeDouble:
         case TypeInt8:
@@ -539,13 +542,13 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
         case TypeUint64: {
             PackedValue heapValue = allocPackedValue(typeToCreate);
             initialisePackedValue(heapValue);
-            *result = OBJ_VAL(newPointerForHeapCell(heapValue));
+            *result = POINTER_VAL(newPointerForHeapCell(heapValue));
             return true;
         }
         case TypeStruct: {
             PackedValue heapValue = allocPackedValue(typeToCreate);
             initialisePackedValue(heapValue);
-            *result = OBJ_VAL(newPointerForHeapCell(heapValue));
+            *result = POINTER_VAL(newPointerForHeapCell(heapValue));
             return true;
         }
         case TypeArray: {
@@ -553,8 +556,8 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
             return true;
         }
         case TypeMap: {
-            if (isSupportedMapKeyType(typeToCreate)) {
-                *result = OBJ_VAL(newMap((ObjConcreteYargTypeMap*)AS_YARGTYPE(typeToCreate)));
+            if (isSupportedMapKeyType(AS_YARGTYPE(typeToCreate))) {
+                *result = MAP_VAL(newMap((ObjConcreteYargTypeMap*)AS_YARGTYPE(typeToCreate)));
                 return true;
             } else {
                 runtimeError(routineContext, "Unsupported map key type.");
@@ -569,6 +572,7 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
         case TypeFunction:
         case TypeRoutine:
         case TypeChannel:
+        case TypeSyncGroup:
         case TypePointer: 
         case TypeYargType:
             return false; // unsupported for now.
@@ -956,29 +960,27 @@ bool intBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
         i = AS_UI32(arg);
     } else if (IS_UI64(arg)) {
         uint64_t u = AS_UI64(arg);
-        *result = OBJ_VAL(newIntU(u));
+        *result = INTOBJ_VAL(newIntU(u));
         return true;
     } else if (IS_STRING(arg)) {
         char *s = AS_CSTRING(arg);
         int il = INT_DIGITS_FOR_S(strlen(s));
         ObjInt *newObj = allocateIntObject(il);
-        result->as.obj = &newObj->obj;
-        result->type = VAL_OBJ;
+        *result = INTOBJ_VAL(newObj);
         int_set_s(s, &newObj->bigInt);
         return true;
     } else if (IS_INT(arg)) {
         Int *from = AS_INT(arg);
         int il = from->d_;
         ObjInt *newObj = allocateIntObject(il);
-        result->as.obj = &newObj->obj;
-        result->type = VAL_OBJ;
+        *result = INTOBJ_VAL(newObj);
         int_set_t(from, &newObj->bigInt);
         return true;
     } else {
         return false;
     }
 
-    *result = OBJ_VAL(newInt(i));
+    *result = INTOBJ_VAL(newInt(i));
     return true;
 }
 
@@ -1023,48 +1025,47 @@ bool floatBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
     } else {
         return false;
     }
-    result->as.dbl = f;
-    result->type = VAL_DOUBLE;
+    *result = DOUBLE_VAL(f);
     return true;
 }
 
 bool stringBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
     Value arg = peek(routineContext, 0);
     ObjString* representation = valueToString(arg);
-    *result = OBJ_VAL(representation);
+    *result = STRING_VAL(representation);
     return true;
 }
 
 Value getBuiltin(uint8_t builtin) {
     switch (builtin) {
-        case BUILTIN_PEEK: return OBJ_VAL(newBuiltin(peekBuiltin));
-        case BUILTIN_READ_YARG_SOURCE: return OBJ_VAL(newBuiltin(readYargSourceBuiltin));
-        case BUILTIN_READ_XIP_FILE: return OBJ_VAL(newBuiltin(readYargROMSourceBuiltin));
-        case BUILTIN_COMPILE: return OBJ_VAL(newBuiltin(compileBuiltin));
-        case BUILTIN_MAKE_ROUTINE: return OBJ_VAL(newBuiltin(makeRoutineBuiltin));
-        case BUILTIN_RESUME: return OBJ_VAL(newBuiltin(resumeBuiltin));
-        case BUILTIN_START: return OBJ_VAL(newBuiltin(startBuiltin));
-        case BUILTIN_MAKE_CHANNEL: return OBJ_VAL(newBuiltin(makeChannelBuiltin));
-        case BUILTIN_SEND: return OBJ_VAL(newBuiltin(sendChannelBuiltin));
-        case BUILTIN_RECEIVE: return OBJ_VAL(newBuiltin(receiveBuiltin));
-        case BUILTIN_SHARE: return OBJ_VAL(newBuiltin(shareChannelBuiltin));
-        case BUILTIN_CPEEK: return OBJ_VAL(newBuiltin(cpeekBuiltin));
-        case BUILTIN_MAKE_SYNCGROUP: return OBJ_VAL(newBuiltin(makeSyncGroupBuiltin));
-        case BUILTIN_LEN: return OBJ_VAL(newBuiltin(lenBuiltin));
-        case BUILTIN_PIN: return OBJ_VAL(newBuiltin(pinBuiltin));
-        case BUILTIN_NEW: return OBJ_VAL(newBuiltin(new_Builtin));
-        case BUILTIN_INT8: return OBJ_VAL(newBuiltin(int8Builtin));
-        case BUILTIN_INT16: return OBJ_VAL(newBuiltin(int16Builtin));
-        case BUILTIN_UINT16: return OBJ_VAL(newBuiltin(uint16Builtin));
-        case BUILTIN_UINT8: return OBJ_VAL(newBuiltin(uint8Builtin));
-        case BUILTIN_INT32: return OBJ_VAL(newBuiltin(int32Builtin));
-        case BUILTIN_UINT32: return OBJ_VAL(newBuiltin(uint32Builtin));
-        case BUILTIN_INT64: return OBJ_VAL(newBuiltin(int64Builtin));
-        case BUILTIN_UINT64: return OBJ_VAL(newBuiltin(uint64Builtin));
-        case BUILTIN_INT: return OBJ_VAL(newBuiltin(intBuiltin));
-        case BUILTIN_MFLOAT64: return OBJ_VAL(newBuiltin(floatBuiltin));
-        case BUILTIN_STRING: return OBJ_VAL(newBuiltin(stringBuiltin));
-        case BUILTIN_LOAD: return OBJ_VAL(newBuiltin(loadBuiltin));
+        case BUILTIN_PEEK: return BUILTIN_VAL(newBuiltin(peekBuiltin));
+        case BUILTIN_READ_YARG_SOURCE: return BUILTIN_VAL(newBuiltin(readYargSourceBuiltin));
+        case BUILTIN_READ_XIP_FILE: return BUILTIN_VAL(newBuiltin(readYargROMSourceBuiltin));
+        case BUILTIN_COMPILE: return BUILTIN_VAL(newBuiltin(compileBuiltin));
+        case BUILTIN_MAKE_ROUTINE: return BUILTIN_VAL(newBuiltin(makeRoutineBuiltin));
+        case BUILTIN_RESUME: return BUILTIN_VAL(newBuiltin(resumeBuiltin));
+        case BUILTIN_START: return BUILTIN_VAL(newBuiltin(startBuiltin));
+        case BUILTIN_MAKE_CHANNEL: return BUILTIN_VAL(newBuiltin(makeChannelBuiltin));
+        case BUILTIN_SEND: return BUILTIN_VAL(newBuiltin(sendChannelBuiltin));
+        case BUILTIN_RECEIVE: return BUILTIN_VAL(newBuiltin(receiveBuiltin));
+        case BUILTIN_SHARE: return BUILTIN_VAL(newBuiltin(shareChannelBuiltin));
+        case BUILTIN_CPEEK: return BUILTIN_VAL(newBuiltin(cpeekBuiltin));
+        case BUILTIN_MAKE_SYNCGROUP: return BUILTIN_VAL(newBuiltin(makeSyncGroupBuiltin));
+        case BUILTIN_LEN: return BUILTIN_VAL(newBuiltin(lenBuiltin));
+        case BUILTIN_PIN: return BUILTIN_VAL(newBuiltin(pinBuiltin));
+        case BUILTIN_NEW: return BUILTIN_VAL(newBuiltin(new_Builtin));
+        case BUILTIN_INT8: return BUILTIN_VAL(newBuiltin(int8Builtin));
+        case BUILTIN_INT16: return BUILTIN_VAL(newBuiltin(int16Builtin));
+        case BUILTIN_UINT16: return BUILTIN_VAL(newBuiltin(uint16Builtin));
+        case BUILTIN_UINT8: return BUILTIN_VAL(newBuiltin(uint8Builtin));
+        case BUILTIN_INT32: return BUILTIN_VAL(newBuiltin(int32Builtin));
+        case BUILTIN_UINT32: return BUILTIN_VAL(newBuiltin(uint32Builtin));
+        case BUILTIN_INT64: return BUILTIN_VAL(newBuiltin(int64Builtin));
+        case BUILTIN_UINT64: return BUILTIN_VAL(newBuiltin(uint64Builtin));
+        case BUILTIN_INT: return BUILTIN_VAL(newBuiltin(intBuiltin));
+        case BUILTIN_MFLOAT64: return BUILTIN_VAL(newBuiltin(floatBuiltin));
+        case BUILTIN_STRING: return BUILTIN_VAL(newBuiltin(stringBuiltin));
+        case BUILTIN_LOAD: return BUILTIN_VAL(newBuiltin(loadBuiltin));
 #ifndef CYARG_FEATURE_TEST_SYSTEM
         default: return NIL_VAL;
 #else

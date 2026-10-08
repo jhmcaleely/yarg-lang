@@ -2,11 +2,8 @@
 #define cyarg_yargtype_h
 
 #include "object.h"
-#include "value.h"
-#include "table.h"
 
 typedef enum {
-   TypeAny,
    TypeBool,
    TypeInt,
    TypeDouble,
@@ -25,6 +22,7 @@ typedef enum {
    TypeFunction,
    TypeRoutine,
    TypeChannel,
+   TypeSyncGroup,
    TypeArray,
    TypeStruct,
    TypePointer,
@@ -32,26 +30,58 @@ typedef enum {
    TypeYargType
 } ConcreteYargType;
 
+typedef union {
+    bool boolean;
+    double dbl;
+    uint8_t ui8;
+    int8_t i8;
+    uint16_t ui16;
+    int16_t i16;
+    uint32_t ui32;
+    int32_t i32;
+    uint64_t ui64;
+    int64_t i64;
+    uintptr_t address;
+    Obj* obj;
+} AnyValue;
+
 typedef struct ObjConcreteYargType {
     Obj obj;
     ConcreteYargType yt;
 } ObjConcreteYargType;
+
+typedef struct {
+    ObjConcreteYargType boolean;
+    ObjConcreteYargType address;
+    ObjConcreteYargType dbl;
+    ObjConcreteYargType int8;
+    ObjConcreteYargType uint8;
+    ObjConcreteYargType int16;
+    ObjConcreteYargType uint16;
+    ObjConcreteYargType int32;
+    ObjConcreteYargType uint32;
+    ObjConcreteYargType int64;
+    ObjConcreteYargType uint64;
+    ObjConcreteYargType type;
+    ObjConcreteYargType class_;
+    ObjConcreteYargType string;
+    ObjConcreteYargType integer;
+
+    ObjConcreteYargType implementation_obj; // only the address matters.
+    // temp
+    ObjConcreteYargType function;
+    ObjConcreteYargType routine;
+    ObjConcreteYargType channel;
+    ObjConcreteYargType syncGroup;
+} SimpleYargTypes;
+
+extern SimpleYargTypes yargTypes;
 
 typedef struct ObjConcreteYargTypeArray {
     ObjConcreteYargType core;
     size_t cardinality;
     ObjConcreteYargType* element_type;
 } ObjConcreteYargTypeArray;
-
-typedef struct ObjConcreteYargTypeStruct {
-    ObjConcreteYargType core;
-    ValueTable field_names;
-    size_t* field_indexes;
-    ObjConcreteYargType** field_types;
-    size_t field_count;
-    size_t storage_size;
-    size_t alignment;
-} ObjConcreteYargTypeStruct;
 
 typedef struct ObjConcreteYargTypePointer {
     ObjConcreteYargType core;
@@ -66,35 +96,26 @@ typedef struct ObjConcreteYargTypeMap {
 
 ObjConcreteYargType* newYargTypeFromType(ConcreteYargType yt);
 
-ObjConcreteYargType* newYargArrayTypeFromType(Value elementType);
-ObjConcreteYargType* newYargStructType(size_t fieldCount);
-ObjConcreteYargType* newYargPointerType(Value targetType);
+ObjConcreteYargType* newYargArrayTypeFromType(ObjConcreteYargType* elementType);
+ObjConcreteYargType* newYargPointerType(ObjConcreteYargType* targetType);
 
-size_t arrayElementOffset(ObjConcreteYargTypeArray* arrayType, size_t index);
-size_t arrayElementSize(ObjConcreteYargTypeArray* arrayType);
-Value arrayElementType(ObjConcreteYargTypeArray* arrayType);
+size_t arrayElementOffset(const ObjConcreteYargTypeArray* arrayType, size_t index);
+size_t arrayElementSize(const ObjConcreteYargTypeArray* arrayType);
+ObjConcreteYargType* arrayElementType(const ObjConcreteYargTypeArray* arrayType);
 
-size_t addFieldType(ObjConcreteYargTypeStruct* st, size_t index, size_t fieldOffset, Value type, Value offset, Value name);
-
-bool isUint32Pointer(Value val);
-
-Value concrete_typeof(Value a);
 bool type_packs_as_obj(ObjConcreteYargType* type);
 bool type_packs_as_container(ObjConcreteYargType* type);
-bool is_nil_assignable_type(Value type);
-bool is_placeable_type(Value type);
-bool is_stored_type(Value type);
-size_t yt_sizeof_type_storage(Value type);
-size_t yt_alignmentfor_type_storage(Value type);
+bool is_nil_assignable_type(ObjConcreteYargType* type);
+bool is_placeable_type(ObjConcreteYargType* type);
+bool is_stored_type(ObjConcreteYargType* type);
+bool is_obj_yargtype(const ObjConcreteYargType* type);
+size_t yt_sizeof_type_storage(ObjConcreteYargType* type);
+size_t yt_alignmentfor_type_storage(ObjConcreteYargType* type);
 
 bool structFieldIndex(ObjConcreteYargType* type, ObjString* name, size_t* index);
 
-Value defaultValue(Value type);
+bool isSupportedMapKeyType(ObjConcreteYargType* type);
 
-bool isInitialisableType(ObjConcreteYargType* lhsType, Value rhsValue, Value *promotedRhs); // promotedRhs will be VAL_NIL if no promotion
-
-bool isSupportedMapKeyType(Value type);
-
-ObjString* typeToString(ObjConcreteYargType* type);
+ObjString* typeToString(const ObjConcreteYargType* type);
 
 #endif

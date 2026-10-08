@@ -224,7 +224,7 @@ static uint64_t strtoNum(const char* literal, int length, int radix) {
 static ObjExpr* namedVariable(Token name, bool canAssign) {
 
     ObjString* nameString = copyString(name.start, name.length);
-    tempRootPush(OBJ_VAL(nameString));
+    tempObjRootPush((Obj*)nameString);
 
     ObjExprNamedVariable* expr = newExprNamedVariable(name.start, name.length);
 
@@ -439,7 +439,7 @@ static ObjExprTypeStruct* structExpression() {
     while (!check(TOKEN_RIGHT_BRACE)) {
         ObjStmtFieldDeclaration* field = fieldStmt();
         pushWorkingNode((Obj*)field);
-        appendToDynamicValueArray(&struct_declaration->fieldsByIndex, OBJ_VAL(field));
+        appendToDynamicValueArray(&struct_declaration->fieldsByIndex, IMPL_OBJ_VAL(field));
         popWorkingNode();
     }
     

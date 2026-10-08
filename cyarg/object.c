@@ -14,6 +14,7 @@
 #include "yargtype.h"
 #include "channel.h"
 #include "sync_group.h"
+#include "yargstructtype.h"
 
 #include "builtin.h"
 
@@ -159,7 +160,7 @@ ObjInt* newIntU(uint64_t value) {
 Value defaultIntValue() {
     ObjInt *intObj = allocateIntObject(1);
     int_init(&intObj->bigInt);
-    return OBJ_VAL(intObj);
+    return INTOBJ_VAL(intObj);
 }
 
 PackedValue arrayElement(PackedValue array, size_t index) {
@@ -178,7 +179,7 @@ size_t arrayCardinality(PackedValue array) {
 
 ObjPackedUniformArray* newPackedUniformArray(ObjConcreteYargTypeArray* type) {
     ObjPackedUniformArray* array = ALLOCATE_OBJ(ObjPackedUniformArray, OBJ_PACKEDUNIFORMARRAY);
-    tempRootPush(OBJ_VAL(array));
+    tempObjRootPush((Obj*)array);
 
     PackedValue new_array = { .storedType = (ObjConcreteYargType*) type, .storedValue = NULL };
     new_array.storedValue = reallocate(NULL, 0, arrayElementSize(type) * type->cardinality);
@@ -205,10 +206,11 @@ Value defaultArrayValue(ObjConcreteYargType* type) {
 
     ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*)type;
     if (arrayType->cardinality == 0) {
+        // todo: remove
         return NIL_VAL;
     }
     
-    return OBJ_VAL(newPackedUniformArray(arrayType));
+    return ARRAY_VAL(newPackedUniformArray(arrayType));
 }
 
 ObjMap* newMap(ObjConcreteYargTypeMap* type) {
@@ -221,7 +223,7 @@ ObjMap* newMap(ObjConcreteYargTypeMap* type) {
 ObjPackedPointer* newPointerForHeapCell(PackedValue location) {
 
     ObjPackedPointer* ptr = ALLOCATE_OBJ(ObjPackedPointer, OBJ_PACKEDPOINTER);
-    tempRootPush(OBJ_VAL(ptr));
+    tempObjRootPush((Obj*)ptr);
     ptr->type = (ObjConcreteYargTypePointer*) newYargTypeFromType(TypePointer);
     ptr->type->target_type = location.storedType;
     ptr->destination = location.storedValue;
@@ -231,7 +233,7 @@ ObjPackedPointer* newPointerForHeapCell(PackedValue location) {
 
 ObjPackedPointer* newPointerAtHeapCell(PackedValue location) {
     ObjPackedPointer* ptr = ALLOCATE_OBJ(ObjPackedPointer, OBJ_UNOWNED_PACKEDPOINTER);
-    tempRootPush(OBJ_VAL(ptr));
+    tempObjRootPush((Obj*)ptr);
     ptr->type = (ObjConcreteYargTypePointer*) newYargTypeFromType(TypePointer);
     ptr->type->target_type = location.storedType;
     ptr->destination = location.storedValue;
@@ -287,7 +289,7 @@ Obj* destinationObject(Value pointer) {
         dest.storedType = p->type->target_type;
         dest.storedValue = p->destination;
         Value target = unpackValue(dest);
-        if (IS_OBJ(target)) {
+        if (type_packs_as_obj(dest.storedType)) {
             return AS_OBJ(target);
         }
     }
@@ -295,7 +297,7 @@ Obj* destinationObject(Value pointer) {
 }
 
 Value placeObjectAt(Value placedType, Value location) {
-    if (is_placeable_type(placedType) && IS_ADDRESS(location)) {
+    if (is_placeable_type(AS_YARGTYPE(placedType)) && IS_ADDRESS(location)) {
         PackedValue loc;
         loc.storedType = IS_NIL(placedType) ? NULL : AS_YARGTYPE(placedType);
         loc.storedValue = (PackedValueStore*) AS_ADDRESS(location);
@@ -311,7 +313,7 @@ Value placeObjectAt(Value placedType, Value location) {
             case TypeInt64:
             case TypeUint64: {
                 ObjPackedPointer* result = newPointerAtHeapCell(loc);
-                return OBJ_VAL(result);
+                return POINTER_VAL(result);
             }
             default:
                 return NIL_VAL;
@@ -322,7 +324,7 @@ Value placeObjectAt(Value placedType, Value location) {
 
 ObjPackedStruct* newPackedStruct(ObjConcreteYargTypeStruct* type) {
     ObjPackedStruct* object = ALLOCATE_OBJ(ObjPackedStruct, OBJ_PACKEDSTRUCT);
-    tempRootPush(OBJ_VAL(object));
+    tempObjRootPush((Obj*)object);
 
     PackedValue new_struct = { .storedType = (ObjConcreteYargType*) type, .storedValue = NULL };
     new_struct.storedValue = reallocate(new_struct.storedValue, 0, type->storage_size);
@@ -346,7 +348,7 @@ ObjPackedStruct* newPackedStructAt(PackedValue location) {
 }
 
 bool structFieldIndex(ObjConcreteYargType* type, ObjString* name, size_t* index) {
-    ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*)type;
+    const ObjConcreteYargTypeStruct* structType = (const ObjConcreteYargTypeStruct*)type;
     Value indexVal;
     if (tableGet(&structType->field_names, name, &indexVal)) {
         *index = AS_UI32(indexVal);
@@ -368,7 +370,7 @@ Value defaultStructValue(ObjConcreteYargType* type) {
     ObjConcreteYargTypeStruct* typeStruct = (ObjConcreteYargTypeStruct*)type;
 
     ObjPackedStruct* object = newPackedStruct(typeStruct);
-    tempRootPush(OBJ_VAL(object));
+    tempObjRootPush((Obj*)object);
 
     return tempRootPop();
 }
@@ -378,7 +380,7 @@ static ObjString* allocateString(char* chars, int length, uint32_t hash) {
     string->length = length;
     string->chars = chars;
     string->hash = hash;
-    tempRootPush(OBJ_VAL(string));
+    tempObjRootPush((Obj*)string);
     tableSet(&vm.strings, string, NIL_VAL);
     tempRootPop();
     return string;
@@ -455,7 +457,7 @@ ObjUpvalue* newUpvalue(ValueCell* slot, size_t stackOffset) {
     return upvalue;
 }
 
-static ObjString* functionToString(ObjFunction* function) {
+static ObjString* functionToString(const ObjFunction* function) {
     if (function->fName == NULL) {
         return copyString("<script>", 8);
     }
@@ -464,16 +466,16 @@ static ObjString* functionToString(ObjFunction* function) {
     return copyString(buffer, (int)strlen(buffer));
 }
 
-static ObjString* routineToString(ObjRoutine* routine) {
+static ObjString* routineToString(const ObjRoutine* routine) {
     char buffer[64];
     snprintf(buffer, sizeof(buffer), "<R%p>", routine);
     return copyString(buffer, (int)strlen(buffer));
 }
 
-static ObjString* arrayToString(ObjPackedUniformArray* array) {
+static ObjString* arrayToString(const ObjPackedUniformArray* array) {
     ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*)array->store.storedType;
     char buffer[1024];
-    ObjString* typeStr = valueToString(OBJ_VAL(arrayType));
+    ObjString* typeStr = valueToString(YARGTYPE_VAL(arrayType));
     snprintf(buffer, sizeof(buffer), "%s:[", typeStr->chars);
     size_t cursor = strlen(buffer);
     for (int i = 0; i < arrayType->cardinality; i++) {
@@ -493,15 +495,15 @@ static ObjString* arrayToString(ObjPackedUniformArray* array) {
     return copyString(buffer, (int)strlen(buffer));
 }
 
-static ObjString* pointerToString(ObjPackedPointer* ptr) {
-    Value targetType = ptr->type->target_type == NULL ? NIL_VAL : OBJ_VAL(ptr->type->target_type);
+static ObjString* pointerToString(const ObjPackedPointer* ptr) {
+    Value targetType = ptr->type->target_type == NULL ? NIL_VAL : YARGTYPE_VAL(ptr->type->target_type);
     ObjString* targetTypeStr = valueToString(targetType);
-    tempRootPush(OBJ_VAL(targetTypeStr));
+    tempObjRootPush((Obj*)targetTypeStr);
 
     ObjString* prefix = copyString("<*", 2);
-    tempRootPush(OBJ_VAL(prefix));
+    tempObjRootPush((Obj*)prefix);
     ObjString* working = concatenateStrings(prefix, targetTypeStr);
-    tempRootPush(OBJ_VAL(working));
+    tempObjRootPush((Obj*)working);
     
     int length = working->length + 12;
     char* chars = ALLOCATE(char, length + 1);
@@ -515,7 +517,7 @@ static ObjString* pointerToString(ObjPackedPointer* ptr) {
     return result;
 }
 
-static ObjString* structToString(ObjPackedStruct* st) {
+static ObjString* structToString(const ObjPackedStruct* st) {
     ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*)st->store.storedType;
     char buffer[1024];
     snprintf(buffer, sizeof(buffer), "struct{|%zu:%zu|", structType->field_count, structType->storage_size);
@@ -531,77 +533,98 @@ static ObjString* structToString(ObjPackedStruct* st) {
     return copyString(buffer, (int)strlen(buffer));
 }
 
-ObjString* mapToString(ObjMap* map) {
-    ObjString* typeStr = valueToString(OBJ_VAL(map->type));
+ObjString* mapToString(const ObjMap* map) {
+    ObjString* typeStr = valueToString(YARGTYPE_VAL(map->type));
     char buffer[64];
     snprintf(buffer, sizeof(buffer), "<map (%d) %s >", map->entries.count, typeStr->chars);
     return copyString(buffer, (int)strlen(buffer));
 }
 
-ObjString* objectToString(Value value) {
-    switch (OBJ_TYPE(value)) {
-        case OBJ_BOUND_METHOD:
-            return functionToString(AS_BOUND_METHOD(value)->method->function);
-        case OBJ_CLASS:
-            return copyString(AS_CLASS(value)->name->chars, AS_CLASS(value)->name->length);
-        case OBJ_CLOSURE:
-            return functionToString(AS_CLOSURE(value)->function);
-        case OBJ_FUNCTION:
-            return functionToString(AS_FUNCTION(value));
+ObjString* objectToString(const Obj* value) {
+    switch (value->type) {
+        case OBJ_BOUND_METHOD: {
+            const ObjBoundMethod* boundMethod = (const ObjBoundMethod*)value;
+            return functionToString(boundMethod->method->function);
+        }
+        case OBJ_CLASS: {
+            const ObjClass* klass = (const ObjClass*)value;
+            return copyString(klass->name->chars, klass->name->length);
+        }
+        case OBJ_CLOSURE: {
+            const ObjClosure* closure = (const ObjClosure*)value;
+            return functionToString(closure->function);
+        }
+        case OBJ_FUNCTION: {
+            const ObjFunction* function = (const ObjFunction*)value;
+            return functionToString(function);
+        }
         case OBJ_INSTANCE: {
             char buffer[64];
-            snprintf(buffer, sizeof(buffer), "%s instance", AS_INSTANCE(value)->klass->name->chars);
+            const ObjInstance* instance = (const ObjInstance*)value;
+            snprintf(buffer, sizeof(buffer), "%s instance", instance->klass->name->chars);
             return copyString(buffer, (int)strlen(buffer));
             }
         case OBJ_NATIVE:
             return copyString("<native fn>", 11);
         case OBJ_BUILTIN:
             return copyString("<builtin fn>", 12);
-        case OBJ_ROUTINE:
-            return routineToString(AS_ROUTINE(value));
-            break;
-        case OBJ_CHANNELCONTAINER:
-            return channelToString(AS_CHANNEL(value));
-            break;
-        case OBJ_SYNCGROUP:
-            return syncGroupToString(AS_SYNCGROUP(value));
-            break;
-        case OBJ_STRING:
-            return copyString(AS_CSTRING(value), AS_STRING(value)->length);
-            break;
-        case OBJ_UPVALUE:
+        case OBJ_ROUTINE: {
+            const ObjRoutine* routine = (const ObjRoutine*)value;
+            return routineToString(routine);
+        }
+        case OBJ_CHANNELCONTAINER: {
+            const ObjChannelContainer* channel = (const ObjChannelContainer*)value;
+            return channelToString(channel);
+        }
+        case OBJ_SYNCGROUP: {
+            const ObjSyncGroup* syncGroup = (const ObjSyncGroup*)value;
+            return syncGroupToString(syncGroup);
+        }
+        case OBJ_STRING: {
+            const ObjString* string = (const ObjString*)value;
+            return copyString(string->chars, string->length);
+        }
+        case OBJ_UPVALUE: {
+            const ObjUpvalue* upvalue = (const ObjUpvalue*)value;
             return copyString("upvalue", 7);
-            break;
+        }
         case OBJ_UNOWNED_UNIFORMARRAY:
-        case OBJ_PACKEDUNIFORMARRAY:
-            return arrayToString(AS_UNIFORMARRAY(value));
-            break;
+        case OBJ_PACKEDUNIFORMARRAY: {
+            const ObjPackedUniformArray* array = (const ObjPackedUniformArray*)value;
+            return arrayToString(array);
+        }
         case OBJ_YARGTYPE:
         case OBJ_YARGTYPE_ARRAY:
         case OBJ_YARGTYPE_STRUCT:
-        case OBJ_YARGTYPE_MAP:
-            return typeToString(AS_YARGTYPE(value));
-            break;
+        case OBJ_YARGTYPE_MAP: {
+            const ObjConcreteYargType* type = (const ObjConcreteYargType*)value;
+            return typeToString(type);
+        }
         case OBJ_UNOWNED_PACKEDPOINTER:
-        case OBJ_PACKEDPOINTER:
-            return pointerToString(AS_POINTER(value));
-            break;
+        case OBJ_PACKEDPOINTER: {
+            const ObjPackedPointer* pointer = (const ObjPackedPointer*)value;
+            return pointerToString(pointer);
+        }
         case OBJ_UNOWNED_PACKEDSTRUCT:
-        case OBJ_PACKEDSTRUCT:
-            return structToString(AS_STRUCT(value));
-            break;
+        case OBJ_PACKEDSTRUCT: {
+            const ObjPackedStruct* strct = (const ObjPackedStruct*)value;
+            return structToString(strct);
+        }
         case OBJ_INT: {
-            Int *i = AS_INT(value);
+            const ObjInt* intObj = (const ObjInt*)value;
+            const Int *i = &intObj->bigInt;
             char sb[INT_STRLEN_FOR_INT254];
             char const* s = int_to_s(i, sb, INT_STRLEN_FOR_INT254);
             return copyString(s, (int)strlen(s));
         }
-        case OBJ_MAP:
-            return mapToString(AS_MAP(value));
+        case OBJ_MAP: {
+            const ObjMap* map = (const ObjMap*)value;
+            return mapToString(map);
+        }
         default: {
-                char buffer[64];
-                snprintf(buffer, sizeof(buffer), "<implementation object %d>", OBJ_TYPE(value));
-                return copyString(buffer, (int)strlen(buffer));
-            }
+            char buffer[64];
+            snprintf(buffer, sizeof(buffer), "<implementation object %d>", value->type);
+            return copyString(buffer, (int)strlen(buffer));
+        }
     }
 }

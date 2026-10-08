@@ -46,10 +46,12 @@ static Entry* findEntry(Entry* entries, int capacity, ObjString* key) {
     }
 }
 
-bool tableGet(ValueTable* table, ObjString* key, Value* value) {
+bool tableGet(const ValueTable* table, ObjString* key, Value* value) {
     if (table->count == 0) return false;
 
-    Entry* entry = findEntry(table->entries, table->capacity, key);
+    ValueTable* writeableTable = (ValueTable*) table;   // TODO: fix this
+
+    Entry* entry = findEntry(writeableTable->entries, table->capacity, key);
     if (entry->key == NULL) return false;
 
     *value = entry->value;
@@ -314,11 +316,11 @@ void printCellTable(ValueCellTable* table) {
     for (int i = 0; i < table->capacity; i++) {
         EntryCell* entry = &table->entries[i];
         if (entry->key != NULL) {
-            printValue(OBJ_VAL((Obj*)entry->key));
+            printValue(STRING_VAL((Obj*)entry->key));
             FPRINTMSG(stderr, ":::");
             printValue(entry->cell.value);
             FPRINTMSG(stderr, ":::");
-            printValue(OBJ_VAL((Obj*)entry->cell.cellType));
+            printValue(YARGTYPE_VAL((Obj*)entry->cell.cellType));
             FPRINTMSG(stderr, "\n");
         }
     }

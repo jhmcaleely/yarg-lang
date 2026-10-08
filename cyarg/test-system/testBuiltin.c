@@ -28,11 +28,11 @@ static bool syncBuiltin(ObjRoutine *, int, Value *);
 Value getTestSystemBuiltin(uint8_t builtin)
 {
     switch (builtin) {
-        case BUILTIN_TS_SET: return OBJ_VAL(newBuiltin(setBuiltin));
-        case BUILTIN_TS_READ: return OBJ_VAL(newBuiltin(readBuiltin));
-        case BUILTIN_TS_WRITE: return OBJ_VAL(newBuiltin(writeBuiltin));
-        case BUILTIN_TS_INTERRUPT: return OBJ_VAL(newBuiltin(interruptBuiltin));
-        case BUILTIN_TS_SYNC: return OBJ_VAL(newBuiltin(syncBuiltin));
+        case BUILTIN_TS_SET: return BUILTIN_VAL(newBuiltin(setBuiltin));
+        case BUILTIN_TS_READ: return BUILTIN_VAL(newBuiltin(readBuiltin));
+        case BUILTIN_TS_WRITE: return BUILTIN_VAL(newBuiltin(writeBuiltin));
+        case BUILTIN_TS_INTERRUPT: return BUILTIN_VAL(newBuiltin(interruptBuiltin));
+        case BUILTIN_TS_SYNC: return BUILTIN_VAL(newBuiltin(syncBuiltin));
         default: return NIL_VAL;
     }
 }
@@ -44,7 +44,7 @@ bool setBuiltin(ObjRoutine *routineContext, int argCount, Value* result)
     {
         Value arg0 = peek(routineContext, 1);
         Value arg1 = peek(routineContext, 0);
-        if (!IS_OBJ(arg0) && !IS_OBJ(arg1))
+        if (IS_UI32(arg0) && IS_UI32(arg1))
         {
             uint32_t address = AS_UI32(arg0);
             uint32_t value = AS_UI32(arg1);
@@ -62,14 +62,14 @@ bool setBuiltin(ObjRoutine *routineContext, int argCount, Value* result)
 
 bool readBuiltin(ObjRoutine *routineContext, int argCount, Value *result) {
     bool ok = false;
-    if (argCount == 1 && !IS_OBJ(peek(routineContext, 0)))
+    if (argCount == 1 && IS_UI32(peek(routineContext, 0)))
     {
         Value arg0 = peek(routineContext, 0);
         uint32_t address = AS_UI32(arg0);
         testIntrinsicsExpectReadAnyValue(address);
         ok = true;
     }
-    else if (argCount == 2 && !IS_OBJ(peek(routineContext, 0)) && !IS_OBJ(peek(routineContext, 1)))
+    else if (argCount == 2 && IS_UI32(peek(routineContext, 0)) && IS_UI32(peek(routineContext, 1)))
     {
         Value arg0 = peek(routineContext, 1);
         Value arg1 = peek(routineContext, 0);
@@ -88,14 +88,14 @@ bool readBuiltin(ObjRoutine *routineContext, int argCount, Value *result) {
 
 bool writeBuiltin(ObjRoutine *routineContext, int argCount, Value *result) {
     bool ok = false;
-    if (argCount == 1 && !IS_OBJ(peek(routineContext, 0)))
+    if (argCount == 1 && IS_UI32(peek(routineContext, 0)))
     {
         Value arg0 = peek(routineContext, 0);
         uint32_t address = AS_UI32(arg0);
         testIntrinsicsExpectWriteAnyValue(address);
         ok = true;
     }
-    else if (argCount == 2 && !IS_OBJ(peek(routineContext, 0)) && !IS_OBJ(peek(routineContext, 1)))
+    else if (argCount == 2 && IS_UI32(peek(routineContext, 0)) && IS_UI32(peek(routineContext, 1)))
     {
         Value arg0 = peek(routineContext, 1);
         Value arg1 = peek(routineContext, 0);
@@ -137,31 +137,31 @@ bool interruptBuiltin(ObjRoutine *routineContext, int argCount, Value *result) {
 
 bool syncBuiltin(ObjRoutine *routineContext, int argCount, Value *result)
 {
+    // TODO: review
     TsLog *log = testIntrinsicsSync();
 
-    Obj emptyString;
-    ObjConcreteYargType *array = newYargArrayTypeFromType(OBJ_VAL(&emptyString));
-    tempRootPush(OBJ_VAL(array));
+    ObjConcreteYargType *array = newYargArrayTypeFromType(NULL);
+    tempObjRootPush((Obj*)array);
 
     ObjConcreteYargTypeArray *arrayAsArray = (ObjConcreteYargTypeArray *)array;
     arrayAsArray->cardinality = log->n_;
     ObjPackedUniformArray* result_array = newPackedUniformArray(arrayAsArray);
     tempRootPop(); // array
-    tempRootPush(OBJ_VAL(result_array));
+    tempObjRootPush((Obj*)result_array);
 
     for (size_t i = 0; i < log->n_; i++)
     {
 //        printf("%s\n", log->i_[i]); // until log gets coppied to *result
         ObjString *s = copyString(log->i_[i], (int)strlen(log->i_[i]));
-        tempRootPush(OBJ_VAL(s));
+        tempObjRootPush((Obj*)s);
         reallocate(log->i_[i], (int)strlen(log->i_[i]) + 1, 0);
         PackedValue p = arrayElement(result_array->store, i);
-        assignToPackedValue(p, OBJ_VAL(s));
+        assignToPackedValue(p, STRING_VAL(s));
         tempRootPop(); // s
     }
 
     tempRootPop(); // array
-    *result = OBJ_VAL(result_array);
+    *result = ARRAY_VAL(result_array);
     log->n_ = 0;
 
     return true;

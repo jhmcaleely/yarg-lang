@@ -15,4 +15,6 @@ typedef struct {
 
 ObjBuiltin* newBuiltin(BuiltinFun function);
 
+#define BUILTIN_VAL(object)     ((Value){.type = &yargTypes.function, .as.obj = (Obj*) object})
+
 #endif

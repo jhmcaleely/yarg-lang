@@ -80,7 +80,7 @@ ObjFunction *loadPackageFromBuffer(ObjRoutine* context, uint8_t* buffer, size_t 
 
     for (int i = 0; i < h->numChunks_; i++) {
         functions[i] = newFunction();
-        push(context, OBJ_VAL(functions[i]));
+        push(context, FUNCTION_VAL(functions[i]));
     }
 
     uint8_t const *startOfCode = next;
@@ -147,7 +147,7 @@ ObjFunction *loadPackageFromBuffer(ObjRoutine* context, uint8_t* buffer, size_t 
             case PACK_CONST_TYPE_S: {
                 char *thisString = (char *)&stringFile[index];
                 ObjString *obj = copyString(thisString, (int)strlen(thisString)); // mark as xip
-                Value value = OBJ_VAL(obj);
+                Value value = STRING_VAL(obj);
                 push(context, value);
                 appendToDynamicValueArray(&currentFunction->chunk.constants, value);
                 pop(context);
@@ -157,9 +157,9 @@ ObjFunction *loadPackageFromBuffer(ObjRoutine* context, uint8_t* buffer, size_t 
             case PACK_CONST_TYPE_I: {
                 Int const *thisInt = (Int const *)&intFile[index];
                 ObjInt *obj = allocateIntObject(thisInt->d_);
-                push(context, OBJ_VAL(obj));
+                push(context, INTOBJ_VAL(obj));
                 memcpy(&obj->bigInt, thisInt, sizeof (Int) + obj->bigInt.m_ * sizeof (uint16_t)); // should be able to shallow copy
-                Value value = OBJ_VAL(obj);
+                Value value = INTOBJ_VAL(obj);
                 appendToDynamicValueArray(&currentFunction->chunk.constants, value);
                 pop(context);
                 DP(printf(":");
@@ -175,7 +175,7 @@ ObjFunction *loadPackageFromBuffer(ObjRoutine* context, uint8_t* buffer, size_t 
             }
             case PACK_CONST_TYPE_F: {
                 ObjFunction *thisFun = functions[index];
-                Value value = OBJ_VAL(thisFun);
+                Value value = FUNCTION_VAL(thisFun);
                 appendToDynamicValueArray(&currentFunction->chunk.constants, value);
                 if (thisFun->fName != 0) {
                     char name[21];

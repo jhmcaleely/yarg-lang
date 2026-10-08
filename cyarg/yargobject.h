@@ -43,6 +43,23 @@ typedef struct ObjConcreteYargTypeMap ObjConcreteYargTypeMap;
 #define AS_INT(value)          (&(AS_INTOBJ(value)->bigInt))
 #define AS_MAP(value)          ((ObjMap*)AS_OBJ(value))
 
+#define STRING_VAL(object)     ((Value){.type = &yargTypes.string, .as.obj = (Obj*) object})
+#define YARGTYPE_VAL(object)   ((Value){.type = &yargTypes.type, .as.obj = (Obj*) object})
+#define INTOBJ_VAL(object)     ((Value){.type = &yargTypes.integer, .as.obj = (Obj*) object})
+#define CLASS_VAL(object)      ((Value){.type = &yargTypes.class_, .as.obj = (Obj*) object})
+#define INSTANCE_VAL(object)   ((Value){.type = &yargTypes.function, .as.obj = (Obj*) object})
+#define FUNCTION_VAL(object)   ((Value){.type = &yargTypes.function, .as.obj = (Obj*) object})
+#define CLOSURE_VAL(object)    ((Value){.type = &yargTypes.function, .as.obj = (Obj*) object})
+#define ROUTINE_VAL(object)    ((Value){.type = &yargTypes.routine, .as.obj = (Obj*) object})
+#define NATIVE_VAL(object)     ((Value){.type = &yargTypes.function, .as.obj = (Obj*) object})
+#define CHANNEL_VAL(object)    ((Value){.type = &yargTypes.channel, .as.obj = (Obj*) object})
+#define SYNCGROUP_VAL(object)  ((Value){.type = &yargTypes.syncGroup, .as.obj = (Obj*) object})
+#define POINTER_VAL(object)    ((Value){.type = ((const ObjConcreteYargType*)((ObjPackedPointer*)object)->type), .as.obj = (Obj*) object})
+#define BOUNDMETHOD_VAL(object)  ((Value){.type = &yargTypes.function, .as.obj = (Obj*) object})
+#define MAP_VAL(object)        ((Value){.type = ((const ObjConcreteYargType*)((ObjMap*)object)->type), .as.obj = (Obj*) object})
+#define STRUCT_VAL(object)     ((Value){.type = ((const ObjConcreteYargType*)((ObjPackedStruct*)object)->store.storedType), .as.obj = (Obj*) object})
+#define ARRAY_VAL(object)      ((Value){.type = ((const ObjConcreteYargType*)((ObjPackedUniformArray*)object)->store.storedType), .as.obj = (Obj*) object})
+
 struct ObjString {
     Obj obj;
     int length;
@@ -128,9 +145,15 @@ Value defaultStructValue(ObjConcreteYargType* type);
 
 Value placeObjectAt(Value type, Value location);
 
-ObjString* objectToString(Value value);
+uintptr_t pinUniformArray(ObjPackedUniformArray* array);
 
 bool isArrayPointer(Value value);
 bool isStructPointer(Value value);
+
+bool arraysEqual(const ObjPackedUniformArray* a, const ObjPackedUniformArray* b);
+bool structsEqual(const ObjPackedStruct* a, const ObjPackedStruct* b);
+bool typesEqual(const ObjConcreteYargType* a, const ObjConcreteYargType* b);
+bool pointersEqual(const ObjPackedPointer* a, const ObjPackedPointer* b);
+bool intsEqual(const ObjInt* a, const ObjInt* b);
 
 #endif

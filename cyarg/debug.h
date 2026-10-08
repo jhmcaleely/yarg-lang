@@ -11,4 +11,6 @@ int disassembleInstruction(Chunk* chunk, int offset);
 void printValue(Value value);
 void fprintValue(FILE* op, Value value);
 
+void printObj(const Obj* object);
+void fprintObj(FILE* op, const Obj* object);
 #endif

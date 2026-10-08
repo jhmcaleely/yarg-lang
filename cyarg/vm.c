@@ -17,6 +17,7 @@
 #include "compiler.h"
 #include "debug.h"
 #include "object.h"
+#include "yargtype.h"
 #include "yargobject.h"
 #include "vmobject.h"
 #include "memory.h"
@@ -27,6 +28,7 @@
 #include "yargtype.h"
 #include "packed_value.h"
 #include "xip_library.h"
+#include "yargstructtype.h"
 
 VM vm;
 
@@ -121,12 +123,12 @@ void fatalVMError(const char* format, ...) {
 
 static void defineNative(const char* name, NativeFn function) {
     ObjString* nameString = copyString(name, (int)strlen(name));
-    tempRootPush(OBJ_VAL(nameString));
+    tempObjRootPush((Obj*)nameString);
     ObjNative* native = newNative(function);
-    tempRootPush(OBJ_VAL(native));
+    tempObjRootPush((Obj*)native);
 
     ValueCell cell;
-    cell.value = OBJ_VAL(native);
+    cell.value = NATIVE_VAL(native);
     cell.cellType = NULL;
     tableCellSet(&vm.globals, nameString, cell);
     tempRootPop();
@@ -135,7 +137,7 @@ static void defineNative(const char* name, NativeFn function) {
 
 static void defineGlobal(const char* name, Value value) {
     ObjString* nameString = copyString(name, (int)strlen(name));
-    tempRootPush(OBJ_VAL(nameString));
+    tempObjRootPush((Obj*)nameString);
 
     ValueCell cell;
     cell.value = value;
@@ -172,9 +174,11 @@ void initVMRuntime() {
 
     // We have two Obj here not on the heap. hack up their init.
     vm.core0.obj.type = OBJ_ROUTINE;
+    vm.core0.obj.isMarked = true;
     initRoutine(&vm.core0);
 
     vm.bootFunction.obj.type = OBJ_FUNCTION;
+    vm.bootFunction.obj.isMarked = true;
     initFunction(&vm.bootFunction);
 
     initCellTable(&vm.globals);
@@ -257,55 +261,46 @@ bool callfn(ObjRoutine* routine, ObjClosure* closure, int argCount) {
 }
 
 static InterpretResult callValue(ObjRoutine* routine, Value callee, int argCount) {
-    if (IS_OBJ(callee)) {
-        switch (OBJ_TYPE(callee)) {
-            case OBJ_BOUND_METHOD: {
-                ObjBoundMethod* bound = AS_BOUND_METHOD(callee);
-                ValueCell* target = peekCell(routine, argCount);
-                target->value = bound->reciever;
-                target->cellType = NULL;
-                return callfn(routine, bound->method, argCount) ? INTERPRET_OK : INTERPRET_RUNTIME_ERROR;
-            }
-            case OBJ_CLASS: {
-                ObjClass* klass = AS_CLASS(callee);
-                ValueCell* target = peekCell(routine, argCount);
-                target->value = OBJ_VAL(newInstance(klass));
-                target->cellType = NULL;
-                Value initializer;
-                if (tableGet(&klass->methods, vm.initString, &initializer)) {
-                    return callfn(routine, AS_CLOSURE(initializer), argCount) ? INTERPRET_OK : INTERPRET_RUNTIME_ERROR;
-                } else if (argCount != 0) {
-                    runtimeError(routine, "Expected 0 arguments but got %d.", argCount);
-                    return INTERPRET_RUNTIME_ERROR;
-                }
-                return INTERPRET_OK;
-            }
-            case OBJ_CLOSURE:
-                return callfn(routine, AS_CLOSURE(callee), argCount) ? INTERPRET_OK : INTERPRET_RUNTIME_ERROR;
-            case OBJ_NATIVE: {
-                NativeFn native = AS_NATIVE(callee);
-                Value result = NIL_VAL;
-                if (native(routine, argCount, &result)) {
-                    popN(routine, argCount + 1);
-                    push(routine, result);
-                    return INTERPRET_OK;
-                } else {
-                    return INTERPRET_RUNTIME_ERROR;
-                }
-            }
-            case OBJ_BUILTIN: {
-                BuiltinFun builtin = AS_BUILTIN(callee);
-                Value result = NIL_VAL;
-                if (builtin(routine, argCount, &result)) {
-                    popN(routine, argCount + 1);
-                    push(routine, result);
-                    return INTERPRET_OK;
-                } else {
-                    return INTERPRET_RUNTIME_ERROR;
-                }
-            }
-            default:
-                break; // Non-callable object type.
+    if (IS_BOUND_METHOD(callee)) {
+        ObjBoundMethod* bound = AS_BOUND_METHOD(callee);
+        ValueCell* target = peekCell(routine, argCount);
+        target->value = bound->reciever;
+        target->cellType = NULL;
+        return callfn(routine, bound->method, argCount) ? INTERPRET_OK : INTERPRET_RUNTIME_ERROR;
+    } else if (IS_CLASS(callee)) {
+        ObjClass* klass = AS_CLASS(callee);
+        ValueCell* target = peekCell(routine, argCount);
+        target->value = INSTANCE_VAL(newInstance(klass));
+        target->cellType = NULL;
+        Value initializer;
+        if (tableGet(&klass->methods, vm.initString, &initializer)) {
+            return callfn(routine, AS_CLOSURE(initializer), argCount) ? INTERPRET_OK : INTERPRET_RUNTIME_ERROR;
+        } else if (argCount != 0) {
+            runtimeError(routine, "Expected 0 arguments but got %d.", argCount);
+            return INTERPRET_RUNTIME_ERROR;
+        }
+        return INTERPRET_OK;
+    } else if (IS_CLOSURE(callee)) {
+        return callfn(routine, AS_CLOSURE(callee), argCount) ? INTERPRET_OK : INTERPRET_RUNTIME_ERROR;
+    } else if (IS_NATIVE(callee)) {
+        NativeFn native = AS_NATIVE(callee);
+        Value result = NIL_VAL;
+        if (native(routine, argCount, &result)) {
+            popN(routine, argCount + 1);
+            push(routine, result);
+            return INTERPRET_OK;
+        } else {
+            return INTERPRET_RUNTIME_ERROR;
+        }
+    } else if (IS_BUILTIN(callee)) {
+        BuiltinFun builtin = AS_BUILTIN(callee);
+        Value result = NIL_VAL;
+        if (builtin(routine, argCount, &result)) {
+            popN(routine, argCount + 1);
+            push(routine, result);
+            return INTERPRET_OK;
+        } else {
+            return INTERPRET_RUNTIME_ERROR;
         }
     }
     runtimeError(routine, "Can only call functions and classes.");
@@ -353,7 +348,7 @@ static bool bindMethod(ObjRoutine* routine, ObjClass* klass, ObjString* name) {
 
     ObjBoundMethod* bound = newBoundMethod(peek(routine, 0), AS_CLOSURE(method));
     pop(routine);
-    push(routine, OBJ_VAL(bound));
+    push(routine, BOUNDMETHOD_VAL(bound));
     return true;
 }
 
@@ -420,10 +415,10 @@ static bool derefArrayElement(ObjRoutine* routine) {
             runtimeError(routine, "Array index %zu out of bounds (0:%zu)", index, arrayCardinality(arrayObj->store) - 1);
             return false;
         }
-        tempRootPush(OBJ_VAL(arrayObj));
+        tempObjRootPush((Obj*)arrayObj);
 
         PackedValue element = arrayElement(arrayObj->store, index);
-        result = OBJ_VAL(newPointerAtHeapCell(element));
+        result = POINTER_VAL(newPointerAtHeapCell(element));
         tempRootPop();
     }
 
@@ -543,7 +538,7 @@ static void concatenate(ObjRoutine* routine) {
     ObjString* result = concatenateStrings(a, b);
     pop(routine);
     pop(routine);
-    push(routine, OBJ_VAL(result));
+    push(routine, STRING_VAL(result));
 }
 
 static void promote(Value *left, Value *right)
@@ -561,73 +556,59 @@ static void promote(Value *left, Value *right)
         toPromote = right;
         promotionToTypeOf = left;
     }
+
     if (toPromote != 0)
     {
-        ValueType promoteTo = promotionToTypeOf->type;
+        const ObjConcreteYargType* promoteTo = promotionToTypeOf->type;
         Int *bigInt = AS_INT(*toPromote);
 
-        switch (promoteTo)
+        if (typesEqual(promoteTo, &yargTypes.int8)
+            && int_is_range(bigInt, INT8_MIN, INT8_MAX) == INT_WITHIN) 
         {
-        case VAL_I8:
-            if (int_is_range(bigInt, INT8_MIN, INT8_MAX) == INT_WITHIN)
-            {
-                toPromote->type = promoteTo;
-                toPromote->as.i8 = (int8_t) int_to_i32(bigInt);
-            }
-            break;
-        case VAL_UI8:
-            if (int_is_range(bigInt, 0, UINT8_MAX) == INT_WITHIN)
-            {
-                toPromote->type = promoteTo;
-                toPromote->as.ui8 = (uint8_t) int_to_u32(bigInt);
-            }
-            break;
-        case VAL_I16:
-            if (int_is_range(bigInt, INT16_MIN, INT16_MAX) == INT_WITHIN)
-            {
-                toPromote->type = promoteTo;
-                toPromote->as.i16 = (int16_t) int_to_i32(bigInt);
-            }
-            break;
-        case VAL_UI16:
-            if (int_is_range(bigInt, 0, UINT16_MAX) == INT_WITHIN)
-            {
-                toPromote->type = promoteTo;
-                toPromote->as.ui16 = (uint16_t) int_to_u32(bigInt);
-            }
-            break;
-        case VAL_I32:
-            if (int_is_range(bigInt, INT32_MIN, INT32_MAX) == INT_WITHIN)
-            {
-                toPromote->type = promoteTo;
-                toPromote->as.i32 = int_to_i32(bigInt);
-            }
-            break;
-        case VAL_UI32:
-            if (int_is_range(bigInt, 0, UINT32_MAX) == INT_WITHIN)
-            {
-                toPromote->type = promoteTo;
-                toPromote->as.ui32 = int_to_u32(bigInt);
-            }
-            break;
-        case VAL_I64:
-            if (int_is_range(bigInt, INT64_MIN, INT64_MAX) == INT_WITHIN)
-            {
-                toPromote->type = promoteTo;
-                toPromote->as.i64 = int_to_i64(bigInt);
-            }
-            break;
-        case VAL_UI64:
-            if (int_is_range(bigInt, 0, UINT64_MAX) == INT_WITHIN)
-            {
-                toPromote->type = promoteTo;
-                toPromote->as.ui64 = int_to_u64(bigInt);
-            }
-            break;
-
-        default:
-            // can’t promote to this type
-            break;
+            toPromote->type = promoteTo;
+            toPromote->as.i8 = (int8_t) int_to_i32(bigInt);
+        } 
+        else if (typesEqual(promoteTo, &yargTypes.uint8)
+                  && int_is_range(bigInt, 0, UINT8_MAX) == INT_WITHIN)
+        {
+            toPromote->type = promoteTo;
+            toPromote->as.ui8 = (uint8_t) int_to_u32(bigInt);
+        } 
+        else if (typesEqual(promoteTo, &yargTypes.uint16)
+                  && int_is_range(bigInt, INT16_MIN, INT16_MAX) == INT_WITHIN)
+        {
+            toPromote->type = promoteTo;
+            toPromote->as.i16 = (int16_t) int_to_i32(bigInt);
+        } 
+        else if (typesEqual(promoteTo, &yargTypes.uint16)
+                    && int_is_range(bigInt, 0, UINT16_MAX) == INT_WITHIN)
+        {
+            toPromote->type = promoteTo;
+            toPromote->as.ui16 = (uint16_t) int_to_u32(bigInt);
+        }
+        else if (typesEqual(promoteTo, &yargTypes.int32)
+            && int_is_range(bigInt, INT32_MIN, INT32_MAX) == INT_WITHIN)
+        {
+            toPromote->type = promoteTo;
+            toPromote->as.i32 = int_to_i32(bigInt);
+        }
+        else if (typesEqual(promoteTo, &yargTypes.uint32)
+                && int_is_range(bigInt, 0, UINT32_MAX) == INT_WITHIN)
+        {
+            toPromote->type = promoteTo;
+            toPromote->as.ui32 = int_to_u32(bigInt);
+        }
+        else if (typesEqual(promoteTo, &yargTypes.int64)
+                && int_is_range(bigInt, INT64_MIN, INT64_MAX) == INT_WITHIN)
+        {
+            toPromote->type = promoteTo;
+            toPromote->as.i64 = int_to_i64(bigInt);
+        }
+        else if (typesEqual(promoteTo, &yargTypes.uint64)
+                && int_is_range(bigInt, 0, UINT64_MAX) == INT_WITHIN)
+        {
+            toPromote->type = promoteTo;
+            toPromote->as.ui64 = int_to_u64(bigInt);
         }
     }
 }
@@ -795,7 +776,7 @@ InterpretResult run(ObjRoutine* routine) {
                 ObjInt *i = newIntU(num);
                 i->isLiteral = true;
                 i->bigInt.neg_ = instruction == OP_IMMEDIATE_N8 || instruction == OP_IMMEDIATE_N16 || instruction == OP_IMMEDIATE_N24;
-                push(routine, OBJ_VAL(i));
+                push(routine, INTOBJ_VAL(i));
                 break;
             }
             case OP_NIL: push(routine, NIL_VAL); break;
@@ -939,7 +920,7 @@ InterpretResult run(ObjRoutine* routine) {
                     push(routine, result);
                 } else if (isStructPointer(peek(routine, 0))) {
                     ObjPackedStruct* object = (ObjPackedStruct*) destinationObject(peek(routine, 0));
-                    tempRootPush(OBJ_VAL(object));
+                    tempObjRootPush((Obj*)object);
                     ObjString* name = READ_STRING();
                     size_t index;
                     if (!structFieldIndex(object->store.storedType, name, &index)) {
@@ -947,7 +928,7 @@ InterpretResult run(ObjRoutine* routine) {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     PackedValue f = structField(object->store, index);
-                    Value result = OBJ_VAL(newPointerAtHeapCell(f));
+                    Value result = POINTER_VAL(newPointerAtHeapCell(f));
                     tempRootPop();
 
                     pop(routine);
@@ -1097,7 +1078,7 @@ InterpretResult run(ObjRoutine* routine) {
                     uint32_t b = AS_UI32(pop(routine));
                     ObjPackedPointer* pointer = AS_POINTER(pop(routine));
                     offsetPointerDestination(pointer, b);
-                    push(routine, OBJ_VAL(pointer));
+                    push(routine, POINTER_VAL(pointer));
                 } else if (IS_STRING(peek(routine, 0)) && IS_STRING(peek(routine, 1))) {
                     concatenate(routine);
                 } else if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) {
@@ -1194,7 +1175,7 @@ InterpretResult run(ObjRoutine* routine) {
             }
             case OP_PRINT: {
                 ObjString* string = valueToString(peek(routine, 0));
-                tempRootPush(OBJ_VAL(string));
+                tempObjRootPush((Obj*)string);
                 printf("%s\n", string->chars);
                 tempRootPop();
                 pop(routine);
@@ -1210,7 +1191,7 @@ InterpretResult run(ObjRoutine* routine) {
                     runtimeError(routine, "Location must be a pointer to an uint32 or address.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                if (!is_positive_integer(assignment) && !is_stored_type(assignment_type)) {
+                if (!is_positive_integer(assignment) && !is_stored_type(AS_YARGTYPE(assignment_type))) {
                     tempRootPop();
                     runtimeError(routine, "Value must be a positive integer or a placeable type.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -1236,7 +1217,7 @@ InterpretResult run(ObjRoutine* routine) {
 
                 if (is_positive_integer(assignment)) {
                     val = as_positive_integer(assignment);
-                } else if (is_stored_type(assignment_type)) {
+                } else if (is_stored_type(AS_YARGTYPE(assignment_type))) {
                     val = (uintptr_t)storedAddressof(assignment);
                 }
 
@@ -1302,7 +1283,7 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_CLOSURE: {
                 ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
                 ObjClosure* closure = newClosure(function);
-                push(routine, OBJ_VAL(closure));
+                push(routine, CLOSURE_VAL(closure));
                 for (int i = 0; i < closure->cUpvalueCount; i++) {
                     uint8_t isLocal = READ_BYTE();
                     uint8_t index = READ_BYTE();
@@ -1342,7 +1323,7 @@ InterpretResult run(ObjRoutine* routine) {
                 break;
             }
             case OP_CLASS:
-                push(routine, OBJ_VAL(newClass(READ_STRING())));
+                push(routine, CLASS_VAL(newClass(READ_STRING())));
                 break;
             case OP_INHERIT: {
                 Value superclass = peek(routine, 1);
@@ -1394,21 +1375,29 @@ InterpretResult run(ObjRoutine* routine) {
                     runtimeError(routine, "Unknown type literal.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                push(routine, OBJ_VAL(typeObj));
+                push(routine, YARGTYPE_VAL(typeObj));
                 break;
             }
             case OP_TYPE_STRUCT: {
                 uint8_t fieldCount = READ_BYTE();
                 ObjConcreteYargTypeStruct* st = (ObjConcreteYargTypeStruct*) newYargStructType(fieldCount);
-                tempRootPush(OBJ_VAL(st));
+                tempObjRootPush((Obj*)st);
                 size_t fieldOffset = 0;
                 for (uint8_t i = 0; i < fieldCount; i++) {
-                    fieldOffset = addFieldType(st, i, fieldOffset, peek(routine, 2), peek(routine, 1), peek(routine, 0));
+                    ObjConcreteYargType* fieldType = AS_YARGTYPE(peek(routine, 2));
+                    ObjString* fieldName = AS_STRING(peek(routine, 0));
+                    Value offsetValue = peek(routine, 1);
+                    if (IS_NIL(offsetValue)) {
+                        fieldOffset = addFieldType(st, i, fieldOffset, fieldType, fieldName);
+                    } else if (is_positive_integer(offsetValue)) {
+                        size_t offset = as_positive_integer(offsetValue);
+                        fieldOffset = addFieldTypeAtOffset(st, i, fieldType, offset, fieldName);
+                    }
                     pop(routine);
                     pop(routine);
                     pop(routine);
                 }
-                push(routine, OBJ_VAL(st));
+                push(routine, YARGTYPE_VAL(st));
                 tempRootPop();
                 break;
             }
@@ -1419,11 +1408,11 @@ InterpretResult run(ObjRoutine* routine) {
 
                 if (IS_NIL(indexer) || IS_YARGTYPE(indexer)) {
                     ObjConcreteYargTypeMap* mapType = ALLOCATE_OBJ(ObjConcreteYargTypeMap, OBJ_YARGTYPE_MAP);
-                    tempRootPush(OBJ_VAL(mapType));
+                    tempObjRootPush((Obj*)mapType);
                     mapType->core.yt = TypeMap;
                     mapType->key_type = IS_NIL(indexer) ? NULL : AS_YARGTYPE(indexer);
                     mapType->value_type = IS_NIL(peek(routine, 1)) ? NULL : AS_YARGTYPE(peek(routine, 1));
-                    if (!isSupportedMapKeyType(OBJ_VAL(mapType))) {
+                    if (!isSupportedMapKeyType((ObjConcreteYargType*) mapType)) {
                         runtimeError(routine, "Unsupported map key type.");
                         tempRootPop();
                         return INTERPRET_RUNTIME_ERROR;
@@ -1436,7 +1425,8 @@ InterpretResult run(ObjRoutine* routine) {
                         runtimeError(routine, "Array cardinality must be non zero.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    ObjConcreteYargTypeArray* array = (ObjConcreteYargTypeArray*) newYargArrayTypeFromType(peek(routine, 1));
+                    ObjConcreteYargType* elementType = AS_YARGTYPE(peek(routine, 1));
+                    ObjConcreteYargTypeArray* array = (ObjConcreteYargTypeArray*) newYargArrayTypeFromType(elementType);
                     array->cardinality = cardinality;
                     typeObject = (ObjConcreteYargType*) array;
                 } else {
@@ -1446,7 +1436,7 @@ InterpretResult run(ObjRoutine* routine) {
 
                 pop(routine);
                 pop(routine);
-                push(routine, OBJ_VAL(typeObject));
+                push(routine, YARGTYPE_VAL(typeObject));
                 break;
             }
             case OP_SET_CELL_TYPE: {
@@ -1481,7 +1471,7 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_PLACE: {
                 Value location = peek(routine, 0);
                 Value type = peek(routine, 1);
-                if (!is_placeable_type(type)) {
+                if (!is_placeable_type(AS_YARGTYPE(type))) {
                     runtimeError(routine, "Cannot place this type.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -1522,7 +1512,7 @@ static void bindBootstrapScript(const char* name, size_t nameLength,
                                 const uint8_t code[], size_t codeLength, 
                                 ObjString* script, size_t constantIndex) {
     bindBootstrapCode(name, nameLength, code, codeLength);
-    uint8_t constant = addConstant(&vm.bootFunction.chunk, OBJ_VAL(script));
+    uint8_t constant = addConstant(&vm.bootFunction.chunk, STRING_VAL(script));
     assert(constant == vm.bootFunction.chunk.code[constantIndex]);
 }
 
@@ -1610,7 +1600,7 @@ void unaryIntOp(ObjRoutine* routine, int op) {
     int_set_t(a, &r->bigInt);
     int_neg(&r->bigInt);
     pop(routine);
-    push(routine, OBJ_VAL(r));
+    push(routine, INTOBJ_VAL(r));
 }
 
 void binaryIntOp(ObjRoutine* routine, char const *c)
@@ -1656,7 +1646,7 @@ void binaryIntOp(ObjRoutine* routine, char const *c)
         assert(!"IntOp");
     }
     routine->stackTopIndex -= 2;
-    push(routine, OBJ_VAL(r));
+    push(routine, INTOBJ_VAL(r));
 }
 
 void binaryIntBoolOp(ObjRoutine* routine, char const *op)

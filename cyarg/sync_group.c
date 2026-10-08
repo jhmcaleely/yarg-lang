@@ -21,11 +21,11 @@ typedef struct ObjSyncGroup {
 
 ObjSyncGroup* newSyncGroup(ObjRoutine* routine, ObjPackedUniformArray* items) {
     ObjSyncGroup* group = ALLOCATE_OBJ(ObjSyncGroup, OBJ_SYNCGROUP);
-    push(routine, OBJ_VAL(group));
+    push(routine, SYNCGROUP_VAL(group));
     vm_mutex_init(&group->group_lock);
     group->channel_array = items;
-    ObjConcreteYargTypeArray* t = (ObjConcreteYargTypeArray*)newYargArrayTypeFromType(NIL_VAL);
-    push(routine, OBJ_VAL(t));
+    ObjConcreteYargTypeArray* t = (ObjConcreteYargTypeArray*)newYargArrayTypeFromType(NULL);
+    push(routine, YARGTYPE_VAL(t));
     t->cardinality = arrayCardinality(items->store);
     group->result_array = newPackedUniformArray(t);
     pop(routine);
@@ -44,7 +44,7 @@ void markSyncGroup(ObjSyncGroup* group) {
     markObject((Obj*)group->result_array);
 }
 
-ObjString* syncGroupToString(ObjSyncGroup* group) {
+ObjString* syncGroupToString(const ObjSyncGroup* group) {
     char buffer[256];
     snprintf(buffer, sizeof(buffer), "sync_group{");
     size_t cursor = strlen(buffer);
@@ -79,7 +79,7 @@ Value receiveSyncGroup(ObjSyncGroup* group) {
         }
         vm_mutex_exit(&group->group_lock);
     }
-    return OBJ_VAL(group->result_array);
+    return ARRAY_VAL(group->result_array);
 }
 
 vm_mutex* getSyncGroupLock(ObjSyncGroup* group) {

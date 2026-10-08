@@ -233,33 +233,27 @@ static uint8_t makeConstant(Value value) {
 #define UINT24_MAX 16777215
 static void emitImmediateConstant(int32_t);
 static void emitConstant(Value value) {
-    // DOUBLE_VAL, ADDRESS_VAL or OBJ_VAL(String or Int)
-    int32_t v = 0;
-    bool asObject = true;
-    switch (value.type) {
-    case VAL_ADDRESS: // fall through
-    case VAL_DOUBLE:
-        break;
-    case VAL_OBJ:
-        if (IS_INT(value)) {
-            ObjInt *oi = (ObjInt *) value.as.obj;
-            if (int_is_range(&oi->bigInt, -UINT24_MAX, UINT24_MAX) == INT_WITHIN) {
-                v = int_to_i32(&oi->bigInt);
-                asObject = false;
-            }
-        } else {
-            assert(value.as.obj->type == OBJ_STRING);
-        }
-        break;
-    default:
-        assert(!"unsupported type as constant");
-        break;
-    }
-
-    if (asObject) {
+    if (IS_ADDRESS(value)) {
         emitBytes(OP_CONSTANT, makeConstant(value));
-    } else {
-        emitImmediateConstant(v);
+    }
+    else if (IS_DOUBLE(value)) {
+        emitBytes(OP_CONSTANT, makeConstant(value));
+    }
+    else if (IS_INT(value)) {
+        ObjInt *oi = (ObjInt *) value.as.obj;
+        if (int_is_range(&oi->bigInt, -UINT24_MAX, UINT24_MAX) == INT_WITHIN) {
+            int32_t v = int_to_i32(&oi->bigInt);
+            emitImmediateConstant(v);
+        }
+        else {
+            emitBytes(OP_CONSTANT, makeConstant(value));
+        }
+    }
+    else if (IS_STRING(value)) {
+        emitBytes(OP_CONSTANT, makeConstant(value));
+    }
+    else {
+        assert(!"unsupported type as constant");
     }
 }
 
@@ -319,7 +313,7 @@ static void patchJump(int offset) {
 }
 
 static uint8_t identifierConstant(ObjString* name) {
-    return makeConstant(OBJ_VAL(name));
+    return makeConstant(STRING_VAL(name));
 }
 
 static void declareVariable(ObjString* name) {
@@ -359,7 +353,7 @@ static void generateNumber(ObjExprNumber* num) {
         ObjInt *objInt = allocateIntObject(num->bigInt.d_);
         objInt->isLiteral = true;
         int_set_t(&num->bigInt, &objInt->bigInt);
-        emitConstant(OBJ_VAL(objInt));
+        emitConstant(INTOBJ_VAL(objInt));
         break;
     }
     default:
@@ -372,7 +366,7 @@ static void generateExprAddress(ObjExprAddress* addr) {
 }
 
 static void generateExprString(ObjExprString* str) {
-    emitConstant(OBJ_VAL(str->string));
+    emitConstant(STRING_VAL(str->string));
 }
 
 static void generateExprLogicalAnd(ObjExprOperation* bin) {
@@ -536,7 +530,7 @@ static void generateExprCollectionInit(ObjExprCollectionInitializer* collection)
             emitByte(OP_SET_ELEMENT);
         } else {
             ObjExpr* element = (ObjExpr*)newExprNumberFromCint(i);
-            tempRootPush(OBJ_VAL(element));
+            tempObjRootPush((Obj*)element);
             generateExpr(element);
             generateExpr((ObjExpr*)item_or_pair);
             emitByte(OP_SET_ELEMENT);
@@ -622,9 +616,9 @@ static void generateExprSuper(ObjExprSuper* super) {
     uint8_t name = identifierConstant(super->name);
 
     ObjString* this_ = copyString("this", 4);
-    tempRootPush(OBJ_VAL(this_));
+    tempObjRootPush((Obj*)this_);
     ObjString* super_ = copyString("super", 5);
-    tempRootPush(OBJ_VAL(super_));
+    tempObjRootPush((Obj*)super_);
 
     generateGetNamedVariable(this_);
     if (super->call) {
@@ -891,7 +885,7 @@ static void generateFunction(FunctionType type, ObjStmtFunDeclaration* decl) {
 
     ObjFunction* function = endCompiler();
     function->arity = decl->parameters.objectCount;
-    emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
+    emitBytes(OP_CLOSURE, makeConstant(FUNCTION_VAL(function)));
 
     for (int i = 0; i < function->upvalueCount; i++) {
         emitByte(compiler.upvalues[i].isLocal ? 1 : 0);
@@ -1001,7 +995,7 @@ static void generateStmtMethodDeclaration(ObjStmtFunDeclaration* method) {
 
     FunctionType type = TYPE_METHOD;
     ObjString* init = copyString("init", 4);
-    tempRootPush(OBJ_VAL(init));
+    tempObjRootPush((Obj*)init);
     if (identifiersEqual(method->name, init)) {
         type = TYPE_INITIALIZER;
     }
@@ -1029,7 +1023,7 @@ static void generateStmtClassDeclaration(ObjStmtClassDeclaration* decl) {
 
         beginScope();
         ObjString* super = copyString("super", 5);
-        tempRootPush(OBJ_VAL(super));
+        tempObjRootPush((Obj*)super);
         addLocal(super);
         defineVariable(0);
 
@@ -1056,7 +1050,7 @@ static void generateStmtClassDeclaration(ObjStmtClassDeclaration* decl) {
 static void generateStmtFieldDeclaration(ObjStmtFieldDeclaration* stmt) {
     generateExpr(stmt->type);
     generateExpr(stmt->offset);
-    emitBytes(OP_CONSTANT, makeConstant(OBJ_VAL(stmt->name)));
+    emitBytes(OP_CONSTANT, makeConstant(STRING_VAL(stmt->name)));
 }
 
 static void generateStmt(ObjStmt* stmt) {

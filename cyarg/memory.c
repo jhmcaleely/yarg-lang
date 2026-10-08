@@ -17,6 +17,7 @@
 #include "yargobject.h"
 #include "packed_value.h"
 #include "vmobject.h"
+#include "yargstructtype.h"
 #include "builtin.h"
 
 #include "../external/o1heap/o1heap/o1heap.h"
@@ -97,6 +98,11 @@ void tempRootPush(Value value) {
     vm_mutex_exit(&vm.heap);
 }
 
+void tempObjRootPush(Obj* object) {
+
+    tempRootPush(IMPL_OBJ_VAL(object));
+}
+
 Value tempRootPop() {
     vm_mutex_enter_blocking(&vm.heap);
     vm.tempRootsTop--;
@@ -105,13 +111,26 @@ Value tempRootPop() {
     return result;
 }
 
+void markConstObject(const Obj* object) {
+    if (object == NULL) return;
+    assert(object->isMarked);
+    assert(object->next == NULL);
+
+#ifdef DEBUG_LOG_GC
+    PRINTERR("%p mark const ", (void*)object);
+    printObj(object);
+    PRINTERR("\n");
+#endif
+}
+
 void markObject(Obj* object) {
     if (object == NULL) return;
     if (object->isMarked) return;
+    if (object->next == NULL) return;
 
 #ifdef DEBUG_LOG_GC
     PRINTERR("%p mark ", (void*)object);
-    printValue(OBJ_VAL(object));
+    printObj(object);
     PRINTERR("\n");
 #endif
 
@@ -128,7 +147,10 @@ void markObject(Obj* object) {
 }
 
 void markValue(Value value) {
-    if (IS_OBJ(value)) markObject(AS_OBJ(value));
+    if (isObjValue(value)) {
+        markObject(value.as.obj);
+    }
+    markConstObject((const Obj*)value.type);
 }
 
 void markValueCell(ValueCell* cell) {
@@ -166,7 +188,7 @@ void markFunction(ObjFunction* function) {
 static void blackenObject(Obj* object) {
 #ifdef DEBUG_LOG_GC
     PRINTERR("%p blacken ", (void*)object);
-    printValue(OBJ_VAL(object));
+    printObj(object);
     PRINTERR("\n");
 #endif
 
@@ -531,8 +553,7 @@ static void freeObject(Obj* object) {
         case OBJ_UNOWNED_PACKEDPOINTER: FREE(ObjPackedPointer, object); break;
         case OBJ_PACKEDPOINTER: {
             ObjPackedPointer* ptr = (ObjPackedPointer*) object;
-            Value targetType = ptr->type->target_type == NULL ? NIL_VAL : OBJ_VAL(ptr->type->target_type);
-            ptr->destination = gc_free(ptr->destination, yt_sizeof_type_storage(targetType), 0);
+            ptr->destination = gc_free(ptr->destination, yt_sizeof_type_storage(ptr->type->target_type), 0);
             FREE(ObjPackedPointer, object); 
             break;
         }
@@ -716,7 +737,7 @@ void printObjects() {
     size_t count = 0;
     while (object != NULL) {
         PRINTERR("%p ", (void*)object);
-        fprintValue(stderr, OBJ_VAL(object));
+        fprintObj(stderr, object);
         PRINTERR("\n");
         object = object->next;
         count++;

@@ -53,7 +53,7 @@ bool addSlice(ObjRoutine* routine) {
     ObjStackSlice* sliceObj = ALLOCATE_OBJ(ObjStackSlice, OBJ_STACKSLICE);
     if (sliceObj == NULL) return false;
 
-    tempRootPush(OBJ_VAL(sliceObj));
+    tempObjRootPush((Obj*)sliceObj);
 
     if (routine->stackSliceCapacity < routine->sliceCount + 1) {
         size_t oldCapacity = routine->stackSliceCapacity;
@@ -74,7 +74,7 @@ bool addSlice(ObjRoutine* routine) {
 
 ObjRoutine* newRoutine() {
     ObjRoutine* routine = ALLOCATE_OBJ(ObjRoutine, OBJ_ROUTINE);
-    tempRootPush(OBJ_VAL(routine));
+    tempObjRootPush((Obj*)routine);
     initRoutine(routine);
     tempRootPop();
     return routine;
@@ -120,7 +120,7 @@ void bindEntryArgs(ObjRoutine* routine, Value entryArg) {
 }
 
 void pushEntryElements(ObjRoutine* routine) {
-    push(routine, OBJ_VAL(routine->entryFunction));
+    push(routine, FUNCTION_VAL(routine->entryFunction));
 
     if (routine->entryFunction->function->arity == 1) {
         push(routine, routine->entryArg);
@@ -133,7 +133,7 @@ void enterEntryFunction(ObjRoutine* routine) {
 
 bool resumeRoutine(ObjRoutine* context, ObjRoutine* target, size_t argCount, Value argument, Value* result) {
     if (target->state == EXEC_UNBOUND) {
-        push(target, OBJ_VAL(target->entryFunction));
+        push(target, FUNCTION_VAL(target->entryFunction));
     }
 
     if (argCount == 1) {
@@ -347,7 +347,7 @@ static void traceValueStack(ObjRoutine* routine) {
     for (size_t line = stack_lines, line_cursor = 0; line >= 0 && line_cursor < stack_lines; line--, line_cursor++) {
         char prefix[21] = "                    ";
         if (line_cursor == 0) { // first line identifes the routine and the total stack size
-            ObjString* routineStr = valueToString(OBJ_VAL(routine));
+            ObjString* routineStr = valueToString(ROUTINE_VAL(routine));
             snprintf(prefix, sizeof(prefix), "%s[%3zu]:", routineStr->chars, stackSize);
         }
         // if this the last line to trace, and there are more stack elements skipped, then indicate that with an ellipsis
@@ -360,7 +360,7 @@ static void traceValueStack(ObjRoutine* routine) {
             if (slot >= stackSize) break;
             ValueCell* cell = peekCell(routine, (int)(stackSize - 1 - slot));
             ObjString* valueStr = valueToString(cell->value);
-            tempRootPush(OBJ_VAL(valueStr));
+            tempObjRootPush((Obj*)valueStr);
             char value_description[12];
             if (valueStr->length > 11) {
                 snprintf(value_description, sizeof(value_description), "%8.8s...", valueStr->chars);
@@ -368,8 +368,8 @@ static void traceValueStack(ObjRoutine* routine) {
                 snprintf(value_description, sizeof(value_description), "%11.11s", valueStr->chars);
             }
             tempRootPop();
-            ObjString* typeStr = valueToString(cell->cellType ? OBJ_VAL(cell->cellType) : NIL_VAL);
-            tempRootPush(OBJ_VAL(typeStr));
+            ObjString* typeStr = valueToString(cell->cellType ? YARGTYPE_VAL(cell->cellType) : NIL_VAL);
+            tempObjRootPush((Obj*)typeStr);
             char type_description[11] = "       any";
             if (typeStr->length > 10 && cell->cellType) {
                 snprintf(type_description, sizeof(type_description), "%7.7s...", typeStr->chars);
@@ -390,7 +390,7 @@ void traceExecution(ObjRoutine* routine) {
     CallFrame* frame = &routine->frames[routine->frameCount - 1];
 
     traceValueStack(routine);
-    ObjString* routineStr = valueToString(OBJ_VAL(routine));
+    ObjString* routineStr = valueToString(ROUTINE_VAL(routine));
     printf("%s %s:", routineStr->chars, frame->closure->function->fName ? frame->closure->function->fName->chars : "script");
     disassembleInstruction(&frame->closure->function->chunk, 
         (int)(frame->ip - frame->closure->function->chunk.code));

@@ -35,6 +35,7 @@ void* gc_free(void* pointer, size_t oldSize, size_t newSize);
 void* reallocate(void* pointer, size_t oldSize, size_t newSize);
 
 void tempRootPush(Value value);
+void tempObjRootPush(Obj* object);
 Value tempRootPop();
 
 void markObject(Obj* object);

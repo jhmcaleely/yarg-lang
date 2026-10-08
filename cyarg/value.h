@@ -1,6 +1,8 @@
 #ifndef cyarg_value_h
 #define cyarg_value_h
 
+#include "yargtype.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -11,39 +13,8 @@ typedef struct ObjRoutine ObjRoutine;
 typedef struct ObjConcreteYargType ObjConcreteYargType;
 typedef struct ObjPackedUniformArray ObjPackedUniformArray;
 
-typedef union {
-    bool boolean;
-    double dbl;
-    uint8_t ui8;
-    int8_t i8;
-    uint16_t ui16;
-    int16_t i16;
-    uint32_t ui32;
-    int32_t i32;
-    uint64_t ui64;
-    int64_t i64;
-    uintptr_t address;
-    Obj* obj;
-} AnyValue;
-
-typedef enum {
-    VAL_BOOL,
-    VAL_NIL,
-    VAL_DOUBLE,
-    VAL_I8,
-    VAL_UI8,
-    VAL_I16,
-    VAL_UI16,
-    VAL_I32,
-    VAL_UI32,
-    VAL_UI64,
-    VAL_I64,
-    VAL_ADDRESS,
-    VAL_OBJ,
-} ValueType;
-
 typedef struct {
-    ValueType type;
+    const ObjConcreteYargType* type;
     AnyValue as;
 } Value;
 
@@ -55,20 +26,22 @@ typedef struct {
 #define IS_32BIT 1
 #endif
 
-#define IS_BOOL(value)     ((value).type == VAL_BOOL)
-#define IS_NIL(value)      ((value).type == VAL_NIL)
-#define IS_DOUBLE(value)   ((value).type == VAL_DOUBLE)
-#define IS_I8(value)       ((value).type == VAL_I8)
-#define IS_UI8(value)      ((value).type == VAL_UI8)
-#define IS_I16(value)      ((value).type == VAL_I16)
-#define IS_UI16(value)     ((value).type == VAL_UI16)
-#define IS_I32(value)      ((value).type == VAL_I32)
-#define IS_UI32(value)     ((value).type == VAL_UI32)
-#define IS_UI64(value)     ((value).type == VAL_UI64)
-#define IS_I64(value)      ((value).type == VAL_I64)
-#define IS_ADDRESS(value)  ((value).type == VAL_ADDRESS)
-#define IS_OBJ(value)      ((value).type == VAL_OBJ)
-#define IS_INT(value)      ((value).type == VAL_OBJ && (value).as.obj->type == OBJ_INT)
+#define IS_NIL(value)      is_nil(value)
+
+#define IS_BOOL(value)     ((value).type->yt == TypeBool)
+#define IS_DOUBLE(value)   ((value).type->yt == TypeDouble)
+#define IS_I8(value)       ((value).type->yt == TypeInt8)
+#define IS_UI8(value)      ((value).type->yt == TypeUint8)
+#define IS_I16(value)      ((value).type->yt == TypeInt16)
+#define IS_UI16(value)     ((value).type->yt == TypeUint16)
+#define IS_I32(value)      ((value).type->yt == TypeInt32)
+#define IS_UI32(value)     ((value).type->yt == TypeUint32)
+#define IS_I64(value)      ((value).type->yt == TypeInt64)
+#define IS_UI64(value)     ((value).type->yt == TypeUint64)
+#define IS_ADDRESS(value)  ((value).type->yt == TypeAddress)
+#define IS_INT(value)      ((value).type->yt == TypeInt && (value).as.obj->type == OBJ_INT)
+#define IS_IMPL_OBJ(value) ((value).type == &yargTypes.implementation_obj && (value).as.obj != NULL)
+#define IS_OBJ(value)      isObjValue(value)
 
 #define AS_OBJ(value)      ((value).as.obj)
 #define AS_BOOL(value)     ((value).as.boolean)
@@ -83,25 +56,31 @@ typedef struct {
 #define AS_ADDRESS(value)  ((value).as.address)
 #define AS_DOUBLE(value)   ((value).as.dbl)
 
-#define BOOL_VAL(value)     ((Value){VAL_BOOL, {.boolean = value }})
-#define NIL_VAL             ((Value){VAL_NIL, {.i32 = 0 }})
-#define DOUBLE_VAL(value)   ((Value){VAL_DOUBLE, {.dbl = value }})
-#define I8_VAL(value)       ((Value){VAL_I8, {.i8 = value}})
-#define UI8_VAL(value)      ((Value){VAL_UI8, {.ui8 = value}})
-#define I16_VAL(value)      ((Value){VAL_I16, {.i16 = value}})
-#define UI16_VAL(value)     ((Value){VAL_UI16, {.ui16 = value}})
-#define I32_VAL(value)      ((Value){VAL_I32, {.i32 = value }})
-#define UI32_VAL(value)     ((Value){VAL_UI32, {.ui32 = value }})
-#define I64_VAL(a)          ((Value){VAL_I64, {.i64 = a}})
-#define UI64_VAL(a)         ((Value){VAL_UI64, {.ui64 = a}})
-#define ADDRESS_VAL(value)  ((Value){VAL_ADDRESS, { .address = value}})
-#define OBJ_VAL(object)     ((Value){VAL_OBJ, {.obj = (Obj*)object}})
+#define NIL_VAL             ((Value){.type = NULL, .as.obj = NULL})
+
+#define BOOL_VAL(value)     ((Value){.type = &yargTypes.boolean, {.boolean = value }})
+#define DOUBLE_VAL(value)   ((Value){.type = &yargTypes.dbl, {.dbl = value }})
+#define I8_VAL(value)       ((Value){.type = &yargTypes.int8, {.i8 = value}})
+#define UI8_VAL(value)      ((Value){.type = &yargTypes.uint8, {.ui8 = value}})
+#define I16_VAL(value)      ((Value){.type = &yargTypes.int16, {.i16 = value}})
+#define UI16_VAL(value)     ((Value){.type = &yargTypes.uint16, {.ui16 = value}})
+#define I32_VAL(value)      ((Value){.type = &yargTypes.int32, {.i32 = value }})
+#define UI32_VAL(value)     ((Value){.type = &yargTypes.uint32, {.ui32 = value }})
+#define I64_VAL(a)          ((Value){.type = &yargTypes.int64, {.i64 = a}})
+#define UI64_VAL(a)         ((Value){.type = &yargTypes.uint64, {.ui64 = a}})
+#define ADDRESS_VAL(value)  ((Value){.type = &yargTypes.address, { .address = value}})
+#define IMPL_OBJ_VAL(object)     ((Value){.type = &yargTypes.implementation_obj, {.obj = (Obj*)object}})
+
 
 #if IS_64BIT
 #define SIZE_T_UI_VAL(value)   UI64_VAL(value)
 #elif IS_32BIT
 #define SIZE_T_UI_VAL(value)   UI32_VAL(value)
 #endif
+
+Value defaultValue(Value type);
+
+bool is_nil(Value value);
 
 bool is_positive_integer(Value a);
 size_t as_positive_integer(Value a);
@@ -122,6 +101,7 @@ typedef struct {
 
 bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue);
 bool initialiseValueCellTarget(ValueCellTarget lhs, Value rhsValue);
+bool isInitialisableType(ObjConcreteYargType* lhsType, Value rhsValue, Value *promotedRhs); // promotedRhs will be VAL_NIL if no promotion
 
 typedef struct {
     int capacity;
@@ -133,10 +113,16 @@ void initDynamicValueArray(DynamicValueArray* array);
 void appendToDynamicValueArray(DynamicValueArray* array, Value value);
 void freeDynamicValueArray(DynamicValueArray* array);
 
-uintptr_t pinUniformArray(ObjPackedUniformArray* array);
 
 Value duplicateValue(Value src);
+Value concrete_typeof(Value a);
 
 bool isAddressValue(Value value);
+bool isUint32Pointer(Value val);
+
+Obj* destinationObject(Value pointer);
+
+bool isObjType(Value value, ObjType type);
+bool isObjValue(Value value);
 
 #endif
