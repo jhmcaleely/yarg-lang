@@ -126,7 +126,6 @@ void markConstObject(const Obj* object) {
 void markObject(Obj* object) {
     if (object == NULL) return;
     if (object->isMarked) return;
-    if (object->next == NULL) return;
 
 #ifdef DEBUG_LOG_GC
     PRINTERR("%p mark ", (void*)object);

@@ -13,8 +13,8 @@
 #include "yargstructtype.h"
 
 bool isObjValue(Value value) {
-    if (is_obj_yargtype(value.type) && value.as.obj != NULL) return true;
-    else if (value.type == &yargTypes.implementation_obj && value.as.obj != NULL) return true;
+    if (value.type == &yargTypes.implementation_obj && value.as.obj != NULL) return true;
+    else if (is_obj_yargtype(value.type) && value.as.obj != NULL) return true;
     return false;
 }
 

@@ -174,11 +174,9 @@ void initVMRuntime() {
 
     // We have two Obj here not on the heap. hack up their init.
     vm.core0.obj.type = OBJ_ROUTINE;
-    vm.core0.obj.isMarked = true;
     initRoutine(&vm.core0);
 
     vm.bootFunction.obj.type = OBJ_FUNCTION;
-    vm.bootFunction.obj.isMarked = true;
     initFunction(&vm.bootFunction);
 
     initCellTable(&vm.globals);
