@@ -50,21 +50,15 @@ bool readYargSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* resu
     if (dotOn != 0 && strcmp(dotOn, ".yb") == 0) {
         size_t file_size = fileSize(filename);
 
-        ObjConcreteYargType* byteType = newYargTypeFromType(TypeUint8);
-        push(routineContext, YARGTYPE_VAL(byteType));
+        Value byteBuffer = allocByteArray(file_size);
+        tempRootPush(byteBuffer);
 
-        ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*)newYargArrayTypeFromType(byteType);
-        push(routineContext, YARGTYPE_VAL(arrayType));
+        
+        readFileIntoBuffer(filename, AS_PACKEDVALUECONTAINER(byteBuffer)->location.placedValue.ui8, file_size);
 
-        arrayType->cardinality = file_size;
-        ObjPackedUniformArray* array = newPackedUniformArray(arrayType);
-        push(routineContext, ARRAY_VAL(array));
+        *result = byteBuffer;
 
-        readFileIntoBuffer(filename, (uint8_t*)array->store.storedValue, file_size);
-
-        *result = ARRAY_VAL(array);
-
-        popN(routineContext, 3);
+        tempRootPop(); // byteBuffer
     }
     else {
         // assume a text file
@@ -120,24 +114,8 @@ bool readYargROMSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* r
     }
 
     if (format_requested == 1) {
-        ObjConcreteYargType* byteType = newYargTypeFromType(TypeUint8);
-        push(routineContext, YARGTYPE_VAL(byteType));
-
-        ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*)newYargArrayTypeFromType(byteType);
-        arrayType->cardinality = length;
-        push(routineContext, YARGTYPE_VAL(arrayType));
-
-        ObjPackedUniformArray* array = ALLOCATE_OBJ(ObjPackedUniformArray, OBJ_UNOWNED_UNIFORMARRAY);
-        push(routineContext, ARRAY_VAL(array));
-
-        PackedValue arrayStore;
-        arrayStore.storedType = (ObjConcreteYargType*) arrayType;
-        arrayStore.storedValue = (PackedValueStore*) data;
-        array->store = arrayStore;
-
-        *result = ARRAY_VAL(array);
-
-        popN(routineContext, 3);
+        Value byteArrayValue = createByteArrayAt(data, length);
+        *result = byteArrayValue;
     }
     else if (format_requested == 2) {
         const char* string = (const char*) data;
@@ -182,10 +160,12 @@ bool loadBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
     Value arg = peek(routineContext, 0);
     ObjFunction* function = NULL;
     
-    if (IS_UNIFORMARRAY(arg)) {
-        ObjPackedUniformArray* array = AS_UNIFORMARRAY(arg);
-        uintptr_t addr = pinUniformArray(array);
-        function = loadPackageFromBuffer(routineContext, (uint8_t*)addr, arrayCardinality(array->store));
+    if (isByteArray(arg)) {
+        ObjPackedValueContainer* container = AS_PACKEDVALUECONTAINER(arg);
+        const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*) arg.type;
+        size_t cardinality = arrayCardinality(arrayType);
+        uint8_t* buffer = (uint8_t*)container->location.placedValue.ui8;
+        function = loadPackageFromBuffer(routineContext, buffer, cardinality);
     } else if (IS_STRING(arg)) {
         const char* source = AS_CSTRING(arg);
         function = compile(source);
@@ -300,22 +280,21 @@ bool makeSyncGroupBuiltin(ObjRoutine* routineContext, int argCount, Value* resul
         runtimeError(routineContext, "Expected an array.");
         return false;
     }
-    ObjPackedUniformArray* array = AS_UNIFORMARRAY(items);
-    ObjConcreteYargTypeArray* t = (ObjConcreteYargTypeArray*)array->store.storedType;
+    ObjConcreteYargTypeArray* t = (ObjConcreteYargTypeArray*)items.type;
     if (t->element_type == NULL) {
-        for (size_t i = 0; i < arrayCardinality(array->store); i++) {
-            Value element = unpackValue(arrayElement(array->store, i));
+        for (size_t i = 0; i < t->cardinality; i++) {
+            Value element = arrayElement(items, i);
             if (!IS_CHANNEL(element)) {
                 runtimeError(routineContext, "Array must contain only channel items.");
                 return false;
             }
         }
-    } else if (t->element_type->yt != TypeArray) {
+    } else if (t->element_type->yt != TypeChannel) {
         runtimeError(routineContext, "Array must contain only channel items.");
         return false;
     }
 
-    ObjSyncGroup* group = newSyncGroup(routineContext, AS_UNIFORMARRAY(items));
+    ObjSyncGroup* group = newSyncGroup(routineContext, items);
 
     *result = SYNCGROUP_VAL((Obj*)group);
     return true;
@@ -435,7 +414,7 @@ bool peekBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
 
     uintptr_t nominal_address = 0;
     if (IS_POINTER(address)) {
-        nominal_address = (uintptr_t) AS_POINTER(address)->destination;
+        nominal_address = (uintptr_t) AS_PACKEDVALUECONTAINER(address)->location.placedValue.ui32;
     } else {
         nominal_address = AS_ADDRESS(address);
     }
@@ -469,7 +448,7 @@ bool lenBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
         *result = INTOBJ_VAL(newIntU(length));
         return true;
     } else if (IS_UNIFORMARRAY(arg)) {
-        ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) AS_UNIFORMARRAY(arg)->store.storedType;
+        ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) arg.type;
         *result = INTOBJ_VAL(newIntU(arrayType->cardinality));
         return true;
     } else if (IS_MAP(arg)) {
@@ -506,9 +485,7 @@ bool pinBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
             return false;
         }
     } else if (IS_UNIFORMARRAY(arg)) {
-        ObjPackedUniformArray* array = AS_UNIFORMARRAY(arg);
-        uintptr_t addr = pinUniformArray(array);
-        *result = ADDRESS_VAL(addr);
+        *result = pinPackedValueContainer(arg);
         return true;
     } else {
         runtimeError(routineContext, "Expected a routine or uniform array.");
@@ -530,7 +507,6 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
 
     ConcreteYargType typeRequested = AS_YARGTYPE(typeToCreate)->yt;
     switch (typeRequested) {
-        case TypeBool:
         case TypeDouble:
         case TypeInt8:
         case TypeUint8:
@@ -540,20 +516,33 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
         case TypeUint32:
         case TypeInt64:
         case TypeUint64: {
-            PackedValue heapValue = allocPackedValue(typeToCreate);
-            initialisePackedValue(heapValue);
-            *result = POINTER_VAL(newPointerForHeapCell(heapValue));
+            PlacedValue heapValue = allocPlacedValue(AS_YARGTYPE(typeToCreate));
+            ObjConcreteYargType* pointerType = newYargPointerType(AS_YARGTYPE(typeToCreate));
+            tempRootPush(YARGTYPE_VAL(pointerType));
+            ValueLocation location;
+            location.placed = true;
+            location.placedValue = heapValue.valuePtr;
+            *result = createPackedValueContainerAt(location, pointerType);
+            tempRootPop();
             return true;
         }
+        case TypeArray:
         case TypeStruct: {
-            PackedValue heapValue = allocPackedValue(typeToCreate);
-            initialisePackedValue(heapValue);
-            *result = POINTER_VAL(newPointerForHeapCell(heapValue));
-            return true;
-        }
-        case TypeArray: {
-            *result = defaultValue(typeToCreate);
-            return true;
+            if (is_placeable_type(AS_YARGTYPE(typeToCreate))) {
+                PlacedValue heapValue = allocPlacedValue(AS_YARGTYPE(typeToCreate));
+                ObjConcreteYargType* pointerType = newYargPointerType(AS_YARGTYPE(typeToCreate));
+                tempRootPush(YARGTYPE_VAL(pointerType));
+                ValueLocation location;
+                location.placed = true;
+                location.placedValue = heapValue.valuePtr;
+                *result = createPackedValueContainerAt(location, pointerType);
+                tempRootPop();
+                return true;
+            } else {
+                *result = defaultValue(typeToCreate);
+                return true;
+            }
+            break;
         }
         case TypeMap: {
             if (isSupportedMapKeyType(AS_YARGTYPE(typeToCreate))) {
@@ -564,6 +553,7 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
                 return false;
             }
         }
+        case TypeBool:
         case TypeInt:
         case TypeString:
         case TypeAddress:

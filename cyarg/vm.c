@@ -26,7 +26,6 @@
 #include "routine.h"
 #include "channel.h"
 #include "yargtype.h"
-#include "packed_value.h"
 #include "xip_library.h"
 #include "yargstructtype.h"
 
@@ -399,24 +398,22 @@ static bool derefArrayElement(ObjRoutine* routine) {
     Value result = NIL_VAL;
 
     if (IS_UNIFORMARRAY(peek(routine, 1))) {
-        ObjPackedUniformArray* array = AS_UNIFORMARRAY(peek(routine, 1));
-        if (index >= arrayCardinality(array->store)) {
+        Value arrayVal = peek(routine, 1);
+        const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*)arrayVal.type;
+        if (index >= arrayType->cardinality) {
             runtimeError(routine, "Array index %zu out of bounds.", index);
             return false;
         }
-        PackedValue element = arrayElement(array->store, index);
-        result = unpackValue(element);
-
+        result = arrayElement(peek(routine, 1), index);
     } else {
-        ObjPackedUniformArray* arrayObj = (ObjPackedUniformArray*)destinationObject(peek(routine, 1));
-        if (index >= arrayCardinality(arrayObj->store)) {
-            runtimeError(routine, "Array index %zu out of bounds (0:%zu)", index, arrayCardinality(arrayObj->store) - 1);
+        Value arrayVal = pointerDestination(peek(routine, 1));
+        tempRootPush(arrayVal);
+        const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*)arrayVal.type;
+        if (index >= arrayType->cardinality) {
+            runtimeError(routine, "Array index %zu out of bounds.", index);
             return false;
         }
-        tempObjRootPush((Obj*)arrayObj);
-
-        PackedValue element = arrayElement(arrayObj->store, index);
-        result = POINTER_VAL(newPointerAtHeapCell(element));
+        result = arrayElementPointer(arrayVal, index);
         tempRootPop();
     }
 
@@ -457,7 +454,7 @@ static bool derefElement(ObjRoutine* routine) {
     return false;
 }
 
-static bool setArrayElement(ObjRoutine* routine, ObjPackedUniformArray* array, Value indexVal, Value rhs) {
+static bool setAnArrayElement(ObjRoutine* routine, Value arrayVal, Value indexVal, Value rhs) {
 
     if (!is_positive_integer(indexVal)) {
         runtimeError(routine, "Expected an array and a positive or unsigned integer.");
@@ -466,16 +463,16 @@ static bool setArrayElement(ObjRoutine* routine, ObjPackedUniformArray* array, V
 
     size_t index = as_positive_integer(indexVal);
 
-    if (index >= arrayCardinality(array->store)) {
-        runtimeError(routine, "Array index %d out of bounds (0:%d)", index, arrayCardinality(array->store) - 1);
+    if (index >= arrayCardinality(arrayVal.type)) {
+        runtimeError(routine, "Array index %zu out of bounds (0:%zu)", index, arrayCardinality(arrayVal.type) - 1);
         return false;
     }
 
-    PackedValue trg = arrayElement(array->store, index);
-    if (!assignToPackedValue(trg, rhs)) {
+    if (!setArrayElement(arrayVal, index, rhs)) {
         runtimeError(routine, "Cannot set array element to incompatible type.");
         return false;
     }
+
     return true;
 }
 
@@ -499,7 +496,7 @@ static bool setElement(ObjRoutine* routine) {
     if (IS_MAP(collection)) {
         result = setMapElement(routine, AS_MAP(collection), index, rhs);
     } else if (IS_UNIFORMARRAY(collection)) {
-        result = setArrayElement(routine, AS_UNIFORMARRAY(collection), index, rhs);
+        result = setAnArrayElement(routine, collection, index, rhs);
     } else {
         runtimeError(routine, "Expected an array and a positive or unsigned integer.");
         return false;
@@ -515,14 +512,10 @@ static bool setElement(ObjRoutine* routine) {
 static void derefPtr(ObjRoutine* routine) {
     Value pointerVal = peek(routine, 0);
 
-    ObjPackedPointer* pointer = AS_POINTER(pointerVal);
-    PackedValue dest;
-    dest.storedType = pointer->type->target_type;
-    dest.storedValue = pointer->destination;
-    Value result = unpackValue(dest);
+    Value target = pointerDestination(pointerVal);
 
     pop(routine);
-    push(routine, result);
+    push(routine, target);
 }
 
 static bool isFalsey(Value value) {
@@ -904,31 +897,31 @@ InterpretResult run(ObjRoutine* routine) {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                 } else if (IS_STRUCT(peek(routine, 0))) {
-                    ObjPackedStruct* object = AS_STRUCT(peek(routine, 0));
+                    Value structVal = peek(routine, 0);
                     ObjString* name = READ_STRING();
                     size_t index;
-                    if (!structFieldIndex(object->store.storedType, name, &index)) {
+                    const ObjConcreteYargTypeStruct* structType = structVal.type;
+                    if (!structFieldIndex(structType, name, &index)) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    PackedValue f = structField(object->store, index);
-                    Value result = unpackValue(f);
-
+                    Value result = structField(structVal, index);
                     pop(routine);
                     push(routine, result);
                 } else if (isStructPointer(peek(routine, 0))) {
-                    ObjPackedStruct* object = (ObjPackedStruct*) destinationObject(peek(routine, 0));
-                    tempObjRootPush((Obj*)object);
+                    Value pointerVal = peek(routine, 0);
                     ObjString* name = READ_STRING();
+
+                    Value structVal = pointerDestination(pointerVal);
+                    tempRootPush(structVal);
                     size_t index;
-                    if (!structFieldIndex(object->store.storedType, name, &index)) {
+                    if (!structFieldIndex(structVal.type, name, &index)) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    PackedValue f = structField(object->store, index);
-                    Value result = POINTER_VAL(newPointerAtHeapCell(f));
-                    tempRootPop();
+                    Value result = structField(structVal, index);
 
+                    tempRootPop();
                     pop(routine);
                     push(routine, result);
                 } else if (IS_INT(peek(routine, 0)))
@@ -959,15 +952,14 @@ InterpretResult run(ObjRoutine* routine) {
                     pop(routine);
                     push(routine, value);
                 } else if (IS_STRUCT(peek(routine, 1))) {
-                    ObjPackedStruct* object = AS_STRUCT(peek(routine, 1));
+                    Value structVal = peek(routine, 1);
                     ObjString* name = READ_STRING();
                     size_t index;
-                    if (!structFieldIndex(object->store.storedType, name, &index)) {
+                    if (!structFieldIndex(structVal.type, name, &index)) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    PackedValue trg = structField(object->store, index);
-                    if (!assignToPackedValue(trg, peek(routine, 0))) {
+                    if (!setStructField(structVal, index, peek(routine, 0))) {
                         runtimeError(routine, "cannot assign to field type.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
@@ -1072,11 +1064,11 @@ InterpretResult run(ObjRoutine* routine) {
                     uint32_t b = AS_UI32(pop(routine));
                     uintptr_t a = AS_ADDRESS(pop(routine));
                     push(routine, ADDRESS_VAL(a + b));
-                } else if (IS_POINTER(peek(routine, 1)) && IS_UI32(peek(routine, 0))) {
-                    uint32_t b = AS_UI32(pop(routine));
-                    ObjPackedPointer* pointer = AS_POINTER(pop(routine));
-                    offsetPointerDestination(pointer, b);
-                    push(routine, POINTER_VAL(pointer));
+                } else if (IS_POINTER(peek(routine, 1)) && is_positive_integer(peek(routine, 0))) {
+                    Value offset = pop(routine);
+                    Value pointer = pop(routine);
+                    offsetPointerDestination(pointer, offset);
+                    push(routine, pointer);
                 } else if (IS_STRING(peek(routine, 0)) && IS_STRING(peek(routine, 1))) {
                     concatenate(routine);
                 } else if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) {
@@ -1189,15 +1181,16 @@ InterpretResult run(ObjRoutine* routine) {
                     runtimeError(routine, "Location must be a pointer to an uint32 or address.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                if (!is_positive_integer(assignment) && !is_stored_type(AS_YARGTYPE(assignment_type))) {
+                if (!is_positive_integer(assignment)) {
                     tempRootPop();
-                    runtimeError(routine, "Value must be a positive integer or a placeable type.");
+                    runtimeError(routine, "Value must be a positive integer.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
 
                 uintptr_t nominal_address = 0;
                 if (isUint32Pointer(location)) {
-                    nominal_address = (uintptr_t) AS_POINTER(location)->destination;
+                    ObjPackedValueContainer* container = AS_PACKEDVALUECONTAINER(location);
+                    nominal_address = (uintptr_t) container->location.placedValue.ui32;
                 }
                 else if (IS_ADDRESS(location))
                 {
@@ -1211,13 +1204,7 @@ InterpretResult run(ObjRoutine* routine) {
                 volatile uint32_t* reg = (volatile uint32_t*) nominal_address;
 #endif
 
-                size_t val = 0;
-
-                if (is_positive_integer(assignment)) {
-                    val = as_positive_integer(assignment);
-                } else if (is_stored_type(AS_YARGTYPE(assignment_type))) {
-                    val = (uintptr_t)storedAddressof(assignment);
-                }
+                size_t val = as_positive_integer(assignment);
 
 #if defined (CYARG_SELF_HOSTED)
                 *reg = val;
@@ -1424,8 +1411,7 @@ InterpretResult run(ObjRoutine* routine) {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     ObjConcreteYargType* elementType = AS_YARGTYPE(peek(routine, 1));
-                    ObjConcreteYargTypeArray* array = (ObjConcreteYargTypeArray*) newYargArrayTypeFromType(elementType);
-                    array->cardinality = cardinality;
+                    ObjConcreteYargTypeArray* array = (ObjConcreteYargTypeArray*) newYargArrayTypeFromType(elementType, cardinality);
                     typeObject = (ObjConcreteYargType*) array;
                 } else {
                     runtimeError(routine, "Collection must be array or map.");
@@ -1451,12 +1437,8 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_SET_PTR_TARGET: {
                 Value rhs = peek(routine, 0);
                 Value lhs = peek(routine, 1);
-                ObjPackedPointer* pLhs = AS_POINTER(lhs);
-                PackedValue trgLhs = { 
-                    .storedType = pLhs->type->target_type, 
-                    .storedValue = pLhs->destination 
-                };
-                if (assignToPackedValue(trgLhs, rhs)) {
+
+                if (setPointerDestination(lhs, rhs)) {
                     pop(routine);
                     pop(routine);
                     push(routine, rhs);
@@ -1477,7 +1459,12 @@ InterpretResult run(ObjRoutine* routine) {
                     runtimeError(routine, "Value must be an address");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                Value result = placeObjectAt(type, location);
+                ValueLocation valueLocation = {
+                    .placed = true,
+                    .placedValue = (PlacedValuePtr){ .ui32 = (uint32_t*) AS_ADDRESS(location) }
+                };
+
+                Value result = createPackedValueContainerAt(valueLocation, AS_YARGTYPE(type));
 
                 pop(routine);
                 pop(routine);

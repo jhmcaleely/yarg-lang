@@ -83,6 +83,8 @@ add_executable(cyarg
     value.c
     value_cell.h
     value_cell.c
+    placed_value.h
+    placed_value.c
     routine.h
     routine.c
     vm.h
@@ -99,7 +101,6 @@ add_executable(cyarg
     object.c
     yargobject.h
     vmobject.h
-    packed_value.h
     table.h
     table.c
     native.h

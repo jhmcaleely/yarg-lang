@@ -15,7 +15,6 @@
 #include "debug.h"
 
 #include "yargobject.h"
-#include "packed_value.h"
 #include "vmobject.h"
 #include "yargstructtype.h"
 #include "builtin.h"
@@ -221,33 +220,11 @@ static void blackenObject(Obj* object) {
             markRoutine(stack);
             break;
         }
-        case OBJ_UNOWNED_PACKEDPOINTER:
-            // fall through
-        case OBJ_PACKEDPOINTER: {
-            ObjPackedPointer* ptr = (ObjPackedPointer*)object;
-            markObject((Obj*)ptr->type);
-            if (ptr->type && ptr->destination) {
-                PackedValue dest;
-                dest.storedType = ptr->type->target_type;
-                dest.storedValue = ptr->destination;
-                markPackedValue(dest);
-            }
+        case OBJ_PACKEDVALUECONTAINER:
+        case OBJ_UNOWNED_PACKEDVALUECONTAINER:
+            // TODO: if !placeable type, mark Values
             break;
-        }
-        case OBJ_UNOWNED_UNIFORMARRAY:
-            /* fall through */
-        case OBJ_PACKEDUNIFORMARRAY: {
-            ObjPackedUniformArray* array = (ObjPackedUniformArray*)object;
-            markPackedValue(array->store);
-            break;
-        }
-        case OBJ_UNOWNED_PACKEDSTRUCT:
-            // fall through
-        case OBJ_PACKEDSTRUCT: {
-            ObjPackedStruct* struct_ = (ObjPackedStruct*)object;
-            markPackedValue(struct_->store);
-            break;
-        }
+
         case OBJ_NATIVE: break;
         case OBJ_BUILTIN: break;
         case OBJ_CHANNELCONTAINER: {
@@ -538,28 +515,11 @@ static void freeObject(Obj* object) {
         }
         case OBJ_UPVALUE: FREE(ObjUpvalue, object); break;
         case OBJ_CHANNELCONTAINER: freeChannelObject(object); break;
-        case OBJ_UNOWNED_PACKEDPOINTER: FREE(ObjPackedPointer, object); break;
-        case OBJ_PACKEDPOINTER: {
-            ObjPackedPointer* ptr = (ObjPackedPointer*) object;
-            ptr->destination = gc_free(ptr->destination, yt_sizeof_type_storage(ptr->type->target_type), 0);
-            FREE(ObjPackedPointer, object); 
+        case OBJ_UNOWNED_PACKEDVALUECONTAINER: FREE(ObjPackedValueContainer, object); break;
+        case OBJ_PACKEDVALUECONTAINER: {
+            // TODO: Free the memory associated with the packed value container's destination before freeing the container itself.
+            FREE(ObjPackedValueContainer, object); 
             break;
-        }
-        case OBJ_UNOWNED_UNIFORMARRAY: FREE(ObjPackedUniformArray, object); break;
-        case OBJ_PACKEDUNIFORMARRAY: {
-            ObjPackedUniformArray* array = (ObjPackedUniformArray*)object;
-            ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*)array->store.storedType;
-            size_t element_size = arrayElementSize(arrayType);
-            array->store.storedValue = gc_free(array->store.storedValue, arrayType->cardinality * element_size, 0);
-            FREE(ObjPackedUniformArray, object);
-            break;
-        }
-        case OBJ_UNOWNED_PACKEDSTRUCT: FREE(ObjPackedStruct, object); break;
-        case OBJ_PACKEDSTRUCT: {
-            ObjPackedStruct* struct_ = (ObjPackedStruct*) object;
-            struct_->store.storedValue = gc_free(struct_->store.storedValue, ((ObjConcreteYargTypeStruct*)(struct_->store.storedType))->storage_size, 0);
-            FREE(ObjPackedStruct, object);
-            break;            
         }
         case OBJ_MAP: {
             ObjMap* map = (ObjMap*)object;

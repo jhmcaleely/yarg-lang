@@ -96,23 +96,24 @@ typedef struct ObjConcreteYargTypeMap {
 
 ObjConcreteYargType* newYargTypeFromType(ConcreteYargType yt);
 
-ObjConcreteYargType* newYargArrayTypeFromType(ObjConcreteYargType* elementType);
+ObjConcreteYargType* newYargArrayTypeFromType(ObjConcreteYargType* elementType, size_t cardinality);
 ObjConcreteYargType* newYargPointerType(ObjConcreteYargType* targetType);
 
 size_t arrayElementOffset(const ObjConcreteYargTypeArray* arrayType, size_t index);
 size_t arrayElementSize(const ObjConcreteYargTypeArray* arrayType);
 ObjConcreteYargType* arrayElementType(const ObjConcreteYargTypeArray* arrayType);
+size_t arrayCardinality(const ObjConcreteYargTypeArray* arrayType);
 
 bool type_packs_as_obj(ObjConcreteYargType* type);
 bool type_packs_as_container(ObjConcreteYargType* type);
 bool is_nil_assignable_type(ObjConcreteYargType* type);
-bool is_placeable_type(ObjConcreteYargType* type);
-bool is_stored_type(ObjConcreteYargType* type);
+bool is_placeable_type(const ObjConcreteYargType* type);
 bool is_obj_yargtype(const ObjConcreteYargType* type);
 size_t yt_sizeof_type_storage(ObjConcreteYargType* type);
 size_t yt_alignmentfor_type_storage(ObjConcreteYargType* type);
 
 bool structFieldIndex(ObjConcreteYargType* type, ObjString* name, size_t* index);
+size_t structFieldOffset(const ObjConcreteYargType* type, size_t fieldIndex);
 
 bool isSupportedMapKeyType(ObjConcreteYargType* type);
 

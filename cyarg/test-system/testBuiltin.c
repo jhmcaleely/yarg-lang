@@ -137,31 +137,23 @@ bool interruptBuiltin(ObjRoutine *routineContext, int argCount, Value *result) {
 
 bool syncBuiltin(ObjRoutine *routineContext, int argCount, Value *result)
 {
-    // TODO: review
     TsLog *log = testIntrinsicsSync();
 
-    ObjConcreteYargType *array = newYargArrayTypeFromType(NULL);
-    tempObjRootPush((Obj*)array);
-
-    ObjConcreteYargTypeArray *arrayAsArray = (ObjConcreteYargTypeArray *)array;
-    arrayAsArray->cardinality = log->n_;
-    ObjPackedUniformArray* result_array = newPackedUniformArray(arrayAsArray);
-    tempRootPop(); // array
-    tempObjRootPush((Obj*)result_array);
+    Value resultArrayVal = allocValueArray(log->n_);
+    tempRootPush(resultArrayVal);
 
     for (size_t i = 0; i < log->n_; i++)
     {
 //        printf("%s\n", log->i_[i]); // until log gets coppied to *result
         ObjString *s = copyString(log->i_[i], (int)strlen(log->i_[i]));
-        tempObjRootPush((Obj*)s);
+        tempRootPush(STRING_VAL(s));
         reallocate(log->i_[i], (int)strlen(log->i_[i]) + 1, 0);
-        PackedValue p = arrayElement(result_array->store, i);
-        assignToPackedValue(p, STRING_VAL(s));
+        setArrayElement(resultArrayVal, i, STRING_VAL(s));
         tempRootPop(); // s
     }
 
     tempRootPop(); // array
-    *result = ARRAY_VAL(result_array);
+    *result = resultArrayVal;
     log->n_ = 0;
 
     return true;

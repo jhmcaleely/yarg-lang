@@ -11,7 +11,6 @@ typedef struct Obj Obj;
 typedef struct ObjString ObjString;
 typedef struct ObjRoutine ObjRoutine;
 typedef struct ObjConcreteYargType ObjConcreteYargType;
-typedef struct ObjPackedUniformArray ObjPackedUniformArray;
 
 typedef struct {
     const ObjConcreteYargType* type;
@@ -73,8 +72,10 @@ typedef struct {
 
 
 #if IS_64BIT
+#define AS_SIZE_T(value)       ((value).as.ui64)
 #define SIZE_T_UI_VAL(value)   UI64_VAL(value)
 #elif IS_32BIT
+#define AS_SIZE_T(value)       ((value).as.ui32)
 #define SIZE_T_UI_VAL(value)   UI32_VAL(value)
 #endif
 
