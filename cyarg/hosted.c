@@ -32,7 +32,7 @@ int bootstrapHostedFile(const char* path) {
     vmHost.exitCode = EX_OK;
 
     ObjString* pathString = copyString(path, (int) strlen(path));
-    tempObjRootPush((Obj*)pathString);
+    tempRootPush(STRING_VAL(pathString));
 
     InterpretResult result = bootScript(pathString);
 
@@ -47,7 +47,7 @@ int bootstrapHostedFile(const char* path) {
 int compileFile(const char* path, const char* outputPath) {
 
     ObjString* pathString = copyString(path, (int) strlen(path));
-    tempObjRootPush((Obj*)pathString);
+    tempRootPush(STRING_VAL(pathString));
 
     Value compilerResult;
     InterpretResult result = compileScript(pathString, &compilerResult);
@@ -72,7 +72,7 @@ int compileFile(const char* path, const char* outputPath) {
 int disassembleFile(const char* path) {
 
     ObjString* pathString = copyString(path, (int)strlen(path));
-    tempObjRootPush((Obj*)pathString);
+    tempRootPush(STRING_VAL(pathString));
 
     Value compilerResult;
     InterpretResult result = compileScript(pathString, &compilerResult);

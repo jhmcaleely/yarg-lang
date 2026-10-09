@@ -1073,3 +1073,88 @@ Value getBuiltin(uint8_t builtin) {
 #endif
     }
 }
+
+ObjString* builtinToString(const ObjBuiltin* builtin) {
+    if (builtin->function == &stringBuiltin) {
+        return copyString("string", 6);
+    }
+    else if (builtin->function == &int8Builtin) {
+        return copyString("int8", 4);
+    }
+    else if (builtin->function == &int16Builtin) {
+        return copyString("int16", 5);
+    }
+    else if (builtin->function == &uint16Builtin) {
+        return copyString("uint16", 6);
+    }
+    else if (builtin->function == &uint8Builtin) {
+        return copyString("uint8", 5);
+    }
+    else if (builtin->function == &int32Builtin) {
+        return copyString("int32", 5);
+    }
+    else if (builtin->function == &uint32Builtin) {
+        return copyString("uint32", 6);
+    }
+    else if (builtin->function == &int64Builtin) {
+        return copyString("int64", 5);
+    }
+    else if (builtin->function == &uint64Builtin) {
+        return copyString("uint64", 6);
+    }
+    else if (builtin->function == &intBuiltin) {
+        return copyString("int", 3);
+    }
+    else if (builtin->function == &floatBuiltin) {
+        return copyString("mfloat64", 8);
+    }
+    else if (builtin->function == &peekBuiltin) {
+        return copyString("peek", 4);
+    }
+    else if (builtin->function == &loadBuiltin) {
+        return copyString("load", 4);
+    }
+    else if (builtin->function == &new_Builtin) {
+        return copyString("new", 3);
+    }
+    else if (builtin->function == &lenBuiltin) {
+        return copyString("len", 3);
+    }
+    else if (builtin->function == &readYargSourceBuiltin) {
+        return copyString("read_yarg_source", 16);
+    }
+    else if (builtin->function == &readYargROMSourceBuiltin) {
+        return copyString("vm_read_xip_file", 15);
+    }
+    else if (builtin->function == &compileBuiltin) {
+        return copyString("compile", 7);
+    }
+    else if (builtin->function == &makeRoutineBuiltin) {
+        return copyString("make_routine", 12);
+    }
+    else if (builtin->function == &resumeBuiltin) {
+        return copyString("resume", 6);
+    }
+    else if (builtin->function == &startBuiltin) {
+        return copyString("start", 5);
+    }
+    else if (builtin->function == &makeChannelBuiltin) {
+        return copyString("make_channel", 12);
+    }
+    else if (builtin->function == &sendChannelBuiltin) {
+        return copyString("send", 4);
+    }
+    else if (builtin->function == &receiveBuiltin) {
+        return copyString("receive", 7);
+    }
+    else if (builtin->function == &shareChannelBuiltin) {
+        return copyString("share", 5);
+    }
+    else if (builtin->function == &cpeekBuiltin) {
+        return copyString("cpeek", 5);
+    }
+    else if (builtin->function == &makeSyncGroupBuiltin) {
+        return copyString("make_syncgroup", 14);
+    }
+    return copyString("<builtin fn>", 12);
+}

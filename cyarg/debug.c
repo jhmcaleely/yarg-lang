@@ -18,7 +18,7 @@ void printValue(Value value) {
 
 void fprintValue(FILE* op, Value value) {
     ObjString* string = valueToString(value);
-    tempObjRootPush((Obj*)string);
+    tempRootPush(STRING_VAL(string));
     FPRINTMSG(op, "%s", string->chars);
     tempRootPop();
 }
@@ -29,7 +29,7 @@ void printObj(const Obj* object) {
 
 void fprintObj(FILE* op, const Obj* object) {
     ObjString* string = objectToString(object);
-    tempObjRootPush((Obj*)string);
+    tempRootPush(STRING_VAL(string));
     FPRINTMSG(op, "%s", string->chars);
     tempRootPop();
 }

@@ -111,18 +111,6 @@ Value tempRootPop() {
     return result;
 }
 
-void markConstObject(const Obj* object) {
-    if (object == NULL) return;
-    assert(object->isMarked);
-    assert(object->next == NULL);
-
-#ifdef DEBUG_LOG_GC
-    PRINTERR("%p mark const ", (void*)object);
-    printObj(object);
-    PRINTERR("\n");
-#endif
-}
-
 void markObject(Obj* object) {
     if (object == NULL) return;
     if (object->isMarked) return;
@@ -149,7 +137,7 @@ void markValue(Value value) {
     if (isObjValue(value)) {
         markObject(value.as.obj);
     }
-    markConstObject((const Obj*)value.type);
+    markObject((Obj*)value.type);
 }
 
 void markValueCell(ValueCell* cell) {

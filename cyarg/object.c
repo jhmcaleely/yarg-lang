@@ -567,7 +567,7 @@ ObjString* objectToString(const Obj* value) {
         case OBJ_NATIVE:
             return copyString("<native fn>", 11);
         case OBJ_BUILTIN:
-            return copyString("<builtin fn>", 12);
+            return builtinToString((const ObjBuiltin*)value);
         case OBJ_ROUTINE: {
             const ObjRoutine* routine = (const ObjRoutine*)value;
             return routineToString(routine);
