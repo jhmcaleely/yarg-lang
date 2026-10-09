@@ -89,6 +89,13 @@ Value createPackedValueContainerAt(ValueLocation location, const ObjConcreteYarg
     return TYPED_VAL(container, type);
 }
 
+Value pinPackedValueContainer(Value packedValueContainer) {
+    ObjPackedValueContainer* container = AS_PACKEDVALUECONTAINER(packedValueContainer);
+    void* address = container->location.placed ? (void*) container->location.placedValue.address : (void*) container->location.value;
+    return ADDRESS_VAL((uintptr_t) address);
+}
+
+
 
 Value allocByteArray(size_t length) {
     const ObjConcreteYargType* element = newYargTypeFromType(TypeUint8);
@@ -114,6 +121,15 @@ Value createByteArrayAt(uint8_t* location, size_t length) {
     Value result = createPackedValueContainerAt(valLocation, arrayType);
     tempRootPop(); // arrayType
     tempRootPop(); // element
+    return result;
+}
+
+Value allocValueArray(size_t length) {
+    const ObjConcreteYargType* arrayType = newYargArrayTypeFromType(NULL, length);
+    tempRootPush(YARGTYPE_VAL(arrayType));
+
+    Value result = defaultPackedValueContainerValue(arrayType);
+    tempRootPop(); // arrayType
     return result;
 }
 

@@ -102,14 +102,12 @@ ObjConcreteYargType* newYargPointerType(ObjConcreteYargType* targetType);
 size_t arrayElementOffset(const ObjConcreteYargTypeArray* arrayType, size_t index);
 size_t arrayElementSize(const ObjConcreteYargTypeArray* arrayType);
 ObjConcreteYargType* arrayElementType(const ObjConcreteYargTypeArray* arrayType);
-size_t arrayCardinality(const ObjConcreteYargTypeArray* arrayType);
+size_t arrayCardinality(const ObjConcreteYargType* arrayType);
 
-bool type_packs_as_obj(ObjConcreteYargType* type);
-bool type_packs_as_container(ObjConcreteYargType* type);
 bool is_nil_assignable_type(ObjConcreteYargType* type);
 bool is_placeable_type(const ObjConcreteYargType* type);
 bool is_obj_yargtype(const ObjConcreteYargType* type);
-size_t yt_sizeof_type_storage(ObjConcreteYargType* type);
+size_t yt_sizeof_type_storage(const ObjConcreteYargType* type);
 size_t yt_alignmentfor_type_storage(ObjConcreteYargType* type);
 
 bool structFieldIndex(ObjConcreteYargType* type, ObjString* name, size_t* index);

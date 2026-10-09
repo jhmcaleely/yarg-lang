@@ -124,6 +124,11 @@ size_t arrayElementSize(const ObjConcreteYargTypeArray* arrayType) {
     return yt_sizeof_type_storage(arrayElementType(arrayType));
 }
 
+size_t arrayCardinality(const ObjConcreteYargType* arrayType) {
+    const ObjConcreteYargTypeArray* t = (const ObjConcreteYargTypeArray*) arrayType;
+    return t->cardinality;
+}
+
 ObjConcreteYargType* newYargStructType(size_t fieldCount) {
     ObjConcreteYargTypeStruct* t = (ObjConcreteYargTypeStruct*) newYargTypeFromType(TypeStruct);
     tempObjRootPush((Obj*)t);
@@ -151,6 +156,7 @@ ObjConcreteYargType* newYargPointerType(ObjConcreteYargType* targetType) {
     p->target_type = targetType;
     return (ObjConcreteYargType*)p;
 }
+
 size_t addFieldType(ObjConcreteYargTypeStruct* st, size_t index, size_t fieldOffset, ObjConcreteYargType* type, ObjString* name) {
     st->field_types[index] = type;
     tableSet(&st->field_names, name, SIZE_T_UI_VAL(index));
@@ -172,6 +178,11 @@ size_t addFieldTypeAtOffset(ObjConcreteYargTypeStruct* st, size_t index, ObjConc
     st->field_indexes[index] = offset;
     st->storage_size = offset + alignmentPadding + yt_sizeof_type_storage(type);
     return st->storage_size;
+}
+
+size_t structFieldOffset(const ObjConcreteYargType* type, size_t fieldIndex) {
+    const ObjConcreteYargTypeStruct* st = (const ObjConcreteYargTypeStruct*) type;
+    return st->field_indexes[fieldIndex];
 }
 
 
@@ -298,7 +309,7 @@ bool is_placeable_type(const ObjConcreteYargType* type) {
     return false;
 }
 
-size_t yt_sizeof_type_storage(ObjConcreteYargType* type) {
+size_t yt_sizeof_type_storage(const ObjConcreteYargType* type) {
     if (type == NULL) {
         return sizeof(Value);
     } else {
@@ -332,6 +343,7 @@ size_t yt_sizeof_type_storage(ObjConcreteYargType* type) {
             const ObjConcreteYargTypeArray* array = (const ObjConcreteYargTypeArray*)type;
             return arrayElementSize(array) * array->cardinality;
         }
+        case TypePointer:
         case TypeInt:
         case TypeString:
         case TypeClass:
@@ -340,10 +352,9 @@ size_t yt_sizeof_type_storage(ObjConcreteYargType* type) {
         case TypeRoutine:
         case TypeChannel:
         case TypeSyncGroup:
-        case TypePointer:
         case TypeMap:
         case TypeYargType:
-            return sizeof(Obj*);
+            return sizeof(Value);
         }
     }
 }
