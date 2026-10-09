@@ -91,6 +91,7 @@ Value defaultPackedValueContainerValue(const ObjConcreteYargType* type) {
         location.value = (Value*) malloc(storage_required);
         memset(location.value, 0, storage_required);
     }
+    // TODO: capture type info for later GC
     ObjPackedValueContainer* container = ALLOCATE_OBJ(ObjPackedValueContainer, OBJ_PACKEDVALUECONTAINER);
     container->location = location;
     return TYPED_VAL(container, type);

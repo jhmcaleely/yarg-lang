@@ -68,7 +68,7 @@ typedef struct {
     ObjConcreteYargType integer;
 
     ObjConcreteYargType implementation_obj; // only the address matters.
-    // temp
+    // TODO:temp
     ObjConcreteYargType function;
     ObjConcreteYargType routine;
     ObjConcreteYargType channel;
