@@ -9,6 +9,7 @@
 
 typedef struct ObjFunction ObjFunction;
 typedef struct O1HeapInstance O1HeapInstance;
+typedef struct ValueCell ValueCell;
 
 void init_heap_instance(O1HeapInstance** instance);
 

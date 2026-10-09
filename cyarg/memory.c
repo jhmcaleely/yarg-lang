@@ -19,6 +19,7 @@
 #include "vmobject.h"
 #include "yargstructtype.h"
 #include "builtin.h"
+#include "value_cell.h"
 
 #include "../external/o1heap/o1heap/o1heap.h"
 

@@ -81,6 +81,8 @@ add_executable(cyarg
     debug.c
     value.h
     value.c
+    value_cell.h
+    value_cell.c
     routine.h
     routine.c
     vm.h

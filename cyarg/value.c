@@ -11,6 +11,7 @@
 #include "yargtype.h"
 #include "yargobject.h"
 #include "yargstructtype.h"
+#include "value_cell.h"
 
 bool isObjValue(Value value) {
     if (value.type == &yargTypes.implementation_obj && value.as.obj != NULL) return true;
@@ -264,7 +265,7 @@ static void packValue(PackedValue packedStorageTarget, Value value) {
     }
 }
 
-static void noLongerLiteralInt(Value *value)
+void noLongerLiteralInt(Value *value)
 {
     if (IS_INT(*value))
     {
@@ -289,54 +290,6 @@ bool assignToPackedValue(PackedValue lhs, Value rhsValue) {
             else
             {
                 packValue(lhs, promoted);
-            }
-            return true;
-        } else {
-            return false;
-        }
-    }
-}
-
-bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
-    if (lhs.cellType == NULL) {
-        noLongerLiteralInt(&rhsValue);
-        *lhs.value = rhsValue;
-        return true;
-    } else {
-        Value promoted;
-        if (isInitialisableType(lhs.cellType, rhsValue, &promoted)) {
-            if (promoted.type == NULL)
-            {
-                noLongerLiteralInt(&rhsValue);
-                *(lhs.value) = rhsValue;
-            }
-            else
-            {
-                *(lhs.value) = promoted;
-            }
-            return true;
-        } else {
-            return false;
-        }
-    }
-}
-
-bool initialiseValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
-    if (lhs.cellType == NULL) {
-        noLongerLiteralInt(&rhsValue);
-        *lhs.value = rhsValue;
-        return true;
-    } else {
-        Value promoted;
-        if (isInitialisableType(lhs.cellType, rhsValue, &promoted)) {
-            if (promoted.type == NULL)
-            {
-                noLongerLiteralInt(&rhsValue);
-                *(lhs.value) = rhsValue;
-            }
-            else
-            {
-                *(lhs.value) = promoted;
             }
             return true;
         } else {

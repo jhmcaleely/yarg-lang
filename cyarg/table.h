@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "value.h"
+#include "value_cell.h"
 
 typedef struct ObjString ObjString;
 

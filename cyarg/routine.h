@@ -3,6 +3,7 @@
 
 #include "value.h"
 #include "object.h"
+#include "value_cell.h"
 
 #define FRAMES_MAX 20
 #define SLICE_MAX 64
@@ -89,7 +90,6 @@ void popN(ObjRoutine* routine, size_t count);
 void popFrame(ObjRoutine* routine, CallFrame* frame);
 Value peek(ObjRoutine* routine, int distance);
 ValueCell* peekCell(ObjRoutine* routine, int distance);
-ValueCellTarget peekCellTarget(ObjRoutine* routine, int distance);
 
 void runtimeError(ObjRoutine* routine, const char* format, ...);
 

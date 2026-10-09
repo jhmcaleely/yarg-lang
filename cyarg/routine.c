@@ -13,6 +13,7 @@
 #include "debug.h"
 #include "yargobject.h"
 #include "vmobject.h"
+#include "value_cell.h"
 
 bool addSlice(ObjRoutine* routine);
 

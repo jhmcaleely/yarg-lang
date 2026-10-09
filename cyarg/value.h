@@ -90,20 +90,6 @@ bool valuesEqual(Value a, Value b);
 ObjString* valueToString(Value value);
 
 typedef struct {
-    Value value;
-    ObjConcreteYargType* cellType;
-} ValueCell;
-
-typedef struct {
-    Value* value;
-    ObjConcreteYargType* cellType;
-} ValueCellTarget;
-
-bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue);
-bool initialiseValueCellTarget(ValueCellTarget lhs, Value rhsValue);
-bool isInitialisableType(ObjConcreteYargType* lhsType, Value rhsValue, Value *promotedRhs); // promotedRhs will be VAL_NIL if no promotion
-
-typedef struct {
     int capacity;
     int count;
     Value* values;
@@ -124,5 +110,8 @@ Obj* destinationObject(Value pointer);
 
 bool isObjType(Value value, ObjType type);
 bool isObjValue(Value value);
+
+void noLongerLiteralInt(Value *value);
+bool isInitialisableType(ObjConcreteYargType* lhsType, Value rhsValue, Value *promotedRhs); // promotedRhs will be VAL_NIL if no promotion
 
 #endif
