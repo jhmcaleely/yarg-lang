@@ -1,5 +1,8 @@
 #include "placed_value.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "common.h"
 
 #include "yargobject.h"
@@ -28,4 +31,20 @@ Value getPlacedValue(PlacedValue placedStorage) {
         default: panic(); break;
     }
     return value;   
+}
+
+PlacedValue allocPlacedValue(const ObjConcreteYargType* type) {
+    PlacedValue placed;
+    size_t storage_required = yt_sizeof_type_storage(type);
+    placed.valuePtr.address = (uintptr_t*) malloc(storage_required);
+    memset(placed.valuePtr.address, 0, storage_required);
+    placed.type = type;
+    return placed;
+}
+
+PlacedValue createPlacedValue(uintptr_t ptr, const ObjConcreteYargType* type) {
+    PlacedValue placed;
+    placed.valuePtr.address = (uintptr_t*) ptr;
+    placed.type = type;
+    return placed;
 }
