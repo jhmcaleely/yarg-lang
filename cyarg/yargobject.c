@@ -65,6 +65,20 @@ bool intsEqual(const ObjInt* a, const ObjInt* b) {
 }
 
 
+bool is_uniformarray(Value value) {
+    if (value.type == NULL) return false;
+    return value.type->yt == TypeArray;
+}
+bool is_pointer(Value value) {
+    if (value.type == NULL) return false;
+    return value.type->yt == TypePointer;
+}
+
+bool is_struct(Value value) {
+    if (value.type == NULL) return false;
+    return value.type->yt == TypeStruct;
+}
+
 Value defaultPackedValueContainerValue(const ObjConcreteYargType* type) {
     size_t storage_required = yt_sizeof_type_storage(type);
     bool placed = is_placeable_type(type);
@@ -95,7 +109,14 @@ Value pinPackedValueContainer(Value packedValueContainer) {
     return ADDRESS_VAL((uintptr_t) address);
 }
 
-
+bool  isByteArray(Value value) {
+    if (!is_uniformarray(value)) return false;
+    const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*) value.type;
+    if (arrayType->element_type) {
+        return arrayType->element_type->yt == TypeUint8;
+    }
+    return false;
+}
 
 Value allocByteArray(size_t length) {
     const ObjConcreteYargType* element = newYargTypeFromType(TypeUint8);
