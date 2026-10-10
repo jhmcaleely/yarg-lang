@@ -180,9 +180,8 @@ size_t addFieldTypeAtOffset(ObjConcreteYargTypeStruct* st, size_t index, ObjConc
     return st->storage_size;
 }
 
-size_t structFieldOffset(const ObjConcreteYargType* type, size_t fieldIndex) {
-    const ObjConcreteYargTypeStruct* st = (const ObjConcreteYargTypeStruct*) type;
-    return st->field_indexes[fieldIndex];
+size_t structFieldOffset(const ObjConcreteYargTypeStruct* type, size_t fieldIndex) {
+    return type->field_indexes[fieldIndex];
 }
 
 
@@ -470,7 +469,7 @@ static bool isInitializableArray(ObjConcreteYargTypeArray* lhsConcreteType, ObjC
     }
 }
 
-bool isInitialisableType(ObjConcreteYargType* lhsType, Value rhsValue, Value *promotedRhs) {
+bool isInitialisableType(const ObjConcreteYargType* lhsType, Value rhsValue, Value *promotedRhs) {
 
     promotedRhs->type = NULL;
 
@@ -674,10 +673,9 @@ ObjString* typeToString(const ObjConcreteYargType* type) {
 }
 
 
-bool structFieldIndex(ObjConcreteYargType* type, ObjString* name, size_t* index) {
-    const ObjConcreteYargTypeStruct* structType = (const ObjConcreteYargTypeStruct*)type;
+bool structFieldIndex(const ObjConcreteYargTypeStruct* type, ObjString* name, size_t* index) {
     Value indexVal;
-    if (tableGet(&structType->field_names, name, &indexVal)) {
+    if (tableGet(&type->field_names, name, &indexVal)) {
         *index = AS_SIZE_T(indexVal);
         return true;
     }

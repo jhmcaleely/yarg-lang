@@ -113,6 +113,6 @@ bool isObjType(Value value, ObjType type);
 bool isObjValue(Value value);
 
 void noLongerLiteralInt(Value *value);
-bool isInitialisableType(ObjConcreteYargType* lhsType, Value rhsValue, Value *promotedRhs); // promotedRhs will be VAL_NIL if no promotion
+bool isInitialisableType(const ObjConcreteYargType* lhsType, Value rhsValue, Value *promotedRhs); // promotedRhs will be VAL_NIL if no promotion
 
 #endif

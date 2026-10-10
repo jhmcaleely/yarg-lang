@@ -120,6 +120,11 @@ void fatalVMError(const char* format, ...) {
     exit(5);
 }
 
+void yarg_panic(void) {
+    assert(false && "yarg panic");
+    exit(EXIT_FAILURE);
+}
+
 static void defineNative(const char* name, NativeFn function) {
     ObjString* nameString = copyString(name, (int)strlen(name));
     tempObjRootPush((Obj*)nameString);

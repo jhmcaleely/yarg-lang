@@ -654,7 +654,10 @@ void collectGarbage() {
     markRoots();
     traceReferences();
     tableRemoveWhite(&vm.strings);
+    #if 0
+    #warn "no gc"
     sweep();
+    #endif
 
     size_t candidateGC = vm.bytesAllocated * GC_HEAP_GROW_FACTOR;
     vm.nextGC = candidateGC > ALWAYS_GC_ABOVE ? ALWAYS_GC_ABOVE : candidateGC;

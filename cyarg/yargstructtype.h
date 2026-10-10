@@ -20,4 +20,7 @@ ObjConcreteYargType* newYargStructType(size_t fieldCount);
 size_t addFieldType(ObjConcreteYargTypeStruct* st, size_t index, size_t fieldOffset, ObjConcreteYargType* type, ObjString* name);
 size_t addFieldTypeAtOffset(ObjConcreteYargTypeStruct* st, size_t index, ObjConcreteYargType* type, size_t offset, ObjString* name);
 
+bool structFieldIndex(const ObjConcreteYargTypeStruct* type, ObjString* name, size_t* index);
+size_t structFieldOffset(const ObjConcreteYargTypeStruct* type, size_t fieldIndex);
+
 #endif

@@ -110,9 +110,6 @@ bool is_obj_yargtype(const ObjConcreteYargType* type);
 size_t yt_sizeof_type_storage(const ObjConcreteYargType* type);
 size_t yt_alignmentfor_type_storage(ObjConcreteYargType* type);
 
-bool structFieldIndex(ObjConcreteYargType* type, ObjString* name, size_t* index);
-size_t structFieldOffset(const ObjConcreteYargType* type, size_t fieldIndex);
-
 bool isSupportedMapKeyType(ObjConcreteYargType* type);
 
 ObjString* typeToString(const ObjConcreteYargType* type);

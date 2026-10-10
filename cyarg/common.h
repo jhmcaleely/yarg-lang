@@ -9,6 +9,6 @@
 
 #include "print.h"
 
-void panic(void);
+void yarg_panic(void);
 
 #endif
