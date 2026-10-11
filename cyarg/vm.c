@@ -924,7 +924,7 @@ InterpretResult run(ObjRoutine* routine) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    Value result = structField(structVal, index);
+                    Value result = structFieldPointer(structVal, index);
 
                     tempRootPop();
                     pop(routine);

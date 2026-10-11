@@ -137,6 +137,7 @@ Value pointerDestination(Value pointer);
 Value structField(Value structVal, size_t fieldIndex);
 
 Value arrayElementPointer(Value array, size_t index);
+Value structFieldPointer(Value structVal, size_t fieldIndex);
 
 bool setArrayElement(Value array, size_t index, Value value);
 bool setStructField(Value structVal, size_t fieldIndex, Value value);

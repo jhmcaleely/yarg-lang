@@ -206,6 +206,26 @@ Value arrayElementPointer(Value array, size_t index) {
     return result;
 }
 
+Value structFieldPointer(Value structVal, size_t fieldIndex) {
+    const ObjConcreteYargTypeStruct* structType = (const ObjConcreteYargTypeStruct*) structVal.type;
+    size_t field_offset = structFieldOffset(structType, fieldIndex);
+    ObjPackedValueContainer* container = AS_PACKEDVALUECONTAINER(structVal);
+    void* base = container->location.placed ? (void*) container->location.placedValue.address : (void*) container->location.value;
+    uintptr_t addr = (uintptr_t) base;
+    addr += field_offset;
+
+    const ObjConcreteYargType* ptrType = newYargPointerType(structType->field_types[fieldIndex]);
+    tempRootPush(YARGTYPE_VAL(ptrType));
+
+    ValueLocation location;
+    location.placedValue.address = (uintptr_t*) addr;
+    location.placed = true;
+
+    Value result = createPackedValueContainerAt(location, ptrType);
+    tempRootPop();
+    return result;
+}
+
 
 Value pointerDestination(Value pointer) {
     const ObjConcreteYargTypePointer* pointerType = (const ObjConcreteYargTypePointer*) pointer.type;
@@ -214,7 +234,7 @@ Value pointerDestination(Value pointer) {
     void* base = container->location.placed ? (void*) container->location.placedValue.address : (void*) container->location.value;
     uintptr_t addr = (uintptr_t) base;
 
-    if (is_placeable_type(pointer.type)) {
+    if (is_placeable_type(pointerType->target_type)) {
         PlacedValue store;
         store.valuePtr.address = (uintptr_t*) addr;
         store.type = pointerType->target_type;
