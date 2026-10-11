@@ -1390,8 +1390,16 @@ InterpretResult run(ObjRoutine* routine) {
                 tempObjRootPush((Obj*)st);
                 size_t fieldOffset = 0;
                 for (uint8_t i = 0; i < fieldCount; i++) {
-                    ObjConcreteYargType* fieldType = AS_YARGTYPE(peek(routine, 2));
+                    // field type can be nil (any) or a concrete Yarg type
+                    Value fieldTypeVal = peek(routine, 2);
+                    ObjConcreteYargType* fieldType = NULL;
+                    if (IS_YARGTYPE(fieldTypeVal)) {
+                        fieldType = AS_YARGTYPE(fieldTypeVal);
+                    }
+
                     ObjString* fieldName = AS_STRING(peek(routine, 0));
+
+                    // offset value can be nil (auto) or a positive integer
                     Value offsetValue = peek(routine, 1);
                     if (IS_NIL(offsetValue)) {
                         fieldOffset = addFieldType(st, i, fieldOffset, fieldType, fieldName);

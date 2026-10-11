@@ -137,11 +137,21 @@ Value defaultStructValue(const ObjConcreteYargType* type) {
         memset(location.placedValue.address, 0, storage_required);
     } else {
         location.value = (Value*) malloc(storage_required);
+        uintptr_t storageBase = (uintptr_t) location.value;
         // for an unplaced struct, initialize each field with its default value
         // note that all fields will be Value slots.
         for (size_t i = 0; i < structType->field_count; i++) {
-            Value fieldTypeVal = structType->field_types[i] ? YARGTYPE_VAL(structType->field_types[i]) : NIL_VAL;
-            location.value[i] = defaultValue(fieldTypeVal);
+            size_t fieldOffset = structType->field_indexes[i];
+
+            ValueLocation fieldLocation;
+            fieldLocation.placed = is_placeable_type(structType->field_types[i]);
+            if (fieldLocation.placed) {
+                fieldLocation.placedValue.address = (uintptr_t*) (storageBase + fieldOffset);
+                memset((void*)fieldLocation.placedValue.address, 0, yt_sizeof_type_storage(structType->field_types[i]));
+            } else {
+                fieldLocation.value = (Value*) (storageBase + fieldOffset);
+                *(Value*)fieldLocation.value = defaultValue(structType->field_types[i] ? YARGTYPE_VAL(structType->field_types[i]) : NIL_VAL);
+            }
         }
     }
     // TODO: capture type info for later GC
@@ -306,7 +316,7 @@ Value structField(Value structVal, size_t fieldIndex) {
     uintptr_t addr = (uintptr_t) base;
     addr += field_offset;
 
-    if (is_placeable_type(structVal.type)) {
+    if (is_placeable_type(structType->field_types[fieldIndex])) {
         PlacedValue store;
         store.valuePtr.address = (uintptr_t*) addr;
         store.type = structType->field_types[fieldIndex];

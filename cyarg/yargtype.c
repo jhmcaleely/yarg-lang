@@ -330,7 +330,7 @@ size_t yt_sizeof_type_storage(const ObjConcreteYargType* type) {
 
 size_t yt_alignmentfor_type_storage(ObjConcreteYargType* type) {
     if (type == NULL) {
-        return 8;
+        return sizeof(Value);
     } else {
         switch (type->yt) {
         case TypeBool:
