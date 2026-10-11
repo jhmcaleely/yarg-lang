@@ -139,7 +139,6 @@ Value defaultStructValue(const ObjConcreteYargType* type) {
         location.value = (Value*) malloc(storage_required);
         uintptr_t storageBase = (uintptr_t) location.value;
         // for an unplaced struct, initialize each field with its default value
-        // note that all fields will be Value slots.
         for (size_t i = 0; i < structType->field_count; i++) {
             size_t fieldOffset = structType->field_indexes[i];
 
