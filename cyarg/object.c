@@ -185,7 +185,7 @@ static ObjString* allocateString(char* chars, int length, uint32_t hash) {
     string->length = length;
     string->chars = chars;
     string->hash = hash;
-    tempObjRootPush((Obj*)string);
+    tempRootPush(STRING_VAL(string));
     tableSet(&vm.strings, string, NIL_VAL);
     tempRootPop();
     return string;

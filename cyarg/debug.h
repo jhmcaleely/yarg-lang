@@ -3,6 +3,7 @@
 
 #include "chunk.h"
 #include "value.h"
+#include "value_cell.h"
 #include <stdio.h>
 
 void disassembleChunk(Chunk* chunk, const char* name);
@@ -13,4 +14,6 @@ void fprintValue(FILE* op, Value value);
 
 void printObj(const Obj* object);
 void fprintObj(FILE* op, const Obj* object);
+
+void fprintValueCell(FILE* op, ValueCell* cell);
 #endif

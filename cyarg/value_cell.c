@@ -1,6 +1,8 @@
 #include "value_cell.h"
 
 #include "common.h"
+#include "debug.h"
+#include "yargobject.h"
 
 bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
     if (lhs.cellType == NULL) {
@@ -48,4 +50,13 @@ bool initialiseValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
             return false;
         }
     }
+}
+
+void fprintValueCell(FILE* op, ValueCell* cell) {
+    FPRINTMSG(op, "<vc:");
+    fprintValue(op, cell->value);
+    FPRINTMSG(op, "<");
+    Value cellTypeValue = cell->cellType ? YARGTYPE_VAL((Obj*)cell->cellType) : NIL_VAL;
+    fprintValue(op, cellTypeValue);
+    FPRINTMSG(op, ">>");
 }
