@@ -921,7 +921,7 @@ InterpretResult run(ObjRoutine* routine) {
                     Value structVal = peek(routine, 0);
                     ObjString* name = READ_STRING();
                     size_t index;
-                    const ObjConcreteYargTypeStruct* structType = structVal.type;
+                    const ObjConcreteYargTypeStruct* structType = (const ObjConcreteYargTypeStruct*)structVal.type;
                     if (!structFieldIndex(structType, name, &index)) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
@@ -936,7 +936,7 @@ InterpretResult run(ObjRoutine* routine) {
                     Value structVal = pointerDestination(pointerVal);
                     tempRootPush(structVal);
                     size_t index;
-                    if (!structFieldIndex(structVal.type, name, &index)) {
+                    if (!structFieldIndex((const ObjConcreteYargTypeStruct*)structVal.type, name, &index)) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
@@ -976,7 +976,7 @@ InterpretResult run(ObjRoutine* routine) {
                     Value structVal = peek(routine, 1);
                     ObjString* name = READ_STRING();
                     size_t index;
-                    if (!structFieldIndex(structVal.type, name, &index)) {
+                    if (!structFieldIndex((const ObjConcreteYargTypeStruct*)structVal.type, name, &index)) {
                         runtimeError(routine, "field not present in struct.");
                         return INTERPRET_RUNTIME_ERROR;
                     }

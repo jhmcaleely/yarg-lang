@@ -354,7 +354,7 @@ bool setArrayElement(Value array, size_t index, Value value) {
 
 bool setStructField(Value structVal, size_t fieldIndex, Value value) {
     const ObjConcreteYargTypeStruct* structType = (const ObjConcreteYargTypeStruct*) structVal.type;
-    size_t field_offset = structFieldOffset((const ObjConcreteYargType*) structType, fieldIndex);
+    size_t field_offset = structFieldOffset(structType, fieldIndex);
     ObjPackedValueContainer* container = AS_PACKEDVALUECONTAINER(structVal);
     void* base = container->location.placed ? (void*) container->location.placedValue.address : (void*) container->location.value;
     uintptr_t addr = (uintptr_t) base;
