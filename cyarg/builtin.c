@@ -527,6 +527,9 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
             return true;
         }
         case TypeArray:
+            *result = defaultValue(typeToCreate);
+            return true;
+            
         case TypeStruct: {
             if (is_placeable_type(AS_YARGTYPE(typeToCreate))) {
                 PlacedValue heapValue = allocPlacedValue(AS_YARGTYPE(typeToCreate));
