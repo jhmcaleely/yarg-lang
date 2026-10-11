@@ -499,8 +499,9 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
     if (argCount == 1
         && IS_YARGTYPE(peek(routineContext, 0))) {
         typeToCreate = peek(routineContext, 0);
-    } else if (argCount == 1
-               && IS_NIL(peek(routineContext, 0))) {
+    } else if ((argCount == 1
+               && IS_NIL(peek(routineContext, 0)))
+               || argCount == 0) {
         // make an 'any' cell, ie a heap allocated Value.
         PlacedValue heapValue = allocPlacedValue(NULL);
         ObjConcreteYargType* pointerType = newYargPointerType(NULL);
@@ -519,6 +520,19 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
 
     ConcreteYargType typeRequested = AS_YARGTYPE(typeToCreate)->yt;
     switch (typeRequested) {
+        case TypeBool: {
+            PlacedValue heapValue = allocPlacedValue(AS_YARGTYPE(typeToCreate));
+            ObjConcreteYargType* pointerType = newYargPointerType(AS_YARGTYPE(typeToCreate));
+            tempRootPush(YARGTYPE_VAL(pointerType));
+            ValueLocation location;
+            location.placed = false;
+            location.value = (Value*) heapValue.valuePtr.address;
+            *location.value = BOOL_VAL(false); // Initialize the value at the location
+            *result = createPackedValueContainerAt(location, pointerType);
+            tempRootPop();
+            return true;
+        }
+
         case TypeDouble:
         case TypeInt8:
         case TypeUint8:
@@ -568,7 +582,6 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
                 return false;
             }
         }
-        case TypeBool:
         case TypeInt:
         case TypeString:
         case TypeAddress:
