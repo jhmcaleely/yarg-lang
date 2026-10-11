@@ -365,7 +365,6 @@ bool setStructField(Value structVal, size_t fieldIndex, Value value) {
 
 bool setPointerDestination(Value pointer, Value value) {
     const ObjConcreteYargTypePointer* pointerType = (const ObjConcreteYargTypePointer*) pointer.type;
-    if (pointerType->target_type == NULL) return false;
 
     ObjPackedValueContainer* container = AS_PACKEDVALUECONTAINER(pointer);
     void* base = container->location.placed ? (void*) container->location.placedValue.address : (void*) container->location.value;

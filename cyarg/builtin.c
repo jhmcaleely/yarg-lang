@@ -499,6 +499,18 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
     if (argCount == 1
         && IS_YARGTYPE(peek(routineContext, 0))) {
         typeToCreate = peek(routineContext, 0);
+    } else if (argCount == 1
+               && IS_NIL(peek(routineContext, 0))) {
+        // make an 'any' cell, ie a heap allocated Value.
+        PlacedValue heapValue = allocPlacedValue(NULL);
+        ObjConcreteYargType* pointerType = newYargPointerType(NULL);
+        tempRootPush(YARGTYPE_VAL(pointerType));
+        ValueLocation location;
+        location.placed = false;
+        location.value = (Value*) heapValue.valuePtr.address;
+        *result = createPackedValueContainerAt(location, pointerType);
+        tempRootPop();
+        return true;
     }
     if (IS_NIL(typeToCreate)) {
         runtimeError(routineContext, "Expected a type to create.");
@@ -529,7 +541,7 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
         case TypeArray:
             *result = defaultValue(typeToCreate);
             return true;
-            
+
         case TypeStruct: {
             if (is_placeable_type(AS_YARGTYPE(typeToCreate))) {
                 PlacedValue heapValue = allocPlacedValue(AS_YARGTYPE(typeToCreate));
