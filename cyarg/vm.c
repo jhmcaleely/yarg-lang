@@ -609,6 +609,22 @@ static void promote(Value *left, Value *right)
     }
 }
 
+void reportBinaryOpTypeError(ObjRoutine* routine, Value lhs, Value rhs, const char* op) {
+    Value lhsType = concrete_typeof(lhs);
+    tempRootPush(lhsType);
+    Value rhsType = concrete_typeof(rhs);
+    tempRootPush(rhsType);
+    ObjString* lhsTypeName = valueToString(lhsType);
+    tempRootPush(STRING_VAL(lhsTypeName));
+    ObjString* rhsTypeName = valueToString(rhsType);
+    tempRootPush(STRING_VAL(rhsTypeName));
+    runtimeError(routine, "%s Operands %s %s must both be numbers, integers or unsigned integers.", op, lhsTypeName->chars, rhsTypeName->chars);
+    tempRootPop();
+    tempRootPop();
+    tempRootPop();
+    tempRootPop();
+}
+
 InterpretResult run(ObjRoutine* routine) {
     CallFrame* frame = &routine->frames[routine->frameCount - 1];
     routine->state = EXEC_RUNNING;
@@ -665,7 +681,7 @@ InterpretResult run(ObjRoutine* routine) {
         } else if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) { \
             binaryIntOp(routine, #op); \
         } else { \
-            runtimeError(routine, #op " Operands %d %d must both be numbers, integers or unsigned integers.", peek(routine, 0).type, peek(routine, 1).type); \
+            reportBinaryOpTypeError(routine, peek(routine, 1), peek(routine, 0), #op); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
     } while (false)
@@ -710,7 +726,7 @@ InterpretResult run(ObjRoutine* routine) {
         } else if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) { \
             binaryIntBoolOp(routine, #op); \
         } else { \
-            runtimeError(routine, #op " Operands %d %d must both be numbers, integers or unsigned integers.", peek(routine, 0).type, peek(routine, 1).type); \
+            reportBinaryOpTypeError(routine, peek(routine, 1), peek(routine, 0), #op); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
     } while (false)
@@ -738,7 +754,7 @@ InterpretResult run(ObjRoutine* routine) {
             uint64_t c = a op b; \
             push(routine, UI64_VAL(c)); \
         } else { \
-            runtimeError(routine, #op " Operands %d %d must be unsigned integers.", peek(routine, 0).type, peek(routine, 1).type); \
+            runtimeError(routine, #op " Operands %d %d must be unsigned integers.", peek(routine, 1).type, peek(routine, 0).type); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
     } while (false)
