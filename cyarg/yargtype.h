@@ -96,8 +96,8 @@ typedef struct ObjConcreteYargTypeMap {
 
 ObjConcreteYargType* newYargTypeFromType(ConcreteYargType yt);
 
-ObjConcreteYargType* newYargArrayTypeFromType(ObjConcreteYargType* elementType, size_t cardinality);
-ObjConcreteYargType* newYargPointerType(ObjConcreteYargType* targetType);
+ObjConcreteYargType* newYargArrayTypeFromType(const ObjConcreteYargType* elementType, size_t cardinality);
+ObjConcreteYargType* newYargPointerType(const ObjConcreteYargType* targetType);
 
 size_t arrayElementOffset(const ObjConcreteYargTypeArray* arrayType, size_t index);
 size_t arrayElementSize(const ObjConcreteYargTypeArray* arrayType);

@@ -79,8 +79,10 @@ bool is_struct(Value value) {
     return value.type->yt == TypeStruct;
 }
 
-Value defaultPackedValueContainerValue(const ObjConcreteYargType* type) {
+Value defaultArrayValue(const ObjConcreteYargType* type) {
+    ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) type;  
     size_t storage_required = yt_sizeof_type_storage(type);
+
     bool placed = is_placeable_type(type);
     ValueLocation location;
     location.placed = placed;
@@ -89,11 +91,63 @@ Value defaultPackedValueContainerValue(const ObjConcreteYargType* type) {
         memset(location.placedValue.address, 0, storage_required);
     } else {
         location.value = (Value*) malloc(storage_required);
-        memset(location.value, 0, storage_required);
+        for (size_t i = 0; i < arrayType->cardinality; i++) {
+            Value elementTypeVal = arrayType->element_type ? YARGTYPE_VAL(arrayType->element_type) : NIL_VAL;
+            location.value[i] = defaultValue(elementTypeVal);
+        }
     }
     // TODO: capture type info for later GC
     ObjPackedValueContainer* container = ALLOCATE_OBJ(ObjPackedValueContainer, OBJ_PACKEDVALUECONTAINER);
     container->location = location;
+
+    return TYPED_VAL(container, type);
+}
+
+Value defaultPointerValue(const ObjConcreteYargType* type) {
+    ObjConcreteYargTypePointer* pointerType = (ObjConcreteYargTypePointer*) type;  
+    size_t storage_required = yt_sizeof_type_storage(type);
+
+    bool placed = is_placeable_type(type);
+    ValueLocation location;
+    location.placed = placed;
+    if (placed) {
+        location.placedValue.address = (uintptr_t*) malloc(storage_required);
+        memset(location.placedValue.address, 0, storage_required);
+    } else {
+        location.value = (Value*) malloc(storage_required);
+        Value targetTypeVal = pointerType->target_type ? YARGTYPE_VAL(pointerType->target_type) : NIL_VAL;
+        *location.value = defaultValue(targetTypeVal);
+    }
+    // TODO: capture type info for later GC
+    ObjPackedValueContainer* container = ALLOCATE_OBJ(ObjPackedValueContainer, OBJ_PACKEDVALUECONTAINER);
+    container->location = location;
+
+    return TYPED_VAL(container, type);
+}
+
+Value defaultStructValue(const ObjConcreteYargType* type) {
+    ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*) type;  
+    size_t storage_required = yt_sizeof_type_storage(type);
+
+    bool placed = is_placeable_type(type);
+    ValueLocation location;
+    location.placed = placed;
+    if (placed) {
+        location.placedValue.address = (uintptr_t*) malloc(storage_required);
+        memset(location.placedValue.address, 0, storage_required);
+    } else {
+        location.value = (Value*) malloc(storage_required);
+        // for an unplaced struct, initialize each field with its default value
+        // note that all fields will be Value slots.
+        for (size_t i = 0; i < structType->field_count; i++) {
+            Value fieldTypeVal = structType->field_types[i] ? YARGTYPE_VAL(structType->field_types[i]) : NIL_VAL;
+            location.value[i] = defaultValue(fieldTypeVal);
+        }
+    }
+    // TODO: capture type info for later GC
+    ObjPackedValueContainer* container = ALLOCATE_OBJ(ObjPackedValueContainer, OBJ_PACKEDVALUECONTAINER);
+    container->location = location;
+
     return TYPED_VAL(container, type);
 }
 
@@ -125,7 +179,7 @@ Value allocByteArray(size_t length) {
     const ObjConcreteYargType* arrayType = newYargArrayTypeFromType(element, length);
     tempRootPush(YARGTYPE_VAL(arrayType));
 
-    Value result = defaultPackedValueContainerValue(arrayType);
+    Value result = defaultArrayValue(arrayType);
     tempRootPop(); // arrayType
     tempRootPop(); // element
     return result;
@@ -150,7 +204,7 @@ Value allocValueArray(size_t length) {
     const ObjConcreteYargType* arrayType = newYargArrayTypeFromType(NULL, length);
     tempRootPush(YARGTYPE_VAL(arrayType));
 
-    Value result = defaultPackedValueContainerValue(arrayType);
+    Value result = defaultArrayValue(arrayType);
     tempRootPop(); // arrayType
     return result;
 }

@@ -104,7 +104,7 @@ ObjConcreteYargType* newYargTypeFromType(ConcreteYargType yt) {
     }
 }
 
-ObjConcreteYargType* newYargArrayTypeFromType(ObjConcreteYargType* elementType, size_t cardinality) {
+ObjConcreteYargType* newYargArrayTypeFromType(const ObjConcreteYargType* elementType, size_t cardinality) {
     ObjConcreteYargTypeArray* t = (ObjConcreteYargTypeArray*) newYargTypeFromType(TypeArray);
     t->element_type = elementType;
     t->core.yt = TypeArray;
@@ -151,7 +151,7 @@ ObjConcreteYargType* newYargStructType(size_t fieldCount) {
     return (ObjConcreteYargType*)t;
 }
 
-ObjConcreteYargType* newYargPointerType(ObjConcreteYargType* targetType) {
+ObjConcreteYargType* newYargPointerType(const ObjConcreteYargType* targetType) {
     ObjConcreteYargTypePointer* p = (ObjConcreteYargTypePointer*) newYargTypeFromType(TypePointer);
     p->target_type = targetType;
     return (ObjConcreteYargType*)p;
@@ -427,9 +427,9 @@ Value defaultValue(Value type) {
             case TypeInt64: return I64_VAL(0);
             case TypeUint64: return UI64_VAL(0);
             case TypeAddress: return ADDRESS_VAL(0);
-            case TypeStruct: return defaultPackedValueContainerValue(ct);
-            case TypeArray: return defaultPackedValueContainerValue(ct);
-            case TypePointer: return defaultPackedValueContainerValue(ct);
+            case TypeStruct: return defaultStructValue(ct);
+            case TypeArray: return defaultArrayValue(ct);
+            case TypePointer: return defaultPointerValue(ct);
             case TypeString:
             case TypeClass:
             case TypeInstance:

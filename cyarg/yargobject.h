@@ -120,9 +120,12 @@ ObjInstance* newInstance(ObjClass* klass);
 ObjInt* allocateIntObject(size_t numDigits);
 
 // the underlying storage for pointers, structs and arrays (containers that contain potentially placed values)
-Value defaultPackedValueContainerValue(const ObjConcreteYargType* type);
 Value createPackedValueContainerAt(ValueLocation location, const ObjConcreteYargType* type);
 Value pinPackedValueContainer(Value packedValueContainer);
+
+Value defaultArrayValue(const ObjConcreteYargType* type);
+Value defaultStructValue(const ObjConcreteYargType* type);
+Value defaultPointerValue(const ObjConcreteYargType* type);
 
 // Two useful coveniences - a byte array and a value array.
 // byte arrays can create a buffer, or be placed over an existing memory location.
