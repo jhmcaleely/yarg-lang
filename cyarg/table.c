@@ -316,11 +316,12 @@ void printCellTable(ValueCellTable* table) {
     for (int i = 0; i < table->capacity; i++) {
         EntryCell* entry = &table->entries[i];
         if (entry->key != NULL) {
-            printValue(STRING_VAL((Obj*)entry->key));
+            fprintValue(stderr, STRING_VAL((Obj*)entry->key));
             FPRINTMSG(stderr, ":::");
-            printValue(entry->cell.value);
+            fprintValue(stderr, entry->cell.value);
             FPRINTMSG(stderr, ":::");
-            printValue(YARGTYPE_VAL((Obj*)entry->cell.cellType));
+            Value cellTypeValue = entry->cell.cellType ? YARGTYPE_VAL((Obj*)entry->cell.cellType) : NIL_VAL;
+            fprintValue(stderr, cellTypeValue);
             FPRINTMSG(stderr, "\n");
         }
     }
