@@ -52,39 +52,50 @@ PlacedValue createPlacedValue(uintptr_t ptr, const ObjConcreteYargType* type) {
     return placed;
 }
 
+void assignToPlacedValue(PlacedValueCellTarget lhs, Value rhs) {
+    if (IS_I8(rhs)) {
+        *lhs.valuePtr.i8 = rhs.as.i8;
+    } else if (IS_UI8(rhs)) {
+        *lhs.valuePtr.ui8 = rhs.as.ui8;
+    } else if (IS_I16(rhs)) {
+        *lhs.valuePtr.i16 = rhs.as.i16;
+    } else if (IS_UI16(rhs)) {
+        *lhs.valuePtr.ui16 = rhs.as.ui16;
+    } else if (IS_I32(rhs)) {
+        *lhs.valuePtr.i32 = rhs.as.i32;
+    } else if (IS_UI32(rhs)) {
+        *lhs.valuePtr.ui32 = rhs.as.ui32;
+    } else if (IS_I64(rhs)) {
+        *lhs.valuePtr.i64 = rhs.as.i64;
+    } else if (IS_UI64(rhs)) {
+        *lhs.valuePtr.ui64 = rhs.as.ui64;
+    } else if (IS_ADDRESS(rhs)) {
+        *lhs.valuePtr.address = rhs.as.address;
+    } else if (IS_DOUBLE(rhs)) {
+        *lhs.valuePtr.dbl = rhs.as.dbl;
+    } else {
+        // TODO: review struct, array, and pointer handling
+        assert(false && "Unhandled type in assignToPlacedValueCellTarget");
+        yarg_panic();
+    }
+}
+
 bool assignToPlacedValueCellTarget(PlacedValueCellTarget lhs, Value rhsValue) {
     assert(lhs.cellType != NULL);
 
     Value promoted;
     if (isInitialisableType(lhs.cellType, rhsValue, &promoted)) {
         assert(promoted.type != NULL || rhsValue.type != NULL);
-        assert(is_placeable_type(promoted.type));
 
-        if (IS_I8(promoted)) {
-            *lhs.valuePtr.i8 = promoted.as.i8;
-        } else if (IS_UI8(promoted)) {
-            *lhs.valuePtr.ui8 = promoted.as.ui8;
-        } else if (IS_I16(promoted)) {
-            *lhs.valuePtr.i16 = promoted.as.i16;
-        } else if (IS_UI16(promoted)) {
-            *lhs.valuePtr.ui16 = promoted.as.ui16;
-        } else if (IS_I32(promoted)) {
-            *lhs.valuePtr.i32 = promoted.as.i32;
-        } else if (IS_UI32(promoted)) {
-            *lhs.valuePtr.ui32 = promoted.as.ui32;
-        } else if (IS_I64(promoted)) {
-            *lhs.valuePtr.i64 = promoted.as.i64;
-        } else if (IS_UI64(promoted)) {
-            *lhs.valuePtr.ui64 = promoted.as.ui64;
-        } else if (IS_ADDRESS(promoted)) {
-            *lhs.valuePtr.address = promoted.as.address;
-        } else if (IS_DOUBLE(promoted)) {
-            *lhs.valuePtr.dbl = promoted.as.dbl;
+        if (promoted.type == NULL) {
+            noLongerLiteralInt(&rhsValue);
+            assert(is_placeable_type(rhsValue.type));
+            assignToPlacedValue(lhs, rhsValue);
         } else {
-            // TODO: review struct, array, and pointer handling
-            assert(false && "Unhandled type in assignToPlacedValueCellTarget");
-            yarg_panic();
+            assert(is_placeable_type(promoted.type));
+            assignToPlacedValue(lhs, promoted);
         }
+
         return true;
     } else {
         return false;

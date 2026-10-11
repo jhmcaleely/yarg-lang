@@ -206,38 +206,6 @@ Value concrete_typeof(Value a) {
     }
 }
 
-
-bool type_packs_as_container(ObjConcreteYargType* type) {
-    switch (type->yt) {
-        case TypeBool:
-        case TypeInt:
-        case TypeDouble:
-        case TypeInt8:
-        case TypeUint8:
-        case TypeInt16:
-        case TypeUint16:
-        case TypeInt32:
-        case TypeUint32:
-        case TypeInt64:
-        case TypeUint64:
-        case TypeAddress:
-        case TypeString:
-        case TypeClass:
-        case TypeInstance:
-        case TypeFunction:
-        case TypeRoutine:
-        case TypeChannel:
-        case TypeSyncGroup:
-        case TypeMap:
-        case TypeYargType:
-            return false;
-        case TypePointer:
-        case TypeArray:
-        case TypeStruct:
-            return true;
-    }
-}
-
 bool is_nil_assignable_type(ObjConcreteYargType* type) {
     if (type == NULL) {
         return true;
@@ -288,6 +256,7 @@ bool is_placeable_type(const ObjConcreteYargType* type) {
             case TypeUint32: return true;
             case TypeInt64: return true;
             case TypeUint64: return true;
+            case TypeDouble: return true;
             case TypeArray: {
                 const ObjConcreteYargTypeArray* ct = (const ObjConcreteYargTypeArray*)type;
                 ObjConcreteYargType* elementType = arrayElementType(ct);
@@ -314,8 +283,9 @@ size_t yt_sizeof_type_storage(const ObjConcreteYargType* type) {
     } else {
         switch (type->yt) {
         case TypeBool:
-        case TypeDouble:
             return sizeof(Value);
+        case TypeDouble:
+            return sizeof(double);
         case TypeInt8:
             return sizeof(int8_t);
         case TypeUint8:
@@ -364,8 +334,9 @@ size_t yt_alignmentfor_type_storage(ObjConcreteYargType* type) {
     } else {
         switch (type->yt) {
         case TypeBool:
-        case TypeDouble:
             return sizeof(Value);
+        case TypeDouble:
+            return sizeof(double);
         case TypeInt8:
             return sizeof(int8_t);
         case TypeUint8:
@@ -404,7 +375,7 @@ size_t yt_alignmentfor_type_storage(ObjConcreteYargType* type) {
         case TypePointer:
         case TypeMap:
         case TypeYargType:
-            return sizeof(Obj*);
+            return sizeof(Value);
         }
     }
 }
