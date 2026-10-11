@@ -44,9 +44,9 @@ bool setBuiltin(ObjRoutine *routineContext, int argCount, Value* result)
     {
         Value arg0 = peek(routineContext, 1);
         Value arg1 = peek(routineContext, 0);
-        if (IS_UI32(arg0) && IS_UI32(arg1))
+        if (IS_ADDRESS(arg0) && IS_UI32(arg1))
         {
-            uint32_t address = AS_UI32(arg0);
+            size_t address = AS_ADDRESS(arg0);
             uint32_t value = AS_UI32(arg1);
             
             testIntrinsicsSetMemory(address, value);
@@ -62,18 +62,18 @@ bool setBuiltin(ObjRoutine *routineContext, int argCount, Value* result)
 
 bool readBuiltin(ObjRoutine *routineContext, int argCount, Value *result) {
     bool ok = false;
-    if (argCount == 1 && IS_UI32(peek(routineContext, 0)))
+    if (argCount == 1 && IS_ADDRESS(peek(routineContext, 0)))
     {
         Value arg0 = peek(routineContext, 0);
-        uint32_t address = AS_UI32(arg0);
+        size_t address = AS_ADDRESS(arg0);
         testIntrinsicsExpectReadAnyValue(address);
         ok = true;
     }
-    else if (argCount == 2 && IS_UI32(peek(routineContext, 0)) && IS_UI32(peek(routineContext, 1)))
+    else if (argCount == 2 && IS_UI32(peek(routineContext, 0)) && IS_ADDRESS(peek(routineContext, 1)))
     {
         Value arg0 = peek(routineContext, 1);
         Value arg1 = peek(routineContext, 0);
-        uint32_t address = AS_UI32(arg0);
+        size_t address = AS_ADDRESS(arg0);
         uint32_t value = AS_UI32(arg1);
         testIntrinsicsExpectRead(address, value);
         ok = true;
@@ -88,18 +88,18 @@ bool readBuiltin(ObjRoutine *routineContext, int argCount, Value *result) {
 
 bool writeBuiltin(ObjRoutine *routineContext, int argCount, Value *result) {
     bool ok = false;
-    if (argCount == 1 && IS_UI32(peek(routineContext, 0)))
+    if (argCount == 1 && IS_ADDRESS(peek(routineContext, 0)))
     {
         Value arg0 = peek(routineContext, 0);
-        uint32_t address = AS_UI32(arg0);
+        size_t address = AS_ADDRESS(arg0);
         testIntrinsicsExpectWriteAnyValue(address);
         ok = true;
     }
-    else if (argCount == 2 && IS_UI32(peek(routineContext, 0)) && IS_UI32(peek(routineContext, 1)))
+    else if (argCount == 2 && IS_ADDRESS(peek(routineContext, 1)) && IS_UI32(peek(routineContext, 0)))
     {
         Value arg0 = peek(routineContext, 1);
         Value arg1 = peek(routineContext, 0);
-        uint32_t address = AS_UI32(arg0);
+        size_t address = AS_ADDRESS(arg0);
         uint32_t value = AS_UI32(arg1);
         testIntrinsicsExpectWrite(address, value);
         ok = true;
