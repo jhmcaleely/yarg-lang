@@ -334,6 +334,48 @@ ValueCellTarget peekCellTarget(ObjRoutine* routine, int distance) {
     return result;
 }
 
+static void bufferEscape(const char* src, char* dest, size_t destSize) {
+    size_t src_cursor = 0;
+    size_t dest_cursor = 0;
+    
+    for (; src[src_cursor] != '\0' && dest_cursor < destSize - 1; src_cursor++) {
+        if (src[src_cursor] == '\n') {
+            dest[dest_cursor] = '\\';
+            if (dest_cursor + 1 < destSize - 1) {
+                dest[dest_cursor + 1] = 'n';
+                dest_cursor++;
+            }
+        } else if (src[src_cursor] == '\t') {
+            dest[dest_cursor] = '\\';
+            if (dest_cursor + 1 < destSize - 1) {
+                dest[dest_cursor + 1] = 't';
+                dest_cursor++;
+            }
+        } else if (src[src_cursor] == '\\') {
+            dest[dest_cursor] = '\\';
+            if (dest_cursor + 1 < destSize - 1) {
+                dest[dest_cursor + 1] = '\\';
+                dest_cursor++;
+            }
+        } else {
+            dest[dest_cursor] = src[src_cursor];
+        }
+        dest_cursor++;
+    }
+    dest[dest_cursor] = '\0';
+}
+
+static ObjString* stackTraceString(Value str) {
+    char* cellStr = AS_CSTRING(str);
+    char buffer[11];
+    bufferEscape(cellStr, buffer, sizeof(buffer));
+    char presentedBuffer[13];
+    snprintf(presentedBuffer, sizeof(presentedBuffer), "\"%s\"", buffer);
+    
+    ObjString* strObj = copyString(presentedBuffer, strlen(presentedBuffer));
+    return strObj;
+}
+
 static void traceValueStack(ObjRoutine* routine) {
     const unsigned int max_stack_trace_lines = 3;
     const unsigned int max_stack_line_width = 5;
@@ -360,8 +402,14 @@ static void traceValueStack(ObjRoutine* routine) {
             size_t slot = (line - 1) * max_stack_line_width + cursor;
             if (slot >= stackSize) break;
             ValueCell* cell = peekCell(routine, (int)(stackSize - 1 - slot));
-            ObjString* valueStr = valueToString(cell->value);
-            tempObjRootPush((Obj*)valueStr);
+            ObjString* valueStr;
+            if (IS_STRING(cell->value)) {
+                valueStr = stackTraceString(cell->value);
+                tempRootPush(STRING_VAL(valueStr));
+            } else {
+                valueStr = valueToString(cell->value);
+                tempRootPush(STRING_VAL(valueStr));
+            }
             char value_description[12];
             if (valueStr->length > 11) {
                 snprintf(value_description, sizeof(value_description), "%8.8s...", valueStr->chars);
@@ -370,7 +418,7 @@ static void traceValueStack(ObjRoutine* routine) {
             }
             tempRootPop();
             ObjString* typeStr = valueToString(cell->cellType ? YARGTYPE_VAL(cell->cellType) : NIL_VAL);
-            tempObjRootPush((Obj*)typeStr);
+            tempRootPush(STRING_VAL(typeStr));
             char type_description[11] = "       any";
             if (typeStr->length > 10 && cell->cellType) {
                 snprintf(type_description, sizeof(type_description), "%7.7s...", typeStr->chars);
