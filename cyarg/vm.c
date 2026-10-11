@@ -1469,7 +1469,9 @@ InterpretResult run(ObjRoutine* routine) {
                     .placedValue = (PlacedValuePtr){ .ui32 = (uint32_t*) AS_ADDRESS(location) }
                 };
 
-                Value result = createPackedValueContainerAt(valueLocation, AS_YARGTYPE(type));
+                const ObjConcreteYargType* pointerType = newYargPointerType(AS_YARGTYPE(type));
+
+                Value result = createPackedValueContainerAt(valueLocation, pointerType);
 
                 pop(routine);
                 pop(routine);
