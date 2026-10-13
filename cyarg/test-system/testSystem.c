@@ -31,7 +31,8 @@ typedef struct TsExpected {
     int e_;
     struct TsExpectedItem {
         enum TsExpectedType operation_;
-        uint32_t address_, value_;
+        size_t address_;
+        uint32_t value_;
     } *i_;
     pthread_mutex_t mutex_;
 } TsExpected;
@@ -40,7 +41,8 @@ typedef struct TsMemory {
     int n_;
     int e_;
     struct TsMemoryItem {
-        uint32_t address_, value_;
+        size_t address_;
+        uint32_t value_;
     } *i_;
     pthread_mutex_t mutex_;
 } TsMemory;
@@ -92,8 +94,8 @@ static void *simulateInterrupt(void *); // thread entry
 static TestSystem *self(void);
 static void extend(void *, size_t); // ensure appropriate mutex is held
 
-static uint32_t read(uint32_t address);
-static void write(uint32_t address, uint32_t value);
+static uint32_t read(size_t address);
+static void write(size_t address, uint32_t value);
 static void addInterruptHandler(uint32_t intId, void (*address)(void));
 static void removeInterruptHandler(uint32_t intId, void (*address)(void));
 static void log(char const *, ...);
@@ -201,12 +203,12 @@ TestSystem *self(void)
     return (TestSystem *)&ts;
 }
 
-uint32_t tsRead(uint32_t address)
+uint32_t tsRead(size_t address)
 {
     return read(address);
 }
 
-void tsWrite(uint32_t address, uint32_t value)
+void tsWrite(size_t address, uint32_t value)
 {
     write(address, value);
 }
@@ -304,7 +306,7 @@ void *simulateInterrupt(void *indexAsP) // thread entry
 }
 
 // system under test interface
-uint32_t read(uint32_t address)
+uint32_t read(size_t address)
 {
     TestSystem *ts = self();
 
@@ -386,7 +388,7 @@ uint32_t read(uint32_t address)
     return valueWrittenOrSet;
 }
     
-void write(uint32_t address, uint32_t value)
+void write(size_t address, uint32_t value)
 {
     TestSystem *ts = self();
     {
@@ -677,7 +679,7 @@ TsLog *testIntrinsicsSync(void)
     return &ts->log_; // log cleared by caller
 }
 
-void testIntrinsicsExpectRead(uint32_t address, uint32_t value)
+void testIntrinsicsExpectRead(size_t address, uint32_t value)
 {
     TestSystem *ts = self();
     {
@@ -688,7 +690,7 @@ void testIntrinsicsExpectRead(uint32_t address, uint32_t value)
     }
 }
 
-void testIntrinsicsExpectReadAnyValue(uint32_t address)
+void testIntrinsicsExpectReadAnyValue(size_t address)
 {
     TestSystem *ts = self();
     {
@@ -699,7 +701,7 @@ void testIntrinsicsExpectReadAnyValue(uint32_t address)
     }
 }
 
-void testIntrinsicsExpectWrite(uint32_t address, uint32_t value)
+void testIntrinsicsExpectWrite(size_t address, uint32_t value)
 {
     TestSystem *ts = self();
     {
@@ -710,7 +712,7 @@ void testIntrinsicsExpectWrite(uint32_t address, uint32_t value)
     }
 }
 
-void testIntrinsicsExpectWriteAnyValue(uint32_t address)
+void testIntrinsicsExpectWriteAnyValue(size_t address)
 {
     TestSystem *ts = self();
     {
@@ -721,7 +723,7 @@ void testIntrinsicsExpectWriteAnyValue(uint32_t address)
     }
 }
 
-void testIntrinsicsSetMemory(uint32_t address, uint32_t value)
+void testIntrinsicsSetMemory(size_t address, uint32_t value)
 {
     TestSystem *ts = self();
     {
