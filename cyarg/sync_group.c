@@ -11,6 +11,7 @@
 #include "yargobject.h"
 #include "routine.h"
 #include "memory.h"
+#include "packed_containers.h"
 
 typedef struct ObjSyncGroup {
     Obj obj;

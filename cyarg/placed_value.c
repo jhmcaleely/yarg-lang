@@ -7,6 +7,7 @@
 #include "common.h"
 
 #include "yargobject.h"
+#include "packed_containers.h"
 
 Value getPlacedValue(PlacedValue placedStorage) {
 

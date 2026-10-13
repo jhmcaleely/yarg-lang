@@ -140,6 +140,10 @@ typedef struct ObjConcreteYargTypeMap {
     const ObjConcreteYargType* value_type;
 } ObjConcreteYargTypeMap;
 
+#define AS_YARGTYPE(value)     ((ObjConcreteYargType*)AS_OBJ(value))
+
+#define YARGTYPE_VAL(object)   ((Value){.type = &yargTypes.type, .as.obj = (Obj*) object})
+
 const ObjConcreteYargType* newYargTypeFromTypeCode(uint8_t typeCode);
 
 ObjConcreteYargType* newYargArrayTypeFromType(const ObjConcreteYargType* elementType, size_t cardinality);
@@ -158,5 +162,7 @@ size_t yt_alignmentfor_type_storage(const ObjConcreteYargType* type);
 bool isSupportedMapKeyType(const ObjConcreteYargType* type);
 
 ObjString* typeToString(const ObjConcreteYargType* type);
+
+bool typesEqual(const ObjConcreteYargType* a, const ObjConcreteYargType* b);
 
 #endif

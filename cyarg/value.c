@@ -11,6 +11,7 @@
 #include "yargobject.h"
 #include "yargstructtype.h"
 #include "value_cell.h"
+#include "packed_containers.h"
 
 bool isObjValue(Value value) {
     if (value.type == &yargTypes.implementation_obj && value.as.obj != NULL) return true;
@@ -75,6 +76,41 @@ Value duplicateValue(Value src) {
         return newStruct;
     } else {
         return src;
+    }
+}
+
+Value defaultValue(Value type) {
+    if (IS_NIL(type)) {
+        return NIL_VAL;
+    } else {
+        ObjConcreteYargType* ct = AS_YARGTYPE(type);
+        switch (ct->yt) {
+            case TypeBool: return BOOL_VAL(false);
+            case TypeInt: return defaultIntValue();
+            case TypeDouble: return DOUBLE_VAL(0);
+            case TypeInt8: return I8_VAL(0);
+            case TypeUint8: return UI8_VAL(0);
+            case TypeInt16: return I16_VAL(0);
+            case TypeUint16: return UI16_VAL(0);
+            case TypeInt32: return I32_VAL(0);
+            case TypeUint32: return UI32_VAL(0);
+            case TypeInt64: return I64_VAL(0);
+            case TypeUint64: return UI64_VAL(0);
+            case TypeAddress: return ADDRESS_VAL(0);
+            case TypeStruct: return defaultStructValue(ct);
+            case TypeArray: return defaultArrayValue(ct);
+            case TypeMap:
+            case TypePointer:
+            case TypeString:
+            case TypeClass:
+            case TypeInstance:
+            case TypeFunction:
+            case TypeRoutine:
+            case TypeChannel:
+            case TypeSyncGroup:
+            case TypeYargType:
+                return NIL_VAL;
+        }
     }
 }
 

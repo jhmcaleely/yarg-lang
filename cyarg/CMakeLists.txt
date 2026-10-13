@@ -99,7 +99,6 @@ add_executable(cyarg
     scanner.c
     object.h
     object.c
-    yargobject.h
     vmobject.h
     table.h
     table.c
@@ -111,7 +110,10 @@ add_executable(cyarg
     channel.c
     yargtype.h
     yargtype.c
+    yargobject.h
     yargobject.c
+    packed_containers.h
+    packed_containers.c
     vm_mutex.h
     vm_mutex.c
     sync_group.h

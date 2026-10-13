@@ -19,6 +19,7 @@
 #include "yargstructtype.h"
 #include "builtin.h"
 #include "value_cell.h"
+#include "packed_containers.h"
 
 #include "../external/o1heap/o1heap/o1heap.h"
 

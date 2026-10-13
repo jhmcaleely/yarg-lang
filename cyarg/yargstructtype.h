@@ -3,6 +3,7 @@
 
 #include "yargtype.h"
 #include "value.h"
+#include "table.h"
 
 #include <stddef.h>
 

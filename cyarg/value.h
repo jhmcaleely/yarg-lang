@@ -69,6 +69,7 @@ typedef struct {
 #define UI64_VAL(a)         ((Value){.type = &yargTypes.uint64, {.ui64 = a}})
 #define ADDRESS_VAL(value)  ((Value){.type = &yargTypes.address, { .address = value}})
 #define IMPL_OBJ_VAL(object)     ((Value){.type = &yargTypes.implementation_obj, {.obj = (Obj*)object}})
+#define TYPED_VAL(object, type) ((Value){.type = ((const ObjConcreteYargType*)type), .as.obj = (Obj*) object})
 
 
 #if IS_64BIT
@@ -105,7 +106,6 @@ Value duplicateValue(Value src);
 Value concrete_typeof(Value a);
 
 bool isAddressValue(Value value);
-bool isUint32Pointer(Value val);
 
 Obj* destinationObject(Value pointer);
 

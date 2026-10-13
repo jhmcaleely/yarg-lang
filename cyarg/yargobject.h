@@ -20,10 +20,7 @@ typedef struct ObjConcreteYargTypeMap ObjConcreteYargTypeMap;
 #define IS_ROUTINE(value)      isObjType(value, OBJ_ROUTINE)
 #define IS_CHANNEL(value)      isObjType(value, OBJ_CHANNELCONTAINER)
 #define IS_STRING(value)       isObjType(value, OBJ_STRING)
-#define IS_UNIFORMARRAY(value) is_uniformarray(value)
 #define IS_YARGTYPE(value)     (isObjType(value, OBJ_YARGTYPE) || isObjType(value, OBJ_YARGTYPE_ARRAY) || isObjType(value, OBJ_YARGTYPE_STRUCT) || isObjType(value, OBJ_YARGTYPE_POINTER) || isObjType(value, OBJ_YARGTYPE_MAP))
-#define IS_POINTER(value)      is_pointer(value)
-#define IS_STRUCT(value)       is_struct(value)
 #define IS_SYNCGROUP(value)    isObjType(value, OBJ_SYNCGROUP)
 #define IS_MAP(value)          isObjType(value, OBJ_MAP)
 
@@ -34,15 +31,12 @@ typedef struct ObjConcreteYargTypeMap ObjConcreteYargTypeMap;
 #define AS_CHANNEL(value)      ((ObjChannelContainer*)AS_OBJ(value))
 #define AS_STRING(value)       ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value)      (((ObjString*)AS_OBJ(value))->chars)
-#define AS_YARGTYPE(value)     ((ObjConcreteYargType*)AS_OBJ(value))
 #define AS_SYNCGROUP(value)    ((ObjSyncGroup*)AS_OBJ(value))
 #define AS_INTOBJ(value)       ((ObjInt*)AS_OBJ(value))
 #define AS_INT(value)          (&(AS_INTOBJ(value)->bigInt))
 #define AS_MAP(value)          ((ObjMap*)AS_OBJ(value))
-#define AS_PACKEDCONTAINER(value) ((ObjPackedContainer*)AS_OBJ(value))
 
 #define STRING_VAL(object)     ((Value){.type = &yargTypes.string, .as.obj = (Obj*) object})
-#define YARGTYPE_VAL(object)   ((Value){.type = &yargTypes.type, .as.obj = (Obj*) object})
 #define INTOBJ_VAL(object)     ((Value){.type = &yargTypes.integer, .as.obj = (Obj*) object})
 #define CLASS_VAL(object)      ((Value){.type = &yargTypes.class_, .as.obj = (Obj*) object})
 #define INSTANCE_VAL(object)   ((Value){.type = &yargTypes.function, .as.obj = (Obj*) object})
@@ -54,11 +48,6 @@ typedef struct ObjConcreteYargTypeMap ObjConcreteYargTypeMap;
 #define SYNCGROUP_VAL(object)  ((Value){.type = &yargTypes.syncGroup, .as.obj = (Obj*) object})
 #define BOUNDMETHOD_VAL(object)  ((Value){.type = &yargTypes.function, .as.obj = (Obj*) object})
 #define MAP_VAL(object)        ((Value){.type = ((const ObjConcreteYargType*)((ObjMap*)object)->type), .as.obj = (Obj*) object})
-#define TYPED_VAL(object, type) ((Value){.type = ((const ObjConcreteYargType*)type), .as.obj = (Obj*) object})
-
-bool is_uniformarray(Value value);
-bool is_pointer(Value value);
-bool is_struct(Value value);
 
 struct ObjString {
     Obj obj;
@@ -94,11 +83,6 @@ typedef struct {
     ValueTable fields;
 } ObjInstance;
 
-typedef struct ObjPackedContainer {
-    Obj obj;
-    void* loc;
-} ObjPackedContainer;
-
 typedef struct {
     Obj obj;
     ObjConcreteYargTypeMap* type;
@@ -111,45 +95,6 @@ ObjClass* newClass(ObjString* name);
 ObjInstance* newInstance(ObjClass* klass);
 ObjInt* allocateIntObject(size_t numDigits);
 
-// the underlying storage for pointers, structs and arrays (packed containers that contain potentially placed values)
-
-typedef struct {
-    void* value;
-    const ObjConcreteYargType* type;
-} PackedValue;
-
-PackedValue allocPackedValue(const ObjConcreteYargType* type);
-void setDefaultPackedValue(PackedValue value);
-
-Value createPackedValueContainerAt(void* location, const ObjConcreteYargType* type);
-Value pinPackedValueContainer(Value packedValueContainer);
-
-void setDefaultPackedContainerValues(void* location, const ObjConcreteYargType* type);
-
-Value defaultArrayValue(const ObjConcreteYargType* type);
-Value defaultStructValue(const ObjConcreteYargType* type);
-
-// Two useful coveniences - a byte array and a value array.
-// byte arrays can create a buffer, or be placed over an existing memory location.
-Value allocByteArray(size_t length);
-Value createByteArrayAt(uint8_t* location, size_t length);
-bool  isByteArray(Value value);
-// value arrays can contain any value.
-Value allocValueArray(size_t length);
-
-Value arrayElement(Value array, size_t index);
-Value pointerDestination(Value pointer);
-Value structField(Value structVal, size_t fieldIndex);
-
-Value arrayElementPointer(Value array, size_t index);
-Value structFieldPointer(Value structVal, size_t fieldIndex);
-
-bool setArrayElement(Value array, size_t index, Value value);
-bool setStructField(Value structVal, size_t fieldIndex, Value value);
-bool setPointerDestination(Value pointer, Value value);
-
-void offsetPointerDestination(Value pointer, Value offset);
-
 ObjMap* newMap(ObjConcreteYargTypeMap* type);
 
 ObjString* takeString(char* chars, int length);
@@ -161,13 +106,6 @@ Value defaultIntValue();
 ObjInt* newInt(int64_t value);
 ObjInt* newIntU(uint64_t value);
 
-bool isArrayPointer(Value value);
-bool isStructPointer(Value value);
-
-bool arraysEqual(Value a, Value b);
-bool structsEqual(Value a, Value b);
-bool pointersEqual(Value a, Value b);
-bool typesEqual(const ObjConcreteYargType* a, const ObjConcreteYargType* b);
 bool intsEqual(const ObjInt* a, const ObjInt* b);
 
 #endif

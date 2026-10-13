@@ -22,6 +22,7 @@
 #include "yargtype.h"
 #include "sync_group.h"
 #include "pack.h"
+#include "packed_containers.h"
 
 #ifdef CYARG_FEATURE_TEST_SYSTEM
 #include "test-system/testSystem.h"

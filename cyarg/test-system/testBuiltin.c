@@ -18,6 +18,7 @@
 #include "../memory.h"
 #include "../builtin.h"
 #include "../yargobject.h"
+#include "../packed_containers.h"
 
 static bool setBuiltin(ObjRoutine *, int, Value *);
 static bool readBuiltin(ObjRoutine *, int, Value *);

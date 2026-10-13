@@ -1,0 +1,339 @@
+#include "packed_containers.h"
+
+#include <stdlib.h>
+
+#include "common.h"
+#include "memory.h"
+#include "placed_value.h"
+#include "yargstructtype.h"
+#include "value_cell.h"
+
+bool is_uniformarray(Value value) {
+    if (value.type == NULL) return false;
+    return value.type->yt == TypeArray;
+}
+bool is_pointer(Value value) {
+    if (value.type == NULL) return false;
+    return value.type->yt == TypePointer;
+}
+
+bool is_struct(Value value) {
+    if (value.type == NULL) return false;
+    return value.type->yt == TypeStruct;
+}
+
+bool isUint32Pointer(Value val) {
+    if (IS_POINTER(val)) {
+        const ObjConcreteYargTypePointer* pointer = (const ObjConcreteYargTypePointer*) val.type;
+        if (pointer->target_type) {
+            return pointer->target_type->yt == TypeUint32;
+        }
+    }
+    return false;
+}
+
+bool arraysEqual(Value a, Value b) {
+    if (!typesEqual(a.type, b.type)) return false;
+    if (a.as.obj == b.as.obj) return true;
+    return false;
+}
+
+bool structsEqual(Value a, Value b) {
+    if (!typesEqual(a.type, b.type)) return false;
+    if (a.as.obj == b.as.obj) return true;
+    return false;
+}
+
+bool pointersEqual(Value a, Value b) {
+    if (!typesEqual(a.type, b.type)) return false;
+    ObjPackedContainer* container_a = AS_PACKEDCONTAINER(a);
+    ObjPackedContainer* container_b = AS_PACKEDCONTAINER(b);
+    return container_a->loc == container_b->loc;
+}
+
+PackedValue allocPackedValue(const ObjConcreteYargType* type) {
+    if (is_packable_container_type(type)) {
+        PackedValue packed;
+        packed.type = type;
+        size_t storage_required = yt_sizeof_type_storage(type);
+        packed.value = malloc(storage_required);
+        setDefaultPackedContainerValues(packed.value, type);
+        return packed;
+    } else if (is_placeable_type(type)) {
+        PlacedValue place = allocPlacedValue(type);
+        return (PackedValue){.type = place.type, .value = place.value};
+    } else {
+        if (yt_sizeof_type_storage(type) != sizeof(Value)) {
+            fatalVMError("Expected Value storage for %d", type->yt);
+            return (PackedValue){.type = type, .value = NULL};
+        }
+        Value typeVal = type ? YARGTYPE_VAL(type) : NIL_VAL;
+        Value* rhsValuePtr = malloc(sizeof(Value));
+        *rhsValuePtr = defaultValue(typeVal);
+
+        PackedValue placed;
+        placed.value = rhsValuePtr;
+        placed.type = type;
+        return placed;
+    }
+}
+
+void setDefaultPackedValue(PackedValue value) {
+    if (is_packable_container_type(value.type)) {
+        setDefaultPackedContainerValues(value.value, value.type);
+    } else if (is_placeable_type(value.type)) {
+        setDefaultPlacedValue((PlacedValue){.type = value.type, .value = value.value});
+    } else {
+        if (yt_sizeof_type_storage(value.type) != sizeof(Value)) {
+            fatalVMError("Expected Value storage for %d", value.type->yt);
+        }
+        *(Value*)value.value = defaultValue(value.type ? YARGTYPE_VAL(value.type) : NIL_VAL);
+    }
+}
+
+
+void setDefaultPackedContainerValues(void* location, const ObjConcreteYargType* type) {
+    if (type->yt == TypeArray) {
+        ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) type;  
+        for (size_t i = 0; i < arrayType->cardinality; i++) {
+            size_t elementOffset = arrayElementOffset(arrayType, i);
+            void* elementLocation = (void*)((uintptr_t)location + elementOffset);
+            if (is_placeable_type(arrayType->element_type)) {
+                setDefaultPlacedValue((PlacedValue){.type = arrayType->element_type, .value = elementLocation});
+            } else {
+                Value elementTypeVal = arrayType->element_type ? YARGTYPE_VAL(arrayType->element_type) : NIL_VAL;
+                *(Value*)elementLocation = defaultValue(elementTypeVal);
+            }
+        }
+    } else if (type->yt == TypeStruct) {
+        ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*) type;
+        for (size_t i = 0; i < structType->field_count; i++) {
+            size_t fieldOffset = structType->field_indexes[i];
+            void* fieldLocation = (void*)((uintptr_t)location + fieldOffset);
+            if (is_placeable_type(structType->field_types[i])) {
+                setDefaultPlacedValue((PlacedValue){.type = structType->field_types[i], .value = fieldLocation});
+            } else {
+                Value fieldTypeVal = structType->field_types[i] ? YARGTYPE_VAL(structType->field_types[i]) : NIL_VAL;
+                *(Value*)fieldLocation = defaultValue(fieldTypeVal);
+            }
+        }
+    } else {
+        fatalVMError("Unsupported packed container type: %d", type->yt);
+    }
+}
+
+
+Value defaultArrayValue(const ObjConcreteYargType* type) {
+    ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) type;  
+    size_t storage_required = yt_sizeof_type_storage(type);
+
+    void* storage = malloc(storage_required);
+    setDefaultPackedContainerValues(storage, type);
+
+    // TODO: capture type info for later GC
+    ObjPackedContainer* container = ALLOCATE_OBJ(ObjPackedContainer, OBJ_PACKEDCONTAINER);
+    container->loc = storage;
+
+    return TYPED_VAL(container, type);
+}
+
+Value defaultStructValue(const ObjConcreteYargType* type) {
+    ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*) type;  
+    size_t storage_required = yt_sizeof_type_storage(type);
+
+    void* storage = malloc(storage_required);
+    setDefaultPackedContainerValues(storage, type);
+
+    // TODO: capture type info for later GC
+    ObjPackedContainer* container = ALLOCATE_OBJ(ObjPackedContainer, OBJ_PACKEDCONTAINER);
+    container->loc = storage;
+
+    return TYPED_VAL(container, type);
+}
+
+
+Value createPackedValueContainerAt(void* location, const ObjConcreteYargType* type) {
+    ObjPackedContainer* container = ALLOCATE_OBJ(ObjPackedContainer, OBJ_UNOWNED_PACKEDCONTAINER);
+    container->loc = location;
+    return TYPED_VAL(container, type);
+}
+
+Value pinPackedValueContainer(Value packedValueContainer) {
+    ObjPackedContainer* container = AS_PACKEDCONTAINER(packedValueContainer);
+    void* address = container->loc;
+    return ADDRESS_VAL((uintptr_t) address);
+}
+
+bool  isByteArray(Value value) {
+    if (!is_uniformarray(value)) return false;
+    const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*) value.type;
+    if (arrayType->element_type) {
+        return arrayType->element_type->yt == TypeUint8;
+    }
+    return false;
+}
+
+Value allocByteArray(size_t length) {
+    const ObjConcreteYargType* element = &yargTypes.uint8;
+    tempRootPush(YARGTYPE_VAL(element));
+    const ObjConcreteYargType* arrayType = newYargArrayTypeFromType(element, length);
+    tempRootPush(YARGTYPE_VAL(arrayType));
+
+    Value result = defaultArrayValue(arrayType);
+    tempRootPop(); // arrayType
+    tempRootPop(); // element
+    return result;
+}
+
+Value createByteArrayAt(uint8_t* location, size_t length) {
+    const ObjConcreteYargType* element = &yargTypes.uint8;
+    tempRootPush(YARGTYPE_VAL(element));
+    const ObjConcreteYargType* arrayType = newYargArrayTypeFromType(element, length);
+    tempRootPush(YARGTYPE_VAL(arrayType));
+
+    Value result = createPackedValueContainerAt(location, arrayType);
+    tempRootPop(); // arrayType
+    tempRootPop(); // element
+    return result;
+}
+
+Value allocValueArray(size_t length) {
+    const ObjConcreteYargType* arrayType = newYargArrayTypeFromType(NULL, length);
+    tempRootPush(YARGTYPE_VAL(arrayType));
+
+    Value result = defaultArrayValue(arrayType);
+    tempRootPop(); // arrayType
+    return result;
+}
+
+void offsetPointerDestination(Value pointerVal, Value offsetVal) {
+    size_t offset = as_positive_integer(offsetVal);
+    ObjPackedContainer* pointer = AS_PACKEDCONTAINER(pointerVal);
+    uintptr_t addr = (uintptr_t) pointer->loc;
+    addr += offset;
+    pointer->loc = (void*) addr;
+}
+
+Value containerElement(ObjPackedContainer* container, const ObjConcreteYargType* element_type, size_t element_offset) {
+    void* elementAddr = (void*) ((uintptr_t) container->loc + element_offset);
+
+    if (is_placeable_type(element_type)) {
+        PlacedValue store;
+        store.value = (void*) elementAddr;
+        store.type = element_type;
+        return getPlacedValue(store);
+    } else {
+        return *(Value*) elementAddr;
+    }
+}
+
+Value arrayElement(Value array, size_t index) {
+    const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*) array.type;
+    size_t element_offset = arrayElementOffset(arrayType, index);
+    return containerElement(AS_PACKEDCONTAINER(array), arrayType->element_type, element_offset);
+}
+
+Value containerElementPointer(ObjPackedContainer* container, const ObjConcreteYargType* element_type, size_t element_offset) {
+    void* elementAddr = (void*) ((uintptr_t) container->loc + element_offset);
+    const ObjConcreteYargType* ptrType = newYargPointerType(element_type);
+    tempRootPush(YARGTYPE_VAL(ptrType));
+
+    Value result = createPackedValueContainerAt(elementAddr, ptrType);
+    tempRootPop();
+    return result;
+}
+
+Value arrayElementPointer(Value array, size_t index) {
+    const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*) array.type;
+    size_t element_offset = arrayElementOffset(arrayType, index);
+    return containerElementPointer(AS_PACKEDCONTAINER(array), arrayType->element_type, element_offset);
+}
+
+Value structFieldPointer(Value structVal, size_t fieldIndex) {
+    const ObjConcreteYargTypeStruct* structType = (const ObjConcreteYargTypeStruct*) structVal.type;
+    size_t field_offset = structFieldOffset(structType, fieldIndex);
+    return containerElementPointer(AS_PACKEDCONTAINER(structVal), structType->field_types[fieldIndex], field_offset);
+}
+
+Value pointerDestination(Value pointer) {
+    const ObjConcreteYargTypePointer* pointerType = (const ObjConcreteYargTypePointer*) pointer.type;
+
+    ObjPackedContainer* container = AS_PACKEDCONTAINER(pointer);
+    uintptr_t addr = (uintptr_t) container->loc;
+
+    if (is_placeable_type(pointerType->target_type)) {
+        PlacedValue store;
+        store.value = (void*) addr;
+        store.type = pointerType->target_type;
+        return getPlacedValue(store);
+    } else if (pointerType->target_type && pointerType->target_type->yt == TypeStruct) {
+        return createPackedValueContainerAt((void*) addr, pointerType->target_type);
+    } else if (pointerType->target_type && pointerType->target_type->yt == TypeArray) {
+        return createPackedValueContainerAt((void*) addr, pointerType->target_type);
+    } else if (pointerType->target_type && pointerType->target_type->yt == TypePointer) {
+        return createPackedValueContainerAt((void*) addr, pointerType->target_type);
+    } else {
+        return *(Value*) addr;
+    }
+}
+
+
+Value structField(Value structVal, size_t fieldIndex) {
+    const ObjConcreteYargTypeStruct* structType = (const ObjConcreteYargTypeStruct*) structVal.type;
+    size_t field_offset = structFieldOffset(structType, fieldIndex);
+    return containerElement(AS_PACKEDCONTAINER(structVal), structType->field_types[fieldIndex], field_offset);
+}
+
+static bool setPlacedContainerElement(const ObjPackedContainer* container, const ObjConcreteYargType* element_type, size_t element_offset, Value value) {
+
+    void* elementAddr = (void*) ((uintptr_t) container->loc + element_offset);
+
+    if (is_placeable_type(element_type)) {
+        PlacedValueCellTarget pvct = {
+            .value = (void*) elementAddr,
+            .type = element_type,
+            .cellType = element_type
+        };
+
+        return assignToPlacedValueCellTarget(pvct, value);
+    } else {
+        ValueCellTarget vct = { 
+            .cellType = element_type, 
+            .value = (Value*) elementAddr 
+        };
+
+        return assignToValueCellTarget(vct, value);
+    }
+}
+
+bool setArrayElement(Value array, size_t index, Value value) {
+    const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*) array.type;
+    size_t element_offset = arrayElementOffset(arrayType, index);
+    return setPlacedContainerElement(AS_PACKEDCONTAINER(array), arrayType->element_type, element_offset, value);
+}
+
+bool setStructField(Value structVal, size_t fieldIndex, Value value) {
+    const ObjConcreteYargTypeStruct* structType = (const ObjConcreteYargTypeStruct*) structVal.type;
+    size_t field_offset = structFieldOffset(structType, fieldIndex);
+    return setPlacedContainerElement(AS_PACKEDCONTAINER(structVal), structType->field_types[fieldIndex], field_offset, value);
+}
+
+bool setPointerDestination(Value pointer, Value value) {
+    const ObjConcreteYargTypePointer* pointerType = (const ObjConcreteYargTypePointer*) pointer.type;
+    return setPlacedContainerElement(AS_PACKEDCONTAINER(pointer), pointerType->target_type, 0, value);
+}
+
+
+bool isArrayPointer(Value value) {
+    if (!IS_POINTER(value)) return false;
+    const ObjConcreteYargTypePointer* pointerType = (const ObjConcreteYargTypePointer*) value.type;
+    if (pointerType->target_type == NULL) return false;
+    return pointerType->target_type->yt == TypeArray;
+}
+
+bool isStructPointer(Value value) {
+    if (!IS_POINTER(value)) return false;
+    const ObjConcreteYargTypePointer* pointerType = (const ObjConcreteYargTypePointer*) value.type;
+    if (pointerType->target_type == NULL) return false;
+    return pointerType->target_type->yt == TypeStruct;
+}

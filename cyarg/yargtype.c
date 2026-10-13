@@ -1,6 +1,7 @@
 #include "yargtype.h"
 
 #include <string.h>
+#include <assert.h>
 
 #include "common.h"
 #include "memory.h"
@@ -166,16 +167,6 @@ size_t structFieldOffset(const ObjConcreteYargTypeStruct* type, size_t fieldInde
     return type->field_indexes[fieldIndex];
 }
 
-
-bool isUint32Pointer(Value val) {
-    if (IS_POINTER(val)) {
-        const ObjConcreteYargTypePointer* pointer = (const ObjConcreteYargTypePointer*) val.type;
-        if (pointer->target_type) {
-            return pointer->target_type->yt == TypeUint32;
-        }
-    }
-    return false;
-}
 
 Value concrete_typeof(Value a) {
     if (IS_NIL(a)) {
@@ -356,41 +347,6 @@ size_t yt_alignmentfor_type_storage(const ObjConcreteYargType* type) {
         case TypeMap:
         case TypeYargType:
             return sizeof(Value);
-        }
-    }
-}
-
-Value defaultValue(Value type) {
-    if (IS_NIL(type)) {
-        return NIL_VAL;
-    } else {
-        ObjConcreteYargType* ct = AS_YARGTYPE(type);
-        switch (ct->yt) {
-            case TypeBool: return BOOL_VAL(false);
-            case TypeInt: return defaultIntValue();
-            case TypeDouble: return DOUBLE_VAL(0);
-            case TypeInt8: return I8_VAL(0);
-            case TypeUint8: return UI8_VAL(0);
-            case TypeInt16: return I16_VAL(0);
-            case TypeUint16: return UI16_VAL(0);
-            case TypeInt32: return I32_VAL(0);
-            case TypeUint32: return UI32_VAL(0);
-            case TypeInt64: return I64_VAL(0);
-            case TypeUint64: return UI64_VAL(0);
-            case TypeAddress: return ADDRESS_VAL(0);
-            case TypeStruct: return defaultStructValue(ct);
-            case TypeArray: return defaultArrayValue(ct);
-            case TypeMap:
-            case TypePointer:
-            case TypeString:
-            case TypeClass:
-            case TypeInstance:
-            case TypeFunction:
-            case TypeRoutine:
-            case TypeChannel:
-            case TypeSyncGroup:
-            case TypeYargType:
-                return NIL_VAL;
         }
     }
 }
@@ -629,6 +585,30 @@ bool structFieldIndex(const ObjConcreteYargTypeStruct* type, ObjString* name, si
     if (tableGet(&type->field_names, name, &indexVal)) {
         *index = AS_SIZE_T(indexVal);
         return true;
+    }
+    return false;
+}
+
+bool typesEqual(const ObjConcreteYargType* a, const ObjConcreteYargType* b) {
+    if (a == b) return true;
+    if (a != NULL) {
+        if (b == NULL) return false;
+        if (a->yt != b->yt) return false;
+        if (a->yt == TypePointer) {
+            assert(b->yt == TypePointer);
+            const ObjConcreteYargTypePointer* pointer_a = (const ObjConcreteYargTypePointer*)a;
+            const ObjConcreteYargTypePointer* pointer_b = (const ObjConcreteYargTypePointer*)b;
+            return typesEqual(pointer_a->target_type, pointer_b->target_type);
+        }
+        if (a->yt == TypeArray) {
+            assert(b->yt == TypeArray);
+            const ObjConcreteYargTypeArray* array_a = (const ObjConcreteYargTypeArray*)a;
+            const ObjConcreteYargTypeArray* array_b = (const ObjConcreteYargTypeArray*)b;
+            if (!typesEqual(array_a->element_type, array_b->element_type)) return false;
+            return array_a->cardinality == array_b->cardinality;
+        }
+        // TODO: structs, maps, other complex types
+        return a->yt == b->yt;
     }
     return false;
 }

@@ -28,6 +28,7 @@
 #include "yargtype.h"
 #include "xip_library.h"
 #include "yargstructtype.h"
+#include "packed_containers.h"
 
 VM vm;
 
