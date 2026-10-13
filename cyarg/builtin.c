@@ -525,29 +525,26 @@ Value createPointerAndTarget(const ObjConcreteYargType* targetType) {
 bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
 
     Value typeToCreate = NIL_VAL;
-    if (argCount == 1
-        && IS_YARGTYPE(peek(routineContext, 0))) {
+    if (argCount == 0) {
+        typeToCreate = NIL_VAL;
+    } else if (argCount == 1 && IS_YARGTYPE(peek(routineContext, 0))) {
         typeToCreate = peek(routineContext, 0);
-    } else if ((argCount == 1
-               && IS_NIL(peek(routineContext, 0)))
-               || argCount == 0) {
+    } else if (argCount == 1 && IS_NIL(peek(routineContext, 0))) {
+        typeToCreate = NIL_VAL;
+    } else {
+        runtimeError(routineContext, "Expected a type to create.");
+        return false;
+    }
+
+    if (IS_NIL(typeToCreate)) {
         // make an 'any' cell, ie a heap allocated Value.
         *result = createPointerAndTarget(NULL);
         return true;
     }
 
-    if (IS_NIL(typeToCreate)) {
-        runtimeError(routineContext, "Expected a type to create.");
-        return false;
-    }
-
     ConcreteYargType typeRequested = AS_YARGTYPE(typeToCreate)->yt;
     switch (typeRequested) {
-        case TypeBool: {
-            *result = createPointerAndTarget(AS_YARGTYPE(typeToCreate));
-            return true;
-        }
-
+        case TypeBool:
         case TypeDouble:
         case TypeInt8:
         case TypeUint8:
@@ -556,20 +553,18 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
         case TypeInt32:
         case TypeUint32:
         case TypeInt64:
-        case TypeUint64: {
-            *result = createPointerAndTarget(AS_YARGTYPE(typeToCreate));
-            return true;
-        }
-        case TypeArray:
-            // TODO: revisit when arrays become Value types.
-            *result = defaultValue(typeToCreate);
-            return true;
-
+        case TypeUint64:
         case TypeStruct: {
             *result = createPointerAndTarget(AS_YARGTYPE(typeToCreate));
             return true;
         }
+        case TypeArray:
+            // TODO: revisit when arrays become value types.
+            *result = defaultValue(typeToCreate);
+            return true;
+
         case TypeMap: {
+            // TODO: revisit if maps become value types.
             if (isSupportedMapKeyType(AS_YARGTYPE(typeToCreate))) {
                 *result = MAP_VAL(newMap((ObjConcreteYargTypeMap*)AS_YARGTYPE(typeToCreate)));
                 return true;
@@ -579,8 +574,10 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
             }
         }
         case TypeInt:
-        case TypeString:
         case TypeAddress:
+            return false; // both a bug!
+
+        case TypeString:
         case TypeClass:
         case TypeInstance:
         case TypeFunction:
@@ -589,9 +586,8 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
         case TypeSyncGroup:
         case TypePointer: 
         case TypeYargType:
-            return false; // unsupported for now.
+            return false; // unsupported (meaningless for types that can be nil)
     }
-
     return false;
 }
 
