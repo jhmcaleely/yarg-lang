@@ -111,9 +111,20 @@ ObjClass* newClass(ObjString* name);
 ObjInstance* newInstance(ObjClass* klass);
 ObjInt* allocateIntObject(size_t numDigits);
 
-// the underlying storage for pointers, structs and arrays (containers that contain potentially placed values)
+// the underlying storage for pointers, structs and arrays (packed containers that contain potentially placed values)
+
+typedef struct {
+    void* value;
+    const ObjConcreteYargType* type;
+} PackedValue;
+
+PackedValue allocPackedValue(const ObjConcreteYargType* type);
+void setDefaultPackedValue(PackedValue value);
+
 Value createPackedValueContainerAt(void* location, const ObjConcreteYargType* type);
 Value pinPackedValueContainer(Value packedValueContainer);
+
+void setDefaultPackedContainerValues(void* location, const ObjConcreteYargType* type);
 
 Value defaultArrayValue(const ObjConcreteYargType* type);
 Value defaultStructValue(const ObjConcreteYargType* type);
@@ -123,7 +134,7 @@ Value defaultStructValue(const ObjConcreteYargType* type);
 Value allocByteArray(size_t length);
 Value createByteArrayAt(uint8_t* location, size_t length);
 bool  isByteArray(Value value);
-// value arrays can contain any value...
+// value arrays can contain any value.
 Value allocValueArray(size_t length);
 
 Value arrayElement(Value array, size_t index);

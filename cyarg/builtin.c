@@ -501,7 +501,7 @@ void* allocateDefaultValue(const ObjConcreteYargType* type) {
         size_t storage_required = yt_sizeof_type_storage(type);
         void* storage = malloc(storage_required);
         if (is_placeable_type(type)) {
-            memset(storage, 0, storage_required);
+            setDefaultPlacedValue((PlacedValue){.type = type, .value = storage});
         } else {
             Value* values = (Value*) storage;
             Value targetTypeVal = type ? YARGTYPE_VAL(type) : NIL_VAL;

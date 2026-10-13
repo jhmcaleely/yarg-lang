@@ -72,20 +72,83 @@ bool is_struct(Value value) {
     return value.type->yt == TypeStruct;
 }
 
+PackedValue allocPackedValue(const ObjConcreteYargType* type) {
+    if (is_packable_container_type(type)) {
+        PackedValue packed;
+        packed.type = type;
+        size_t storage_required = yt_sizeof_type_storage(type);
+        packed.value = malloc(storage_required);
+        setDefaultPackedContainerValues(packed.value, type);
+        return packed;
+    } else if (is_placeable_type(type)) {
+        PlacedValue place = allocPlacedValue(type);
+        return (PackedValue){.type = place.type, .value = place.value};
+    } else {
+        if (yt_sizeof_type_storage(type) != sizeof(Value)) {
+            fatalVMError("Expected Value storage for %d", type->yt);
+            return (PackedValue){.type = type, .value = NULL};
+        }
+        Value typeVal = type ? YARGTYPE_VAL(type) : NIL_VAL;
+        Value* rhsValuePtr = malloc(sizeof(Value));
+        *rhsValuePtr = defaultValue(typeVal);
+
+        PackedValue placed;
+        placed.value = rhsValuePtr;
+        placed.type = type;
+        return placed;
+    }
+}
+
+void setDefaultPackedValue(PackedValue value) {
+    if (is_packable_container_type(value.type)) {
+        setDefaultPackedContainerValues(value.value, value.type);
+    } else if (is_placeable_type(value.type)) {
+        setDefaultPlacedValue((PlacedValue){.type = value.type, .value = value.value});
+    } else {
+        if (yt_sizeof_type_storage(value.type) != sizeof(Value)) {
+            fatalVMError("Expected Value storage for %d", value.type->yt);
+        }
+        *(Value*)value.value = defaultValue(value.type ? YARGTYPE_VAL(value.type) : NIL_VAL);
+    }
+}
+
+void setDefaultPackedContainerValues(void* location, const ObjConcreteYargType* type) {
+    if (type->yt == TypeArray) {
+        ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) type;  
+        for (size_t i = 0; i < arrayType->cardinality; i++) {
+            size_t elementOffset = arrayElementOffset(arrayType, i);
+            void* elementLocation = (void*)((uintptr_t)location + elementOffset);
+            if (is_placeable_type(arrayType->element_type)) {
+                setDefaultPlacedValue((PlacedValue){.type = arrayType->element_type, .value = elementLocation});
+            } else {
+                Value elementTypeVal = arrayType->element_type ? YARGTYPE_VAL(arrayType->element_type) : NIL_VAL;
+                *(Value*)elementLocation = defaultValue(elementTypeVal);
+            }
+        }
+    } else if (type->yt == TypeStruct) {
+        ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*) type;
+        for (size_t i = 0; i < structType->field_count; i++) {
+            size_t fieldOffset = structType->field_indexes[i];
+            void* fieldLocation = (void*)((uintptr_t)location + fieldOffset);
+            if (is_placeable_type(structType->field_types[i])) {
+                setDefaultPlacedValue((PlacedValue){.type = structType->field_types[i], .value = fieldLocation});
+            } else {
+                Value fieldTypeVal = structType->field_types[i] ? YARGTYPE_VAL(structType->field_types[i]) : NIL_VAL;
+                *(Value*)fieldLocation = defaultValue(fieldTypeVal);
+            }
+        }
+    } else {
+        fatalVMError("Unsupported packed container type: %d", type->yt);
+    }
+}
+
+
 Value defaultArrayValue(const ObjConcreteYargType* type) {
     ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) type;  
     size_t storage_required = yt_sizeof_type_storage(type);
 
     void* storage = malloc(storage_required);
-    if (is_placeable_type(type)) {
-        memset(storage, 0, storage_required);
-    } else {
-        Value* values = (Value*) storage;
-        for (size_t i = 0; i < arrayType->cardinality; i++) {
-            Value elementTypeVal = arrayType->element_type ? YARGTYPE_VAL(arrayType->element_type) : NIL_VAL;
-            values[i] = defaultValue(elementTypeVal);
-        }
-    }
+    setDefaultPackedContainerValues(storage, type);
 
     // TODO: capture type info for later GC
     ObjPackedContainer* container = ALLOCATE_OBJ(ObjPackedContainer, OBJ_PACKEDCONTAINER);
@@ -99,23 +162,7 @@ Value defaultStructValue(const ObjConcreteYargType* type) {
     size_t storage_required = yt_sizeof_type_storage(type);
 
     void* storage = malloc(storage_required);
-
-    if (is_placeable_type(type)) {
-        memset(storage, 0, storage_required);
-    } else {
-        uintptr_t storageBase = (uintptr_t) storage;
-        // for an unplaced struct, initialize each field with its default value
-        for (size_t i = 0; i < structType->field_count; i++) {
-            size_t fieldOffset = structType->field_indexes[i];
-
-            void* fieldStorage = (void*) (storageBase + fieldOffset);
-            if (is_placeable_type(structType->field_types[i])) {
-                memset(fieldStorage, 0, yt_sizeof_type_storage(structType->field_types[i]));
-            } else {
-                *(Value*)fieldStorage = defaultValue(structType->field_types[i] ? YARGTYPE_VAL(structType->field_types[i]) : NIL_VAL);
-            }
-        }
-    }
+    setDefaultPackedContainerValues(storage, type);
 
     // TODO: capture type info for later GC
     ObjPackedContainer* container = ALLOCATE_OBJ(ObjPackedContainer, OBJ_PACKEDCONTAINER);

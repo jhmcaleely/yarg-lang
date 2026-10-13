@@ -10,9 +10,8 @@ typedef struct {
 } PlacedValue;
 
 PlacedValue allocPlacedValue(const ObjConcreteYargType* type);
-PlacedValue allocPackedValue(const ObjConcreteYargType* type);
+void setDefaultPlacedValue(PlacedValue value);
 
 Value getPlacedValue(PlacedValue placedStorage);
-
 
 #endif // cyarg_placed_value_h

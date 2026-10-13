@@ -55,37 +55,16 @@ PlacedValue allocPlacedValue(const ObjConcreteYargType* type) {
        PlacedValue placed;
         size_t storage_required = yt_sizeof_type_storage(type);
         placed.value = malloc(storage_required);
-        memset(placed.value, 0, storage_required);
         placed.type = type;
+        setDefaultPlacedValue(placed);
         return placed;
     }
 }
 
-PlacedValue allocPackedValue(const ObjConcreteYargType* type) {
-    if (is_packable_container_type(type)) {
-        PlacedValue placed;
-        size_t storage_required = yt_sizeof_type_storage(type);
-        placed.value = malloc(storage_required);
-        // TODO: broken for structs with non-trivial initialization
-        memset(placed.value, 0, storage_required);
-        placed.type = type;
-        return placed;
-    } else if (is_placeable_type(type)) {
-        return allocPlacedValue(type);
-    } else {
-        if (yt_sizeof_type_storage(type) != sizeof(Value)) {
-            fatalVMError("Expected Value storage for %d", type->yt);
-            return (PlacedValue){.type = type, .value = NULL};
-        }
-        Value typeVal = type ? YARGTYPE_VAL(type) : NIL_VAL;
-        Value* rhsValuePtr = malloc(sizeof(Value));
-        *rhsValuePtr = defaultValue(typeVal);
-
-        PlacedValue placed;
-        placed.value = rhsValuePtr;
-        placed.type = type;
-        return placed;
-    }
+void setDefaultPlacedValue(PlacedValue value) {
+    assert(is_placeable_type(value.type));
+    size_t storage_size = yt_sizeof_type_storage(value.type);
+    memset(value.value, 0, storage_size);
 }
 
 void assignToPlacedValue(PlacedValueCellTarget lhs, Value rhs) {
