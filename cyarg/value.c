@@ -54,16 +54,25 @@ Value duplicateValue(Value src) {
     if (IS_INT(src)) {
         ObjInt* rhs = AS_INTOBJ(src);
         ObjInt* lhs = allocateIntObject(rhs->bigInt.m_);
+        tempRootPush(INTOBJ_VAL(lhs));
         uint16_t* lhs_w = (uint16_t*) &lhs->bigInt.w_[0];
         uint16_t* rhs_w = (uint16_t*) &rhs->bigInt.w_[0];
         memcpy(lhs_w, rhs_w, rhs->bigInt.m_ * sizeof(uint16_t));
         lhs->bigInt.neg_ = rhs->bigInt.neg_;
         lhs->bigInt.d_ = rhs->bigInt.d_;
         lhs->isLiteral = rhs->isLiteral;
+        tempRootPop();
         return INTOBJ_VAL(lhs);
     } else if (IS_STRUCT(src)) {
-        // TODO: Implement deep copy for packed struct
-        return src;
+        Value newStruct = defaultStructValue(src.type);
+        tempRootPush(newStruct);
+        const ObjConcreteYargTypeStruct* structType = (const ObjConcreteYargTypeStruct*) src.type;
+        size_t storage_required = yt_sizeof_type_storage((const ObjConcreteYargType*) structType);
+        ObjPackedValueContainer* container = AS_PACKEDVALUECONTAINER(src);
+        ObjPackedValueContainer* newContainer = AS_PACKEDVALUECONTAINER(newStruct);
+        memcpy(newContainer->location.placedValue.address, container->location.placedValue.address, storage_required);
+        tempRootPop();
+        return newStruct;
     } else {
         return src;
     }
@@ -191,7 +200,8 @@ static ObjString* pointerToString(Value ptrVal) {
     const ObjConcreteYargTypePointer* ptrType = (const ObjConcreteYargTypePointer*)ptrVal.type;
     const ObjPackedValueContainer* ptr = AS_PACKEDVALUECONTAINER(ptrVal);
 
-    ObjString* targetTypeStr = valueToString(YARGTYPE_VAL(ptrType->target_type));
+    Value targetType = ptrType->target_type ? YARGTYPE_VAL(ptrType->target_type) : NIL_VAL;
+    ObjString* targetTypeStr = valueToString(targetType);
     tempRootPush(STRING_VAL(targetTypeStr));
 
     ObjString* prefix = copyString("<*", 2);
