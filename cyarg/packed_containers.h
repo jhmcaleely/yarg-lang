@@ -22,14 +22,6 @@ bool isUint32Pointer(Value val);
 
 // the underlying storage for pointers, structs and arrays (packed containers that contain potentially placed values)
 
-typedef struct {
-    void* value;
-    const ObjConcreteYargType* type;
-} PackedValue;
-
-PackedValue allocPackedValue(const ObjConcreteYargType* type);
-void setDefaultPackedValue(PackedValue value);
-
 Value createPackedValueContainerAt(void* location, const ObjConcreteYargType* type);
 Value pinPackedValueContainer(Value packedValueContainer);
 

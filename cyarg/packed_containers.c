@@ -51,47 +51,6 @@ bool pointersEqual(Value a, Value b) {
     return container_a->loc == container_b->loc;
 }
 
-PackedValue allocPackedValue(const ObjConcreteYargType* type) {
-    if (is_packable_container_type(type)) {
-        PackedValue packed;
-        packed.type = type;
-        size_t storage_required = yt_sizeof_type_storage(type);
-        packed.value = malloc(storage_required);
-        setDefaultPackedContainerValues(packed.value, type);
-        return packed;
-    } else if (is_placeable_type(type)) {
-        PlacedValue place = allocPlacedValue(type);
-        return (PackedValue){.type = place.type, .value = place.value};
-    } else {
-        if (yt_sizeof_type_storage(type) != sizeof(Value)) {
-            fatalVMError("Expected Value storage for %d", type->yt);
-            return (PackedValue){.type = type, .value = NULL};
-        }
-        Value typeVal = type ? YARGTYPE_VAL(type) : NIL_VAL;
-        Value* rhsValuePtr = malloc(sizeof(Value));
-        *rhsValuePtr = defaultValue(typeVal);
-
-        PackedValue placed;
-        placed.value = rhsValuePtr;
-        placed.type = type;
-        return placed;
-    }
-}
-
-void setDefaultPackedValue(PackedValue value) {
-    if (is_packable_container_type(value.type)) {
-        setDefaultPackedContainerValues(value.value, value.type);
-    } else if (is_placeable_type(value.type)) {
-        setDefaultPlacedValue((PlacedValue){.type = value.type, .value = value.value});
-    } else {
-        if (yt_sizeof_type_storage(value.type) != sizeof(Value)) {
-            fatalVMError("Expected Value storage for %d", value.type->yt);
-        }
-        *(Value*)value.value = defaultValue(value.type ? YARGTYPE_VAL(value.type) : NIL_VAL);
-    }
-}
-
-
 void setDefaultPackedContainerValues(void* location, const ObjConcreteYargType* type) {
     if (type->yt == TypeArray) {
         ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) type;  
@@ -217,7 +176,9 @@ void offsetPointerDestination(Value pointerVal, Value offsetVal) {
 Value containerElement(ObjPackedContainer* container, const ObjConcreteYargType* element_type, size_t element_offset) {
     void* elementAddr = (void*) ((uintptr_t) container->loc + element_offset);
 
-    if (is_placeable_type(element_type)) {
+    if (is_placeable_type(element_type) && is_packable_container_type(element_type)) {
+        return createPackedValueContainerAt(elementAddr, element_type);
+    } else if (is_placeable_type(element_type)) {
         PlacedValue store;
         store.value = (void*) elementAddr;
         store.type = element_type;
@@ -261,16 +222,14 @@ Value pointerDestination(Value pointer) {
     ObjPackedContainer* container = AS_PACKEDCONTAINER(pointer);
     uintptr_t addr = (uintptr_t) container->loc;
 
-    if (is_placeable_type(pointerType->target_type)) {
+    if (is_placeable_type(pointerType->target_type) && is_packable_container_type(pointerType->target_type)) {
+        return createPackedValueContainerAt((void*) addr, pointerType->target_type);
+    } else if (is_placeable_type(pointerType->target_type)) {
         PlacedValue store;
         store.value = (void*) addr;
         store.type = pointerType->target_type;
         return getPlacedValue(store);
-    } else if (pointerType->target_type && pointerType->target_type->yt == TypeStruct) {
-        return createPackedValueContainerAt((void*) addr, pointerType->target_type);
-    } else if (pointerType->target_type && pointerType->target_type->yt == TypeArray) {
-        return createPackedValueContainerAt((void*) addr, pointerType->target_type);
-    } else if (pointerType->target_type && pointerType->target_type->yt == TypePointer) {
+    } else if (is_packable_container_type(pointerType->target_type)) {
         return createPackedValueContainerAt((void*) addr, pointerType->target_type);
     } else {
         return *(Value*) addr;

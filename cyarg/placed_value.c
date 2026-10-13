@@ -6,14 +6,12 @@
 
 #include "common.h"
 
-#include "yargobject.h"
-#include "packed_containers.h"
+#include "yargtype.h"
+#include "value_cell.h"
 
 Value getPlacedValue(PlacedValue placedStorage) {
-
-    if (is_packable_container_type(placedStorage.type)) {
-        return createPackedValueContainerAt(placedStorage.value, placedStorage.type);
-    } else if (is_placeable_type(placedStorage.type)) {
+    
+    if (is_placeable_type(placedStorage.type)) {
         Value value = NIL_VAL;
         value.type = placedStorage.type;
         if (placedStorage.type == &yargTypes.dbl) {
@@ -44,22 +42,6 @@ Value getPlacedValue(PlacedValue placedStorage) {
         fatalVMError("Unsupported non-placeable type: %s", placedStorage.type->yt);
     }
     return NIL_VAL;
-}
-
-
-
-PlacedValue allocPlacedValue(const ObjConcreteYargType* type) {
-    if (!is_placeable_type(type)) {
-        fatalVMError("Cannot allocate placed value for non-placeable type: %s", type->yt);
-        return (PlacedValue){.type = type, .value = NULL};
-    } else {
-       PlacedValue placed;
-        size_t storage_required = yt_sizeof_type_storage(type);
-        placed.value = malloc(storage_required);
-        placed.type = type;
-        setDefaultPlacedValue(placed);
-        return placed;
-    }
 }
 
 void setDefaultPlacedValue(PlacedValue value) {

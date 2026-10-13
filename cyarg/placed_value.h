@@ -9,7 +9,6 @@ typedef struct {
     const ObjConcreteYargType* type;
 } PlacedValue;
 
-PlacedValue allocPlacedValue(const ObjConcreteYargType* type);
 void setDefaultPlacedValue(PlacedValue value);
 
 Value getPlacedValue(PlacedValue placedStorage);
