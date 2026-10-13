@@ -616,9 +616,9 @@ static void generateExprSuper(ObjExprSuper* super) {
     uint8_t name = identifierConstant(super->name);
 
     ObjString* this_ = copyString("this", 4);
-    tempObjRootPush((Obj*)this_);
+    tempRootPush(STRING_VAL(this_));
     ObjString* super_ = copyString("super", 5);
-    tempObjRootPush((Obj*)super_);
+    tempRootPush(STRING_VAL(super_));
 
     generateGetNamedVariable(this_);
     if (super->call) {
@@ -995,7 +995,7 @@ static void generateStmtMethodDeclaration(ObjStmtFunDeclaration* method) {
 
     FunctionType type = TYPE_METHOD;
     ObjString* init = copyString("init", 4);
-    tempObjRootPush((Obj*)init);
+    tempRootPush(STRING_VAL(init));
     if (identifiersEqual(method->name, init)) {
         type = TYPE_INITIALIZER;
     }
@@ -1003,7 +1003,7 @@ static void generateStmtMethodDeclaration(ObjStmtFunDeclaration* method) {
     generateFunction(type, method);
 
     emitBytes(OP_METHOD, constant);
-    tempRootPop(); // initi
+    tempRootPop(); // init
 }
 
 static void generateStmtClassDeclaration(ObjStmtClassDeclaration* decl) {
@@ -1023,14 +1023,14 @@ static void generateStmtClassDeclaration(ObjStmtClassDeclaration* decl) {
 
         beginScope();
         ObjString* super = copyString("super", 5);
-        tempObjRootPush((Obj*)super);
+        tempRootPush(STRING_VAL(super));
         addLocal(super);
         defineVariable(0);
 
         generateGetNamedVariable(decl->name);
         emitByte(OP_INHERIT);
         classCompiler.hasSuperclass = true;
-        tempRootPop(); //super
+        tempRootPop(); // super
     }
 
     // Make the class name conveniently available on the stack for method definition.

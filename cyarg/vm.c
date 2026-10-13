@@ -128,7 +128,7 @@ void yarg_panic(void) {
 
 static void defineNative(const char* name, NativeFn function) {
     ObjString* nameString = copyString(name, (int)strlen(name));
-    tempObjRootPush((Obj*)nameString);
+    tempRootPush(STRING_VAL(nameString));
     ObjNative* native = newNative(function);
     tempObjRootPush((Obj*)native);
 
@@ -142,7 +142,7 @@ static void defineNative(const char* name, NativeFn function) {
 
 static void defineGlobal(const char* name, Value value) {
     ObjString* nameString = copyString(name, (int)strlen(name));
-    tempObjRootPush((Obj*)nameString);
+    tempRootPush(STRING_VAL(nameString));
 
     ValueCell cell;
     cell.value = value;
@@ -1189,7 +1189,7 @@ InterpretResult run(ObjRoutine* routine) {
             }
             case OP_PRINT: {
                 ObjString* string = valueToString(peek(routine, 0));
-                tempObjRootPush((Obj*)string);
+                tempRootPush(STRING_VAL(string));
                 printf("%s\n", string->chars);
                 tempRootPop();
                 pop(routine);

@@ -494,7 +494,7 @@ static ObjString* typeLiteralToString(const ObjConcreteYargType* type) {
         case TypeArray: {
             const ObjConcreteYargTypeArray* array = (const ObjConcreteYargTypeArray*) type;
             ObjString* typeStr = typeLiteralToString(array->element_type);
-            tempObjRootPush((Obj*)typeStr);
+            tempRootPush(STRING_VAL(typeStr));
             char buffer[128];
             if (array->cardinality > 0) {
                 snprintf(buffer, sizeof(buffer), "%s[%zu]", typeStr->chars, array->cardinality);
@@ -512,7 +512,7 @@ static ObjString* typeLiteralToString(const ObjConcreteYargType* type) {
             size_t cursor = strlen(buffer);
             for (size_t i = 0; i < st->field_count; i++) {
                 ObjString* fieldTypeStr = typeLiteralToString(st->field_types[i]);
-                tempObjRootPush((Obj*)fieldTypeStr);
+                tempRootPush(STRING_VAL(fieldTypeStr));
                 snprintf(buffer + cursor, sizeof(buffer) - cursor, "%s; ", fieldTypeStr->chars);
                 cursor = strlen(buffer);
                 tempRootPop();
@@ -523,7 +523,7 @@ static ObjString* typeLiteralToString(const ObjConcreteYargType* type) {
         case TypePointer: {
             const ObjConcreteYargTypePointer* st = (const ObjConcreteYargTypePointer*) type;
             ObjString* typeStr = typeLiteralToString(st->target_type);
-            tempObjRootPush((Obj*)typeStr);
+            tempRootPush(STRING_VAL(typeStr));
             char buffer[128];
             snprintf(buffer, sizeof(buffer), "*%s", typeStr->chars);
             ObjString* result = copyString(buffer, (int)strlen(buffer));
@@ -533,9 +533,9 @@ static ObjString* typeLiteralToString(const ObjConcreteYargType* type) {
         case TypeMap: {
             const ObjConcreteYargTypeMap* mt = (const ObjConcreteYargTypeMap*) type;
             ObjString* typeStr = typeLiteralToString(mt->value_type);
-            tempObjRootPush((Obj*)typeStr);
+            tempRootPush(STRING_VAL(typeStr));
             ObjString* keyTypeStr = typeLiteralToString(mt->key_type);
-            tempObjRootPush((Obj*)keyTypeStr);
+            tempRootPush(STRING_VAL(keyTypeStr));
             char buffer[128];
             snprintf(buffer, sizeof(buffer), "%s[%s]", typeStr->chars, keyTypeStr->chars);
             ObjString* result = copyString(buffer, (int)strlen(buffer));
@@ -551,9 +551,9 @@ static ObjString* typeLiteralToString(const ObjConcreteYargType* type) {
 
 ObjString* typeToString(const ObjConcreteYargType* type) {
     ObjString* literalStr = typeLiteralToString(type);
-    tempObjRootPush((Obj*)literalStr);
+    tempRootPush(STRING_VAL(literalStr));
     ObjString* prefix = copyString("Type:", 5);
-    tempObjRootPush((Obj*)prefix);
+    tempRootPush(STRING_VAL(prefix));
     ObjString* result = concatenateStrings(prefix, literalStr);
     tempRootPop();
     tempRootPop();

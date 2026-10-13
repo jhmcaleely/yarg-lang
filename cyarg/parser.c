@@ -224,7 +224,7 @@ static uint64_t strtoNum(const char* literal, int length, int radix) {
 static ObjExpr* namedVariable(Token name, bool canAssign) {
 
     ObjString* nameString = copyString(name.start, name.length);
-    tempObjRootPush((Obj*)nameString);
+    tempRootPush(STRING_VAL(nameString));
 
     ObjExprNamedVariable* expr = newExprNamedVariable(name.start, name.length);
 
