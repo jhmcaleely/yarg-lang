@@ -118,7 +118,7 @@ typedef struct {
     ObjConcreteYargType syncGroup;
 } SimpleYargTypes;
 
-extern SimpleYargTypes yargTypes;
+extern const SimpleYargTypes yargTypes;
 
 typedef struct ObjConcreteYargTypeArray {
     ObjConcreteYargType core;
@@ -137,7 +137,7 @@ typedef struct ObjConcreteYargTypeMap {
     const ObjConcreteYargType* value_type;
 } ObjConcreteYargTypeMap;
 
-ObjConcreteYargType* newYargTypeFromType(ConcreteYargType yt);
+const ObjConcreteYargType* newYargTypeFromTypeCode(uint8_t typeCode);
 
 ObjConcreteYargType* newYargArrayTypeFromType(const ObjConcreteYargType* elementType, size_t cardinality);
 ObjConcreteYargType* newYargPointerType(const ObjConcreteYargType* targetType);

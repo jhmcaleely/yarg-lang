@@ -183,7 +183,7 @@ bool  isByteArray(Value value) {
 }
 
 Value allocByteArray(size_t length) {
-    const ObjConcreteYargType* element = newYargTypeFromType(TypeUint8);
+    const ObjConcreteYargType* element = &yargTypes.uint8;
     tempRootPush(YARGTYPE_VAL(element));
     const ObjConcreteYargType* arrayType = newYargArrayTypeFromType(element, length);
     tempRootPush(YARGTYPE_VAL(arrayType));
@@ -195,7 +195,7 @@ Value allocByteArray(size_t length) {
 }
 
 Value createByteArrayAt(uint8_t* location, size_t length) {
-    const ObjConcreteYargType* element = newYargTypeFromType(TypeUint8);
+    const ObjConcreteYargType* element = &yargTypes.uint8;
     tempRootPush(YARGTYPE_VAL(element));
     const ObjConcreteYargType* arrayType = newYargArrayTypeFromType(element, length);
     tempRootPush(YARGTYPE_VAL(arrayType));
