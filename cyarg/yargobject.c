@@ -207,21 +207,23 @@ void offsetPointerDestination(Value pointerVal, Value offsetVal) {
     pointer->loc = (void*) addr;
 }
 
+Value containerElement(ObjPackedContainer* container, const ObjConcreteYargType* element_type, size_t element_offset) {
+    void* elementAddr = (void*) ((uintptr_t) container->loc + element_offset);
+
+    if (is_placeable_type(element_type)) {
+        PlacedValue store;
+        store.value = (void*) elementAddr;
+        store.type = element_type;
+        return getPlacedValue(store);
+    } else {
+        return *(Value*) elementAddr;
+    }
+}
+
 Value arrayElement(Value array, size_t index) {
     const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*) array.type;
     size_t element_offset = arrayElementOffset(arrayType, index);
-    ObjPackedContainer* container = AS_PACKEDCONTAINER(array);
-    uintptr_t addr = (uintptr_t) container->loc;
-    addr += element_offset;
-
-    if (is_placeable_type(array.type)) {
-        PlacedValue store;
-        store.value = (void*) addr;
-        store.type = arrayType->element_type;
-        return getPlacedValue(store);
-    } else {
-        return *(Value*) addr;
-    }
+    return containerElement(AS_PACKEDCONTAINER(array), arrayType->element_type, element_offset);
 }
 
 Value containerElementPointer(ObjPackedContainer* container, const ObjConcreteYargType* element_type, size_t element_offset) {
@@ -271,18 +273,7 @@ Value pointerDestination(Value pointer) {
 Value structField(Value structVal, size_t fieldIndex) {
     const ObjConcreteYargTypeStruct* structType = (const ObjConcreteYargTypeStruct*) structVal.type;
     size_t field_offset = structFieldOffset(structType, fieldIndex);
-    ObjPackedContainer* container = AS_PACKEDCONTAINER(structVal);
-    uintptr_t addr = (uintptr_t) container->loc;
-    addr += field_offset;
-
-    if (is_placeable_type(structType->field_types[fieldIndex])) {
-        PlacedValue store;
-        store.value = (void*) addr;
-        store.type = structType->field_types[fieldIndex];
-        return getPlacedValue(store);
-    } else {
-        return *(Value*) addr;
-    }
+    return containerElement(AS_PACKEDCONTAINER(structVal), structType->field_types[fieldIndex], field_offset);
 }
 
 static bool setPlacedContainerElement(const ObjPackedContainer* container, const ObjConcreteYargType* element_type, size_t element_offset, Value value) {
