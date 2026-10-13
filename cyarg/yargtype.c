@@ -380,7 +380,8 @@ Value defaultValue(Value type) {
             case TypeAddress: return ADDRESS_VAL(0);
             case TypeStruct: return defaultStructValue(ct);
             case TypeArray: return defaultArrayValue(ct);
-            case TypePointer: return defaultPointerValue(ct);
+            case TypeMap:
+            case TypePointer:
             case TypeString:
             case TypeClass:
             case TypeInstance:
@@ -388,7 +389,6 @@ Value defaultValue(Value type) {
             case TypeRoutine:
             case TypeChannel:
             case TypeSyncGroup:
-            case TypeMap:
             case TypeYargType:
                 return NIL_VAL;
         }

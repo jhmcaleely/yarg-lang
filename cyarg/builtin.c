@@ -492,6 +492,36 @@ bool pinBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
     }
 }
 
+void* allocateDefaultValue(const ObjConcreteYargType* type) {
+    // TODO: capture type info for later GC
+    if (type && type->yt == TypeStruct) {
+        Value structVal = defaultStructValue(type);
+        return AS_PACKEDCONTAINER(structVal)->loc;
+    } else {
+        size_t storage_required = yt_sizeof_type_storage(type);
+        void* storage = malloc(storage_required);
+        if (is_placeable_type(type)) {
+            memset(storage, 0, storage_required);
+        } else {
+            Value* values = (Value*) storage;
+            Value targetTypeVal = type ? YARGTYPE_VAL(type) : NIL_VAL;
+            *values = defaultValue(targetTypeVal);
+        }
+        return storage;
+    }
+}
+
+Value createPointerAndTarget(const ObjConcreteYargType* targetType) {
+    void* location = allocateDefaultValue(targetType);
+    // TODO: capture type info for later GC
+
+    const ObjConcreteYargType* pointerType = newYargPointerType(targetType);
+    tempRootPush(YARGTYPE_VAL(pointerType));
+    Value pointerVal = createPackedValueContainerAt(location, pointerType);
+    tempRootPop();
+    return pointerVal;
+}
+
 bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
 
     Value typeToCreate = NIL_VAL;
@@ -502,13 +532,10 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
                && IS_NIL(peek(routineContext, 0)))
                || argCount == 0) {
         // make an 'any' cell, ie a heap allocated Value.
-        PlacedValue heapValue = allocPackedValue(NULL);
-        ObjConcreteYargType* pointerType = newYargPointerType(NULL);
-        tempRootPush(YARGTYPE_VAL(pointerType));
-        *result = createPackedValueContainerAt(heapValue.value, pointerType);
-        tempRootPop();
+        *result = createPointerAndTarget(NULL);
         return true;
     }
+
     if (IS_NIL(typeToCreate)) {
         runtimeError(routineContext, "Expected a type to create.");
         return false;
@@ -517,12 +544,7 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
     ConcreteYargType typeRequested = AS_YARGTYPE(typeToCreate)->yt;
     switch (typeRequested) {
         case TypeBool: {
-            PlacedValue heapValue = allocPackedValue(AS_YARGTYPE(typeToCreate));
-            ObjConcreteYargType* pointerType = newYargPointerType(AS_YARGTYPE(typeToCreate));
-            tempRootPush(YARGTYPE_VAL(pointerType));
-            *(Value*)heapValue.value = BOOL_VAL(false);
-            *result = createPackedValueContainerAt(heapValue.value, pointerType);
-            tempRootPop();
+            *result = createPointerAndTarget(AS_YARGTYPE(typeToCreate));
             return true;
         }
 
@@ -535,27 +557,16 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
         case TypeUint32:
         case TypeInt64:
         case TypeUint64: {
-            PlacedValue heapValue = allocPlacedValue(AS_YARGTYPE(typeToCreate));
-            ObjConcreteYargType* pointerType = newYargPointerType(AS_YARGTYPE(typeToCreate));
-            tempRootPush(YARGTYPE_VAL(pointerType));
-            *result = createPackedValueContainerAt(heapValue.value, pointerType);
-            tempRootPop();
+            *result = createPointerAndTarget(AS_YARGTYPE(typeToCreate));
             return true;
         }
         case TypeArray:
+            // TODO: revisit when arrays become Value types.
             *result = defaultValue(typeToCreate);
             return true;
 
         case TypeStruct: {
-            Value newStruct = defaultStructValue(AS_YARGTYPE(typeToCreate));
-            tempRootPush(newStruct);
-            ObjPackedContainer* newStructCell = AS_PACKEDCONTAINER(newStruct);
-
-            ObjConcreteYargType* pointerType = newYargPointerType(AS_YARGTYPE(typeToCreate));
-            tempRootPush(YARGTYPE_VAL(pointerType));
-            *result = createPackedValueContainerAt(newStructCell->loc, pointerType);
-            tempRootPop();
-            tempRootPop();
+            *result = createPointerAndTarget(AS_YARGTYPE(typeToCreate));
             return true;
         }
         case TypeMap: {

@@ -117,7 +117,6 @@ Value pinPackedValueContainer(Value packedValueContainer);
 
 Value defaultArrayValue(const ObjConcreteYargType* type);
 Value defaultStructValue(const ObjConcreteYargType* type);
-Value defaultPointerValue(const ObjConcreteYargType* type);
 
 // Two useful coveniences - a byte array and a value array.
 // byte arrays can create a buffer, or be placed over an existing memory location.

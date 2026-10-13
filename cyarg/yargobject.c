@@ -94,26 +94,6 @@ Value defaultArrayValue(const ObjConcreteYargType* type) {
     return TYPED_VAL(container, type);
 }
 
-Value defaultPointerValue(const ObjConcreteYargType* type) {
-    ObjConcreteYargTypePointer* pointerType = (ObjConcreteYargTypePointer*) type;  
-    size_t storage_required = yt_sizeof_type_storage(type);
-
-    void* storage = malloc(storage_required);
-    if (is_placeable_type(type)) {
-        memset(storage, 0, storage_required);
-    } else {
-        Value* values = (Value*) storage;
-        Value targetTypeVal = pointerType->target_type ? YARGTYPE_VAL(pointerType->target_type) : NIL_VAL;
-        *values = defaultValue(targetTypeVal);
-    }
-
-    // TODO: capture type info for later GC
-    ObjPackedContainer* container = ALLOCATE_OBJ(ObjPackedContainer, OBJ_PACKEDCONTAINER);
-    container->loc = storage;
-
-    return TYPED_VAL(container, type);
-}
-
 Value defaultStructValue(const ObjConcreteYargType* type) {
     ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*) type;  
     size_t storage_required = yt_sizeof_type_storage(type);
