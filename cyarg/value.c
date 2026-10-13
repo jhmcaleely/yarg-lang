@@ -43,14 +43,6 @@ bool is_nil(Value value) {
     }
 }
 
-void noLongerLiteralInt(Value *value)
-{
-    if (IS_INT(*value))
-    {
-        ((ObjInt *) value->as.obj)->isLiteral = false;
-    }
-}
-
 Value duplicateValue(Value src) {
     if (IS_INT(src)) {
         ObjInt* rhs = AS_INTOBJ(src);

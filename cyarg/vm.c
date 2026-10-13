@@ -866,7 +866,7 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_INITIALISE: {
                 ValueCellTarget lhsTrg = peekCellTarget(routine, 1);
                 ValueCell* rhs = peekCell(routine, 0);
-                if (!initialiseValueCellTarget(lhsTrg, rhs->value)) {
+                if (!assignToValueCellTarget(lhsTrg, rhs->value)) {
                     runtimeError(routine, "Cannot initialise variable with this value.");
                     return INTERPRET_RUNTIME_ERROR;
                 }

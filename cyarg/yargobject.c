@@ -79,6 +79,12 @@ Value defaultIntValue() {
     return INTOBJ_VAL(intObj);
 }
 
+void noLongerLiteralInt(Value value) {
+    if (IS_INT(value)) {
+        ((ObjInt *) value.as.obj)->isLiteral = false;
+    }
+}
+
 ObjMap* newMap(ObjConcreteYargTypeMap* type) {
     ObjMap* map = ALLOCATE_OBJ(ObjMap, OBJ_MAP);
     map->type = type;

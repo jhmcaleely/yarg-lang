@@ -104,5 +104,6 @@ Value defaultIntValue();
 ObjInt* newInt(int64_t value);
 ObjInt* newIntU(uint64_t value);
 bool intsEqual(const ObjInt* a, const ObjInt* b);
+void noLongerLiteralInt(Value value);
 
 #endif

@@ -4,6 +4,7 @@
 #include "yargtype.h"
 #include "value.h"
 #include "placed_value.h"
+
 typedef struct ObjRoutine ObjRoutine;
 
 typedef struct ValueCell {
@@ -23,8 +24,6 @@ typedef struct {
 } PlacedValueCellTarget;
 
 bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue);
-bool initialiseValueCellTarget(ValueCellTarget lhs, Value rhsValue);
-
 bool assignToPlacedValueCellTarget(PlacedValueCellTarget lhs, Value rhsValue);
 
 ValueCellTarget peekCellTarget(ObjRoutine* routine, int distance);

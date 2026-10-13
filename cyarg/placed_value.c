@@ -50,7 +50,7 @@ void setDefaultPlacedValue(PlacedValue value) {
     memset(value.value, 0, storage_size);
 }
 
-void assignToPlacedValue(PlacedValueCellTarget lhs, Value rhs) {
+void setPlacedValue(PlacedValue lhs, Value rhs) {
     if (IS_I8(rhs)) {
         *(int8_t*)lhs.value = rhs.as.i8;
     } else if (IS_UI8(rhs)) {
@@ -73,28 +73,6 @@ void assignToPlacedValue(PlacedValueCellTarget lhs, Value rhs) {
         *(double*)lhs.value = rhs.as.dbl;
     } else {
         // TODO: review struct, array, and pointer handling
-        fatalVMError("Unhandled type in assignToPlacedValueCellTarget");
-    }
-}
-
-bool assignToPlacedValueCellTarget(PlacedValueCellTarget lhs, Value rhsValue) {
-    assert(lhs.cellType != NULL);
-
-    Value promoted;
-    if (isInitialisableType(lhs.cellType, rhsValue, &promoted)) {
-        assert(promoted.type != NULL || rhsValue.type != NULL);
-
-        if (promoted.type == NULL) {
-            noLongerLiteralInt(&rhsValue);
-            assert(is_placeable_type(rhsValue.type));
-            assignToPlacedValue(lhs, rhsValue);
-        } else {
-            assert(is_placeable_type(promoted.type));
-            assignToPlacedValue(lhs, promoted);
-        }
-
-        return true;
-    } else {
-        return false;
+        fatalVMError("Unhandled type in setPlacedValue");
     }
 }

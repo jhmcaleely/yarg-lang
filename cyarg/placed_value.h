@@ -12,5 +12,6 @@ typedef struct {
 void setDefaultPlacedValue(PlacedValue value);
 
 Value getPlacedValue(PlacedValue placedStorage);
+void setPlacedValue(PlacedValue placedStorage, Value rhs);
 
 #endif // cyarg_placed_value_h
