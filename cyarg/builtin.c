@@ -568,7 +568,18 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
                 tempRootPop();
                 return true;
             } else {
-                *result = defaultValue(typeToCreate);
+                Value newStruct = defaultStructValue(AS_YARGTYPE(typeToCreate));
+                tempRootPush(newStruct);
+                ObjPackedValueContainer* newStructCell = AS_PACKEDVALUECONTAINER(newStruct);
+
+                ObjConcreteYargType* pointerType = newYargPointerType(AS_YARGTYPE(typeToCreate));
+                tempRootPush(YARGTYPE_VAL(pointerType));
+                ValueLocation locationPtr;
+                locationPtr.placed = false;
+                locationPtr.value = (Value*) newStructCell->location.value;
+                *result = createPackedValueContainerAt(locationPtr, pointerType);
+                tempRootPop();
+                tempRootPop();
                 return true;
             }
             break;
