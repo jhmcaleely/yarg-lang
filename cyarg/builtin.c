@@ -1047,6 +1047,12 @@ bool stringBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
     return true;
 }
 
+ObjBuiltin* newBuiltin(BuiltinFun function) {
+    ObjBuiltin* builtin = ALLOCATE_OBJ(ObjBuiltin, OBJ_BUILTIN);
+    builtin->function = function;
+    return builtin;
+}
+
 Value getBuiltin(uint8_t builtin) {
     switch (builtin) {
         case BUILTIN_PEEK: return BUILTIN_VAL(newBuiltin(peekBuiltin));

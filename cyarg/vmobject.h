@@ -3,6 +3,7 @@
 
 #include "object.h"
 #include "value.h"
+#include "value_cell.h"
 
 #define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
 #define IS_CLOSURE(value)      isObjType(value, OBJ_CLOSURE)
@@ -15,6 +16,8 @@
     (((ObjNative*)AS_OBJ(value))->function)
 #define AS_BUILTIN(value) \
     (((ObjBuiltin*)AS_OBJ(value))->function)
+
+typedef struct ObjFunction ObjFunction;
 
 typedef struct ObjUpvalue {
     Obj obj;

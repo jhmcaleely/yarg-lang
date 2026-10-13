@@ -444,3 +444,9 @@ void traceExecution(ObjRoutine* routine) {
     disassembleInstruction(&frame->closure->function->chunk, 
         (int)(frame->ip - frame->closure->function->chunk.code));
 }
+
+ObjString* routineToString(const ObjRoutine* routine) {
+    char buffer[64];
+    snprintf(buffer, sizeof(buffer), "<R%p>", routine);
+    return copyString(buffer, (int)strlen(buffer));
+}

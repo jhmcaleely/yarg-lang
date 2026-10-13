@@ -100,6 +100,7 @@ add_executable(cyarg
     object.h
     object.c
     vmobject.h
+    vmobject.c
     table.h
     table.c
     native.h

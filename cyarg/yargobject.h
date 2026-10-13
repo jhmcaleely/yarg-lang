@@ -9,10 +9,6 @@
 #include "table.h"
 
 typedef struct ObjConcreteYargType ObjConcreteYargType;
-typedef struct ObjConcreteYargTypeArray ObjConcreteYargTypeArray;
-typedef struct ObjConcreteYargTypeStruct ObjConcreteYargTypeStruct;
-typedef struct ObjConcreteYargTypePointer ObjConcreteYargTypePointer;
-typedef struct ObjConcreteYargTypeMap ObjConcreteYargTypeMap;
 
 #define IS_CLASS(value)        isObjType(value, OBJ_CLASS)
 #define IS_FUNCTION(value)     isObjType(value, OBJ_FUNCTION)
@@ -62,7 +58,6 @@ typedef struct ObjInt {
     Int bigInt;
 } ObjInt;
 
-
 typedef struct ObjFunction {
     Obj obj;
     int arity;
@@ -91,21 +86,23 @@ typedef struct {
 
 ObjFunction* newFunction();
 void initFunction(ObjFunction* function);
+ObjString* functionToString(const ObjFunction* function);
+
 ObjClass* newClass(ObjString* name);
 ObjInstance* newInstance(ObjClass* klass);
-ObjInt* allocateIntObject(size_t numDigits);
 
 ObjMap* newMap(ObjConcreteYargTypeMap* type);
+ObjString* mapToString(const ObjMap* map);
 
 ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);
 ObjString* copyStringWithEscapes(const char* chars, int length);
 ObjString* concatenateStrings(ObjString* a, ObjString* b);
 
+ObjInt* allocateIntObject(size_t numDigits);
 Value defaultIntValue();
 ObjInt* newInt(int64_t value);
 ObjInt* newIntU(uint64_t value);
-
 bool intsEqual(const ObjInt* a, const ObjInt* b);
 
 #endif

@@ -5,20 +5,12 @@
 #include <assert.h>
 
 #include "memory.h"
+#include "vm.h"
 #include "yargobject.h"
 #include "vmobject.h"
-#include "table.h"
-#include "value.h"
-#include "vm.h"
-#include "yargtype.h"
+#include "builtin.h"
 #include "channel.h"
 #include "sync_group.h"
-#include "yargstructtype.h"
-
-#include "builtin.h"
-
-#define ALLOCATE_OBJ(type, objectType) \
-    (type*)allocateObject(sizeof(type), objectType)
 
 Obj* allocateObject(size_t size, ObjType type) {
     Obj* object = (Obj*)reallocate(NULL, 0, size);
@@ -39,14 +31,6 @@ Obj* allocateObject(size_t size, ObjType type) {
 #endif
 
     return object;
-}
-
-ObjInt* allocateIntObject(size_t numDigits) {
-    numDigits += numDigits % 2; // numDigits is always even
-    assert(numDigits <= 254 && numDigits >= 2);
-    ObjInt *i = (ObjInt *) allocateObject(sizeof (ObjInt) + numDigits * sizeof (uint16_t), OBJ_INT);
-    i->bigInt.m_ = numDigits;
-    return i;
 }
 
 void initDynamicObjArray(DynamicObjArray* array) {
@@ -80,208 +64,6 @@ Obj* removeLastFromDynamicObjArray(DynamicObjArray* array) {
         array->objectCount--;
     }
     return end;
-}
-
-
-ObjBoundMethod* newBoundMethod(Value reciever, ObjClosure* method) {
-    ObjBoundMethod* bound = ALLOCATE_OBJ(ObjBoundMethod,
-                                         OBJ_BOUND_METHOD);
-    bound->reciever = reciever;
-    bound->method = method;
-    return bound;
-}
-
-ObjClass* newClass(ObjString* name) {
-    ObjClass* klass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
-    klass->name = name;
-    initTable(&klass->methods);
-    return klass;
-}
-
-ObjClosure* newClosure(ObjFunction* function) {
-    ObjUpvalue** upvalues = ALLOCATE(ObjUpvalue*, function->upvalueCount);
-    for (int i = 0; i < function->upvalueCount; i++) {
-        upvalues[i] = NULL;
-    }
-
-    ObjClosure* closure = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
-    closure->function = function;
-    closure->upvalues = upvalues;
-    closure->cUpvalueCount = function->upvalueCount;
-    return closure;
-}
-
-ObjFunction* newFunction() {
-    ObjFunction* function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
-    initFunction(function);
-    return function;
-}
-
-void initFunction(ObjFunction* function) {
-    // may not be called after alloc, so init all fields.
-    function->arity = 0;
-    function->upvalueCount = 0;
-    function->fName = NULL;
-    initChunk(&function->chunk);
-}
-
-ObjInstance* newInstance(ObjClass* klass) {
-    ObjInstance* instance = ALLOCATE_OBJ(ObjInstance, OBJ_INSTANCE);
-    instance->klass = klass;
-    initTable(&instance->fields);
-    return instance;
-}
-
-ObjNative* newNative(NativeFn function) {
-    ObjNative* native = ALLOCATE_OBJ(ObjNative, OBJ_NATIVE);
-    native->function = function;
-    return native;
-}
-
-ObjBuiltin* newBuiltin(BuiltinFun function) {
-    ObjBuiltin* builtin = ALLOCATE_OBJ(ObjBuiltin, OBJ_BUILTIN);
-    builtin->function = function;
-    return builtin;
-}
-
-ObjInt* newInt(int64_t value) {
-    ObjInt *i = allocateIntObject(sizeof value / sizeof (uint16_t));
-    int_set_i(value, &i->bigInt);
-    return i;
-}
-
-ObjInt* newIntU(uint64_t value) {
-    ObjInt *i = allocateIntObject(sizeof value / sizeof (uint16_t));
-    int_set_u(value, &i->bigInt);
-    return i;
-}
-
-Value defaultIntValue() {
-    ObjInt *intObj = allocateIntObject(1);
-    int_init(&intObj->bigInt);
-    return INTOBJ_VAL(intObj);
-}
-
-ObjMap* newMap(ObjConcreteYargTypeMap* type) {
-    ObjMap* map = ALLOCATE_OBJ(ObjMap, OBJ_MAP);
-    map->type = type;
-    initTable(&map->entries);
-    return map;
-}
-
-bool isAddressValue(Value val) {
-    if (IS_INT(val)) {
-        ObjInt *i = AS_INTOBJ(val);
-        return i->isLiteral;
-    } else if (IS_ADDRESS(val)) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-static ObjString* allocateString(char* chars, int length, uint32_t hash) {
-    ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
-    string->length = length;
-    string->chars = chars;
-    string->hash = hash;
-    tempRootPush(STRING_VAL(string));
-    tableSet(&vm.strings, string, NIL_VAL);
-    tempRootPop();
-    return string;
-}
-
-static uint32_t hashString(const char* key, int length) {
-    uint32_t hash = 2166136261u;
-    for (int i = 0; i < length; i++) {
-        hash ^= (uint8_t)key[i];
-        hash += 16777619;
-    }
-    return hash;
-}
-
-ObjString* takeString(char* chars, int length) {
-    uint32_t hash = hashString(chars, length);
-    ObjString* interned = tableFindString(&vm.strings, chars, length, hash);
-    if (interned != NULL) {
-        FREE_ARRAY(char, chars, length + 1);
-        return interned;
-    }
-
-    return allocateString(chars, length, hash);
-}
-
-ObjString* copyString(const char* chars, int length) {
-    uint32_t hash = hashString(chars, length);
-    ObjString* interned = tableFindString(&vm.strings, chars, length, hash);
-    if (interned != NULL) return interned;
-
-    char* heapChars = ALLOCATE(char, length + 1);
-    memcpy(heapChars, chars, length);
-    heapChars[length] = '\0';
-    return allocateString(heapChars, length, hash);
-}
-
-ObjString* copyStringWithEscapes(const char* chars, int length)
-{
-    char* heapChars = ALLOCATE(char, length + 1);
-
-    char const *in = chars;
-    char *out = heapChars;
-    int lengthOut = 0;
-    for (int i = 0; i < length && *in != '\0'; i++)
-    {
-        if (*in == '\\')
-        {
-            in++;
-            i++;
-        }
-        *out++ = *in++;
-        lengthOut++;
-    }
-    uint32_t hash = hashString(heapChars, lengthOut);
-    ObjString* interned = tableFindString(&vm.strings, heapChars, lengthOut, hash);
-    if (interned != NULL)
-    {
-        FREE(char, heapChars);
-        return interned;
-    }
-
-    *out = '\0';
-    return allocateString(heapChars, lengthOut, hash);
-}
-
-
-ObjUpvalue* newUpvalue(ValueCell* slot, size_t stackOffset) {
-    ObjUpvalue* upvalue = ALLOCATE_OBJ(ObjUpvalue, OBJ_UPVALUE);
-    upvalue->closed.value = NIL_VAL;
-    upvalue->closed.cellType = NULL;
-    upvalue->contents = slot;
-    upvalue->stackOffset = stackOffset;
-    upvalue->next = NULL;
-    return upvalue;
-}
-
-static ObjString* functionToString(const ObjFunction* function) {
-    if (function->fName == NULL) {
-        return copyString("<script>", 8);
-    }
-    char buffer[64];
-    snprintf(buffer, sizeof(buffer), "<fn %s>", function->fName->chars);
-    return copyString(buffer, (int)strlen(buffer));
-}
-
-static ObjString* routineToString(const ObjRoutine* routine) {
-    char buffer[64];
-    snprintf(buffer, sizeof(buffer), "<R%p>", routine);
-    return copyString(buffer, (int)strlen(buffer));
-}
-
-ObjString* mapToString(const ObjMap* map) {
-    ObjString* typeStr = valueToString(YARGTYPE_VAL(map->type));
-    char buffer[64];
-    snprintf(buffer, sizeof(buffer), "<map (%d) %s >", map->entries.count, typeStr->chars);
-    return copyString(buffer, (int)strlen(buffer));
 }
 
 ObjString* objectToString(const Obj* value) {
