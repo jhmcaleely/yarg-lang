@@ -68,8 +68,8 @@ Value duplicateValue(Value src) {
         tempRootPush(newStruct);
         const ObjConcreteYargTypeStruct* structType = (const ObjConcreteYargTypeStruct*) src.type;
         size_t storage_required = yt_sizeof_type_storage((const ObjConcreteYargType*) structType);
-        ObjPackedValueContainer* container = AS_PACKEDVALUECONTAINER(src);
-        ObjPackedValueContainer* newContainer = AS_PACKEDVALUECONTAINER(newStruct);
+        ObjPackedContainer* container = AS_PACKEDCONTAINER(src);
+        ObjPackedContainer* newContainer = AS_PACKEDCONTAINER(newStruct);
         memcpy(newContainer->loc, container->loc, storage_required);
         tempRootPop();
         return newStruct;
@@ -198,7 +198,7 @@ static ObjString* arrayToString(Value arrayVal) {
 
 static ObjString* pointerToString(Value ptrVal) {
     const ObjConcreteYargTypePointer* ptrType = (const ObjConcreteYargTypePointer*)ptrVal.type;
-    const ObjPackedValueContainer* ptr = AS_PACKEDVALUECONTAINER(ptrVal);
+    const ObjPackedContainer* ptr = AS_PACKEDCONTAINER(ptrVal);
 
     Value targetType = ptrType->target_type ? YARGTYPE_VAL(ptrType->target_type) : NIL_VAL;
     ObjString* targetTypeStr = valueToString(targetType);

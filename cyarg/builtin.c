@@ -54,7 +54,7 @@ bool readYargSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* resu
         tempRootPush(byteBuffer);
 
         
-        readFileIntoBuffer(filename, AS_PACKEDVALUECONTAINER(byteBuffer)->loc, file_size);
+        readFileIntoBuffer(filename, AS_PACKEDCONTAINER(byteBuffer)->loc, file_size);
 
         *result = byteBuffer;
 
@@ -161,7 +161,7 @@ bool loadBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
     ObjFunction* function = NULL;
     
     if (isByteArray(arg)) {
-        ObjPackedValueContainer* container = AS_PACKEDVALUECONTAINER(arg);
+        ObjPackedContainer* container = AS_PACKEDCONTAINER(arg);
         const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*) arg.type;
         uint8_t* buffer = (uint8_t*)container->loc;
         function = loadPackageFromBuffer(routineContext, buffer, arrayType->cardinality);
@@ -413,7 +413,7 @@ bool peekBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
 
     uintptr_t nominal_address = 0;
     if (IS_POINTER(address)) {
-        nominal_address = (uintptr_t) AS_PACKEDVALUECONTAINER(address)->loc;
+        nominal_address = (uintptr_t) AS_PACKEDCONTAINER(address)->loc;
     } else {
         nominal_address = AS_ADDRESS(address);
     }
@@ -549,7 +549,7 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
         case TypeStruct: {
             Value newStruct = defaultStructValue(AS_YARGTYPE(typeToCreate));
             tempRootPush(newStruct);
-            ObjPackedValueContainer* newStructCell = AS_PACKEDVALUECONTAINER(newStruct);
+            ObjPackedContainer* newStructCell = AS_PACKEDCONTAINER(newStruct);
 
             ObjConcreteYargType* pointerType = newYargPointerType(AS_YARGTYPE(typeToCreate));
             tempRootPush(YARGTYPE_VAL(pointerType));

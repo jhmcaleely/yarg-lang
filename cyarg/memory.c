@@ -220,8 +220,8 @@ static void blackenObject(Obj* object) {
             markRoutine(stack);
             break;
         }
-        case OBJ_PACKEDVALUECONTAINER:
-        case OBJ_UNOWNED_PACKEDVALUECONTAINER:
+        case OBJ_PACKEDCONTAINER:
+        case OBJ_UNOWNED_PACKEDCONTAINER:
             // TODO: if !placeable type, mark Values
             break;
 
@@ -515,10 +515,10 @@ static void freeObject(Obj* object) {
         }
         case OBJ_UPVALUE: FREE(ObjUpvalue, object); break;
         case OBJ_CHANNELCONTAINER: freeChannelObject(object); break;
-        case OBJ_UNOWNED_PACKEDVALUECONTAINER: FREE(ObjPackedValueContainer, object); break;
-        case OBJ_PACKEDVALUECONTAINER: {
+        case OBJ_UNOWNED_PACKEDCONTAINER: FREE(ObjPackedContainer, object); break;
+        case OBJ_PACKEDCONTAINER: {
             // TODO: Free the memory associated with the packed value container's destination before freeing the container itself.
-            FREE(ObjPackedValueContainer, object); 
+            FREE(ObjPackedContainer, object); 
             break;
         }
         case OBJ_MAP: {

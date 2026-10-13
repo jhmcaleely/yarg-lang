@@ -39,7 +39,7 @@ typedef struct ObjConcreteYargTypeMap ObjConcreteYargTypeMap;
 #define AS_INTOBJ(value)       ((ObjInt*)AS_OBJ(value))
 #define AS_INT(value)          (&(AS_INTOBJ(value)->bigInt))
 #define AS_MAP(value)          ((ObjMap*)AS_OBJ(value))
-#define AS_PACKEDVALUECONTAINER(value) ((ObjPackedValueContainer*)AS_OBJ(value))
+#define AS_PACKEDCONTAINER(value) ((ObjPackedContainer*)AS_OBJ(value))
 
 #define STRING_VAL(object)     ((Value){.type = &yargTypes.string, .as.obj = (Obj*) object})
 #define YARGTYPE_VAL(object)   ((Value){.type = &yargTypes.type, .as.obj = (Obj*) object})
@@ -94,10 +94,10 @@ typedef struct {
     ValueTable fields;
 } ObjInstance;
 
-typedef struct ObjPackedValueContainer {
+typedef struct ObjPackedContainer {
     Obj obj;
     void* loc;
-} ObjPackedValueContainer;
+} ObjPackedContainer;
 
 typedef struct {
     Obj obj;

@@ -1212,7 +1212,7 @@ InterpretResult run(ObjRoutine* routine) {
 
                 uintptr_t nominal_address = 0;
                 if (isUint32Pointer(location)) {
-                    ObjPackedValueContainer* container = AS_PACKEDVALUECONTAINER(location);
+                    ObjPackedContainer* container = AS_PACKEDCONTAINER(location);
                     nominal_address = (uintptr_t) container->loc;
                 }
                 else if (IS_ADDRESS(location))
