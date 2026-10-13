@@ -13,7 +13,7 @@ typedef struct ValueCell {
 
 typedef struct {
     Value* value;
-    ObjConcreteYargType* cellType;
+    const ObjConcreteYargType* cellType;
 } ValueCellTarget;
 
 typedef struct {
