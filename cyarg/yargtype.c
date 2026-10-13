@@ -168,17 +168,6 @@ size_t structFieldOffset(const ObjConcreteYargTypeStruct* type, size_t fieldInde
 }
 
 
-Value concrete_typeof(Value a) {
-    if (IS_NIL(a)) {
-        return NIL_VAL;
-    } else if (IS_IMPL_OBJ(a)) {
-        fatalVMError("Unexpected object type");
-        return NIL_VAL;
-    } else {
-        return YARGTYPE_VAL(a.type);
-    }
-}
-
 bool is_nil_assignable_type(const ObjConcreteYargType* type) {
     if (type == NULL) {
         return true;
@@ -607,7 +596,17 @@ bool typesEqual(const ObjConcreteYargType* a, const ObjConcreteYargType* b) {
             if (!typesEqual(array_a->element_type, array_b->element_type)) return false;
             return array_a->cardinality == array_b->cardinality;
         }
-        // TODO: structs, maps, other complex types
+        if (a->yt == TypeStruct) {
+            assert(b->yt == TypeStruct);
+            const ObjConcreteYargTypeStruct* struct_a = (const ObjConcreteYargTypeStruct*)a;
+            const ObjConcreteYargTypeStruct* struct_b = (const ObjConcreteYargTypeStruct*)b;
+            if (struct_a->field_count != struct_b->field_count) return false;
+            for (size_t i = 0; i < struct_a->field_count; i++) {
+                if (!typesEqual(struct_a->field_types[i], struct_b->field_types[i])) return false;
+            }
+            return true;
+        }
+        // TODO: maps, other complex types
         return a->yt == b->yt;
     }
     return false;

@@ -43,6 +43,17 @@ bool is_nil(Value value) {
     }
 }
 
+Value concrete_typeof(Value a) {
+    if (IS_NIL(a)) {
+        return NIL_VAL;
+    } else if (IS_IMPL_OBJ(a)) {
+        fatalVMError("Unexpected object type");
+        return NIL_VAL;
+    } else {
+        return YARGTYPE_VAL(a.type);
+    }
+}
+
 Value duplicateValue(Value src) {
     if (IS_INT(src)) {
         ObjInt* rhs = AS_INTOBJ(src);

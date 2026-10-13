@@ -10,6 +10,7 @@
 // TypeFunction  |       |           |           | x             | x   | x   |
 // TypeRoutine   |       |           | %         | x             | x   | x   |
 // TypeChannel   |       |           | x         | x             | x   | x   |
+// TypeSyncGroup |       |           | x         | x             | x   | x   |
 // TypeMap       |       |           | x         | x             | x   | x   |
 // TypeYargType  |       |           |           |               | x   | x   |
 // TypeDouble    | x     | x         |           |               |     |     |
