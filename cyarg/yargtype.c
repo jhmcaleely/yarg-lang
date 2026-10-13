@@ -202,7 +202,7 @@ Value concrete_typeof(Value a) {
     }
 }
 
-bool is_nil_assignable_type(ObjConcreteYargType* type) {
+bool is_nil_assignable_type(const ObjConcreteYargType* type) {
     if (type == NULL) {
         return true;
     } else {
@@ -323,7 +323,7 @@ size_t yt_sizeof_type_storage(const ObjConcreteYargType* type) {
     }
 }
 
-size_t yt_alignmentfor_type_storage(ObjConcreteYargType* type) {
+size_t yt_alignmentfor_type_storage(const ObjConcreteYargType* type) {
     if (type == NULL) {
         return sizeof(Value);
     } else {
@@ -525,7 +525,7 @@ bool isInitialisableType(const ObjConcreteYargType* lhsType, Value rhsValue, Val
 }
 
 // this is a temporary measure, until we have a more complete hashing setup.
-bool isSupportedMapKeyType(ObjConcreteYargType* type) {
+bool isSupportedMapKeyType(const ObjConcreteYargType* type) {
     if (type != NULL) {
         switch (type->yt) {
             case TypeMap: {

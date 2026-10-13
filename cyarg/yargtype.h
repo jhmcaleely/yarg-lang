@@ -145,13 +145,13 @@ ObjConcreteYargType* newYargPointerType(const ObjConcreteYargType* targetType);
 size_t arrayElementOffset(const ObjConcreteYargTypeArray* arrayType, size_t index);
 const ObjConcreteYargType* arrayElementType(const ObjConcreteYargType* arrayType);
 
-bool is_nil_assignable_type(ObjConcreteYargType* type);
+bool is_nil_assignable_type(const ObjConcreteYargType* type);
 bool is_placeable_type(const ObjConcreteYargType* type);
 bool is_obj_yargtype(const ObjConcreteYargType* type);
 size_t yt_sizeof_type_storage(const ObjConcreteYargType* type);
-size_t yt_alignmentfor_type_storage(ObjConcreteYargType* type);
+size_t yt_alignmentfor_type_storage(const ObjConcreteYargType* type);
 
-bool isSupportedMapKeyType(ObjConcreteYargType* type);
+bool isSupportedMapKeyType(const ObjConcreteYargType* type);
 
 ObjString* typeToString(const ObjConcreteYargType* type);
 
