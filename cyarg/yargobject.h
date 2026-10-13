@@ -94,17 +94,9 @@ typedef struct {
     ValueTable fields;
 } ObjInstance;
 
-typedef struct ValueLocation {
-    bool placed;
-    union {
-        PlacedValuePtr placedValue;
-        Value* value;
-    };
-} ValueLocation;
-
 typedef struct ObjPackedValueContainer {
     Obj obj;
-    ValueLocation location;
+    void* loc;
 } ObjPackedValueContainer;
 
 typedef struct {
@@ -120,7 +112,7 @@ ObjInstance* newInstance(ObjClass* klass);
 ObjInt* allocateIntObject(size_t numDigits);
 
 // the underlying storage for pointers, structs and arrays (containers that contain potentially placed values)
-Value createPackedValueContainerAt(ValueLocation location, const ObjConcreteYargType* type);
+Value createPackedValueContainerAt(void* location, const ObjConcreteYargType* type);
 Value pinPackedValueContainer(Value packedValueContainer);
 
 Value defaultArrayValue(const ObjConcreteYargType* type);

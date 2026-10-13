@@ -54,7 +54,7 @@ bool readYargSourceBuiltin(ObjRoutine* routineContext, int argCount, Value* resu
         tempRootPush(byteBuffer);
 
         
-        readFileIntoBuffer(filename, AS_PACKEDVALUECONTAINER(byteBuffer)->location.placedValue.ui8, file_size);
+        readFileIntoBuffer(filename, AS_PACKEDVALUECONTAINER(byteBuffer)->loc, file_size);
 
         *result = byteBuffer;
 
@@ -163,7 +163,7 @@ bool loadBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
     if (isByteArray(arg)) {
         ObjPackedValueContainer* container = AS_PACKEDVALUECONTAINER(arg);
         const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*) arg.type;
-        uint8_t* buffer = (uint8_t*)container->location.placedValue.ui8;
+        uint8_t* buffer = (uint8_t*)container->loc;
         function = loadPackageFromBuffer(routineContext, buffer, arrayType->cardinality);
     } else if (IS_STRING(arg)) {
         const char* source = AS_CSTRING(arg);
@@ -413,7 +413,7 @@ bool peekBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
 
     uintptr_t nominal_address = 0;
     if (IS_POINTER(address)) {
-        nominal_address = (uintptr_t) AS_PACKEDVALUECONTAINER(address)->location.placedValue.ui32;
+        nominal_address = (uintptr_t) AS_PACKEDVALUECONTAINER(address)->loc;
     } else {
         nominal_address = AS_ADDRESS(address);
     }
@@ -502,13 +502,10 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
                && IS_NIL(peek(routineContext, 0)))
                || argCount == 0) {
         // make an 'any' cell, ie a heap allocated Value.
-        PlacedValue heapValue = allocPlacedValue(NULL);
+        PlacedValue heapValue = allocPackedValue(NULL);
         ObjConcreteYargType* pointerType = newYargPointerType(NULL);
         tempRootPush(YARGTYPE_VAL(pointerType));
-        ValueLocation location;
-        location.placed = false;
-        location.value = (Value*) heapValue.valuePtr.address;
-        *result = createPackedValueContainerAt(location, pointerType);
+        *result = createPackedValueContainerAt(heapValue.value, pointerType);
         tempRootPop();
         return true;
     }
@@ -520,14 +517,11 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
     ConcreteYargType typeRequested = AS_YARGTYPE(typeToCreate)->yt;
     switch (typeRequested) {
         case TypeBool: {
-            PlacedValue heapValue = allocPlacedValue(AS_YARGTYPE(typeToCreate));
+            PlacedValue heapValue = allocPackedValue(AS_YARGTYPE(typeToCreate));
             ObjConcreteYargType* pointerType = newYargPointerType(AS_YARGTYPE(typeToCreate));
             tempRootPush(YARGTYPE_VAL(pointerType));
-            ValueLocation location;
-            location.placed = false;
-            location.value = (Value*) heapValue.valuePtr.address;
-            *location.value = BOOL_VAL(false); // Initialize the value at the location
-            *result = createPackedValueContainerAt(location, pointerType);
+            *(Value*)heapValue.value = BOOL_VAL(false);
+            *result = createPackedValueContainerAt(heapValue.value, pointerType);
             tempRootPop();
             return true;
         }
@@ -544,10 +538,7 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
             PlacedValue heapValue = allocPlacedValue(AS_YARGTYPE(typeToCreate));
             ObjConcreteYargType* pointerType = newYargPointerType(AS_YARGTYPE(typeToCreate));
             tempRootPush(YARGTYPE_VAL(pointerType));
-            ValueLocation location;
-            location.placed = true;
-            location.placedValue = heapValue.valuePtr;
-            *result = createPackedValueContainerAt(location, pointerType);
+            *result = createPackedValueContainerAt(heapValue.value, pointerType);
             tempRootPop();
             return true;
         }
@@ -556,32 +547,16 @@ bool new_Builtin(ObjRoutine* routineContext, int argCount, Value* result) {
             return true;
 
         case TypeStruct: {
-            if (is_placeable_type(AS_YARGTYPE(typeToCreate))) {
-                PlacedValue heapValue = allocPlacedValue(AS_YARGTYPE(typeToCreate));
-                ObjConcreteYargType* pointerType = newYargPointerType(AS_YARGTYPE(typeToCreate));
-                tempRootPush(YARGTYPE_VAL(pointerType));
-                ValueLocation location;
-                location.placed = true;
-                location.placedValue = heapValue.valuePtr;
-                *result = createPackedValueContainerAt(location, pointerType);
-                tempRootPop();
-                return true;
-            } else {
-                Value newStruct = defaultStructValue(AS_YARGTYPE(typeToCreate));
-                tempRootPush(newStruct);
-                ObjPackedValueContainer* newStructCell = AS_PACKEDVALUECONTAINER(newStruct);
+            Value newStruct = defaultStructValue(AS_YARGTYPE(typeToCreate));
+            tempRootPush(newStruct);
+            ObjPackedValueContainer* newStructCell = AS_PACKEDVALUECONTAINER(newStruct);
 
-                ObjConcreteYargType* pointerType = newYargPointerType(AS_YARGTYPE(typeToCreate));
-                tempRootPush(YARGTYPE_VAL(pointerType));
-                ValueLocation locationPtr;
-                locationPtr.placed = false;
-                locationPtr.value = (Value*) newStructCell->location.value;
-                *result = createPackedValueContainerAt(locationPtr, pointerType);
-                tempRootPop();
-                tempRootPop();
-                return true;
-            }
-            break;
+            ObjConcreteYargType* pointerType = newYargPointerType(AS_YARGTYPE(typeToCreate));
+            tempRootPush(YARGTYPE_VAL(pointerType));
+            *result = createPackedValueContainerAt(newStructCell->loc, pointerType);
+            tempRootPop();
+            tempRootPop();
+            return true;
         }
         case TypeMap: {
             if (isSupportedMapKeyType(AS_YARGTYPE(typeToCreate))) {

@@ -17,7 +17,7 @@ typedef struct {
 } ValueCellTarget;
 
 typedef struct {
-    PlacedValuePtr valuePtr;
+    void* value;
     const ObjConcreteYargType* type;
     const ObjConcreteYargType* cellType;
 } PlacedValueCellTarget;

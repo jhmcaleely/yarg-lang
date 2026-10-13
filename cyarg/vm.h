@@ -58,7 +58,6 @@ InterpretResult bootXIP();
 
 InterpretResult run(ObjRoutine* routine);
 bool callfn(ObjRoutine* routine, ObjClosure* closure, int argCount);
-void fatalVMError(const char* format, ...);
 
 bool installPinnedRoutine(ObjRoutine* pinnedRoutine, uintptr_t* address);
 bool removePinnedRoutine(uintptr_t address);

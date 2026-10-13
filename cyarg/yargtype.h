@@ -4,7 +4,7 @@
 //               | Value | Placeable | Container | Parameterised | Obj | nil |
 // TypeBool      | x     |           |           |               |     |     |
 // TypeInt       | x     |           |           |               | x   |     |
-// TypePointer   |       |           | x         | x             | x   | x   |
+// TypePointer   |       | Packable* | x         | x             | x   | x   |
 // TypeClass     |       |           |           |               | x   | x   |
 // TypeInstance  |       |           |           | x             | x   | x   |
 // TypeFunction  |       |           |           | x             | x   | x   |
@@ -23,8 +23,8 @@
 // TypeUint64    | x     | x         |           |               |     |     |
 // TypeAddress   | x     | x         |           |               |     | $   |
 // TypeString    |       | !         |           |               | x   | x   |
-// TypeArray     | x     | *         | x         | x             | x   |     |
-// TypeStruct    | x     | *         | x         | x             | x   |     |
+// TypeArray     | x     | Packable  | x         | x             | x   |     |
+// TypeStruct    | x     | Packable  | x         | x             | x   |     |
 //
 // nil exists outside the set of types as an untyped special value. A location
 // that can contain any type can contain nil, and the 'nil' types above can also
@@ -33,13 +33,16 @@
 // Value - values are copied when passed. other types are 'pass by reference'
 // Placeable - has a platform defined layout in memory. Container types
 //             occupy linear memory suffient for all elements
+//  Packable - laid out linearly in memory, will be placeable if its contained 
+//             types are placeable.
+//  Packable* - Pointers will refer to packed type memory, or other types,
+//              similarly to a single element array, without allocating storage.
 // Container - storage for one-or-more elements of another type.
 // Parameterised - requires information to fully define the type, eg the
 //                 size of an array, or the types of its elements.
 // Obj - Always stored as a heap Obj(ect).
 //
 // ! will have a c-style string available
-// * placeable if it's contained types are placeable
 // % routines contain only functions
 // $ address 0 is distinct from nil, and nil cannot be assigned to address.
 
@@ -147,6 +150,7 @@ const ObjConcreteYargType* arrayElementType(const ObjConcreteYargType* arrayType
 
 bool is_nil_assignable_type(const ObjConcreteYargType* type);
 bool is_placeable_type(const ObjConcreteYargType* type);
+bool is_packable_container_type(const ObjConcreteYargType* type);
 bool is_obj_yargtype(const ObjConcreteYargType* type);
 size_t yt_sizeof_type_storage(const ObjConcreteYargType* type);
 size_t yt_alignmentfor_type_storage(const ObjConcreteYargType* type);

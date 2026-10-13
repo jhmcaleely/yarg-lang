@@ -1213,7 +1213,7 @@ InterpretResult run(ObjRoutine* routine) {
                 uintptr_t nominal_address = 0;
                 if (isUint32Pointer(location)) {
                     ObjPackedValueContainer* container = AS_PACKEDVALUECONTAINER(location);
-                    nominal_address = (uintptr_t) container->location.placedValue.ui32;
+                    nominal_address = (uintptr_t) container->loc;
                 }
                 else if (IS_ADDRESS(location))
                 {
@@ -1476,14 +1476,10 @@ InterpretResult run(ObjRoutine* routine) {
                     runtimeError(routine, "Value must be an address");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                ValueLocation valueLocation = {
-                    .placed = true,
-                    .placedValue = (PlacedValuePtr){ .ui32 = (uint32_t*) AS_ADDRESS(location) }
-                };
-
+                uintptr_t address = AS_ADDRESS(location);
                 const ObjConcreteYargType* pointerType = newYargPointerType(AS_YARGTYPE(type));
 
-                Value result = createPackedValueContainerAt(valueLocation, pointerType);
+                Value result = createPackedValueContainerAt((void*)address, pointerType);
 
                 pop(routine);
                 pop(routine);

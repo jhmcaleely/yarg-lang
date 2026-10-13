@@ -9,74 +9,109 @@
 #include "yargobject.h"
 
 Value getPlacedValue(PlacedValue placedStorage) {
-    Value value;
-    value.type = placedStorage.type;
-    switch (placedStorage.type->yt) {
-        case TypeDouble: value.as.dbl = *placedStorage.valuePtr.dbl; break;
-        case TypeInt8: value.as.i8 = *placedStorage.valuePtr.i8; break;
-        case TypeUint8: value.as.ui8 = *placedStorage.valuePtr.ui8; break;
-        case TypeInt16: value.as.i16 = *placedStorage.valuePtr.i16; break;
-        case TypeUint16: value.as.ui16 = *placedStorage.valuePtr.ui16; break;
-        case TypeInt32: value.as.i32 = *placedStorage.valuePtr.i32; break;
-        case TypeUint32: value.as.ui32 = *placedStorage.valuePtr.ui32; break;
-        case TypeInt64: value.as.i64 = *placedStorage.valuePtr.i64; break;
-        case TypeUint64: value.as.ui64 = *placedStorage.valuePtr.ui64; break;
-        case TypeAddress: value.as.address = *placedStorage.valuePtr.address; break;
 
-        case TypePointer:
-        case TypeStruct:
-        case TypeArray: {
-            ValueLocation location;
-            location.placedValue = placedStorage.valuePtr;
-            value = createPackedValueContainerAt(location, placedStorage.type);
+    if (is_packable_container_type(placedStorage.type)) {
+        return createPackedValueContainerAt(placedStorage.value, placedStorage.type);
+    } else if (is_placeable_type(placedStorage.type)) {
+        Value value = NIL_VAL;
+        value.type = placedStorage.type;
+        if (placedStorage.type == &yargTypes.dbl) {
+            value.as.dbl = *(double*) placedStorage.value;
+        } else if (placedStorage.type == &yargTypes.int8) {
+            value.as.i8 = *(int8_t*) placedStorage.value;
+        } else if (placedStorage.type == &yargTypes.uint8) {
+            value.as.ui8 = *(uint8_t*) placedStorage.value;
+        } else if (placedStorage.type == &yargTypes.int16) {
+            value.as.i16 = *(int16_t*) placedStorage.value;
+        } else if (placedStorage.type == &yargTypes.uint16) {
+            value.as.ui16 = *(uint16_t*) placedStorage.value;
+        } else if (placedStorage.type == &yargTypes.int32) {
+            value.as.i32 = *(int32_t*) placedStorage.value;
+        } else if (placedStorage.type == &yargTypes.uint32) {
+            value.as.ui32 = *(uint32_t*) placedStorage.value;
+        } else if (placedStorage.type == &yargTypes.int64) {
+            value.as.i64 = *(int64_t*) placedStorage.value;
+        } else if (placedStorage.type == &yargTypes.uint64) {
+            value.as.ui64 = *(uint64_t*) placedStorage.value;
+        } else if (placedStorage.type == &yargTypes.address) {
+            value.as.address = *(uintptr_t*) placedStorage.value;
+        } else {
+            fatalVMError("Unsupported placeable type: %s", placedStorage.type->yt);
         }
-        break;
-        default: yarg_panic(); break;
+        return value;
+    } else {
+        fatalVMError("Unsupported non-placeable type: %s", placedStorage.type->yt);
     }
-    return value;   
+    return NIL_VAL;
 }
+
+
 
 PlacedValue allocPlacedValue(const ObjConcreteYargType* type) {
-    PlacedValue placed;
-    size_t storage_required = yt_sizeof_type_storage(type);
-    placed.valuePtr.address = (uintptr_t*) malloc(storage_required);
-    memset(placed.valuePtr.address, 0, storage_required);
-    placed.type = type;
-    return placed;
+    if (!is_placeable_type(type)) {
+        fatalVMError("Cannot allocate placed value for non-placeable type: %s", type->yt);
+        return (PlacedValue){.type = type, .value = NULL};
+    } else {
+       PlacedValue placed;
+        size_t storage_required = yt_sizeof_type_storage(type);
+        placed.value = malloc(storage_required);
+        memset(placed.value, 0, storage_required);
+        placed.type = type;
+        return placed;
+    }
 }
 
-PlacedValue createPlacedValue(uintptr_t ptr, const ObjConcreteYargType* type) {
-    PlacedValue placed;
-    placed.valuePtr.address = (uintptr_t*) ptr;
-    placed.type = type;
-    return placed;
+PlacedValue allocPackedValue(const ObjConcreteYargType* type) {
+    if (is_packable_container_type(type)) {
+        PlacedValue placed;
+        size_t storage_required = yt_sizeof_type_storage(type);
+        placed.value = malloc(storage_required);
+        // TODO: broken for structs with non-trivial initialization
+        memset(placed.value, 0, storage_required);
+        placed.type = type;
+        return placed;
+    } else if (is_placeable_type(type)) {
+        return allocPlacedValue(type);
+    } else {
+        if (yt_sizeof_type_storage(type) != sizeof(Value)) {
+            fatalVMError("Expected Value storage for %d", type->yt);
+            return (PlacedValue){.type = type, .value = NULL};
+        }
+        Value typeVal = type ? YARGTYPE_VAL(type) : NIL_VAL;
+        Value* rhsValuePtr = malloc(sizeof(Value));
+        *rhsValuePtr = defaultValue(typeVal);
+
+        PlacedValue placed;
+        placed.value = rhsValuePtr;
+        placed.type = type;
+        return placed;
+    }
 }
 
 void assignToPlacedValue(PlacedValueCellTarget lhs, Value rhs) {
     if (IS_I8(rhs)) {
-        *lhs.valuePtr.i8 = rhs.as.i8;
+        *(int8_t*)lhs.value = rhs.as.i8;
     } else if (IS_UI8(rhs)) {
-        *lhs.valuePtr.ui8 = rhs.as.ui8;
+        *(uint8_t*)lhs.value = rhs.as.ui8;
     } else if (IS_I16(rhs)) {
-        *lhs.valuePtr.i16 = rhs.as.i16;
+        *(int16_t*)lhs.value = rhs.as.i16;
     } else if (IS_UI16(rhs)) {
-        *lhs.valuePtr.ui16 = rhs.as.ui16;
+        *(uint16_t*)lhs.value = rhs.as.ui16;
     } else if (IS_I32(rhs)) {
-        *lhs.valuePtr.i32 = rhs.as.i32;
+        *(int32_t*)lhs.value = rhs.as.i32;
     } else if (IS_UI32(rhs)) {
-        *lhs.valuePtr.ui32 = rhs.as.ui32;
+        *(uint32_t*)lhs.value = rhs.as.ui32;
     } else if (IS_I64(rhs)) {
-        *lhs.valuePtr.i64 = rhs.as.i64;
+        *(int64_t*)lhs.value = rhs.as.i64;
     } else if (IS_UI64(rhs)) {
-        *lhs.valuePtr.ui64 = rhs.as.ui64;
+        *(uint64_t*)lhs.value = rhs.as.ui64;
     } else if (IS_ADDRESS(rhs)) {
-        *lhs.valuePtr.address = rhs.as.address;
+        *(uintptr_t*)lhs.value = rhs.as.address;
     } else if (IS_DOUBLE(rhs)) {
-        *lhs.valuePtr.dbl = rhs.as.dbl;
+        *(double*)lhs.value = rhs.as.dbl;
     } else {
         // TODO: review struct, array, and pointer handling
-        assert(false && "Unhandled type in assignToPlacedValueCellTarget");
-        yarg_panic();
+        fatalVMError("Unhandled type in assignToPlacedValueCellTarget");
     }
 }
 

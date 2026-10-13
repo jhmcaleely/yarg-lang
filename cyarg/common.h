@@ -9,6 +9,6 @@
 
 #include "print.h"
 
-void yarg_panic(void);
+void fatalVMError(const char* format, ...);
 
 #endif

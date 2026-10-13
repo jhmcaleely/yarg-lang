@@ -70,7 +70,7 @@ Value duplicateValue(Value src) {
         size_t storage_required = yt_sizeof_type_storage((const ObjConcreteYargType*) structType);
         ObjPackedValueContainer* container = AS_PACKEDVALUECONTAINER(src);
         ObjPackedValueContainer* newContainer = AS_PACKEDVALUECONTAINER(newStruct);
-        memcpy(newContainer->location.placedValue.address, container->location.placedValue.address, storage_required);
+        memcpy(newContainer->loc, container->loc, storage_required);
         tempRootPop();
         return newStruct;
     } else {
@@ -209,12 +209,10 @@ static ObjString* pointerToString(Value ptrVal) {
     ObjString* working = concatenateStrings(prefix, targetTypeStr);
     tempRootPush(STRING_VAL(working));
 
-    void* targetAddress = ptr->location.placed ? (void*)ptr->location.placedValue.address : ptr->location.value;
-    
     int length = working->length + 12;
     char* chars = ALLOCATE(char, length + 1);
     memcpy(chars, working->chars, working->length);
-    snprintf(chars + working->length, 12 + 1, ":%p>", targetAddress);
+    snprintf(chars + working->length, 12 + 1, ":%p>", ptr->loc);
 
     ObjString* result = takeString(chars, length);
     tempRootPop();
