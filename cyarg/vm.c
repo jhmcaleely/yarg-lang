@@ -468,8 +468,10 @@ static bool setAnArrayElement(ObjRoutine* routine, Value arrayVal, Value indexVa
 
     size_t index = as_positive_integer(indexVal);
 
-    if (index >= arrayCardinality(arrayVal.type)) {
-        runtimeError(routine, "Array index %zu out of bounds (0:%zu)", index, arrayCardinality(arrayVal.type) - 1);
+    const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*)arrayVal.type;
+
+    if (index >= arrayType->cardinality) {
+        runtimeError(routine, "Array index %zu out of bounds (0:%zu)", index, arrayType->cardinality - 1);
         return false;
     }
 

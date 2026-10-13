@@ -163,9 +163,8 @@ bool loadBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
     if (isByteArray(arg)) {
         ObjPackedValueContainer* container = AS_PACKEDVALUECONTAINER(arg);
         const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*) arg.type;
-        size_t cardinality = arrayCardinality((const ObjConcreteYargType*)arrayType);
         uint8_t* buffer = (uint8_t*)container->location.placedValue.ui8;
-        function = loadPackageFromBuffer(routineContext, buffer, cardinality);
+        function = loadPackageFromBuffer(routineContext, buffer, arrayType->cardinality);
     } else if (IS_STRING(arg)) {
         const char* source = AS_CSTRING(arg);
         function = compile(source);

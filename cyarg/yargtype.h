@@ -110,7 +110,8 @@ typedef struct {
     ObjConcreteYargType integer;
 
     ObjConcreteYargType implementation_obj; // only the address matters.
-    // TODO:temp
+
+    // TODO: review as more types have complete implementations.
     ObjConcreteYargType function;
     ObjConcreteYargType routine;
     ObjConcreteYargType channel;
@@ -122,18 +123,18 @@ extern SimpleYargTypes yargTypes;
 typedef struct ObjConcreteYargTypeArray {
     ObjConcreteYargType core;
     size_t cardinality;
-    ObjConcreteYargType* element_type;
+    const ObjConcreteYargType* element_type;
 } ObjConcreteYargTypeArray;
 
 typedef struct ObjConcreteYargTypePointer {
     ObjConcreteYargType core;
-    ObjConcreteYargType* target_type;
+    const ObjConcreteYargType* target_type;
 } ObjConcreteYargTypePointer;
 
 typedef struct ObjConcreteYargTypeMap {
     ObjConcreteYargType core;
-    ObjConcreteYargType* key_type;
-    ObjConcreteYargType* value_type;
+    const ObjConcreteYargType* key_type;
+    const ObjConcreteYargType* value_type;
 } ObjConcreteYargTypeMap;
 
 ObjConcreteYargType* newYargTypeFromType(ConcreteYargType yt);
@@ -142,9 +143,7 @@ ObjConcreteYargType* newYargArrayTypeFromType(const ObjConcreteYargType* element
 ObjConcreteYargType* newYargPointerType(const ObjConcreteYargType* targetType);
 
 size_t arrayElementOffset(const ObjConcreteYargTypeArray* arrayType, size_t index);
-size_t arrayElementSize(const ObjConcreteYargTypeArray* arrayType);
-ObjConcreteYargType* arrayElementType(const ObjConcreteYargTypeArray* arrayType);
-size_t arrayCardinality(const ObjConcreteYargType* arrayType);
+const ObjConcreteYargType* arrayElementType(const ObjConcreteYargType* arrayType);
 
 bool is_nil_assignable_type(ObjConcreteYargType* type);
 bool is_placeable_type(const ObjConcreteYargType* type);

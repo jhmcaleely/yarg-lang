@@ -112,16 +112,12 @@ ObjConcreteYargType* newYargArrayTypeFromType(const ObjConcreteYargType* element
     return (ObjConcreteYargType*)t;
 }
 
-ObjConcreteYargType* arrayElementType(const ObjConcreteYargTypeArray* arrayType) {
-    return arrayType->element_type;
+const ObjConcreteYargType* arrayElementType(const ObjConcreteYargType* arrayType) {
+    return ((const ObjConcreteYargTypeArray*)arrayType)->element_type;
 }
 
 size_t arrayElementOffset(const ObjConcreteYargTypeArray* arrayType, size_t index) {
-    return index * arrayElementSize(arrayType);
-}
-
-size_t arrayElementSize(const ObjConcreteYargTypeArray* arrayType) {
-    return yt_sizeof_type_storage(arrayElementType(arrayType));
+    return index * yt_sizeof_type_storage(arrayElementType((const ObjConcreteYargType*)arrayType));
 }
 
 size_t arrayCardinality(const ObjConcreteYargType* arrayType) {
@@ -258,8 +254,7 @@ bool is_placeable_type(const ObjConcreteYargType* type) {
             case TypeUint64: return true;
             case TypeDouble: return true;
             case TypeArray: {
-                const ObjConcreteYargTypeArray* ct = (const ObjConcreteYargTypeArray*)type;
-                ObjConcreteYargType* elementType = arrayElementType(ct);
+                const ObjConcreteYargType* elementType = arrayElementType(type);
                 return is_placeable_type(elementType);
             }
             case TypeStruct: {
@@ -310,7 +305,7 @@ size_t yt_sizeof_type_storage(const ObjConcreteYargType* type) {
         }
         case TypeArray: {
             const ObjConcreteYargTypeArray* array = (const ObjConcreteYargTypeArray*)type;
-            return arrayElementSize(array) * array->cardinality;
+            return yt_sizeof_type_storage(arrayElementType(type)) * array->cardinality;
         }
         case TypePointer:
         case TypeInt:
@@ -360,8 +355,7 @@ size_t yt_alignmentfor_type_storage(ObjConcreteYargType* type) {
             return st->alignment;
         }
         case TypeArray: {
-            const ObjConcreteYargTypeArray* array = (const ObjConcreteYargTypeArray*)type;
-            ObjConcreteYargType* elementType = array->element_type;
+            const ObjConcreteYargType* elementType = arrayElementType(type);
             return yt_alignmentfor_type_storage(elementType);
         }
         case TypeInt:
