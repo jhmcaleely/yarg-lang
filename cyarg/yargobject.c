@@ -302,6 +302,12 @@ Value pointerDestination(Value pointer) {
         store.valuePtr.address = (uintptr_t*) addr;
         store.type = pointerType->target_type;
         return getPlacedValue(store);
+    } else if (pointerType->target_type && pointerType->target_type->yt == TypeStruct) {
+        return createPackedValueContainerAt(container->location, pointerType->target_type);
+    } else if (pointerType->target_type && pointerType->target_type->yt == TypeArray) {
+        return createPackedValueContainerAt(container->location, pointerType->target_type);
+    } else if (pointerType->target_type && pointerType->target_type->yt == TypePointer) {
+        return createPackedValueContainerAt(container->location, pointerType->target_type);
     } else {
         return *(Value*) addr;
     }
