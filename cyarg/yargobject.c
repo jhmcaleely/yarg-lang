@@ -334,9 +334,10 @@ static bool setPlacedContainerElement(const ObjConcreteYargType* element_type, u
 
         return assignToPlacedValueCellTarget(pvct, value);
     } else {
-        ValueCellTarget vct;
-        vct.cellType = element_type;
-        vct.value = (Value*) elementAddr;
+        ValueCellTarget vct = { 
+            .cellType = element_type, 
+            .value = (Value*) elementAddr 
+        };
 
         return assignToValueCellTarget(vct, value);
     }
