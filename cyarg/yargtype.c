@@ -340,17 +340,9 @@ size_t yt_alignmentfor_type_storage(const ObjConcreteYargType* type) {
     }
 }
 
-static bool isAssignableCardinality(size_t lhsCardinality, size_t rhsCardinality) {
-    if (lhsCardinality == 0) {
-        return true;
-    } else {
-        return lhsCardinality == rhsCardinality;
-    }
-}
-
 static bool isInitializableArray(ObjConcreteYargTypeArray* lhsConcreteType, ObjConcreteYargTypeArray* rhsConcreteType) {
 
-    if (isAssignableCardinality(lhsConcreteType->cardinality, rhsConcreteType->cardinality)) {
+    if (lhsConcreteType->cardinality == rhsConcreteType->cardinality) {
         if (lhsConcreteType->element_type == NULL) {
             return true;
         } else if (lhsConcreteType->element_type == NULL && rhsConcreteType->element_type == NULL) {
@@ -358,7 +350,7 @@ static bool isInitializableArray(ObjConcreteYargTypeArray* lhsConcreteType, ObjC
         } else if (rhsConcreteType->element_type == NULL) {
             return false;
         } else {
-            return lhsConcreteType->element_type->yt == rhsConcreteType->element_type->yt;
+            return typesEqual(lhsConcreteType->element_type, rhsConcreteType->element_type);
         }
     } else {
         return false;
@@ -451,7 +443,7 @@ bool isInitialisableType(const ObjConcreteYargType* lhsType, Value rhsValue, Val
                 }
             }
         }
-        return lhsType->yt == rhsConcreteType->yt;
+        return typesEqual(lhsType, rhsConcreteType);
     }
 }
 
