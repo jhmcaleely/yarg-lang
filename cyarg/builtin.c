@@ -501,7 +501,7 @@ Value createPointerAndTarget(const ObjConcreteYargType* targetType) {
     Value targetVal = newPackedValueContainer(targetType);
     ObjPackedContainer* targetContainer = AS_PACKEDCONTAINER(targetVal);
 
-    Value pointerVal = createPackedValueContainerAt(targetContainer->loc, pointerType);
+    Value pointerVal = createPackedContainerFor(targetContainer, 0, pointerType);
     tempRootPop();
     return pointerVal;
 }

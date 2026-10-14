@@ -34,6 +34,7 @@ void freePackedStorage(ObjPackedStorage* storage);
 
 Value newPackedValueContainer(const ObjConcreteYargType* type);
 Value createPackedValueContainerAt(void* location, const ObjConcreteYargType* type);
+Value createPackedContainerFor(ObjPackedContainer* container, size_t offset, const ObjConcreteYargType* type);
 
 Value pinPackedValueContainer(Value packedValueContainer);
 

@@ -289,12 +289,6 @@ Value duplicatePointer(Value pointer) {
     return pointer;
 }
 
-Value createPackedValueContainerAt(void* location, const ObjConcreteYargType* type) {
-    ObjPackedContainer* container = ALLOCATE_OBJ(ObjPackedContainer, OBJ_UNOWNED_PACKEDCONTAINER);
-    container->loc = location;
-    return TYPED_VAL(container, type);
-}
-
 Value newPackedValueContainer(const ObjConcreteYargType* type) {
     ObjOwningPackedContainer* container = ALLOCATE_OBJ(ObjOwningPackedContainer, OBJ_PACKEDCONTAINER);
     tempObjRootPush((Obj*)container);
@@ -303,6 +297,32 @@ Value newPackedValueContainer(const ObjConcreteYargType* type) {
     container->container.loc = &container->storage->storage[0];
     tempRootPop();
     return TYPED_VAL(container, type);
+}
+
+Value newPackedValueContainerFor(ObjOwningPackedContainer* owningContainer, size_t offset, const ObjConcreteYargType* type) {
+    ObjOwningPackedContainer* newContainer = ALLOCATE_OBJ(ObjOwningPackedContainer, OBJ_PACKEDCONTAINER);
+    newContainer->storage = owningContainer->storage;
+    void* targetLocation = (void*) ((uintptr_t) owningContainer->container.loc + offset);
+    newContainer->container.loc = targetLocation;
+    return TYPED_VAL(newContainer, type);
+}
+
+Value createPackedValueContainerAt(void* location, const ObjConcreteYargType* type) {
+    ObjPackedContainer* container = ALLOCATE_OBJ(ObjPackedContainer, OBJ_UNOWNED_PACKEDCONTAINER);
+    container->loc = location;
+    return TYPED_VAL(container, type);
+}
+
+Value createPackedContainerFor(ObjPackedContainer* container, size_t offset, const ObjConcreteYargType* type) {
+    Obj* object = (Obj*) container;
+    assert(object && (object->type == OBJ_PACKEDCONTAINER || object->type == OBJ_UNOWNED_PACKEDCONTAINER));
+    if (object->type == OBJ_UNOWNED_PACKEDCONTAINER) {
+        return createPackedValueContainerAt((void*) ((uintptr_t) container->loc + offset), type);
+    } else {
+        assert(object->type == OBJ_PACKEDCONTAINER);
+        ObjOwningPackedContainer* owningContainer = (ObjOwningPackedContainer*) container;
+        return newPackedValueContainerFor(owningContainer, offset, type);
+    }
 }
 
 Value pinPackedValueContainer(Value packedValueContainer) {
@@ -365,14 +385,14 @@ Value containerElement(ObjPackedContainer* container, const ObjConcreteYargType*
     void* elementAddr = (void*) ((uintptr_t) container->loc + element_offset);
 
     if (is_placeable_type(element_type) && is_packable_container_type(element_type)) {
-        return createPackedValueContainerAt(elementAddr, element_type);
+        return createPackedContainerFor(container, element_offset, element_type);
     } else if (is_placeable_type(element_type)) {
         PlacedValue store;
         store.value = (void*) elementAddr;
         store.type = element_type;
         return getPlacedValue(store);
     } else if (is_packable_container_type(element_type)) {
-        return createPackedValueContainerAt(elementAddr, element_type);
+        return createPackedContainerFor(container, element_offset, element_type);
     } else {
         return *(Value*) elementAddr;
     }
@@ -381,16 +401,15 @@ Value containerElement(ObjPackedContainer* container, const ObjConcreteYargType*
 Value arrayElement(Value array, size_t index) {
     const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*) array.type;
     size_t element_offset = arrayElementOffset(arrayType, index);
-    
+
     return containerElement(AS_PACKEDCONTAINER(array), arrayType->element_type, element_offset);
 }
 
 Value containerElementPointer(ObjPackedContainer* container, const ObjConcreteYargType* element_type, size_t element_offset) {
-    void* elementAddr = (void*) ((uintptr_t) container->loc + element_offset);
     const ObjConcreteYargType* ptrType = newYargPointerType(element_type);
     tempRootPush(YARGTYPE_VAL(ptrType));
 
-    Value result = createPackedValueContainerAt(elementAddr, ptrType);
+    Value result = createPackedContainerFor(container, element_offset, ptrType);
     tempRootPop();
     return result;
 }

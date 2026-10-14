@@ -107,8 +107,6 @@ Value concrete_typeof(Value a);
 
 bool isAddressValue(Value value);
 
-Obj* destinationObject(Value pointer);
-
 bool isObjType(Value value, ObjType type);
 bool isObjValue(Value value);
 
