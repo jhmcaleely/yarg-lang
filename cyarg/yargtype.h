@@ -11,7 +11,7 @@
 // TypeRoutine   |       |           | %         | x             | x   | x   |
 // TypeChannel   |       |           | x         | x             | x   | x   |
 // TypeSyncGroup |       |           | x         | x             | x   | x   |
-// TypeMap       |       |           | x         | x             | x   | x   |
+// TypeMap       | +     |           | x         | x             | x   | +   |
 // TypeYargType  |       |           |           |               | x   | x   |
 // TypeDouble    | x     | x         |           |               |     |     |
 // TypeInt8      | x     | x         |           |               |     |     |
@@ -24,7 +24,7 @@
 // TypeUint64    | x     | x         |           |               |     |     |
 // TypeAddress   | x     | x         |           |               |     | $   |
 // TypeString    |       | !         |           |               | x   | x   |
-// TypeArray     | x     | Packable  | x         | x             | x   |     |
+// TypeArray     | +     | Packable  | x         | x             | x   | +   |
 // TypeStruct    | x     | Packable  | x         | x             | x   |     |
 //
 // nil exists outside the set of types as an untyped special value. A location
@@ -46,6 +46,7 @@
 // ! will have a c-style string available
 // % routines contain only functions
 // $ address 0 is distinct from nil, and nil cannot be assigned to address.
+// + both Array and Map will become value types as the implementation is completed.
 
 #include "object.h"
 

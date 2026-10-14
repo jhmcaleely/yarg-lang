@@ -7,9 +7,13 @@
  *
  * These functions will call the underlying malloc & free functions from the C standard library
  * or other allocator.
+ * 
+ * reallocate() will examine the current memory usage and determine if garbage collection is 
+ * necessary before allocating new memory. It currently uses a mark-and-sweep garbage collection 
+ * strategy.
  *
- * For all memory allocated to an Obj instance, free will be called automatically when the object
- * is no longer referenced.
+ * Therefore for all memory allocated to an Obj instance, free will be called automatically 
+ * when the object is no longer referenced.
  *
  * Obj instances are tracked in two places. All instances can be traversed, by the linked
  * list formed from the next member of Obj.
