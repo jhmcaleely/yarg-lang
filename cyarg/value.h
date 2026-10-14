@@ -12,6 +12,8 @@ typedef struct ObjString ObjString;
 typedef struct ObjRoutine ObjRoutine;
 typedef struct ObjConcreteYargType ObjConcreteYargType;
 
+// All Yarg values (including nil) can be stored in a Value, and all
+// Yarg values are typed (except nil which exists outside the type system)
 typedef struct {
     const ObjConcreteYargType* type;
     AnyValue as;
@@ -19,6 +21,10 @@ typedef struct {
 
 // placed values exist with a defined memory layout, so the
 // type information is stored separately from the value itself.
+// Note that placed values are a subset of all values, and 
+// specifically exclude nil.
+// Note: elsewhere, a NULL 'const ObjConcreteYargType*' indicates 
+/// the 'any' type, and is invalid for placed values.
 typedef struct {
     void* value;
     const ObjConcreteYargType* type;
