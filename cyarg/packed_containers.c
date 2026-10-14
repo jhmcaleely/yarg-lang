@@ -381,6 +381,7 @@ Value containerElement(ObjPackedContainer* container, const ObjConcreteYargType*
 Value arrayElement(Value array, size_t index) {
     const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*) array.type;
     size_t element_offset = arrayElementOffset(arrayType, index);
+    
     return containerElement(AS_PACKEDCONTAINER(array), arrayType->element_type, element_offset);
 }
 
@@ -409,27 +410,13 @@ Value structFieldPointer(Value structVal, size_t fieldIndex) {
 Value pointerDestination(Value pointer) {
     const ObjConcreteYargTypePointer* pointerType = (const ObjConcreteYargTypePointer*) pointer.type;
 
-    ObjPackedContainer* container = AS_PACKEDCONTAINER(pointer);
-    uintptr_t addr = (uintptr_t) container->loc;
-
-    if (is_placeable_type(pointerType->target_type) && is_packable_container_type(pointerType->target_type)) {
-        return createPackedValueContainerAt((void*) addr, pointerType->target_type);
-    } else if (is_placeable_type(pointerType->target_type)) {
-        PlacedValue store;
-        store.value = (void*) addr;
-        store.type = pointerType->target_type;
-        return getPlacedValue(store);
-    } else if (is_packable_container_type(pointerType->target_type)) {
-        return createPackedValueContainerAt((void*) addr, pointerType->target_type);
-    } else {
-        return *(Value*) addr;
-    }
+    return containerElement(AS_PACKEDCONTAINER(pointer), pointerType->target_type, 0);
 }
-
 
 Value structField(Value structVal, size_t fieldIndex) {
     const ObjConcreteYargTypeStruct* structType = (const ObjConcreteYargTypeStruct*) structVal.type;
     size_t field_offset = structFieldOffset(structType, fieldIndex);
+
     return containerElement(AS_PACKEDCONTAINER(structVal), structType->field_types[fieldIndex], field_offset);
 }
 
