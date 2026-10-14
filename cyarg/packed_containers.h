@@ -78,7 +78,6 @@ bool isUint32Pointer(Value val);
 #define IS_POINTER(value)      is_pointer(value)
 #define IS_STRUCT(value)       is_struct(value)
 
-ObjPackedStorage* newPackedStorage(const ObjConcreteYargType* type);
 void markPackedStorage(ObjPackedStorage* storage);
 void freePackedStorage(ObjPackedStorage* storage);
 
@@ -87,8 +86,6 @@ Value createPackedValueContainerAt(void* location, const ObjConcreteYargType* ty
 Value createPackedContainerFor(ObjPackedContainer* container, size_t offset, const ObjConcreteYargType* type);
 
 Value pinPackedValueContainer(Value packedValueContainer);
-
-void setDefaultPackedContainerValues(void* location, const ObjConcreteYargType* type);
 
 Value defaultArrayValue(const ObjConcreteYargType* type);
 Value defaultStructValue(const ObjConcreteYargType* type);

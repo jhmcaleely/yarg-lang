@@ -9,6 +9,10 @@ typedef struct {
     const ObjConcreteYargType* type;
 } PlacedValue;
 
+// not implemented - all placed values have 
+// default value of 0, and our poilcy of
+// zeroing all memory ensures that placed values are 
+// initialized to their default state.
 void setDefaultPlacedValue(PlacedValue value);
 
 Value getPlacedValue(PlacedValue placedStorage);

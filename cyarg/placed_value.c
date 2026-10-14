@@ -44,12 +44,6 @@ Value getPlacedValue(PlacedValue placedStorage) {
     return NIL_VAL;
 }
 
-void setDefaultPlacedValue(PlacedValue value) {
-    assert(is_placeable_type(value.type));
-    size_t storage_size = yt_sizeof_type_storage(value.type);
-    memset(value.value, 0, storage_size);
-}
-
 void setPlacedValue(PlacedValue lhs, Value rhs) {
     if (IS_I8(rhs)) {
         *(int8_t*)lhs.value = rhs.as.i8;

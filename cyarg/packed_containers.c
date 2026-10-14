@@ -19,6 +19,8 @@ typedef struct ObjPackedStorage {
     uint8_t storage[];
 } ObjPackedStorage;
 
+ObjPackedStorage* newPackedStorage(const ObjConcreteYargType* type);
+
 size_t yt_packable_element_count(const ObjConcreteYargType* type) {
     if (type && type->yt == TypeArray) {
         const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*) type;
@@ -216,37 +218,6 @@ bool pointersEqual(Value a, Value b) {
     ObjPackedContainer* container_b = AS_PACKEDCONTAINER(b);
     return container_a->loc == container_b->loc;
 }
-
-void setDefaultPackedContainerValues(void* location, const ObjConcreteYargType* type) {
-    if (type->yt == TypeArray) {
-        ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) type;  
-        for (size_t i = 0; i < arrayType->cardinality; i++) {
-            size_t elementOffset = arrayElementOffset(arrayType, i);
-            void* elementLocation = (void*)((uintptr_t)location + elementOffset);
-            if (is_placeable_type(arrayType->element_type)) {
-                setDefaultPlacedValue((PlacedValue){.type = arrayType->element_type, .value = elementLocation});
-            } else {
-                Value elementTypeVal = arrayType->element_type ? YARGTYPE_VAL(arrayType->element_type) : NIL_VAL;
-                *(Value*)elementLocation = defaultValue(elementTypeVal);
-            }
-        }
-    } else if (type->yt == TypeStruct) {
-        ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*) type;
-        for (size_t i = 0; i < structType->field_count; i++) {
-            size_t fieldOffset = structType->field_indexes[i];
-            void* fieldLocation = (void*)((uintptr_t)location + fieldOffset);
-            if (is_placeable_type(structType->field_types[i])) {
-                setDefaultPlacedValue((PlacedValue){.type = structType->field_types[i], .value = fieldLocation});
-            } else {
-                Value fieldTypeVal = structType->field_types[i] ? YARGTYPE_VAL(structType->field_types[i]) : NIL_VAL;
-                *(Value*)fieldLocation = defaultValue(fieldTypeVal);
-            }
-        }
-    } else {
-        fatalVMError("Unsupported packed container type: %d", type->yt);
-    }
-}
-
 
 Value defaultArrayValue(const ObjConcreteYargType* type) {
 
