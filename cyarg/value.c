@@ -277,7 +277,6 @@ static ObjString* structToString(Value stVal) {
 
 
 ObjString* valueToString(Value value) {
-    ObjString* string = NULL;
 
     if (is_nil(value)) {
         return copyString("nil", 3);

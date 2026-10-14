@@ -168,16 +168,42 @@ void markTable(ValueTable* table) {
     }
 }
 
+void printTable(ValueTable* table) {
+    FPRINTMSG(stderr, "ValueTable %p (%d:%d)\n", table, table->capacity, table->count);
+    for (int i = 0; i < table->capacity; i++) {
+        Entry* entry = &table->entries[i];
+        if (entry->key != NULL) {
+            FPRINTMSG(stderr, "  [");
+            fprintValue(stderr, STRING_VAL((Obj*)entry->key));
+            FPRINTMSG(stderr, "] = ");
+            if (!IS_NIL(entry->value)) {
+                fprintValue(stderr, entry->value);
+            } else {
+                FPRINTMSG(stderr, "nil");
+            }
+            FPRINTMSG(stderr, "\n");
+        }
+    }
+}
+
 bool tableInvariant(ValueTable* table) {
     // Check that the count of entries matches the number of non-NULL keys.
     if (table->capacity == 0) return table->count == 0;
 
-    int actualCount = 0;
+    size_t actualCount = 0;
+    size_t tombCount = 0;
     for (int i = 0; i < table->capacity; i++) {
         Entry* entry = &table->entries[i];
         if (entry->key != NULL) actualCount++;
+        if (entry->key == NULL && valuesEqual(entry->value, BOOL_VAL(true))) tombCount++;
     }
-    return actualCount == table->count;
+
+    if ((actualCount + tombCount) != table->count) {
+        printTable(table);
+        return false;
+    } else {
+        return true;
+    }
 }
 
 void initCellTable(ValueCellTable* table) {

@@ -3,7 +3,55 @@
 
 #include "value.h"
 
-// the underlying storage for pointers, structs and arrays (packed containers that contain potentially placed values)
+// Yarg has two container types that can be placed if they constain only placeable elements.
+// Additionally, the pointer type is built to support placed values, and it acts as a container
+// type that has only a single element.
+//
+// In order to support a predictable memory layout when placed, with only one container implementation, 
+// all instances of structs, arrays and pointers refer to elements that are 'packed'. They exist in 
+// the underlying storage as a flat sequence of elements. When not 'placeable', the storage currently
+// defaults to a Value, but in future it may support more efficient storage for non-placeable elements.
+//
+// two examples:
+// var uint32[2] a; // an array of two uint32 elements
+// 0 +----+
+//   |    | a[0]
+// 4 +----+
+//   |    | a[1]
+// 8 +----+
+// 
+// var struct { uint32 a; uint64 b; }[2] s1; // an array of two structs, each with a uint32 and a uint64 field
+//  0 +----+
+//    |    | s1[0].a
+//  8 +----+        // note alignment due to uint64 field
+//    |    | s1[0].b
+// 16 +----+
+//    |    | s1[1].a
+// 24 +----+
+//    |    | s1[1].b
+// 32 +----+
+//
+// var struct { uint32 a; b; } s2; // a single struct with a uint32 and a field that can hold any value.
+//                 0 +----+
+//                   |    | s2.a
+//                 4 +----+
+//                   |    | s2.b
+// sizeof(Value) + 4 +----+
+// 
+// Note that s2 is not of 'placeable' type, so the memory layout is entirely private to the implementation, 
+// and may change.
+//
+// Both s1 and a are'placeable', and could be used with place:
+// place uint32[2] @x10000000 rA;
+//     rA[0] has address @x10000000
+//     rA[1] has address @x10000004
+// place struct { uint32 a; uint64 b; }[2] @x10000000 rS;
+//     rS[0].a has address @x10000000
+//     rS[0].b has address @x10000008
+//     rS[1].a has address @x10000016
+//     rS[1].b has address @x10000024
+//
+// Note the recursion into the elements of arrays and the fields of structs when determining their placement.
 
 typedef struct ObjPackedStorage ObjPackedStorage;
 

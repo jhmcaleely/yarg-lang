@@ -376,6 +376,34 @@ static ObjString* stackTraceString(Value str) {
     return strObj;
 }
 
+static void snprintValueDescription(char* buffer, size_t bufferSize, Value value) {
+    ObjString* valueStr;
+    if (IS_STRING(value)) {
+        valueStr = stackTraceString(value);
+    } else {
+        valueStr = valueToString(value);
+    }
+    
+    if (valueStr->length > (bufferSize - 1)) {
+        snprintf(buffer, bufferSize, "%8.8s...", valueStr->chars);
+    } else {
+        snprintf(buffer, bufferSize, "%11.11s", valueStr->chars);
+    }
+}
+
+static void snprintTypeDescription(char* buffer, size_t bufferSize, const ObjConcreteYargType* type) {
+    ObjString* typeStr = typeToString(type);
+
+    if (typeStr->length > (bufferSize - 1) && type) {
+        snprintf(buffer, bufferSize, "%7.7s...", typeStr->chars);
+    } else if (type) {
+        snprintf(buffer, bufferSize, "%10.10s", typeStr->chars);
+    } else {
+        snprintf(buffer, bufferSize, "%10.10s", "any");
+    }
+}
+
+
 static void traceValueStack(ObjRoutine* routine) {
     const unsigned int max_stack_trace_lines = 3;
     const unsigned int max_stack_line_width = 5;
@@ -402,30 +430,13 @@ static void traceValueStack(ObjRoutine* routine) {
             size_t slot = (line - 1) * max_stack_line_width + cursor;
             if (slot >= stackSize) break;
             ValueCell* cell = peekCell(routine, (int)(stackSize - 1 - slot));
-            ObjString* valueStr;
-            if (IS_STRING(cell->value)) {
-                valueStr = stackTraceString(cell->value);
-                tempRootPush(STRING_VAL(valueStr));
-            } else {
-                valueStr = valueToString(cell->value);
-                tempRootPush(STRING_VAL(valueStr));
-            }
+
             char value_description[12];
-            if (valueStr->length > 11) {
-                snprintf(value_description, sizeof(value_description), "%8.8s...", valueStr->chars);
-            } else {
-                snprintf(value_description, sizeof(value_description), "%11.11s", valueStr->chars);
-            }
-            tempRootPop();
-            ObjString* typeStr = valueToString(cell->cellType ? YARGTYPE_VAL(cell->cellType) : NIL_VAL);
-            tempRootPush(STRING_VAL(typeStr));
-            char type_description[11] = "       any";
-            if (typeStr->length > 10 && cell->cellType) {
-                snprintf(type_description, sizeof(type_description), "%7.7s...", typeStr->chars);
-            } else if (cell->cellType) {
-                snprintf(type_description, sizeof(type_description), "%7.7s", typeStr->chars);
-            }
-            tempRootPop();
+            snprintValueDescription(value_description, sizeof(value_description), cell->value);
+
+            char type_description[11];
+            snprintTypeDescription(type_description, sizeof(type_description), cell->cellType);
+
             printf("[%s|%s]", value_description, type_description);
         }
         printf("\n");
@@ -440,9 +451,11 @@ void traceExecution(ObjRoutine* routine) {
 
     traceValueStack(routine);
     ObjString* routineStr = valueToString(ROUTINE_VAL(routine));
+    tempRootPush(STRING_VAL(routineStr));
     printf("%s %s:", routineStr->chars, frame->closure->function->fName ? frame->closure->function->fName->chars : "script");
     disassembleInstruction(&frame->closure->function->chunk, 
         (int)(frame->ip - frame->closure->function->chunk.code));
+    tempRootPop();
 }
 
 ObjString* routineToString(const ObjRoutine* routine) {

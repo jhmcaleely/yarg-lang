@@ -17,10 +17,15 @@ void printValue(Value value) {
 }
 
 void fprintValue(FILE* op, Value value) {
-    ObjString* string = valueToString(value);
-    tempRootPush(STRING_VAL(string));
-    FPRINTMSG(op, "%s", string->chars);
-    tempRootPop();
+    if (IS_STRING(value)) {
+        char* cstring = AS_CSTRING(value);
+        FPRINTMSG(op, "%s", cstring);
+    } else {
+        ObjString* string = valueToString(value);
+        tempRootPush(STRING_VAL(string));
+        FPRINTMSG(op, "%s", string->chars);
+        tempRootPop();
+    }
 }
 
 void printObj(const Obj* object) {
