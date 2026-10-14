@@ -221,10 +221,17 @@ static void blackenObject(Obj* object) {
             markRoutine(stack);
             break;
         }
-        case OBJ_PACKEDCONTAINER:
-        case OBJ_UNOWNED_PACKEDCONTAINER:
-            // TODO: if !placeable type, mark Values
+        case OBJ_PACKEDSTORAGE: {
+            ObjPackedStorage* storage = (ObjPackedStorage*)object;
+            MarkPackedStorage(storage);
             break;
+        }
+        case OBJ_PACKEDCONTAINER: {
+            ObjOwningPackedContainer* container = (ObjOwningPackedContainer*)object;
+            markObject((Obj*)container->storage);
+            break;
+        }
+        case OBJ_UNOWNED_PACKEDCONTAINER: break;
 
         case OBJ_NATIVE: break;
         case OBJ_BUILTIN: break;
@@ -516,12 +523,13 @@ static void freeObject(Obj* object) {
         }
         case OBJ_UPVALUE: FREE(ObjUpvalue, object); break;
         case OBJ_CHANNELCONTAINER: freeChannelObject(object); break;
-        case OBJ_UNOWNED_PACKEDCONTAINER: FREE(ObjPackedContainer, object); break;
-        case OBJ_PACKEDCONTAINER: {
-            // TODO: Free the memory associated with the packed value container's destination before freeing the container itself.
-            FREE(ObjPackedContainer, object); 
+        case OBJ_PACKEDSTORAGE: {
+            ObjPackedStorage* storage = (ObjPackedStorage*)object;
+            gc_free(storage, storage->storage_size, 0);
             break;
-        }
+        } 
+        case OBJ_UNOWNED_PACKEDCONTAINER: FREE(ObjPackedContainer, object); break;
+        case OBJ_PACKEDCONTAINER: FREE(ObjOwningPackedContainer, object); break;
         case OBJ_MAP: {
             ObjMap* map = (ObjMap*)object;
             freeTable(&map->entries);

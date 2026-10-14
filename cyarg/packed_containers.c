@@ -1,12 +1,112 @@
 #include "packed_containers.h"
 
 #include <stdlib.h>
+#include <assert.h>
+#include <string.h>
 
 #include "common.h"
 #include "memory.h"
+#include "yargtype.h"
 #include "placed_value.h"
 #include "yargstructtype.h"
 #include "value_cell.h"
+
+size_t yt_packable_element_count(const ObjConcreteYargType* type) {
+    if (type && type->yt == TypeArray) {
+        const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*) type;
+        return arrayType->cardinality * yt_packable_element_count(arrayType->element_type);
+    } else if (type && type->yt == TypeStruct) {
+        const ObjConcreteYargTypeStruct* structType = (const ObjConcreteYargTypeStruct*) type;
+        size_t total = 0;
+        for (size_t i = 0; i < structType->field_count; i++) {
+            total += yt_packable_element_count(structType->field_types[i]);
+        }
+        return total;
+    } else {
+        return 1;
+    }
+}
+
+size_t yt_packable_value_element_count(const ObjConcreteYargType* type) {
+    if (type && type->yt == TypeArray) {
+        const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*) type;
+        return arrayType->cardinality * yt_packable_value_element_count(arrayType->element_type);
+    } else if (type && type->yt == TypeStruct) {
+        const ObjConcreteYargTypeStruct* structType = (const ObjConcreteYargTypeStruct*) type;
+        size_t total = 0;
+        for (size_t i = 0; i < structType->field_count; i++) {
+            total += yt_packable_value_element_count(structType->field_types[i]);
+        }
+        return total;
+    } else if (yt_packs_asValue(type)) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+typedef struct FlattenedElements {
+    size_t offset;
+    const ObjConcreteYargType* type;
+} FlattenedElements;
+
+size_t yt_flatten_types(FlattenedElements* elements, size_t start_cursor, size_t start_offset, const ObjConcreteYargType* rootType) {
+    size_t cursor = start_cursor;
+    if (rootType && rootType->yt == TypeArray) {
+        const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*) rootType;
+        for (size_t i = 0; i < arrayType->cardinality; i++) {
+            size_t elementOffset = arrayElementOffset(arrayType, i);
+            cursor = yt_flatten_types(elements, cursor, start_offset + elementOffset, arrayType->element_type);
+        }
+    } else if (rootType && rootType->yt == TypeStruct) {
+        const ObjConcreteYargTypeStruct* structType = (const ObjConcreteYargTypeStruct*) rootType;
+        for (size_t i = 0; i < structType->field_count; i++) {
+            size_t fieldOffset = structFieldOffset(structType, i);
+            cursor = yt_flatten_types(elements, cursor, start_offset + fieldOffset, structType->field_types[i]);
+        }
+    } else {
+        elements[cursor++] = (FlattenedElements){.offset = start_offset, .type = rootType};
+    }
+    return cursor;
+}
+
+ObjPackedStorage* newPackedStorage(const ObjConcreteYargType* type) {
+    size_t storage_required = yt_sizeof_type_storage(type);
+    ObjPackedStorage* storage = (ObjPackedStorage*) allocateObject(sizeof(ObjPackedStorage) + storage_required, OBJ_PACKEDSTORAGE);
+    storage->storage_size = storage_required;
+    tempObjRootPush((Obj*)storage);
+
+    size_t packed_elements = yt_packable_element_count(type);
+    FlattenedElements* elements = ALLOCATE(FlattenedElements, packed_elements);
+    size_t flattened_count = yt_flatten_types(elements, 0, 0, type);
+    assert(flattened_count == packed_elements);
+
+    size_t value_elements = yt_packable_value_element_count(type);
+    assert(value_elements <= packed_elements);
+
+    storage->values = ALLOCATE(Value*, value_elements);
+    for (size_t i = 0; i < packed_elements; i++) {        
+        if (yt_packs_asValue(elements[i].type)) {
+            Value* valueAddr = (Value*)((uintptr_t)&storage->storage[0] + elements[i].offset);
+            assert(storage->value_elements < value_elements);
+            storage->values[storage->value_elements++] = valueAddr;
+            Value elementType = elements[i].type ? YARGTYPE_VAL(elements[i].type) : NIL_VAL;
+            *valueAddr = defaultValue(elementType);
+        }
+    }
+
+    FREE_ARRAY(FlattenedElements, elements, packed_elements);
+    tempRootPop();
+    return storage;
+}
+
+void MarkPackedStorage(ObjPackedStorage* storage) {
+    for (size_t i = 0; i < storage->value_elements; i++) {
+        if (storage->values[i] != NULL) {
+            markValue(*storage->values[i]);
+        }
+    }
+}
 
 bool is_uniformarray(Value value) {
     if (value.type == NULL) return false;
@@ -21,6 +121,59 @@ bool is_struct(Value value) {
     if (value.type == NULL) return false;
     return value.type->yt == TypeStruct;
 }
+
+bool yt_packs_asValue(const ObjConcreteYargType* type) {
+    if (type == NULL) {
+        assert(yt_sizeof_type_storage(type) == sizeof(Value));
+        return true;
+    } else {
+        switch (type->yt) {
+        case TypeBool:
+            assert(yt_sizeof_type_storage(type) == sizeof(Value));
+            return true;
+        case TypeDouble:
+            return false;
+        case TypeInt8:
+            return false;
+        case TypeUint8:
+            return false;
+        case TypeInt16:
+            return false;
+        case TypeUint16:
+            return false;
+        case TypeInt32:
+            return false;
+        case TypeUint32:
+            return false;
+        case TypeInt64:
+            return false;
+        case TypeUint64:
+            return false;
+        case TypeAddress:
+            return false;
+        case TypeStruct:
+            return false;
+        case TypeArray:
+            return false;
+        case TypePointer:
+            return false;
+        
+        case TypeInt:
+        case TypeString:
+        case TypeClass:
+        case TypeInstance:
+        case TypeFunction:
+        case TypeRoutine:
+        case TypeChannel:
+        case TypeSyncGroup:
+        case TypeMap:
+        case TypeYargType:
+            assert(yt_sizeof_type_storage(type) == sizeof(Value));
+            return true;
+        }
+    }
+}
+
 
 bool isUint32Pointer(Value val) {
     if (IS_POINTER(val)) {
@@ -83,37 +236,59 @@ void setDefaultPackedContainerValues(void* location, const ObjConcreteYargType* 
 
 
 Value defaultArrayValue(const ObjConcreteYargType* type) {
-    ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) type;  
-    size_t storage_required = yt_sizeof_type_storage(type);
 
-    void* storage = malloc(storage_required);
-    setDefaultPackedContainerValues(storage, type);
-
-    // TODO: capture type info for later GC
-    ObjPackedContainer* container = ALLOCATE_OBJ(ObjPackedContainer, OBJ_PACKEDCONTAINER);
-    container->loc = storage;
-
-    return TYPED_VAL(container, type);
+    return newPackedValueContainer(type);
 }
 
 Value defaultStructValue(const ObjConcreteYargType* type) {
-    ObjConcreteYargTypeStruct* structType = (ObjConcreteYargTypeStruct*) type;  
-    size_t storage_required = yt_sizeof_type_storage(type);
 
-    void* storage = malloc(storage_required);
-    setDefaultPackedContainerValues(storage, type);
+    return newPackedValueContainer(type);
+}
 
-    // TODO: capture type info for later GC
-    ObjPackedContainer* container = ALLOCATE_OBJ(ObjPackedContainer, OBJ_PACKEDCONTAINER);
-    container->loc = storage;
+Value defaultPointerValue(const ObjConcreteYargType* type) {
 
+    return NIL_VAL;
+}
+
+Value duplicateArray(Value arrayVal) {
+    return arrayVal; // TODO: revisit when arrays become value types
+}
+
+Value duplicateStruct(Value rhsStructVal) {
+
+    ObjOwningPackedContainer* container = ALLOCATE_OBJ(ObjOwningPackedContainer, OBJ_PACKEDCONTAINER);
+    tempObjRootPush((Obj*)container);
+    const ObjConcreteYargType* type = rhsStructVal.type;
+    ObjPackedStorage* storage = newPackedStorage(type);
+    tempObjRootPush((Obj*)storage);
+    ObjPackedContainer* rhsContainer = AS_PACKEDCONTAINER(rhsStructVal);
+
+    memcpy(&storage->storage[0], rhsContainer->loc, storage->storage_size);
+
+    container->storage = storage;
+    container->container.loc = &container->storage->storage[0];
+    tempRootPop();
+    tempRootPop();
     return TYPED_VAL(container, type);
 }
 
+Value duplicatePointer(Value pointer) {
+    return pointer;
+}
 
 Value createPackedValueContainerAt(void* location, const ObjConcreteYargType* type) {
     ObjPackedContainer* container = ALLOCATE_OBJ(ObjPackedContainer, OBJ_UNOWNED_PACKEDCONTAINER);
     container->loc = location;
+    return TYPED_VAL(container, type);
+}
+
+Value newPackedValueContainer(const ObjConcreteYargType* type) {
+    ObjOwningPackedContainer* container = ALLOCATE_OBJ(ObjOwningPackedContainer, OBJ_PACKEDCONTAINER);
+    tempObjRootPush((Obj*)container);
+    ObjPackedStorage* storage = newPackedStorage(type);
+    container->storage = storage;
+    container->container.loc = &container->storage->storage[0];
+    tempRootPop();
     return TYPED_VAL(container, type);
 }
 
@@ -183,6 +358,8 @@ Value containerElement(ObjPackedContainer* container, const ObjConcreteYargType*
         store.value = (void*) elementAddr;
         store.type = element_type;
         return getPlacedValue(store);
+    } else if (is_packable_container_type(element_type)) {
+        return createPackedValueContainerAt(elementAddr, element_type);
     } else {
         return *(Value*) elementAddr;
     }

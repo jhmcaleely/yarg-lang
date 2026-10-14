@@ -68,15 +68,11 @@ Value duplicateValue(Value src) {
         tempRootPop();
         return INTOBJ_VAL(lhs);
     } else if (IS_STRUCT(src)) {
-        Value newStruct = defaultStructValue(src.type);
-        tempRootPush(newStruct);
-        const ObjConcreteYargTypeStruct* structType = (const ObjConcreteYargTypeStruct*) src.type;
-        size_t storage_required = yt_sizeof_type_storage((const ObjConcreteYargType*) structType);
-        ObjPackedContainer* container = AS_PACKEDCONTAINER(src);
-        ObjPackedContainer* newContainer = AS_PACKEDCONTAINER(newStruct);
-        memcpy(newContainer->loc, container->loc, storage_required);
-        tempRootPop();
-        return newStruct;
+        return duplicateStruct(src);
+    } else if (IS_UNIFORMARRAY(src)) {
+        return duplicateArray(src);
+    } else if (IS_POINTER(src)) {
+        return duplicatePointer(src);
     } else {
         return src;
     }
@@ -102,8 +98,8 @@ Value defaultValue(Value type) {
             case TypeAddress: return ADDRESS_VAL(0);
             case TypeStruct: return defaultStructValue(ct);
             case TypeArray: return defaultArrayValue(ct);
+            case TypePointer: return defaultPointerValue(ct);
             case TypeMap:
-            case TypePointer:
             case TypeString:
             case TypeClass:
             case TypeInstance:
