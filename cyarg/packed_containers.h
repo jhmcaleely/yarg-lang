@@ -96,7 +96,7 @@ Value duplicateStruct(Value structVal);
 Value duplicateArray(Value arrayVal);
 Value duplicatePointer(Value pointer);
 
-// Two useful coveniences - a byte array and a value array.
+// Two useful conveniences - a byte array and a value array.
 // byte arrays can create a buffer, or be placed over an existing memory location.
 Value allocByteArray(size_t length);
 Value createByteArrayAt(uint8_t* location, size_t length);
