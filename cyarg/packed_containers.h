@@ -28,17 +28,9 @@ bool isUint32Pointer(Value val);
 #define IS_POINTER(value)      is_pointer(value)
 #define IS_STRUCT(value)       is_struct(value)
 
-typedef struct ObjPackedStorage {
-    Obj obj;
-    size_t storage_size;
-    size_t value_elements;
-    Value** values;
-    uint8_t storage[];
-} ObjPackedStorage;
-
-
 ObjPackedStorage* newPackedStorage(const ObjConcreteYargType* type);
-void MarkPackedStorage(ObjPackedStorage* storage);
+void markPackedStorage(ObjPackedStorage* storage);
+void freePackedStorage(ObjPackedStorage* storage);
 
 Value newPackedValueContainer(const ObjConcreteYargType* type);
 Value createPackedValueContainerAt(void* location, const ObjConcreteYargType* type);

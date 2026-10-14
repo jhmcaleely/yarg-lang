@@ -11,6 +11,14 @@
 #include "yargstructtype.h"
 #include "value_cell.h"
 
+typedef struct ObjPackedStorage {
+    Obj obj;
+    size_t storage_size;
+    size_t value_elements;
+    Value** values;
+    uint8_t storage[];
+} ObjPackedStorage;
+
 size_t yt_packable_element_count(const ObjConcreteYargType* type) {
     if (type && type->yt == TypeArray) {
         const ObjConcreteYargTypeArray* arrayType = (const ObjConcreteYargTypeArray*) type;
@@ -100,12 +108,17 @@ ObjPackedStorage* newPackedStorage(const ObjConcreteYargType* type) {
     return storage;
 }
 
-void MarkPackedStorage(ObjPackedStorage* storage) {
+void markPackedStorage(ObjPackedStorage* storage) {
     for (size_t i = 0; i < storage->value_elements; i++) {
         if (storage->values[i] != NULL) {
             markValue(*storage->values[i]);
         }
     }
+}
+
+void freePackedStorage(ObjPackedStorage* storage) {
+    FREE_ARRAY(Value*, storage->values, storage->value_elements);
+    gc_free(storage, storage->storage_size, 0);
 }
 
 bool is_uniformarray(Value value) {

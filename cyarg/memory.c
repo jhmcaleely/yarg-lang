@@ -223,7 +223,7 @@ static void blackenObject(Obj* object) {
         }
         case OBJ_PACKEDSTORAGE: {
             ObjPackedStorage* storage = (ObjPackedStorage*)object;
-            MarkPackedStorage(storage);
+            markPackedStorage(storage);
             break;
         }
         case OBJ_PACKEDCONTAINER: {
@@ -522,12 +522,8 @@ static void freeObject(Obj* object) {
             break;
         }
         case OBJ_UPVALUE: FREE(ObjUpvalue, object); break;
-        case OBJ_CHANNELCONTAINER: freeChannelObject(object); break;
-        case OBJ_PACKEDSTORAGE: {
-            ObjPackedStorage* storage = (ObjPackedStorage*)object;
-            gc_free(storage, storage->storage_size, 0);
-            break;
-        } 
+        case OBJ_CHANNELCONTAINER: freeChannelObject((ObjChannelContainer*)object); break;
+        case OBJ_PACKEDSTORAGE: freePackedStorage((ObjPackedStorage*)object); break;
         case OBJ_UNOWNED_PACKEDCONTAINER: FREE(ObjPackedContainer, object); break;
         case OBJ_PACKEDCONTAINER: FREE(ObjOwningPackedContainer, object); break;
         case OBJ_MAP: {
