@@ -7,7 +7,6 @@
 #include "common.h"
 #include "memory.h"
 #include "yargtype.h"
-#include "placed_value.h"
 #include "yargstructtype.h"
 #include "value_cell.h"
 

@@ -3,7 +3,6 @@
 
 #include "yargtype.h"
 #include "value.h"
-#include "placed_value.h"
 
 typedef struct ObjRoutine ObjRoutine;
 

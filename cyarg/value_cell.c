@@ -5,7 +5,6 @@
 #include "common.h"
 #include "debug.h"
 #include "yargobject.h"
-#include "placed_value.h"
 
 bool assignToValueCellTarget(ValueCellTarget lhs, Value rhsValue) {
     if (lhs.cellType == NULL) {

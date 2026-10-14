@@ -3,7 +3,6 @@
 
 #include "object.h"
 #include "big-int/big-int.h"
-#include "placed_value.h"
 #include "value.h"
 #include "chunk.h"
 #include "table.h"

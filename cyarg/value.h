@@ -17,6 +17,13 @@ typedef struct {
     AnyValue as;
 } Value;
 
+// placed values exist with a defined memory layout, so the
+// type information is stored separately from the value itself.
+typedef struct {
+    void* value;
+    const ObjConcreteYargType* type;
+} PlacedValue;
+
 #if defined(__LP64__) || defined(_WIN64) || defined(__x86_64__) || defined(__aarch64__)
 #define IS_64BIT 1
 #define IS_32BIT 0
@@ -79,6 +86,15 @@ typedef struct {
 #define AS_SIZE_T(value)       ((value).as.ui32)
 #define SIZE_T_UI_VAL(value)   UI32_VAL(value)
 #endif
+
+// not implemented - all placed values have 
+// default value of 0, and our policy of
+// zeroing all memory ensures that placed values are 
+// initialized to their default state.
+void setDefaultPlacedValue(PlacedValue value);
+
+Value getPlacedValue(PlacedValue placedStorage);
+void setPlacedValue(PlacedValue placedStorage, Value rhs);
 
 Value defaultValue(Value type);
 
