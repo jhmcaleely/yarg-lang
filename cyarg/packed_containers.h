@@ -3,8 +3,10 @@
 
 #include "value.h"
 
-// Yarg has two container types that can be placed if they constain only placeable elements.
-// Additionally, the pointer type is built to support placed values, and it acts as a container
+// Yarg has two container types that can be placed if they contain only placeable elements:
+//  - Array (fixed-size sequences of elements)
+//  - Struct (collections of named fields, accessed by offset at run time)
+// Additionally, the Pointer type is built to support placed values, and it acts as a container
 // type that has only a single element.
 //
 // In order to support a predictable memory layout when placed, with only one container implementation, 
