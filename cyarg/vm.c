@@ -1612,8 +1612,11 @@ void binaryIntOp(ObjRoutine* routine, char const *c)
     int s = 0;
     switch (*c)
     {
-    case '+': case '-': case '%':
+    case '+':
         s = 1 + (a->d_ > b->d_ ? a->d_ : b->d_);
+        break;
+    case '-': case '%':
+        s = a->d_ > b->d_ ? a->d_ : b->d_;
         break;
     case '*':
         s = a->d_ + b->d_;
