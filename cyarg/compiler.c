@@ -37,6 +37,7 @@ typedef struct {
 
 typedef struct Compiler {
     struct Compiler* enclosing;
+    ObjRoutine* context;
     ObjParser* parser;
     ObjFunction* function;
     ObjAst* ast;
@@ -60,9 +61,10 @@ bool hadCompilerError = false;
 static struct Compiler* current = NULL;
 static ClassCompiler* currentClass = NULL;
 
-static void initCompiler(Compiler* compiler, FunctionType type, ObjString* name) {
+static void initCompiler(Compiler* compiler, FunctionType type, ObjString* name, ObjRoutine* context) {
 
     compiler->enclosing = current;
+    compiler->context = context;
     compiler->parser = NULL;
     compiler->ast = NULL;
     compiler->function = NULL;
@@ -878,7 +880,8 @@ static void generateStmtIf(ObjStmtIf* ctrl) {
 
 static void generateFunction(FunctionType type, ObjStmtFunDeclaration* decl) {
     Compiler compiler;
-    initCompiler(&compiler, type, decl->name);
+    assert(current->context != NULL);
+    initCompiler(&compiler, type, decl->name, current->context);
     beginScope();
 
     for (int i = 0; i < decl->parameters.objectCount; i++) {
@@ -1136,6 +1139,7 @@ static ObjFunction* endCompiler() {
 
     current->ast = NULL;
     current->parser = NULL;
+    current->context = NULL;
     current->recent = NULL;
     hadCompilerError |= current->hadError;
     ObjFunction* function = current->function;
@@ -1153,7 +1157,7 @@ Value compile(ObjRoutine* context) {
     ObjScanner* scanner = newScanner(AS_STRING(source));
     push(context, IMPL_OBJ_VAL((Obj*)scanner));
     struct Compiler compiler;
-    initCompiler(&compiler, TYPE_SCRIPT, NULL);
+    initCompiler(&compiler, TYPE_SCRIPT, NULL, context);
 
     bool parseError = parse(current->parser, current->ast, scanner);
     if (!parseError) {
@@ -1174,6 +1178,7 @@ void markCompilerRoots() {
     while (compiler != NULL) {
         markObject((Obj*)compiler->function);
         markObject((Obj*)compiler->parser);
+        markObject((Obj*)compiler->context);
         markObject((Obj*)compiler->ast);
         markObject((Obj*)compiler->recent);
 
