@@ -38,9 +38,7 @@ typedef struct {
 typedef struct Compiler {
     struct Compiler* enclosing;
     ObjRoutine* context;
-    ObjParser* parser;
     ObjFunction* function;
-    ObjAst* ast;
     FunctionType type;
     ObjStmt* recent;
     bool hadError;
@@ -65,8 +63,6 @@ static void initCompiler(Compiler* compiler, FunctionType type, ObjString* name,
 
     compiler->enclosing = current;
     compiler->context = context;
-    compiler->parser = NULL;
-    compiler->ast = NULL;
     compiler->function = NULL;
     compiler->type = type;
     compiler->recent = NULL;
@@ -79,8 +75,6 @@ static void initCompiler(Compiler* compiler, FunctionType type, ObjString* name,
     // set the current compiler before we start adding new objects to it.
     current = compiler;
 
-    compiler->parser = newParser();
-    compiler->ast = newObjAst();
     compiler->function = newFunction();
 
     if (type != TYPE_SCRIPT) {
@@ -1137,8 +1131,6 @@ static void generate(ObjStmt* stmt) {
 static ObjFunction* endCompiler() {
     emitReturn();
 
-    current->ast = NULL;
-    current->parser = NULL;
     current->context = NULL;
     current->recent = NULL;
     hadCompilerError |= current->hadError;
@@ -1156,18 +1148,27 @@ Value compile(ObjRoutine* context) {
 
     ObjScanner* scanner = newScanner(AS_STRING(source));
     push(context, IMPL_OBJ_VAL((Obj*)scanner));
+
+    ObjAst* ast = newObjAst();
+    push(context, IMPL_OBJ_VAL((Obj*)ast));
+
+    ObjParser* parser = newParser(context, ast, scanner);
+    push(context, IMPL_OBJ_VAL((Obj*)parser));
+
     struct Compiler compiler;
     initCompiler(&compiler, TYPE_SCRIPT, NULL, context);
 
-    bool parseError = parse(current->parser, current->ast, scanner);
+    bool parseError = parse(parser);
     if (!parseError) {
-        generate(current->ast->statements);
+        generate(ast->statements);
     }
 
     ObjFunction* function = endCompiler();
     
     bool compileError = parseError || hadCompilerError;
 
+    pop(context);
+    pop(context);
     pop(context);
 
     return compileError ? NIL_VAL : FUNCTION_VAL(function);
@@ -1177,9 +1178,7 @@ void markCompilerRoots() {
     Compiler* compiler = current;
     while (compiler != NULL) {
         markObject((Obj*)compiler->function);
-        markObject((Obj*)compiler->parser);
         markObject((Obj*)compiler->context);
-        markObject((Obj*)compiler->ast);
         markObject((Obj*)compiler->recent);
 
         for (int i = 0; i < compiler->localCount; i++) {
