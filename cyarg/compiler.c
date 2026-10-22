@@ -13,6 +13,7 @@
 #include "object.h"
 #include "yargobject.h"
 #include "scanner.h"
+#include "routine.h"
 
 static void generateExpr(ObjExpr* expr);
 
@@ -1144,11 +1145,13 @@ static ObjFunction* endCompiler() {
     return function;
 }
 
-ObjFunction* compile(ObjString* source) {
+Value compile(ObjRoutine* context) {
     hadCompilerError = false;
 
-    ObjScanner* scanner = newScanner(source);
-    tempObjRootPush((Obj*)scanner);
+    Value source = peek(context, 0);
+
+    ObjScanner* scanner = newScanner(AS_STRING(source));
+    push(context, IMPL_OBJ_VAL((Obj*)scanner));
     struct Compiler compiler;
     initCompiler(&compiler, TYPE_SCRIPT, NULL);
 
@@ -1161,9 +1164,9 @@ ObjFunction* compile(ObjString* source) {
     
     bool compileError = parseError || hadCompilerError;
 
-    tempRootPop();
+    pop(context);
 
-    return compileError ? NULL : function;
+    return compileError ? NIL_VAL : FUNCTION_VAL(function);
 }
 
 void markCompilerRoots() {
