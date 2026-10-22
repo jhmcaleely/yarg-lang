@@ -1158,14 +1158,14 @@ Value compile(ObjRoutine* context) {
     struct Compiler compiler;
     initCompiler(&compiler, TYPE_SCRIPT, NULL, context);
 
-    bool parseError = parse(parser);
-    if (!parseError) {
+    Value parseError = parse(context);
+    if (!AS_BOOL(parseError)) {
         generate(ast->statements);
     }
 
     ObjFunction* function = endCompiler();
     
-    bool compileError = parseError || hadCompilerError;
+    bool compileError = AS_BOOL(parseError) || hadCompilerError;
 
     pop(context);
     pop(context);
