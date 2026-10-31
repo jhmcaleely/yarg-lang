@@ -167,6 +167,9 @@ void markValue(Value value) {
     if (isObjValue(value)) {
         markObject(value.as.obj);
     }
+    else if (IS_BIG_INT(value)) {
+        markObject((Obj *)AS_OBJINT(value));
+    }
     markObject((Obj*)value.type);
 }
 
