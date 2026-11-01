@@ -387,11 +387,12 @@ ObjString* valueToString(Value value) {
             case TypeYargType: return objectToString(value.as.obj);
             case TypePointer:  return pointerToString(value);
             case TypeInt:
-            if (value.as.bigSmallInt.obj_) {
-                return objectToString((Obj *)value.as.bigSmallInt.objInt_);
+            if (IS_BIG_INT(value)) {
+                return objectToString((Obj *)AS_BIG_SMALL_INT(value).objInt_);
             } else {
                 char sb[INT_STRLEN_FOR_INT254];
-                char const* s = int_to_s((Int *)&value.as.bigSmallInt.i_, sb, INT_STRLEN_FOR_INT254);
+                Int * int_ = BIG_SMALL_INT_AS_INT(AS_BIG_SMALL_INT(value));
+                char const* s = int_to_s(int_, sb, INT_STRLEN_FOR_INT254);
                 return copyString(s, (int)strlen(s));
             }
             case TypeMap:      return objectToString(value.as.obj);
