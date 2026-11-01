@@ -78,7 +78,6 @@ typedef struct {
 
 #define BOOL_VAL(value)     ((Value){.type = &yargTypes.boolean, {.boolean = value }})
 #define DOUBLE_VAL(value)   ((Value){.type = &yargTypes.dbl, {.dbl = value }})
-#define INT_VAL(value)      ((Value){.type = integer, {.bigSmallInt = valueMoreWork }})
 #define I8_VAL(value)       ((Value){.type = &yargTypes.int8, {.i8 = value}})
 #define UI8_VAL(value)      ((Value){.type = &yargTypes.uint8, {.ui8 = value}})
 #define I16_VAL(value)      ((Value){.type = &yargTypes.int16, {.i16 = value}})
