@@ -82,6 +82,7 @@ typedef struct // largest concrete type of int - can be a global or a local - us
     uint32_t w_[254 / 2];
 } IntConcrete254;
 
+// note: intended to pack as 8 bytes on builds with a 32bit pointer size.
 typedef struct BigSmallInt
 {
     union
