@@ -29,6 +29,7 @@
 #define o1heapInit(a,b) (void *)1
 #define o1heapFree(a,b) free(b)
 #define o1heapReallocate(a,b,c) realloc(b, c)
+#define o1heapAllocate(a,b) malloc(b)
 #define o1heapDoInvariantsHold(a) true
 #else
 #include "../external/o1heap/o1heap/o1heap.h"
