@@ -14,19 +14,19 @@ place struct {
 
 var timer_irq = [0, 1, 2, 3];
 var pwm_irq_wrap = 4;
-var usbctrl_irq = 5;
-var xip_irq = 6;
+//var usbctrl_irq = 5;
+//var xip_irq = 6;
 var pio_irq = [ [8, 9], [10, 11] ];
-var dma_irq = [12, 13];
+//var dma_irq = [12, 13];
 var io_irq_bank0 = 13;
-var io_irq_qspi = 14;
-var sio_irq_proc = [15, 16];
-var clocks_irq = 17;
-var spi_irq = [18, 19];
+//var io_irq_qspi = 14;
+//var sio_irq_proc = [15, 16];
+//var clocks_irq = 17;
+//var spi_irq = [18, 19];
 var uart_irq = [20, 21];
-var adc_irq_fifo = 22;
-var i2c_irq = [23, 24];
-var rtc_irq = 25;
+//var adc_irq_fifo = 22;
+//var i2c_irq = [23, 24];
+//var rtc_irq = 25;
 
 // We have two native functions (for now) which allow us to interop with
 // Pico C SDK users like TinyUSB.

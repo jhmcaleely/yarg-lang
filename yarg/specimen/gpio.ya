@@ -6,18 +6,18 @@ var pico_led = uint32(25);
 var GPIO_OUT = true;
 var GPIO_IN = false;
 
-var gpio_func_ixp = 0;
-var gpio_func_spi = 1;
+//var gpio_func_ixp = 0;
+//var gpio_func_spi = 1;
 var gpio_func_uart = 2;
-var gpio_func_i2c = 3;
-var gpio_func_pwm = 4;
+//var gpio_func_i2c = 3;
+//var gpio_func_pwm = 4;
 var gpio_func_sio = 5;
 var gpio_func_pio0 = 6;
 var gpio_func_pio1 = 7;
 var gpio_func_pio = [ gpio_func_pio0, gpio_func_pio1 ];
-var gpio_func_clock = 8;
-var gpio_func_usb = 9;
-var gpio_func_null = 31;
+//var gpio_func_clock = 8;
+//var gpio_func_usb = 9;
+//var gpio_func_null = 31;
 
 var GPIO_IRQ_EDGE_FALL = uint32(0x4);
 var GPIO_IRQ_EDGE_RISE = uint32(0x8);

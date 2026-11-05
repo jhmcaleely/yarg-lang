@@ -88,14 +88,9 @@ var PIO_SM_CLKDIV_FRAC_BITS = uint32(0xff) << PIO_SM_CLKDIV_FRAC_LSB;
 var PIO_SM_CLKDIV_INT_LSB = uint32(16);
 var PIO_SM_CLKDIV_INT_BITS = uint32(0xffff) << PIO_SM_CLKDIV_INT_LSB;
 
-var PIO_FIFO_JOIN_NONE = uint32(0);
+//var PIO_FIFO_JOIN_NONE = uint32(0);
 var PIO_FIFO_JOIN_TX = uint32(1);
-var PIO_FIFO_JOIN_RX = uint32(2);
-
-var PIO_FDEBUG_TXOVER_LSB = uint32(16);
-var PIO_FDEBUG_RXUNDER_LSB = uint32(8);
-var PIO_FDEBUG_TXSTALL_LSB = uint32(24);
-var PIO_FDEBUG_RXSTALL_LSB = uint32(0);
+//var PIO_FIFO_JOIN_RX = uint32(2);
 
 var PIO_CTRL_SM_RESTART_LSB = uint32(4);
 var PIO_CTRL_CLKDIV_RESTART_LSB = uint32(8);
@@ -122,6 +117,11 @@ fun pio_sm_init(pio_num, sm_num, initial_pc, clkdiv, execctrl, shiftctrl, pinctr
     // pio_sm_clear_fifos. why do it twice? mean TX?
     poke pio[pio_num].sm[sm_num].shiftctrl, REG_ALIAS_XOR_BITS, PIO_SM_SHIFTCTRL_FJOIN_RX_BITS;
     poke pio[pio_num].sm[sm_num].shiftctrl, REG_ALIAS_XOR_BITS, PIO_SM_SHIFTCTRL_FJOIN_RX_BITS;
+
+    var PIO_FDEBUG_TXOVER_LSB = uint32(16);
+    var PIO_FDEBUG_RXUNDER_LSB = uint32(8);
+    var PIO_FDEBUG_TXSTALL_LSB = uint32(24);
+    var PIO_FDEBUG_RXSTALL_LSB = uint32(0);
 
     // Clear FIFO debug flags
     var uint32 fdebug_sm_mask =

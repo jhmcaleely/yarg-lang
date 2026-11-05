@@ -89,8 +89,9 @@ fun ws2812_init(gpio_pin, pio_num, sm_num, offset) {
 fun ws2812_set_pixels(channel, pixels) {
 
     // configure
+    var pixel_buffer = pin(pixels);
     poke dma.channel[channel].trans_count, len(pixels);
-    poke dma.channel[channel].read_addr, pixels;
+    poke dma.channel[channel].read_addr, pixel_buffer;
     poke dma.channel[channel].write_addr, pio[ws2812_pio].txf[ws2812_sm];
 
     reg_write_masked(dma.channel[channel].al1_ctrl, 0x10, 0x10); // increment read addr
