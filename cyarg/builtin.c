@@ -474,28 +474,30 @@ bool lenBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
     }
 
     Value arg = peek(routineContext, 0);
+    size_t length = 0;
 
     if (IS_STRING(arg)) {
         ObjString* string = AS_STRING(arg);
-        size_t length = string->length;
-        allocateIntValue(result, sizeof (size_t) / sizeof (uint16_t));
-        int_set_u(length, AS_INT(*result));
-        return true;
+        length = string->length;
     } else if (IS_UNIFORMARRAY(arg)) {
         ObjConcreteYargTypeArray* arrayType = (ObjConcreteYargTypeArray*) arg.type;
-        allocateIntValue(result, sizeof (size_t) / sizeof (uint16_t));
-        int_set_u(arrayType->cardinality, AS_INT(*result));
-        return true;
+        length = arrayType->cardinality;
     } else if (IS_MAP(arg)) {
         ObjMap* map = AS_MAP(arg);
-        size_t count = map->entries.count;
-        allocateIntValue(result, sizeof (size_t) / sizeof (uint16_t));
-        int_set_u(count, AS_INT(*result));
-        return true;
+        length = map->entries.count;
     } else {
         runtimeError(routineContext, "Expected a string, array or map.");
         return false;
     }
+    
+    size_t numDigits = sizeof(size_t) / sizeof(uint16_t);
+    if (length < UINT16_MAX) {
+        numDigits = 1;
+    }
+    
+    allocateIntValue(result, numDigits);
+    int_set_u(length, AS_INT(*result));
+    return true;
 }
 
 bool pinBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
