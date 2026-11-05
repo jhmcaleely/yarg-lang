@@ -1242,8 +1242,8 @@ InterpretResult run(ObjRoutine* routine) {
                     runtimeError(routine, "Location must be a pointer to an uint32 or address.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                if (!is_positive_integer(assignment)) {
-                    runtimeError(routine, "Value must be a positive integer.");
+                if (!(is_positive_integer(assignment) || IS_ADDRESS(assignment) || isUint32Pointer(assignment))) {
+                    runtimeError(routine, "Value must be a positive integer, an address, or a uint32 pointer.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
 
@@ -1264,7 +1264,17 @@ InterpretResult run(ObjRoutine* routine) {
                 volatile uint32_t* reg = (volatile uint32_t*) nominal_address;
 #endif
 
-                size_t val = as_positive_integer(assignment);
+                size_t val;
+                if (IS_ADDRESS(assignment)) {
+                    val = AS_ADDRESS(assignment);
+                } else if (isUint32Pointer(assignment)) {
+                    ObjPackedContainer* container = AS_PACKEDCONTAINER(assignment);
+                    printf("assignment is a uint32 pointer: 0x%08lx\n", (uintptr_t) container->loc);
+                    val = (uintptr_t) container->loc;
+                }
+                else {
+                    val = as_positive_integer(assignment);
+                }
 
 #if defined (CYARG_SELF_HOSTED)
                 *reg = val;
