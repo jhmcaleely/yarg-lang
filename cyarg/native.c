@@ -383,11 +383,13 @@ bool vm_trace_offNative(ObjRoutine* routine, int argCount, Value* result) {
 }
 
 bool vm_trace_noteNative(ObjRoutine* routine, int argCount, Value* result) {
+    printf("TRACE NOTE");
     if (argCount >= 1) {
         Value noteVal = nativeArgument(routine, argCount, 0);
         ObjString* noteString = valueToString(noteVal);
-        printf("TRACE NOTE: %s\n", noteString->chars);
+        printf(": %s", noteString->chars);
     }
+    printf("\n");
     *result = NIL_VAL;
     return true;
 }
