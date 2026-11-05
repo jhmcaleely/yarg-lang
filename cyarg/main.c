@@ -17,6 +17,8 @@
 #include "hosted.h"
 #endif
 
+#include "packed_containers.h"
+
 #ifdef CYARG_FEATURE_HOSTED_REPL
 void usageMessage(FILE* destination) {
     fputs("Usage:\n"
@@ -67,7 +69,17 @@ int main() {
     initVMMemory();
     initVMRuntime();
 
-    bootXIP();
+    InterpretResult res = bootXIP();
+    if (res != INTERPRET_OK) {
+        Value errors = vm.core0.error;
+        assert(IS_UNIFORMARRAY(errors));
+
+        size_t cardinality = arrayCardinality(errors);
+        for (size_t i = 0; i < cardinality; i++) {
+            Value error = arrayElement(errors, i);
+            printf("%s\n", AS_CSTRING(error));
+        }
+    }
 
     freeVM();
     return 0;
