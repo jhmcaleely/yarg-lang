@@ -1,0 +1,93 @@
+// Yarg implementation of Conway's Life
+// https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
+//
+// A 2D matrix of cells, which contain a running instance
+// of Conway's Life.
+//
+// The neighbourhood (n) around a cell (c) is consulted to
+// see if the cell should maintain or change state
+//
+// nnn
+// ncn
+// nnn
+
+// characters handing for ascii state reports
+var live = 1;
+var dead = 0;
+
+// https://github.com/kraj/uClibc/blob/master/libc/stdlib/rand_r.c#L25
+var uint32 maxRand = 0x7fffffff;
+var uint32 seed = 4;
+fun rand()
+{
+    var uint32 next = seed;
+    var uint32 result;
+
+    next = next * 1103515245;
+    next = next + 12345;
+    result = (next / 65536) % 2048;
+
+    next = next * 1103515245;
+    next = next + 12345;
+    result = result << 10;
+    result = result ^ ((next / 65536) % 1024);
+
+    next = next * 1103515245;
+    next = next + 12345;
+    result = result << 10;
+    result = result ^ ((next / 65536) % 1024);
+
+    seed = next;
+    return next & maxRand;
+}
+
+fun random_state() {
+
+    if (rand() > maxRand / 2) {
+        return 0;
+    }
+    else {
+        return 1;
+    }
+}
+
+fun make_world(size) {
+
+    var world = new(any[size]);
+    for (var c = 0; c < len(world); c = c + 1) {
+        world[c] = random_state();
+    }
+    return world;
+}
+
+fun neighbour_weight(world, cell, neighbour_of) {
+    var result = 0;
+    for (var i = 0; i < 8; i = i + 1) {
+        var world_offset = neighbour_of(cell, i);
+        result = result + world[world_offset];
+    }
+    return result;
+}
+
+fun next_state(state, alive_neighbours) {
+    var new_state = dead;
+    
+    if (state == live and (alive_neighbours == 2 or alive_neighbours == 3)) {
+        new_state = live;
+    }
+    else if (state == dead and alive_neighbours == 3) {
+        new_state = live;
+    }
+
+    return new_state;
+}
+
+fun next_generation(world, neighbour_of) {
+    var next_gen = new(any[len(world)]);
+    for (var cell = 0; cell < len(world); cell = cell + 1) {
+        var nw = neighbour_weight(world, cell, neighbour_of);
+        next_gen[cell] = next_state(world[cell], nw);
+    }
+
+    return next_gen;
+}
