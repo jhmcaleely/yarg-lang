@@ -205,6 +205,9 @@ void initVMRuntime() {
     defineGlobal(&vm.core0, "vm_xip_start", ADDRESS_VAL(vm_xip_start));
 
     defineNative(&vm.core0, "vm_xip_string_node", vm_xip_string_nodeNative);
+    defineNative(&vm.core0, "vm_trace_on", vm_trace_onNative);
+    defineNative(&vm.core0, "vm_trace_off", vm_trace_offNative);
+    defineNative(&vm.core0, "vm_trace_note", vm_trace_noteNative);
 }
 
 void freeVM() {

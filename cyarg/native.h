@@ -20,6 +20,9 @@ bool fileSizeNative(ObjRoutine* routine, int argCount, Value* result);
 bool fileExistsNative(ObjRoutine* routine, int argCount, Value* result);
 
 bool vm_xip_string_nodeNative(ObjRoutine* routine, int argCount, Value* result);
+bool vm_trace_onNative(ObjRoutine* routine, int argCount, Value* result);
+bool vm_trace_offNative(ObjRoutine* routine, int argCount, Value* result);
+bool vm_trace_noteNative(ObjRoutine* routine, int argCount, Value* result);
 
 #if defined(CYARG_FEATURE_HOSTED_REPL)
 bool host_argcNative(ObjRoutine* routine, int argCount, Value* result);
