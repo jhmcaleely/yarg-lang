@@ -369,3 +369,27 @@ bool vm_xip_string_nodeNative(ObjRoutine* routine, int argCount, Value* result) 
     *result = stringVal;
     return true;
 }
+
+bool vm_trace_onNative(ObjRoutine* routine, int argCount, Value* result) {
+    *result = BOOL_VAL(routine->traceExecution);
+    routine->traceExecution = true;
+    return true;
+}
+
+bool vm_trace_offNative(ObjRoutine* routine, int argCount, Value* result) {
+    *result = BOOL_VAL(routine->traceExecution);
+    routine->traceExecution = false;
+    return true;
+}
+
+bool vm_trace_noteNative(ObjRoutine* routine, int argCount, Value* result) {
+    printf("TRACE NOTE");
+    if (argCount >= 1) {
+        Value noteVal = nativeArgument(routine, argCount, 0);
+        ObjString* noteString = valueToString(noteVal);
+        printf(": %s", noteString->chars);
+    }
+    printf("\n");
+    *result = NIL_VAL;
+    return true;
+}
