@@ -7,6 +7,5 @@ typedef struct ObjFunction ObjFunction;
 typedef struct ObjRoutine ObjRoutine;
 
 Value compile(ObjRoutine* context);
-void markCompilerRoots();
 
 #endif

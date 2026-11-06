@@ -9,16 +9,26 @@
  * A goal is for memory allocation required in the langauge to be O(1) and therefore useable
  * in contexts like interrupt response, where predictable time is desired.
  * 
- * Currently, an external heap (o1heap) is used, and reserves a large static array for all
- * allocations.
- * 
  * There are therefore a suite of C-like memory management functions (see memory.h), and a 
- * garbage collector to manage Obj instances (see here, and memory.h)
+ * garbage collector to manage Obj instances here in object.h.
  * 
- * The system is safe for concurrent access from multiple cores and interrupt contexts.
+ * The system is safe for concurrent access from multiple cores and interrupt contexts. The
+ * locking property (non-reentrant mutexes) required on target is preservered on host.
  * 
- * Most VM memory allocation is for Obj instances.
- *
+ * Most VM memory allocation is for Obj instances. Most creation of memory in the vm is
+ * therefore through:
+ *  vm_object_alloc()
+ * 
+ * C-style memory allocation is through:
+ *  vm_allocate()
+ *  vm_reallocate()
+ *  vm_free()
+ * 
+ * Various macros wrap those functions for convenience.
+ * 
+ * If you are implementing those functions or the gc, then heap_ can be used, with
+ * due consideration for concurrent access.
+ * 
  * The garbage collector is hooked into the standard allocation functions. In time, it will
  * also be designed to be O(1) in cases needed by the language, but this is not yet implemented.
  *
@@ -30,15 +40,18 @@
  * The globals are notably the language stack, some VM state, and the 'temporary root'
  * stack accessible throughout the VM.
  *
- * Since any call to reallocate() can trigger the GC, objects constructed via multiple calls to reallocate()
+ * Since any call allocating memory can trigger the GC, objects constructed via multiple allocation calls
  * often need care in storage during this phase. Commonly either push()'d onto the
  * language stack, or tempRootPush()'d onto the temporary root stack. Note that a partially constructed object
  * must be safe to free, and object allocation zero's the whole memory cell as a convenience for this
+ * 
+ * An external heap implementation (../external/o1heap) is used to provide O(1) allocation,
+ * but it can be switched out (see heap.h & .c), for example to use c stdlib based
+ * memory debug and analysis tools.
  */
 
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 
 typedef struct ObjString ObjString;
 
@@ -112,25 +125,11 @@ typedef struct Obj {
     Obj* next;
 } Obj;
 
-// Dynamic array of Object pointers. Takes ownership of the passed object before growing the array.
-typedef struct {
-    Obj* stash;
-    Obj** objects;
-    int objectCapacity;
-    int objectCount;
-} DynamicObjArray;
-
-
 #define ALLOCATE_OBJ(type, objectType) \
-    (type*)allocateObject(sizeof(type), objectType)
+    (type*)vm_object_alloc(sizeof(type), objectType)
 
-Obj* allocateObject(size_t size, ObjType type);
+Obj* vm_object_alloc(size_t size, ObjType type);
 
 ObjString* objectToString(const Obj* value);
-
-void initDynamicObjArray(DynamicObjArray* array);
-void freeDynamicObjArray(DynamicObjArray* array);
-void gc_freeDynamicObjArray(DynamicObjArray* array);
-void appendToDynamicObjArray(DynamicObjArray* array, Obj* obj);
 
 #endif

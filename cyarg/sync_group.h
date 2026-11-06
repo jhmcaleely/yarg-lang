@@ -10,9 +10,6 @@ typedef struct ObjSyncGroup ObjSyncGroup;
 
 ObjSyncGroup* newSyncGroup(ObjRoutine* routine, Value itemArray);
 
-void markSyncGroup(ObjSyncGroup* group);
-void gc_freeSyncGroup(ObjSyncGroup* group);
-
 ObjString* syncGroupToString(const ObjSyncGroup* group);
 
 Value receiveSyncGroup(ObjSyncGroup* group);

@@ -3,6 +3,7 @@
 
 #include "value.h"
 #include "object.h"
+#include "object_dyn_array.h"
 #include "value_cell.h"
 
 #define FRAMES_MAX 20
@@ -84,8 +85,6 @@ int op_return(ObjRoutine* routine, CallFrame* frame);
 void op_close_upvalues(ObjRoutine* routine);
 bool startRoutine(ObjRoutine* context, ObjRoutine* target, size_t argCount, Value argument);
 bool receiveFromRoutine(ObjRoutine* routine, Value* result);
-
-void markRoutine(ObjRoutine* routine);
 
 void push(ObjRoutine* routine, Value value);
 void pushTyped(ObjRoutine* routine, Value value, Value type);
