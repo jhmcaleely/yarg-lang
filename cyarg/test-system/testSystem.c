@@ -203,6 +203,18 @@ TestSystem *self(void)
     return (TestSystem *)&ts;
 }
 
+// use on VM shutdown, if a log entry was made outside a
+// defined test (eg, by peek() call.)
+void tsDrainLog(void) {
+    TestSystem *ts = self();
+
+    for (size_t i = 0; i < ts->log_.n_; i++)
+    {
+        vm_free(ts->log_.i_[i]);
+    }
+    vm_free(ts->log_.i_);
+}
+
 size_t tsRead(size_t address)
 {
     return read(address);

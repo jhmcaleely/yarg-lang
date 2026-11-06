@@ -29,6 +29,9 @@
 #include "xip_library.h"
 #include "yargstructtype.h"
 #include "packed_containers.h"
+#ifdef CYARG_FEATURE_TEST_SYSTEM
+#include "test-system/testIntrinsics.h"
+#endif
 
 VM vm;
 
@@ -215,6 +218,9 @@ void freeVM() {
     vm.core1 = NULL;
     vm.initString = NULL;
     vm.libraryPath = NULL;
+#ifdef CYARG_FEATURE_TEST_SYSTEM
+    tsDrainLog();
+#endif
     vm_objects_free();
 }
 
