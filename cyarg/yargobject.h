@@ -86,6 +86,7 @@ typedef struct {
 ObjFunction* newFunction();
 void initFunction(ObjFunction* function);
 ObjString* functionToString(const ObjFunction* function);
+void freeFunction(ObjFunction* function);
 
 ObjClass* newClass(ObjString* name);
 ObjInstance* newInstance(ObjClass* klass);

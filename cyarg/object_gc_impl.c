@@ -411,6 +411,8 @@ void freeObject(Obj* object) {
         case OBJ_BUILTIN: break;
         case OBJ_ROUTINE: {
             ObjRoutine* routine = (ObjRoutine*)object;
+            gc_free(routine->stackSlices);
+            gc_freeDynamicObjArray(&routine->additionalSlicesArray);
             gc_freeDynamicObjArray(&routine->runtimeErrors);
             break;
         }

@@ -68,7 +68,9 @@ typedef struct ObjRoutine {
 
 void initRoutine(ObjRoutine* routine);
 ObjRoutine* newRoutine();
+void freeRoutine(ObjRoutine* routine);
 void resetRoutine(ObjRoutine* routine);
+
 bool bindEntryFn(ObjRoutine* routine, ObjClosure* closure);
 void bindEntryArgs(ObjRoutine* routine, Value entryArg);
 void pushEntryElements(ObjRoutine* routine);
