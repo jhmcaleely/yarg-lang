@@ -85,7 +85,9 @@ fun next_state(state, alive_neighbours) {
 fun next_generation(world, neighbour_of) {
     var next_gen = new(any[len(world)]);
     for (var cell = 0; cell < len(world); cell = cell + 1) {
+        vm_trace_note("cell" + string(cell));
         var nw = neighbour_weight(world, cell, neighbour_of);
+        vm_trace_note("alive neighbours" + string(nw));
         next_gen[cell] = next_state(world[cell], nw);
     }
 

@@ -2,7 +2,12 @@
 // by a Raspberry Pi Pico.
 
 import("conway");
+
+vm_trace_note("imported conway");
+
 import("cube_bit");
+
+vm_trace_note("importing complete");
 
 // The Life array for the CUBE:BIT Led Cube.
 var surface_world = make_world(56);
@@ -29,10 +34,15 @@ fun surface_neighbour_of(cell, neighbour) {
 }
 
 cube_bit_init();
+vm_trace_note("init complete");
 
-while (true) {
-
+var iteration = 0;
+while (iteration < 10) {
+    vm_trace_note("iteration" + string(iteration));
     display_on_surface(surface_world);
+    vm_trace_note("next generations");
     surface_world = next_generation(surface_world, surface_neighbour_of);
+    vm_trace_note("done");
+    iteration = iteration + 1;
 }
     
