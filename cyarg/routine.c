@@ -53,6 +53,7 @@ void freeRoutine(ObjRoutine* routine) {
 void resetRoutine(ObjRoutine* routine) {
 
     routine->result = NIL_VAL;
+    freeDynamicObjArray(&routine->runtimeErrors);
     initDynamicObjArray(&routine->runtimeErrors);
 
     routine->stackTopIndex = 0;
