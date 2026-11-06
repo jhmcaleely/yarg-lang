@@ -210,6 +210,9 @@ void initVMRuntime() {
 void freeVM() {
     freeCellTable(&vm.globals);
     freeTable(&vm.strings);
+    freeRoutine(&vm.core0);
+    freeFunction(&vm.bootFunction);
+    vm.core1 = NULL;
     vm.initString = NULL;
     vm.libraryPath = NULL;
     vm_objects_free();

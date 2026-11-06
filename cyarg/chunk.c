@@ -17,6 +17,12 @@ void initChunk(Chunk* chunk) {
     initDynamicValueArray(&chunk->constants);
 }
 
+void freeChunk(Chunk* chunk) {
+    vm_free(chunk->code);
+    vm_free(chunk->lines);
+    freeDynamicValueArray(&chunk->constants);
+}
+
 void writeChunk(Chunk* chunk, uint8_t byte, int line) {
     if (chunk->capacity < chunk->count + 1) {
         int oldCapacity = chunk->capacity;

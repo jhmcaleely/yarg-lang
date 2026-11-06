@@ -44,6 +44,12 @@ void initRoutine(ObjRoutine* routine) {
     resetRoutine(routine);
 }
 
+void freeRoutine(ObjRoutine* routine) {
+    vm_free(routine->stackSlices);
+    freeDynamicObjArray(&routine->additionalSlicesArray);
+    freeDynamicObjArray(&routine->runtimeErrors);
+}
+
 void resetRoutine(ObjRoutine* routine) {
 
     routine->result = NIL_VAL;

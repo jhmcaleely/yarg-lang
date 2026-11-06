@@ -24,6 +24,10 @@ void initFunction(ObjFunction* function) {
     initChunk(&function->chunk);
 }
 
+void freeFunction(ObjFunction* function) {
+    freeChunk(&function->chunk);
+}
+
 ObjString* functionToString(const ObjFunction* function) {
     if (function->fName == NULL) {
         return copyString("<script>", 8);
