@@ -62,7 +62,6 @@ typedef struct ObjScanner ObjScanner;
 typedef struct ObjString ObjString;
 
 ObjScanner* newScanner(ObjString* source);
-void markScanner(ObjScanner* scanner);
 
 Token scanToken(ObjScanner* scanner);
 

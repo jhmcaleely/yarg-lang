@@ -78,9 +78,6 @@ bool isUint32Pointer(Value val);
 #define IS_POINTER(value)      is_pointer(value)
 #define IS_STRUCT(value)       is_struct(value)
 
-void markPackedStorage(ObjPackedStorage* storage);
-void gc_freePackedStorage(ObjPackedStorage* storage);
-
 Value newPackedValueContainer(const ObjConcreteYargType* type);
 Value createPackedValueContainerAt(void* location, const ObjConcreteYargType* type);
 Value createPackedContainerFor(ObjPackedContainer* container, size_t offset, const ObjConcreteYargType* type);
@@ -105,6 +102,7 @@ Value allocValueArray(size_t length);
 Value allocValueStructPair(const char* leftFieldName, const char* rightFieldName);
 
 // convert internal DynamicObjArray to Value array
+typedef struct DynamicObjArray DynamicObjArray;
 Value duplicateAsValueArray(DynamicObjArray* array);
 
 size_t arrayCardinality(Value array);
