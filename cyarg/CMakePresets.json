@@ -62,6 +62,16 @@
                 "YARG_DEVICE": "RASPBERRY_PI_PICO",
                 "CMAKE_BUILD_TYPE": "Debug"
             } 
+        },
+        {
+            "name": "target-pico2-arm",
+            "displayName": "For Pico 2 (RP2350, env setup required)",
+            "description": "Using the Pico SDK ARM toolchain",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "YARG_DEVICE": "RASPBERRY_PI_PICO2",
+                "CMAKE_BUILD_TYPE": "Release"
+            } 
         }
     ]
 }

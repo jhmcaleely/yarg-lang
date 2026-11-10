@@ -20,12 +20,18 @@ if (EXISTS ${picoVscode})
 endif()
 # ====================================================================================
 
-# Yarg device selection: RASPBERRY_PI_PICO or GENERIC_HOST
+# Yarg device selection: 
+#   RASPBERRY_PI_PICO
+#   RASPBERRY_PI_PICO2
+#   GENERIC_HOST (suitable for MacOS or Linux Hosting)
 # determines if cyarg is built as hosted or self-hosted binary
 # for Pico, sets the PICO_BOARD variable for the Pico SDK
 if (YARG_DEVICE STREQUAL "RASPBERRY_PI_PICO")
 set(CYARG_HOSTING "SELF_HOSTED" CACHE STRING "cyarg built as self-hosting binary")
 set(PICO_BOARD "pico" CACHE STRING "Raspberry Pi Pico board")
+elseif (YARG_DEVICE STREQUAL "RASPBERRY_PI_PICO2")
+set(CYARG_HOSTING "SELF_HOSTED" CACHE STRING "cyarg built as self-hosting binary")
+set(PICO_BOARD "pico2" CACHE STRING "Raspberry Pi Pico 2 board")
 elseif (YARG_DEVICE STREQUAL "GENERIC_HOST")
 set(CYARG_HOSTING "HOSTED" CACHE STRING "cyarg built as hosted binary")
 endif()
@@ -43,12 +49,12 @@ set(CYARG_FEATURE_TEST_SYSTEM "TRUE" CACHE STRING "Include the test system")
 endif()
 
 if (YARG_DEVICE STREQUAL "RASPBERRY_PI_PICO")
-add_compile_definitions(CYARG_PICO_SDK_TARGET)
-add_compile_definitions(CYARG_PICO_STDLIB)
-add_compile_definitions(CYARG_PICO_SDK_SYNC)
-add_compile_definitions(CYARG_PICO_BUSY_SYNC)
 add_compile_definitions(PICO_STACK_SIZE=0x1000)
-elseif(YARG_DEVICE STREQUAL "GENERIC_HOST")
+elseif(YARG_DEVICE STREQUAL "RASPBERRY_PI_PICO2")
+add_compile_definitions(PICO_STACK_SIZE=0x1000)
+endif()
+
+if(YARG_DEVICE STREQUAL "GENERIC_HOST")
 add_compile_definitions(CYARG_PTHREADS_SYNC)
 endif()
 
@@ -56,14 +62,18 @@ if (CYARG_FEATURE_HEAP STREQUAL "CSTDLIB")
 add_compile_definitions(CYARG_CSTDLIB_HEAP)
 endif()
 
-if(YARG_DEVICE STREQUAL "RASPBERRY_PI_PICO")
+if(PICO_BOARD)
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
 endif()
 
 if(PICO_BOARD)
 set(PICO_USE_FASTEST_SUPPORTED_CLOCK 1)
+add_compile_definitions(CYARG_PICO_SDK_TARGET)
+add_compile_definitions(CYARG_PICO_STDLIB)
 set(SKIP_PICO_MALLOC 1)
+add_compile_definitions(CYARG_PICO_SDK_SYNC)
+add_compile_definitions(CYARG_PICO_BUSY_SYNC)
 endif()
 
 # The PICO SDK will also need CXX & ASM toolchains to assemble the firmware image
@@ -175,7 +185,7 @@ target_sources(cyarg
       fs/fs_littlefs.c
       ../external/littlefs/lfs.c
       ../external/littlefs/lfs_util.c)
-if (YARG_DEVICE STREQUAL "RASPBERRY_PI_PICO")
+if (YARG_DEVICE STREQUAL "RASPBERRY_PI_PICO" OR YARG_DEVICE STREQUAL "RASPBERRY_PI_PICO2")
 target_sources(cyarg
     PRIVATE
       fs/pico_flash_fs.h
@@ -236,7 +246,9 @@ target_include_directories(cyarg PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
 )
 
-pico_set_linker_script(cyarg ${CMAKE_SOURCE_DIR}/memmap_custom.ld)
+if (PICO_BOARD STREQUAL "pico")
+pico_set_linker_script(cyarg ${CMAKE_SOURCE_DIR}/memmap_pico.ld)
+endif()
 
 pico_add_extra_outputs(cyarg)
 endif()
