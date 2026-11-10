@@ -5,21 +5,6 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# == DO NOT EDIT THE FOLLOWING LINES for the Raspberry Pi Pico VS Code Extension to work ==
-if(WIN32)
-    set(USERHOME $ENV{USERPROFILE})
-else()
-    set(USERHOME $ENV{HOME})
-endif()
-set(sdkVersion 2.3.1)
-set(toolchainVersion 14_2_Rel1)
-set(picotoolVersion 2.3.1)
-set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
-if (EXISTS ${picoVscode})
-    include(${picoVscode})
-endif()
-# ====================================================================================
-
 # Yarg device selection: 
 #   RASPBERRY_PI_PICO
 #   RASPBERRY_PI_PICO2
@@ -29,12 +14,32 @@ endif()
 if (YARG_DEVICE STREQUAL "RASPBERRY_PI_PICO")
 set(CYARG_HOSTING "SELF_HOSTED" CACHE STRING "cyarg built as self-hosting binary")
 set(PICO_BOARD "pico" CACHE STRING "Raspberry Pi Pico board")
+set(toolchainVersion 14_2_Rel1)
 elseif (YARG_DEVICE STREQUAL "RASPBERRY_PI_PICO2")
 set(CYARG_HOSTING "SELF_HOSTED" CACHE STRING "cyarg built as self-hosting binary")
 set(PICO_BOARD "pico2" CACHE STRING "Raspberry Pi Pico 2 board")
+if(CYARG_TOOLCHAIN_VERSION)
+set(toolchainVersion ${CYARG_TOOLCHAIN_VERSION})
+else()
+set(toolchainVersion 14_2_Rel1)
+endif()
 elseif (YARG_DEVICE STREQUAL "GENERIC_HOST")
 set(CYARG_HOSTING "HOSTED" CACHE STRING "cyarg built as hosted binary")
 endif()
+
+# == DO NOT EDIT THE FOLLOWING LINES for the Raspberry Pi Pico VS Code Extension to work ==
+if(WIN32)
+    set(USERHOME $ENV{USERPROFILE})
+else()
+    set(USERHOME $ENV{HOME})
+endif()
+set(sdkVersion 2.3.1)
+set(picotoolVersion 2.3.1)
+set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
+if (EXISTS ${picoVscode})
+    include(${picoVscode})
+endif()
+# ====================================================================================
 
 # configures defaults for hosting and self hosted builds.
 if (CYARG_HOSTING STREQUAL "SELF_HOSTED")

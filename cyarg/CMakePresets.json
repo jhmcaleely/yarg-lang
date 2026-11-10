@@ -72,6 +72,17 @@
                 "YARG_DEVICE": "RASPBERRY_PI_PICO2",
                 "CMAKE_BUILD_TYPE": "Release"
             } 
+        },
+        {
+            "name": "target-pico2-riscv",
+            "displayName": "For Pico 2 RISC-V (RP2350, env setup required)",
+            "description": "Using the Pico SDK RISC-V toolchain",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "YARG_DEVICE": "RASPBERRY_PI_PICO2",
+                "CYARG_TOOLCHAIN_VERSION": "RISCV_PICO_2_3_1_0",
+                "CMAKE_BUILD_TYPE": "Release"
+            } 
         }
     ]
 }
