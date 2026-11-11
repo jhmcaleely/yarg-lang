@@ -17,6 +17,7 @@ typedef enum {
     OP_DEFINE_GLOBAL,
     OP_SET_GLOBAL,
     OP_INITIALISE,
+    OP_INITIALISE_DEFAULT,
     OP_GET_UPVALUE,
     OP_SET_UPVALUE,
     OP_GET_PROPERTY,
@@ -67,8 +68,7 @@ typedef enum {
     OP_SET_PTR_TARGET,
     OP_PLACE,
     OP_DUPLICATE,
-    OP_ERROR,
-    OP_DEFAULT_VALUE
+    OP_ERROR
 } OpCode;
 
 typedef struct {

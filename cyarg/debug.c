@@ -264,6 +264,8 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return constantInstruction("OP_SET_GLOBAL", chunk, offset);
         case OP_INITIALISE:
             return simpleInstruction("OP_INITIALISE", offset);
+        case OP_INITIALISE_DEFAULT:
+            return simpleInstruction("OP_INITIALISE_DEFAULT", offset);
         case OP_GET_UPVALUE:
             return byteInstruction("OP_GET_UPVALUE", chunk, offset);
         case OP_SET_UPVALUE:
@@ -382,8 +384,6 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return simpleInstruction("OP_PLACE", offset);
         case OP_DUPLICATE:
             return simpleInstruction("OP_DUPLICATE", offset);
-        case OP_DEFAULT_VALUE:
-            return simpleInstruction("OP_DEFAULT_VALUE", offset);
         default:
             printf("Unknown opcode %d\n", instruction);
             return offset + 1;

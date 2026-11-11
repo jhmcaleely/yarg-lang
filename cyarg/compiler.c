@@ -808,20 +808,17 @@ static void generateVarDeclaration(ObjStmtVarDeclaration* decl) {
 
     if (decl->type == NULL && decl->initialiser == NULL) {
         emitByte(OP_NIL);
+    } else if (decl->type && decl->initialiser == NULL) {
+        generateExpr(decl->type);
+        emitByte(OP_INITIALISE_DEFAULT);
+    } else if (decl->type == NULL && decl->initialiser) {
+        generateExpr(decl->initialiser);
+        emitByte(OP_DUPLICATE);
     } else {
-        if (decl->type) {
-            generateExpr(decl->type);
-        } else {
-            emitByte(OP_NIL);
-        }
-
-        if (decl->initialiser) {
-            generateExpr(decl->initialiser);
-            emitByte(OP_DUPLICATE);
-        } else {
-            emitByte(OP_DEFAULT_VALUE);
-        }
-
+        assert(decl->type && decl->initialiser);
+        generateExpr(decl->type);
+        generateExpr(decl->initialiser);
+        emitByte(OP_DUPLICATE);
         emitByte(OP_INITIALISE);
     }
 

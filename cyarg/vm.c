@@ -910,6 +910,13 @@ InterpretResult run(ObjRoutine* routine) {
                 pushTyped(routine, result, targetType);
                 break;
             }
+            case OP_INITIALISE_DEFAULT: {
+                Value targetType = peek(routine, 0);
+                Value result = defaultValue(targetType);
+                pop(routine);
+                pushTyped(routine, result, targetType);
+                break;
+            }
             case OP_DUPLICATE: {
                 Value rhs = peek(routine, 0);
                 Value lhs = duplicateValue(rhs);
@@ -1473,12 +1480,6 @@ InterpretResult run(ObjRoutine* routine) {
                 pop(routine);
                 pop(routine);
                 push(routine, YARGTYPE_VAL(typeObject));
-                break;
-            }
-            case OP_DEFAULT_VALUE: {
-                Value type = peek(routine, 0);
-                Value def = defaultValue(type);
-                push(routine, def);
                 break;
             }
             case OP_DEREF_PTR: {
