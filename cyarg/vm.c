@@ -898,13 +898,16 @@ InterpretResult run(ObjRoutine* routine) {
                 break;
             }
             case OP_INITIALISE: {
-                ValueCellTarget lhsTrg = peekCellTarget(routine, 1);
+                Value targetType = peek(routine, 1);
                 ValueCell* rhs = peekCell(routine, 0);
-                if (!assignToValueCellTarget(lhsTrg, rhs->value)) {
+                Value result;
+                if (!canInitialiseType(targetType, rhs->value, &result)) {
                     runtimeError(routine, "Cannot initialise variable with this value.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 pop(routine);
+                pop(routine);
+                pushTyped(routine, result, targetType);
                 break;
             }
             case OP_DUPLICATE: {
@@ -1472,11 +1475,10 @@ InterpretResult run(ObjRoutine* routine) {
                 push(routine, YARGTYPE_VAL(typeObject));
                 break;
             }
-            case OP_SET_CELL_TYPE: {
+            case OP_DEFAULT_VALUE: {
                 Value type = peek(routine, 0);
                 Value def = defaultValue(type);
-                pop(routine);
-                pushTyped(routine, def, type);
+                push(routine, def);
                 break;
             }
             case OP_DEREF_PTR: {

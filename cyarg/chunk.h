@@ -63,12 +63,12 @@ typedef enum {
     OP_TYPE_LITERAL,
     OP_TYPE_STRUCT,
     OP_TYPE_INDEXED_COLLECTION,
-    OP_SET_CELL_TYPE,
     OP_DEREF_PTR,
     OP_SET_PTR_TARGET,
     OP_PLACE,
     OP_DUPLICATE,
-    OP_ERROR
+    OP_ERROR,
+    OP_DEFAULT_VALUE
 } OpCode;
 
 typedef struct {

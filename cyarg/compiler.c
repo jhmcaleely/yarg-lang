@@ -808,17 +808,18 @@ static void generateVarDeclaration(ObjStmtVarDeclaration* decl) {
 
     if (decl->type) {
         generateExpr(decl->type);
-    }
-    else {
+    } else {
         emitByte(OP_NIL);
     }
-    emitByte(OP_SET_CELL_TYPE);
 
     if (decl->initialiser) {
         generateExpr(decl->initialiser);
         emitByte(OP_DUPLICATE);
-        emitByte(OP_INITIALISE);
+    } else {
+        emitByte(OP_DEFAULT_VALUE);
     }
+
+    emitByte(OP_INITIALISE);
 
     defineVariable(global);
 }

@@ -374,8 +374,6 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return byteInstruction("OP_TYPE_STRUCT", chunk, offset);
         case OP_TYPE_INDEXED_COLLECTION:
             return simpleInstruction("OP_TYPE_INDEXED_COLLECTION", offset);
-        case OP_SET_CELL_TYPE:
-            return simpleInstruction("OP_SET_CELL_TYPE", offset);
         case OP_DEREF_PTR:
             return simpleInstruction("OP_DEREF_PTR", offset);
         case OP_SET_PTR_TARGET:
@@ -384,6 +382,8 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return simpleInstruction("OP_PLACE", offset);
         case OP_DUPLICATE:
             return simpleInstruction("OP_DUPLICATE", offset);
+        case OP_DEFAULT_VALUE:
+            return simpleInstruction("OP_DEFAULT_VALUE", offset);
         default:
             printf("Unknown opcode %d\n", instruction);
             return offset + 1;
