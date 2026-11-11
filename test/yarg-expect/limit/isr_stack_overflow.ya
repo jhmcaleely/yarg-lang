@@ -35,7 +35,7 @@ for (var i = 0; i < len(result.errors); i = i + 1) {
     print result.errors[i];
 }
 // expect: Fixed Value stack size exceeded.
-// expect: [line 12] in foo
+// expect: [line 13] in foo
 // expect: [line 26] in foo
 // expect: [line 26] in foo
 // expect: [line 26] in foo

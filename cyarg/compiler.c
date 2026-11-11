@@ -806,20 +806,24 @@ static void generateStmtPoke(ObjStmtPoke* stmt) {
 static void generateVarDeclaration(ObjStmtVarDeclaration* decl) {
     uint8_t global = parseVariable(decl->name);
 
-    if (decl->type) {
-        generateExpr(decl->type);
-    } else {
+    if (decl->type == NULL && decl->initialiser == NULL) {
         emitByte(OP_NIL);
-    }
-
-    if (decl->initialiser) {
-        generateExpr(decl->initialiser);
-        emitByte(OP_DUPLICATE);
     } else {
-        emitByte(OP_DEFAULT_VALUE);
-    }
+        if (decl->type) {
+            generateExpr(decl->type);
+        } else {
+            emitByte(OP_NIL);
+        }
 
-    emitByte(OP_INITIALISE);
+        if (decl->initialiser) {
+            generateExpr(decl->initialiser);
+            emitByte(OP_DUPLICATE);
+        } else {
+            emitByte(OP_DEFAULT_VALUE);
+        }
+
+        emitByte(OP_INITIALISE);
+    }
 
     defineVariable(global);
 }
