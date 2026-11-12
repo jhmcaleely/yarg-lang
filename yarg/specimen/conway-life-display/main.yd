@@ -2,165 +2,155 @@ main.ya
       4 | import("conway");
 0000    4 OP_GET_GLOBAL       0 string:'import'
 0002    | OP_CONSTANT         1 string:'conway'
-0004    | OP_DUPLICATE
+0004    | OP_VALUE_BY_VALUE
 0005    | OP_CALL             1
 0007    | OP_POP
       6 | vm_trace_note("imported conway");
 0008    6 OP_GET_GLOBAL       2 string:'vm_trace_note'
 0010    | OP_CONSTANT         3 string:'imported conway'
-0012    | OP_DUPLICATE
+0012    | OP_VALUE_BY_VALUE
 0013    | OP_CALL             1
 0015    | OP_POP
       8 | import("cube_bit");
 0016    8 OP_GET_GLOBAL       0 string:'import'
 0018    | OP_CONSTANT         4 string:'cube_bit'
-0020    | OP_DUPLICATE
+0020    | OP_VALUE_BY_VALUE
 0021    | OP_CALL             1
 0023    | OP_POP
      10 | vm_trace_note("importing complete");
 0024   10 OP_GET_GLOBAL       2 string:'vm_trace_note'
 0026    | OP_CONSTANT         5 string:'importing complete'
-0028    | OP_DUPLICATE
+0028    | OP_VALUE_BY_VALUE
 0029    | OP_CALL             1
 0031    | OP_POP
      13 | var surface_world = make_world(56);
 0032   13 OP_GET_GLOBAL       7 string:'make_world'
 0034    | OP_IMMEDIATE_P8    56
-0036    | OP_DUPLICATE
+0036    | OP_VALUE_BY_VALUE
 0037    | OP_CALL             1
-0039    | OP_DUPLICATE
+0039    | OP_VALUE_BY_VALUE
 0040    | OP_DEFINE_GLOBAL    6 string:'surface_world'
      16 | var display_pixels = [ [uint8(0), uint8(255), uint8(0)], [uint8(255), uint8(0), uint8(0)] ];
-0042   16 OP_GET_BUILTIN   new
-0044    | OP_NIL
-0045    | OP_IMMEDIATE_P8     2
-0047    | OP_TYPE_INDEXED_COLLECTION
-0048    | OP_CALL             1
-0050    | OP_IMMEDIATE_P8     0
-0052    | OP_GET_BUILTIN   new
-0054    | OP_NIL
-0055    | OP_IMMEDIATE_P8     3
-0057    | OP_TYPE_INDEXED_COLLECTION
-0058    | OP_CALL             1
+0042   16 OP_NIL
+0043    | OP_IMMEDIATE_P8     2
+0045    | OP_TYPE_INDEXED_COLLECTION
+0046    | OP_CALL_BUILTIN  new    1
+0049    | OP_IMMEDIATE_P8     0
+0051    | OP_NIL
+0052    | OP_IMMEDIATE_P8     3
+0054    | OP_TYPE_INDEXED_COLLECTION
+0055    | OP_CALL_BUILTIN  new    1
+0058    | OP_IMMEDIATE_P8     0
 0060    | OP_IMMEDIATE_P8     0
-0062    | OP_IMMEDIATE_P8     0
-0064    | OP_DUPLICATE
-0065    | OP_CALL_BUILTIN  uint8    1
-0068    | OP_SET_ELEMENT
-0069    | OP_IMMEDIATE_P8     1
-0071    | OP_IMMEDIATE_P8   255
-0073    | OP_DUPLICATE
-0074    | OP_CALL_BUILTIN  uint8    1
-0077    | OP_SET_ELEMENT
-0078    | OP_IMMEDIATE_P8     2
-0080    | OP_IMMEDIATE_P8     0
-0082    | OP_DUPLICATE
-0083    | OP_CALL_BUILTIN  uint8    1
-0086    | OP_SET_ELEMENT
-0087    | OP_SET_ELEMENT
-0088    | OP_IMMEDIATE_P8     1
-0090    | OP_GET_BUILTIN   new
-0092    | OP_NIL
-0093    | OP_IMMEDIATE_P8     3
-0095    | OP_TYPE_INDEXED_COLLECTION
-0096    | OP_CALL             1
-0098    | OP_IMMEDIATE_P8     0
-0100    | OP_IMMEDIATE_P8   255
-0102    | OP_DUPLICATE
-0103    | OP_CALL_BUILTIN  uint8    1
-0106    | OP_SET_ELEMENT
-0107    | OP_IMMEDIATE_P8     1
-0109    | OP_IMMEDIATE_P8     0
-0111    | OP_DUPLICATE
+0062    | OP_CALL_BUILTIN  uint8    1
+0065    | OP_SET_ELEMENT
+0066    | OP_IMMEDIATE_P8     1
+0068    | OP_IMMEDIATE_P8   255
+0070    | OP_CALL_BUILTIN  uint8    1
+0073    | OP_SET_ELEMENT
+0074    | OP_IMMEDIATE_P8     2
+0076    | OP_IMMEDIATE_P8     0
+0078    | OP_CALL_BUILTIN  uint8    1
+0081    | OP_SET_ELEMENT
+0082    | OP_SET_ELEMENT
+0083    | OP_IMMEDIATE_P8     1
+0085    | OP_NIL
+0086    | OP_IMMEDIATE_P8     3
+0088    | OP_TYPE_INDEXED_COLLECTION
+0089    | OP_CALL_BUILTIN  new    1
+0092    | OP_IMMEDIATE_P8     0
+0094    | OP_IMMEDIATE_P8   255
+0096    | OP_CALL_BUILTIN  uint8    1
+0099    | OP_SET_ELEMENT
+0100    | OP_IMMEDIATE_P8     1
+0102    | OP_IMMEDIATE_P8     0
+0104    | OP_CALL_BUILTIN  uint8    1
+0107    | OP_SET_ELEMENT
+0108    | OP_IMMEDIATE_P8     2
+0110    | OP_IMMEDIATE_P8     0
 0112    | OP_CALL_BUILTIN  uint8    1
 0115    | OP_SET_ELEMENT
-0116    | OP_IMMEDIATE_P8     2
-0118    | OP_IMMEDIATE_P8     0
-0120    | OP_DUPLICATE
-0121    | OP_CALL_BUILTIN  uint8    1
-0124    | OP_SET_ELEMENT
-0125    | OP_SET_ELEMENT
-0126    | OP_DUPLICATE
-0127    | OP_DEFINE_GLOBAL    8 string:'display_pixels'
+0116    | OP_SET_ELEMENT
+0117    | OP_VALUE_BY_VALUE
+0118    | OP_DEFINE_GLOBAL    8 string:'display_pixels'
      18 | fun display_on_surface(world) {
-0129   18 OP_CLOSURE         10 <fn display_on_surface>
-0131    | OP_DEFINE_GLOBAL    9 string:'display_on_surface'
+0120   18 OP_CLOSURE         10 <fn display_on_surface>
+0122    | OP_DEFINE_GLOBAL    9 string:'display_on_surface'
      27 | fun surface_neighbour_of(cell, neighbour) {
-0133   27 OP_CLOSURE         12 <fn surface_neighbour_of>
-0135    | OP_DEFINE_GLOBAL   11 string:'surface_neighbour_of'
+0124   27 OP_CLOSURE         12 <fn surface_neighbour_of>
+0126    | OP_DEFINE_GLOBAL   11 string:'surface_neighbour_of'
      36 | cube_bit_init();
-0137   36 OP_GET_GLOBAL      13 string:'cube_bit_init'
-0139    | OP_CALL             0
-0141    | OP_POP
+0128   36 OP_GET_GLOBAL      13 string:'cube_bit_init'
+0130    | OP_CALL             0
+0132    | OP_POP
      37 | vm_trace_note("init complete");
-0142   37 OP_GET_GLOBAL       2 string:'vm_trace_note'
-0144    | OP_CONSTANT        14 string:'init complete'
-0146    | OP_DUPLICATE
-0147    | OP_CALL             1
-0149    | OP_POP
+0133   37 OP_GET_GLOBAL       2 string:'vm_trace_note'
+0135    | OP_CONSTANT        14 string:'init complete'
+0137    | OP_VALUE_BY_VALUE
+0138    | OP_CALL             1
+0140    | OP_POP
      39 | var iteration = 0;
-0150   39 OP_IMMEDIATE_P8     0
-0152    | OP_DUPLICATE
-0153    | OP_DEFINE_GLOBAL   15 string:'iteration'
+0141   39 OP_IMMEDIATE_P8     0
+0143    | OP_VALUE_BY_VALUE
+0144    | OP_DEFINE_GLOBAL   15 string:'iteration'
      40 | while (iteration < 10) {
-0155   40 OP_GET_GLOBAL      15 string:'iteration'
-0157    | OP_IMMEDIATE_P8    10
-0159    | OP_LESS
-0160    | OP_JUMP_IF_FALSE  160 -> 229
-0163    | OP_POP
+0146   40 OP_GET_GLOBAL      15 string:'iteration'
+0148    | OP_IMMEDIATE_P8    10
+0150    | OP_LESS
+0151    | OP_JUMP_IF_FALSE  151 -> 219
+0154    | OP_POP
      41 |     vm_trace_note("iteration" + string(iteration));
-0164   41 OP_GET_GLOBAL       2 string:'vm_trace_note'
-0166    | OP_CONSTANT        15 string:'iteration'
-0168    | OP_GET_GLOBAL      15 string:'iteration'
-0170    | OP_DUPLICATE
-0171    | OP_CALL_BUILTIN  string    1
-0174    | OP_ADD
-0175    | OP_DUPLICATE
-0176    | OP_CALL             1
-0178    | OP_POP
+0155   41 OP_GET_GLOBAL       2 string:'vm_trace_note'
+0157    | OP_CONSTANT        15 string:'iteration'
+0159    | OP_GET_GLOBAL      15 string:'iteration'
+0161    | OP_CALL_BUILTIN  string    1
+0164    | OP_ADD
+0165    | OP_VALUE_BY_VALUE
+0166    | OP_CALL             1
+0168    | OP_POP
      42 |     display_on_surface(surface_world);
-0179   42 OP_GET_GLOBAL       9 string:'display_on_surface'
-0181    | OP_GET_GLOBAL       6 string:'surface_world'
-0183    | OP_DUPLICATE
-0184    | OP_CALL             1
-0186    | OP_POP
+0169   42 OP_GET_GLOBAL       9 string:'display_on_surface'
+0171    | OP_GET_GLOBAL       6 string:'surface_world'
+0173    | OP_VALUE_BY_VALUE
+0174    | OP_CALL             1
+0176    | OP_POP
      43 |     vm_trace_note("next generations");
-0187   43 OP_GET_GLOBAL       2 string:'vm_trace_note'
-0189    | OP_CONSTANT        16 string:'next generations'
-0191    | OP_DUPLICATE
-0192    | OP_CALL             1
-0194    | OP_POP
+0177   43 OP_GET_GLOBAL       2 string:'vm_trace_note'
+0179    | OP_CONSTANT        16 string:'next generations'
+0181    | OP_VALUE_BY_VALUE
+0182    | OP_CALL             1
+0184    | OP_POP
      44 |     surface_world = next_generation(surface_world, surface_neighbour_of);
-0195   44 OP_GET_GLOBAL      17 string:'next_generation'
-0197    | OP_GET_GLOBAL       6 string:'surface_world'
-0199    | OP_DUPLICATE
-0200    | OP_GET_GLOBAL      11 string:'surface_neighbour_of'
-0202    | OP_DUPLICATE
-0203    | OP_CALL             2
-0205    | OP_DUPLICATE
-0206    | OP_SET_GLOBAL       6 string:'surface_world'
-0208    | OP_POP
+0185   44 OP_GET_GLOBAL      17 string:'next_generation'
+0187    | OP_GET_GLOBAL       6 string:'surface_world'
+0189    | OP_VALUE_BY_VALUE
+0190    | OP_GET_GLOBAL      11 string:'surface_neighbour_of'
+0192    | OP_VALUE_BY_VALUE
+0193    | OP_CALL             2
+0195    | OP_VALUE_BY_VALUE
+0196    | OP_SET_GLOBAL       6 string:'surface_world'
+0198    | OP_POP
      45 |     vm_trace_note("done");
-0209   45 OP_GET_GLOBAL       2 string:'vm_trace_note'
-0211    | OP_CONSTANT        18 string:'done'
-0213    | OP_DUPLICATE
-0214    | OP_CALL             1
-0216    | OP_POP
+0199   45 OP_GET_GLOBAL       2 string:'vm_trace_note'
+0201    | OP_CONSTANT        18 string:'done'
+0203    | OP_VALUE_BY_VALUE
+0204    | OP_CALL             1
+0206    | OP_POP
      46 |     iteration = iteration + 1;
-0217   46 OP_GET_GLOBAL      15 string:'iteration'
-0219    | OP_IMMEDIATE_P8     1
-0221    | OP_ADD
-0222    | OP_DUPLICATE
-0223    | OP_SET_GLOBAL      15 string:'iteration'
-0225    | OP_POP
-0226    | OP_LOOP           226 -> 155
-0229    | OP_POP
-0230    | OP_NIL
-0231    | OP_RETURN
+0207   46 OP_GET_GLOBAL      15 string:'iteration'
+0209    | OP_IMMEDIATE_P8     1
+0211    | OP_ADD
+0212    | OP_VALUE_BY_VALUE
+0213    | OP_SET_GLOBAL      15 string:'iteration'
+0215    | OP_POP
+0216    | OP_LOOP           216 -> 146
+0219    | OP_POP
+0220    | OP_NIL
+0221    | OP_RETURN
 main.ya:  20:display_on_surface()
      20 |     for (var k = 0; k < len(world); k = k + 1) {
 0000   20 OP_IMMEDIATE_P8     0
-0002    | OP_DUPLICATE
+0002    | OP_VALUE_BY_VALUE
 0003    | OP_GET_LOCAL        2
 0005    | OP_GET_LOCAL        1
 0007    | OP_LEN_BUILTIN
@@ -171,7 +161,7 @@ main.ya:  20:display_on_surface()
 0016    | OP_GET_LOCAL        2
 0018    | OP_IMMEDIATE_P8     1
 0020    | OP_ADD
-0021    | OP_DUPLICATE
+0021    | OP_VALUE_BY_VALUE
 0022    | OP_SET_LOCAL        2
 0024    | OP_POP
 0025    | OP_LOOP            25 -> 3
@@ -180,13 +170,13 @@ main.ya:  20:display_on_surface()
 0030    | OP_GET_GLOBAL       1 string:'surface_leds'
 0032    | OP_GET_LOCAL        2
 0034    | OP_ELEMENT
-0035    | OP_DUPLICATE
+0035    | OP_VALUE_BY_VALUE
 0036    | OP_GET_GLOBAL       2 string:'display_pixels'
 0038    | OP_GET_LOCAL        1
 0040    | OP_GET_LOCAL        2
 0042    | OP_ELEMENT
 0043    | OP_ELEMENT
-0044    | OP_DUPLICATE
+0044    | OP_VALUE_BY_VALUE
 0045    | OP_CALL             2
 0047    | OP_POP
 0048    | OP_LOOP            48 -> 16
@@ -205,10 +195,10 @@ main.ya:  28:surface_neighbour_of()
 0004    | OP_ELEMENT
 0005    | OP_GET_LOCAL        2
 0007    | OP_ELEMENT
-0008    | OP_DUPLICATE
+0008    | OP_VALUE_BY_VALUE
      29 |     for (var i = 0; i < len(surface_neighbourhoods); i = i + 1) {
 0009   29 OP_IMMEDIATE_P8     0
-0011    | OP_DUPLICATE
+0011    | OP_VALUE_BY_VALUE
 0012    | OP_GET_LOCAL        4
 0014    | OP_GET_GLOBAL       0 string:'surface_neighbourhoods'
 0016    | OP_LEN_BUILTIN
@@ -219,7 +209,7 @@ main.ya:  28:surface_neighbour_of()
 0025    | OP_GET_LOCAL        4
 0027    | OP_IMMEDIATE_P8     1
 0029    | OP_ADD
-0030    | OP_DUPLICATE
+0030    | OP_VALUE_BY_VALUE
 0031    | OP_SET_LOCAL        4
 0033    | OP_POP
 0034    | OP_LOOP            34 -> 12

@@ -1,22 +1,22 @@
 conway.ya
      15 | var live = 1;
 0000   15 OP_IMMEDIATE_P8     1
-0002    | OP_DUPLICATE
+0002    | OP_VALUE_BY_VALUE
 0003    | OP_DEFINE_GLOBAL    0 string:'live'
      16 | var dead = 0;
 0005   16 OP_IMMEDIATE_P8     0
-0007    | OP_DUPLICATE
+0007    | OP_VALUE_BY_VALUE
 0008    | OP_DEFINE_GLOBAL    1 string:'dead'
      19 | var uint32 maxRand = 0x7fffffff;
 0010   19 OP_TYPE_LITERAL  uint32
 0012    | OP_CONSTANT         3 int:'2147483647'
-0014    | OP_DUPLICATE
+0014    | OP_VALUE_BY_VALUE
 0015    | OP_INITIALISE
 0016    | OP_DEFINE_GLOBAL    2 string:'maxRand'
      20 | var uint32 seed = 4;
 0018   20 OP_TYPE_LITERAL  uint32
 0020    | OP_IMMEDIATE_P8     4
-0022    | OP_DUPLICATE
+0022    | OP_VALUE_BY_VALUE
 0023    | OP_INITIALISE
 0024    | OP_DEFINE_GLOBAL    4 string:'seed'
      21 | fun rand()
@@ -43,7 +43,7 @@ conway.ya:  23:rand()
      23 |     var uint32 next = seed;
 0000   23 OP_TYPE_LITERAL  uint32
 0002    | OP_GET_GLOBAL       0 string:'seed'
-0004    | OP_DUPLICATE
+0004    | OP_VALUE_BY_VALUE
 0005    | OP_INITIALISE
      24 |     var uint32 result;
 0006   24 OP_TYPE_LITERAL  uint32
@@ -52,14 +52,14 @@ conway.ya:  23:rand()
 0009   26 OP_GET_LOCAL        1
 0011    | OP_CONSTANT         1 int:'1103515245'
 0013    | OP_MULTIPLY
-0014    | OP_DUPLICATE
+0014    | OP_VALUE_BY_VALUE
 0015    | OP_SET_LOCAL        1
 0017    | OP_POP
      27 |     next = next + 12345;
 0018   27 OP_GET_LOCAL        1
 0020    | OP_IMMEDIATE_P16  12345
 0023    | OP_ADD
-0024    | OP_DUPLICATE
+0024    | OP_VALUE_BY_VALUE
 0025    | OP_SET_LOCAL        1
 0027    | OP_POP
      28 |     result = (next / 65536) % 2048;
@@ -68,28 +68,28 @@ conway.ya:  23:rand()
 0034    | OP_DIVIDE
 0035    | OP_IMMEDIATE_P16   2048
 0038    | OP_MODULO
-0039    | OP_DUPLICATE
+0039    | OP_VALUE_BY_VALUE
 0040    | OP_SET_LOCAL        2
 0042    | OP_POP
      30 |     next = next * 1103515245;
 0043   30 OP_GET_LOCAL        1
 0045    | OP_CONSTANT         1 int:'1103515245'
 0047    | OP_MULTIPLY
-0048    | OP_DUPLICATE
+0048    | OP_VALUE_BY_VALUE
 0049    | OP_SET_LOCAL        1
 0051    | OP_POP
      31 |     next = next + 12345;
 0052   31 OP_GET_LOCAL        1
 0054    | OP_IMMEDIATE_P16  12345
 0057    | OP_ADD
-0058    | OP_DUPLICATE
+0058    | OP_VALUE_BY_VALUE
 0059    | OP_SET_LOCAL        1
 0061    | OP_POP
      32 |     result = result << 10;
 0062   32 OP_GET_LOCAL        2
 0064    | OP_IMMEDIATE_P8    10
 0066    | OP_LEFT_SHIFT
-0067    | OP_DUPLICATE
+0067    | OP_VALUE_BY_VALUE
 0068    | OP_SET_LOCAL        2
 0070    | OP_POP
      33 |     result = result ^ ((next / 65536) % 1024);
@@ -100,28 +100,28 @@ conway.ya:  23:rand()
 0080    | OP_IMMEDIATE_P16   1024
 0083    | OP_MODULO
 0084    | OP_BITXOR
-0085    | OP_DUPLICATE
+0085    | OP_VALUE_BY_VALUE
 0086    | OP_SET_LOCAL        2
 0088    | OP_POP
      35 |     next = next * 1103515245;
 0089   35 OP_GET_LOCAL        1
 0091    | OP_CONSTANT         1 int:'1103515245'
 0093    | OP_MULTIPLY
-0094    | OP_DUPLICATE
+0094    | OP_VALUE_BY_VALUE
 0095    | OP_SET_LOCAL        1
 0097    | OP_POP
      36 |     next = next + 12345;
 0098   36 OP_GET_LOCAL        1
 0100    | OP_IMMEDIATE_P16  12345
 0103    | OP_ADD
-0104    | OP_DUPLICATE
+0104    | OP_VALUE_BY_VALUE
 0105    | OP_SET_LOCAL        1
 0107    | OP_POP
      37 |     result = result << 10;
 0108   37 OP_GET_LOCAL        2
 0110    | OP_IMMEDIATE_P8    10
 0112    | OP_LEFT_SHIFT
-0113    | OP_DUPLICATE
+0113    | OP_VALUE_BY_VALUE
 0114    | OP_SET_LOCAL        2
 0116    | OP_POP
      38 |     result = result ^ ((next / 65536) % 1024);
@@ -132,12 +132,12 @@ conway.ya:  23:rand()
 0126    | OP_IMMEDIATE_P16   1024
 0129    | OP_MODULO
 0130    | OP_BITXOR
-0131    | OP_DUPLICATE
+0131    | OP_VALUE_BY_VALUE
 0132    | OP_SET_LOCAL        2
 0134    | OP_POP
      40 |     seed = next;
 0135   40 OP_GET_LOCAL        1
-0137    | OP_DUPLICATE
+0137    | OP_VALUE_BY_VALUE
 0138    | OP_SET_GLOBAL       0 string:'seed'
 0140    | OP_POP
      41 |     return next & maxRand;
@@ -172,12 +172,12 @@ conway.ya:  56:make_world()
 0000   56 OP_NIL
 0001    | OP_GET_LOCAL        1
 0003    | OP_TYPE_INDEXED_COLLECTION
-0004    | OP_DUPLICATE
+0004    | OP_VALUE_BY_VALUE
 0005    | OP_CALL_BUILTIN  new    1
-0008    | OP_DUPLICATE
+0008    | OP_VALUE_BY_VALUE
      57 |     for (var c = 0; c < len(world); c = c + 1) {
 0009   57 OP_IMMEDIATE_P8     0
-0011    | OP_DUPLICATE
+0011    | OP_VALUE_BY_VALUE
 0012    | OP_GET_LOCAL        3
 0014    | OP_GET_LOCAL        2
 0016    | OP_LEN_BUILTIN
@@ -188,7 +188,7 @@ conway.ya:  56:make_world()
 0025    | OP_GET_LOCAL        3
 0027    | OP_IMMEDIATE_P8     1
 0029    | OP_ADD
-0030    | OP_DUPLICATE
+0030    | OP_VALUE_BY_VALUE
 0031    | OP_SET_LOCAL        3
 0033    | OP_POP
 0034    | OP_LOOP            34 -> 12
@@ -210,10 +210,10 @@ conway.ya:  56:make_world()
 conway.ya:  64:neighbour_weight()
      64 |     var result = 0;
 0000   64 OP_IMMEDIATE_P8     0
-0002    | OP_DUPLICATE
+0002    | OP_VALUE_BY_VALUE
      65 |     for (var i = 0; i < 8; i = i + 1) {
 0003   65 OP_IMMEDIATE_P8     0
-0005    | OP_DUPLICATE
+0005    | OP_VALUE_BY_VALUE
 0006    | OP_GET_LOCAL        5
 0008    | OP_IMMEDIATE_P8     8
 0010    | OP_LESS
@@ -223,25 +223,25 @@ conway.ya:  64:neighbour_weight()
 0018    | OP_GET_LOCAL        5
 0020    | OP_IMMEDIATE_P8     1
 0022    | OP_ADD
-0023    | OP_DUPLICATE
+0023    | OP_VALUE_BY_VALUE
 0024    | OP_SET_LOCAL        5
 0026    | OP_POP
 0027    | OP_LOOP            27 -> 6
      66 |         var world_offset = neighbour_of(cell, i);
 0030   66 OP_GET_LOCAL        3
 0032    | OP_GET_LOCAL        2
-0034    | OP_DUPLICATE
+0034    | OP_VALUE_BY_VALUE
 0035    | OP_GET_LOCAL        5
-0037    | OP_DUPLICATE
+0037    | OP_VALUE_BY_VALUE
 0038    | OP_CALL             2
-0040    | OP_DUPLICATE
+0040    | OP_VALUE_BY_VALUE
      67 |         result = result + world[world_offset];
 0041   67 OP_GET_LOCAL        4
 0043    | OP_GET_LOCAL        1
 0045    | OP_GET_LOCAL        6
 0047    | OP_ELEMENT
 0048    | OP_ADD
-0049    | OP_DUPLICATE
+0049    | OP_VALUE_BY_VALUE
 0050    | OP_SET_LOCAL        4
 0052    | OP_POP
 0053    | OP_POP
@@ -256,7 +256,7 @@ conway.ya:  64:neighbour_weight()
 conway.ya:  73:next_state()
      73 |     var new_state = dead;
 0000   73 OP_GET_GLOBAL       0 string:'dead'
-0002    | OP_DUPLICATE
+0002    | OP_VALUE_BY_VALUE
      75 |     if (state == live and (alive_neighbours == 2 or alive_neighbours == 3)) {
 0003   75 OP_GET_LOCAL        1
 0005    | OP_GET_GLOBAL       1 string:'live'
@@ -276,7 +276,7 @@ conway.ya:  73:next_state()
 0032    | OP_POP
      76 |         new_state = live;
 0033   76 OP_GET_GLOBAL       1 string:'live'
-0035    | OP_DUPLICATE
+0035    | OP_VALUE_BY_VALUE
 0036    | OP_SET_LOCAL        3
 0038    | OP_POP
 0039    | OP_JUMP            39 -> 71
@@ -294,7 +294,7 @@ conway.ya:  73:next_state()
 0060    | OP_POP
      79 |         new_state = live;
 0061   79 OP_GET_GLOBAL       1 string:'live'
-0063    | OP_DUPLICATE
+0063    | OP_VALUE_BY_VALUE
 0064    | OP_SET_LOCAL        3
 0066    | OP_POP
 0067    | OP_JUMP            67 -> 71
@@ -310,23 +310,23 @@ conway.ya:  86:next_generation()
 0001    | OP_GET_LOCAL        1
 0003    | OP_LEN_BUILTIN
 0004    | OP_TYPE_INDEXED_COLLECTION
-0005    | OP_DUPLICATE
+0005    | OP_VALUE_BY_VALUE
 0006    | OP_CALL_BUILTIN  new    1
-0009    | OP_DUPLICATE
+0009    | OP_VALUE_BY_VALUE
      87 |     for (var cell = 0; cell < len(world); cell = cell + 1) {
 0010   87 OP_IMMEDIATE_P8     0
-0012    | OP_DUPLICATE
+0012    | OP_VALUE_BY_VALUE
 0013    | OP_GET_LOCAL        4
 0015    | OP_GET_LOCAL        1
 0017    | OP_LEN_BUILTIN
 0018    | OP_LESS
-0019    | OP_JUMP_IF_FALSE   19 -> 105
+0019    | OP_JUMP_IF_FALSE   19 -> 103
 0022    | OP_POP
 0023    | OP_JUMP            23 -> 38
 0026    | OP_GET_LOCAL        4
 0028    | OP_IMMEDIATE_P8     1
 0030    | OP_ADD
-0031    | OP_DUPLICATE
+0031    | OP_VALUE_BY_VALUE
 0032    | OP_SET_LOCAL        4
 0034    | OP_POP
 0035    | OP_LOOP            35 -> 13
@@ -334,51 +334,49 @@ conway.ya:  86:next_generation()
 0038   88 OP_GET_GLOBAL       0 string:'vm_trace_note'
 0040    | OP_CONSTANT         1 string:'cell'
 0042    | OP_GET_LOCAL        4
-0044    | OP_DUPLICATE
-0045    | OP_CALL_BUILTIN  string    1
-0048    | OP_ADD
-0049    | OP_DUPLICATE
-0050    | OP_CALL             1
-0052    | OP_POP
+0044    | OP_CALL_BUILTIN  string    1
+0047    | OP_ADD
+0048    | OP_VALUE_BY_VALUE
+0049    | OP_CALL             1
+0051    | OP_POP
      89 |         var nw = neighbour_weight(world, cell, neighbour_of);
-0053   89 OP_GET_GLOBAL       2 string:'neighbour_weight'
-0055    | OP_GET_LOCAL        1
-0057    | OP_DUPLICATE
-0058    | OP_GET_LOCAL        4
-0060    | OP_DUPLICATE
-0061    | OP_GET_LOCAL        2
-0063    | OP_DUPLICATE
-0064    | OP_CALL             3
-0066    | OP_DUPLICATE
+0052   89 OP_GET_GLOBAL       2 string:'neighbour_weight'
+0054    | OP_GET_LOCAL        1
+0056    | OP_VALUE_BY_VALUE
+0057    | OP_GET_LOCAL        4
+0059    | OP_VALUE_BY_VALUE
+0060    | OP_GET_LOCAL        2
+0062    | OP_VALUE_BY_VALUE
+0063    | OP_CALL             3
+0065    | OP_VALUE_BY_VALUE
      90 |         vm_trace_note("alive neighbours" + string(nw));
-0067   90 OP_GET_GLOBAL       0 string:'vm_trace_note'
-0069    | OP_CONSTANT         3 string:'alive neighbours'
-0071    | OP_GET_LOCAL        5
-0073    | OP_DUPLICATE
-0074    | OP_CALL_BUILTIN  string    1
-0077    | OP_ADD
-0078    | OP_DUPLICATE
-0079    | OP_CALL             1
-0081    | OP_POP
+0066   90 OP_GET_GLOBAL       0 string:'vm_trace_note'
+0068    | OP_CONSTANT         3 string:'alive neighbours'
+0070    | OP_GET_LOCAL        5
+0072    | OP_CALL_BUILTIN  string    1
+0075    | OP_ADD
+0076    | OP_VALUE_BY_VALUE
+0077    | OP_CALL             1
+0079    | OP_POP
      91 |         next_gen[cell] = next_state(world[cell], nw);
-0082   91 OP_GET_LOCAL        3
-0084    | OP_GET_LOCAL        4
-0086    | OP_GET_GLOBAL       4 string:'next_state'
-0088    | OP_GET_LOCAL        1
-0090    | OP_GET_LOCAL        4
-0092    | OP_ELEMENT
-0093    | OP_DUPLICATE
-0094    | OP_GET_LOCAL        5
-0096    | OP_DUPLICATE
-0097    | OP_CALL             2
-0099    | OP_SET_ELEMENT
-0100    | OP_POP
-0101    | OP_POP
-0102    | OP_LOOP           102 -> 26
-0105    | OP_POP
-0106    | OP_POP
+0080   91 OP_GET_LOCAL        3
+0082    | OP_GET_LOCAL        4
+0084    | OP_GET_GLOBAL       4 string:'next_state'
+0086    | OP_GET_LOCAL        1
+0088    | OP_GET_LOCAL        4
+0090    | OP_ELEMENT
+0091    | OP_VALUE_BY_VALUE
+0092    | OP_GET_LOCAL        5
+0094    | OP_VALUE_BY_VALUE
+0095    | OP_CALL             2
+0097    | OP_SET_ELEMENT
+0098    | OP_POP
+0099    | OP_POP
+0100    | OP_LOOP           100 -> 26
+0103    | OP_POP
+0104    | OP_POP
      94 |     return next_gen;
-0107   94 OP_GET_LOCAL        3
+0105   94 OP_GET_LOCAL        3
+0107    | OP_RETURN
+0108    | OP_NIL
 0109    | OP_RETURN
-0110    | OP_NIL
-0111    | OP_RETURN
