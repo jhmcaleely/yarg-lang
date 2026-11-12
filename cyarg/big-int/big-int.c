@@ -78,6 +78,13 @@ Int *int_init_concrete2(IntConcrete2 *i)
     return (Int *) i;
 }
 
+Int* int_init_concrete2_u8(IntConcrete2 *i, uint8_t to)
+{
+    (void) int_init_concrete2(i);
+    int_set_u8(to, (Int *) i);
+    return (Int *) i;
+}
+
 Int *int_init_concrete4(IntConcrete4 *i)
 {
     i->m_ = 4;
@@ -118,6 +125,16 @@ void int_set_i(int64_t to, Int *i)
     }
     int_set_u(v, i);
     i->neg_ = to < 0;
+}
+
+void int_set_u8(uint8_t to, Int *i)
+{
+    assert(i->m_ != 0 && i->m_ % 2 == 0);
+    i->overflow_ = false;
+    i->neg_ = false;
+
+    i->w_[0] = (uint32_t) to;
+    i->d_ = 1;
 }
 
 void int_set_u(uint64_t to, Int *i)
