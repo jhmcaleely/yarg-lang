@@ -1320,6 +1320,19 @@ InterpretResult run(ObjRoutine* routine) {
                 frame->ip -= offset;
                 break;
             }
+            case OP_CALL_BUILTIN: {
+                int argCount = READ_BYTE();
+                Value callee = peek(routine, argCount);
+                BuiltinFun builtin = AS_BUILTIN(callee);
+                Value result = NIL_VAL;
+                if (builtin(routine, argCount, &result)) {
+                    popN(routine, argCount + 1);
+                    push(routine, result);
+                } else {
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
             case OP_CALL: {
                 int argCount = READ_BYTE();
                 InterpretResult result = callValue(routine, peek(routine, argCount), argCount);
