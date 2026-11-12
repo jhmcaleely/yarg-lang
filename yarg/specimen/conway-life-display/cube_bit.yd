@@ -1984,7 +1984,7 @@ cube_bit.ya:  97:clamp_brightness()
 0003   99 OP_GET_LOCAL        2
 0005    | OP_IMMEDIATE_P8   255
 0007    | OP_LESS
-0008    | OP_JUMP_IF_FALSE    8 -> 37
+0008    | OP_JUMP_IF_FALSE    8 -> 36
 0011    | OP_POP
     100 |         var divider = 256 / ((max) + 1);
 0012  100 OP_IMMEDIATE_P16    256
@@ -1995,20 +1995,19 @@ cube_bit.ya:  97:clamp_brightness()
 0021    | OP_DUPLICATE
     101 |         return channel / uint8(divider);
 0022  101 OP_GET_LOCAL        1
-0024    | OP_GET_BUILTIN   uint8
-0026    | OP_GET_LOCAL        3
-0028    | OP_DUPLICATE
-0029    | OP_CALL             1
-0031    | OP_DIVIDE
-0032    | OP_RETURN
-0033    | OP_POP
-0034    | OP_JUMP            34 -> 41
-0037    | OP_POP
+0024    | OP_GET_LOCAL        3
+0026    | OP_DUPLICATE
+0027    | OP_CALL_BUILTIN  uint8    1
+0030    | OP_DIVIDE
+0031    | OP_RETURN
+0032    | OP_POP
+0033    | OP_JUMP            33 -> 40
+0036    | OP_POP
     103 |     else {
-0038  103 OP_GET_LOCAL        1
-0040    | OP_RETURN
-0041    | OP_NIL
-0042    | OP_RETURN
+0037  103 OP_GET_LOCAL        1
+0039    | OP_RETURN
+0040    | OP_NIL
+0041    | OP_RETURN
 cube_bit.ya: 110:set_pixel()
     110 |     var clamped = [ clamp_brightness(colour[0]),
 0000  110 OP_GET_BUILTIN   new
@@ -2044,36 +2043,33 @@ cube_bit.ya: 110:set_pixel()
     114 |     cube_pixels[k] = uint32(clamped[1]) << 24 | uint32(clamped[0]) << 16 | uint32(clamped[2]) << 8;
 0048  114 OP_GET_GLOBAL       1 string:'cube_pixels'
 0050    | OP_GET_LOCAL        1
-0052    | OP_GET_BUILTIN   uint32
-0054    | OP_GET_LOCAL        3
-0056    | OP_IMMEDIATE_P8     1
-0058    | OP_ELEMENT
-0059    | OP_DUPLICATE
-0060    | OP_CALL             1
-0062    | OP_IMMEDIATE_P8    24
-0064    | OP_LEFT_SHIFT
-0065    | OP_GET_BUILTIN   uint32
-0067    | OP_GET_LOCAL        3
-0069    | OP_IMMEDIATE_P8     0
-0071    | OP_ELEMENT
-0072    | OP_DUPLICATE
-0073    | OP_CALL             1
-0075    | OP_IMMEDIATE_P8    16
-0077    | OP_LEFT_SHIFT
-0078    | OP_BITOR
-0079    | OP_GET_BUILTIN   uint32
-0081    | OP_GET_LOCAL        3
-0083    | OP_IMMEDIATE_P8     2
-0085    | OP_ELEMENT
-0086    | OP_DUPLICATE
-0087    | OP_CALL             1
-0089    | OP_IMMEDIATE_P8     8
-0091    | OP_LEFT_SHIFT
-0092    | OP_BITOR
-0093    | OP_SET_ELEMENT
-0094    | OP_POP
-0095    | OP_NIL
-0096    | OP_RETURN
+0052    | OP_GET_LOCAL        3
+0054    | OP_IMMEDIATE_P8     1
+0056    | OP_ELEMENT
+0057    | OP_DUPLICATE
+0058    | OP_CALL_BUILTIN  uint32    1
+0061    | OP_IMMEDIATE_P8    24
+0063    | OP_LEFT_SHIFT
+0064    | OP_GET_LOCAL        3
+0066    | OP_IMMEDIATE_P8     0
+0068    | OP_ELEMENT
+0069    | OP_DUPLICATE
+0070    | OP_CALL_BUILTIN  uint32    1
+0073    | OP_IMMEDIATE_P8    16
+0075    | OP_LEFT_SHIFT
+0076    | OP_BITOR
+0077    | OP_GET_LOCAL        3
+0079    | OP_IMMEDIATE_P8     2
+0081    | OP_ELEMENT
+0082    | OP_DUPLICATE
+0083    | OP_CALL_BUILTIN  uint32    1
+0086    | OP_IMMEDIATE_P8     8
+0088    | OP_LEFT_SHIFT
+0089    | OP_BITOR
+0090    | OP_SET_ELEMENT
+0091    | OP_POP
+0092    | OP_NIL
+0093    | OP_RETURN
 cube_bit.ya: 119:write_pixels()
     119 |     ws2812_set_pixels(ws2812_dma_channel, cube_pixels);
 0000  119 OP_GET_GLOBAL       0 string:'ws2812_set_pixels'

@@ -43,170 +43,161 @@ main.ya
 0057    | OP_TYPE_INDEXED_COLLECTION
 0058    | OP_CALL             1
 0060    | OP_IMMEDIATE_P8     0
-0062    | OP_GET_BUILTIN   uint8
-0064    | OP_IMMEDIATE_P8     0
-0066    | OP_DUPLICATE
-0067    | OP_CALL             1
-0069    | OP_SET_ELEMENT
-0070    | OP_IMMEDIATE_P8     1
-0072    | OP_GET_BUILTIN   uint8
-0074    | OP_IMMEDIATE_P8   255
-0076    | OP_DUPLICATE
-0077    | OP_CALL             1
-0079    | OP_SET_ELEMENT
-0080    | OP_IMMEDIATE_P8     2
-0082    | OP_GET_BUILTIN   uint8
-0084    | OP_IMMEDIATE_P8     0
-0086    | OP_DUPLICATE
-0087    | OP_CALL             1
-0089    | OP_SET_ELEMENT
-0090    | OP_SET_ELEMENT
-0091    | OP_IMMEDIATE_P8     1
-0093    | OP_GET_BUILTIN   new
-0095    | OP_NIL
-0096    | OP_IMMEDIATE_P8     3
-0098    | OP_TYPE_INDEXED_COLLECTION
-0099    | OP_CALL             1
-0101    | OP_IMMEDIATE_P8     0
-0103    | OP_GET_BUILTIN   uint8
-0105    | OP_IMMEDIATE_P8   255
-0107    | OP_DUPLICATE
-0108    | OP_CALL             1
-0110    | OP_SET_ELEMENT
-0111    | OP_IMMEDIATE_P8     1
-0113    | OP_GET_BUILTIN   uint8
-0115    | OP_IMMEDIATE_P8     0
-0117    | OP_DUPLICATE
-0118    | OP_CALL             1
-0120    | OP_SET_ELEMENT
-0121    | OP_IMMEDIATE_P8     2
-0123    | OP_GET_BUILTIN   uint8
-0125    | OP_IMMEDIATE_P8     0
-0127    | OP_DUPLICATE
-0128    | OP_CALL             1
-0130    | OP_SET_ELEMENT
-0131    | OP_SET_ELEMENT
-0132    | OP_DUPLICATE
-0133    | OP_DEFINE_GLOBAL    8 string:'display_pixels'
+0062    | OP_IMMEDIATE_P8     0
+0064    | OP_DUPLICATE
+0065    | OP_CALL_BUILTIN  uint8    1
+0068    | OP_SET_ELEMENT
+0069    | OP_IMMEDIATE_P8     1
+0071    | OP_IMMEDIATE_P8   255
+0073    | OP_DUPLICATE
+0074    | OP_CALL_BUILTIN  uint8    1
+0077    | OP_SET_ELEMENT
+0078    | OP_IMMEDIATE_P8     2
+0080    | OP_IMMEDIATE_P8     0
+0082    | OP_DUPLICATE
+0083    | OP_CALL_BUILTIN  uint8    1
+0086    | OP_SET_ELEMENT
+0087    | OP_SET_ELEMENT
+0088    | OP_IMMEDIATE_P8     1
+0090    | OP_GET_BUILTIN   new
+0092    | OP_NIL
+0093    | OP_IMMEDIATE_P8     3
+0095    | OP_TYPE_INDEXED_COLLECTION
+0096    | OP_CALL             1
+0098    | OP_IMMEDIATE_P8     0
+0100    | OP_IMMEDIATE_P8   255
+0102    | OP_DUPLICATE
+0103    | OP_CALL_BUILTIN  uint8    1
+0106    | OP_SET_ELEMENT
+0107    | OP_IMMEDIATE_P8     1
+0109    | OP_IMMEDIATE_P8     0
+0111    | OP_DUPLICATE
+0112    | OP_CALL_BUILTIN  uint8    1
+0115    | OP_SET_ELEMENT
+0116    | OP_IMMEDIATE_P8     2
+0118    | OP_IMMEDIATE_P8     0
+0120    | OP_DUPLICATE
+0121    | OP_CALL_BUILTIN  uint8    1
+0124    | OP_SET_ELEMENT
+0125    | OP_SET_ELEMENT
+0126    | OP_DUPLICATE
+0127    | OP_DEFINE_GLOBAL    8 string:'display_pixels'
      18 | fun display_on_surface(world) {
-0135   18 OP_CLOSURE         10 <fn display_on_surface>
-0137    | OP_DEFINE_GLOBAL    9 string:'display_on_surface'
+0129   18 OP_CLOSURE         10 <fn display_on_surface>
+0131    | OP_DEFINE_GLOBAL    9 string:'display_on_surface'
      27 | fun surface_neighbour_of(cell, neighbour) {
-0139   27 OP_CLOSURE         12 <fn surface_neighbour_of>
-0141    | OP_DEFINE_GLOBAL   11 string:'surface_neighbour_of'
+0133   27 OP_CLOSURE         12 <fn surface_neighbour_of>
+0135    | OP_DEFINE_GLOBAL   11 string:'surface_neighbour_of'
      36 | cube_bit_init();
-0143   36 OP_GET_GLOBAL      13 string:'cube_bit_init'
-0145    | OP_CALL             0
-0147    | OP_POP
+0137   36 OP_GET_GLOBAL      13 string:'cube_bit_init'
+0139    | OP_CALL             0
+0141    | OP_POP
      37 | vm_trace_note("init complete");
-0148   37 OP_GET_GLOBAL       2 string:'vm_trace_note'
-0150    | OP_CONSTANT        14 string:'init complete'
-0152    | OP_DUPLICATE
-0153    | OP_CALL             1
-0155    | OP_POP
+0142   37 OP_GET_GLOBAL       2 string:'vm_trace_note'
+0144    | OP_CONSTANT        14 string:'init complete'
+0146    | OP_DUPLICATE
+0147    | OP_CALL             1
+0149    | OP_POP
      39 | var iteration = 0;
-0156   39 OP_IMMEDIATE_P8     0
-0158    | OP_DUPLICATE
-0159    | OP_DEFINE_GLOBAL   15 string:'iteration'
+0150   39 OP_IMMEDIATE_P8     0
+0152    | OP_DUPLICATE
+0153    | OP_DEFINE_GLOBAL   15 string:'iteration'
      40 | while (iteration < 10) {
-0161   40 OP_GET_GLOBAL      15 string:'iteration'
-0163    | OP_IMMEDIATE_P8    10
-0165    | OP_LESS
-0166    | OP_JUMP_IF_FALSE  166 -> 236
-0169    | OP_POP
+0155   40 OP_GET_GLOBAL      15 string:'iteration'
+0157    | OP_IMMEDIATE_P8    10
+0159    | OP_LESS
+0160    | OP_JUMP_IF_FALSE  160 -> 229
+0163    | OP_POP
      41 |     vm_trace_note("iteration" + string(iteration));
-0170   41 OP_GET_GLOBAL       2 string:'vm_trace_note'
-0172    | OP_CONSTANT        15 string:'iteration'
-0174    | OP_GET_BUILTIN   string
-0176    | OP_GET_GLOBAL      15 string:'iteration'
-0178    | OP_DUPLICATE
-0179    | OP_CALL             1
-0181    | OP_ADD
-0182    | OP_DUPLICATE
-0183    | OP_CALL             1
-0185    | OP_POP
+0164   41 OP_GET_GLOBAL       2 string:'vm_trace_note'
+0166    | OP_CONSTANT        15 string:'iteration'
+0168    | OP_GET_GLOBAL      15 string:'iteration'
+0170    | OP_DUPLICATE
+0171    | OP_CALL_BUILTIN  string    1
+0174    | OP_ADD
+0175    | OP_DUPLICATE
+0176    | OP_CALL             1
+0178    | OP_POP
      42 |     display_on_surface(surface_world);
-0186   42 OP_GET_GLOBAL       9 string:'display_on_surface'
-0188    | OP_GET_GLOBAL       6 string:'surface_world'
-0190    | OP_DUPLICATE
-0191    | OP_CALL             1
-0193    | OP_POP
+0179   42 OP_GET_GLOBAL       9 string:'display_on_surface'
+0181    | OP_GET_GLOBAL       6 string:'surface_world'
+0183    | OP_DUPLICATE
+0184    | OP_CALL             1
+0186    | OP_POP
      43 |     vm_trace_note("next generations");
-0194   43 OP_GET_GLOBAL       2 string:'vm_trace_note'
-0196    | OP_CONSTANT        16 string:'next generations'
-0198    | OP_DUPLICATE
-0199    | OP_CALL             1
-0201    | OP_POP
+0187   43 OP_GET_GLOBAL       2 string:'vm_trace_note'
+0189    | OP_CONSTANT        16 string:'next generations'
+0191    | OP_DUPLICATE
+0192    | OP_CALL             1
+0194    | OP_POP
      44 |     surface_world = next_generation(surface_world, surface_neighbour_of);
-0202   44 OP_GET_GLOBAL      17 string:'next_generation'
-0204    | OP_GET_GLOBAL       6 string:'surface_world'
-0206    | OP_DUPLICATE
-0207    | OP_GET_GLOBAL      11 string:'surface_neighbour_of'
-0209    | OP_DUPLICATE
-0210    | OP_CALL             2
-0212    | OP_DUPLICATE
-0213    | OP_SET_GLOBAL       6 string:'surface_world'
-0215    | OP_POP
+0195   44 OP_GET_GLOBAL      17 string:'next_generation'
+0197    | OP_GET_GLOBAL       6 string:'surface_world'
+0199    | OP_DUPLICATE
+0200    | OP_GET_GLOBAL      11 string:'surface_neighbour_of'
+0202    | OP_DUPLICATE
+0203    | OP_CALL             2
+0205    | OP_DUPLICATE
+0206    | OP_SET_GLOBAL       6 string:'surface_world'
+0208    | OP_POP
      45 |     vm_trace_note("done");
-0216   45 OP_GET_GLOBAL       2 string:'vm_trace_note'
-0218    | OP_CONSTANT        18 string:'done'
-0220    | OP_DUPLICATE
-0221    | OP_CALL             1
-0223    | OP_POP
+0209   45 OP_GET_GLOBAL       2 string:'vm_trace_note'
+0211    | OP_CONSTANT        18 string:'done'
+0213    | OP_DUPLICATE
+0214    | OP_CALL             1
+0216    | OP_POP
      46 |     iteration = iteration + 1;
-0224   46 OP_GET_GLOBAL      15 string:'iteration'
-0226    | OP_IMMEDIATE_P8     1
-0228    | OP_ADD
-0229    | OP_DUPLICATE
-0230    | OP_SET_GLOBAL      15 string:'iteration'
-0232    | OP_POP
-0233    | OP_LOOP           233 -> 161
-0236    | OP_POP
-0237    | OP_NIL
-0238    | OP_RETURN
+0217   46 OP_GET_GLOBAL      15 string:'iteration'
+0219    | OP_IMMEDIATE_P8     1
+0221    | OP_ADD
+0222    | OP_DUPLICATE
+0223    | OP_SET_GLOBAL      15 string:'iteration'
+0225    | OP_POP
+0226    | OP_LOOP           226 -> 155
+0229    | OP_POP
+0230    | OP_NIL
+0231    | OP_RETURN
 main.ya:  20:display_on_surface()
      20 |     for (var k = 0; k < len(world); k = k + 1) {
 0000   20 OP_IMMEDIATE_P8     0
 0002    | OP_DUPLICATE
 0003    | OP_GET_LOCAL        2
-0005    | OP_GET_BUILTIN   len
-0007    | OP_GET_LOCAL        1
-0009    | OP_DUPLICATE
-0010    | OP_CALL             1
-0012    | OP_LESS
-0013    | OP_JUMP_IF_FALSE   13 -> 55
-0016    | OP_POP
-0017    | OP_JUMP            17 -> 32
-0020    | OP_GET_LOCAL        2
-0022    | OP_IMMEDIATE_P8     1
-0024    | OP_ADD
-0025    | OP_DUPLICATE
-0026    | OP_SET_LOCAL        2
-0028    | OP_POP
-0029    | OP_LOOP            29 -> 3
+0005    | OP_GET_LOCAL        1
+0007    | OP_LEN_BUILTIN
+0008    | OP_LESS
+0009    | OP_JUMP_IF_FALSE    9 -> 51
+0012    | OP_POP
+0013    | OP_JUMP            13 -> 28
+0016    | OP_GET_LOCAL        2
+0018    | OP_IMMEDIATE_P8     1
+0020    | OP_ADD
+0021    | OP_DUPLICATE
+0022    | OP_SET_LOCAL        2
+0024    | OP_POP
+0025    | OP_LOOP            25 -> 3
      21 |         set_pixel(surface_leds[k], display_pixels[world[k]]);
-0032   21 OP_GET_GLOBAL       0 string:'set_pixel'
-0034    | OP_GET_GLOBAL       1 string:'surface_leds'
-0036    | OP_GET_LOCAL        2
-0038    | OP_ELEMENT
-0039    | OP_DUPLICATE
-0040    | OP_GET_GLOBAL       2 string:'display_pixels'
-0042    | OP_GET_LOCAL        1
-0044    | OP_GET_LOCAL        2
-0046    | OP_ELEMENT
-0047    | OP_ELEMENT
-0048    | OP_DUPLICATE
-0049    | OP_CALL             2
+0028   21 OP_GET_GLOBAL       0 string:'set_pixel'
+0030    | OP_GET_GLOBAL       1 string:'surface_leds'
+0032    | OP_GET_LOCAL        2
+0034    | OP_ELEMENT
+0035    | OP_DUPLICATE
+0036    | OP_GET_GLOBAL       2 string:'display_pixels'
+0038    | OP_GET_LOCAL        1
+0040    | OP_GET_LOCAL        2
+0042    | OP_ELEMENT
+0043    | OP_ELEMENT
+0044    | OP_DUPLICATE
+0045    | OP_CALL             2
+0047    | OP_POP
+0048    | OP_LOOP            48 -> 16
 0051    | OP_POP
-0052    | OP_LOOP            52 -> 20
-0055    | OP_POP
-0056    | OP_POP
+0052    | OP_POP
      24 |     write_pixels();
-0057   24 OP_GET_GLOBAL       3 string:'write_pixels'
-0059    | OP_CALL             0
-0061    | OP_POP
-0062    | OP_NIL
-0063    | OP_RETURN
+0053   24 OP_GET_GLOBAL       3 string:'write_pixels'
+0055    | OP_CALL             0
+0057    | OP_POP
+0058    | OP_NIL
+0059    | OP_RETURN
 main.ya:  28:surface_neighbour_of()
      28 |     var led = surface_neighbourhoods[cell][neighbour];
 0000   28 OP_GET_GLOBAL       0 string:'surface_neighbourhoods'
@@ -219,36 +210,34 @@ main.ya:  28:surface_neighbour_of()
 0009   29 OP_IMMEDIATE_P8     0
 0011    | OP_DUPLICATE
 0012    | OP_GET_LOCAL        4
-0014    | OP_GET_BUILTIN   len
-0016    | OP_GET_GLOBAL       0 string:'surface_neighbourhoods'
-0018    | OP_DUPLICATE
-0019    | OP_CALL             1
-0021    | OP_LESS
-0022    | OP_JUMP_IF_FALSE   22 -> 63
-0025    | OP_POP
-0026    | OP_JUMP            26 -> 41
-0029    | OP_GET_LOCAL        4
-0031    | OP_IMMEDIATE_P8     1
-0033    | OP_ADD
-0034    | OP_DUPLICATE
-0035    | OP_SET_LOCAL        4
-0037    | OP_POP
-0038    | OP_LOOP            38 -> 12
+0014    | OP_GET_GLOBAL       0 string:'surface_neighbourhoods'
+0016    | OP_LEN_BUILTIN
+0017    | OP_LESS
+0018    | OP_JUMP_IF_FALSE   18 -> 59
+0021    | OP_POP
+0022    | OP_JUMP            22 -> 37
+0025    | OP_GET_LOCAL        4
+0027    | OP_IMMEDIATE_P8     1
+0029    | OP_ADD
+0030    | OP_DUPLICATE
+0031    | OP_SET_LOCAL        4
+0033    | OP_POP
+0034    | OP_LOOP            34 -> 12
      30 |         if (surface_leds[i] == led) {
-0041   30 OP_GET_GLOBAL       1 string:'surface_leds'
-0043    | OP_GET_LOCAL        4
-0045    | OP_ELEMENT
-0046    | OP_GET_LOCAL        3
-0048    | OP_EQUAL
-0049    | OP_JUMP_IF_FALSE   49 -> 59
-0052    | OP_POP
+0037   30 OP_GET_GLOBAL       1 string:'surface_leds'
+0039    | OP_GET_LOCAL        4
+0041    | OP_ELEMENT
+0042    | OP_GET_LOCAL        3
+0044    | OP_EQUAL
+0045    | OP_JUMP_IF_FALSE   45 -> 55
+0048    | OP_POP
      31 |             return i;
-0053   31 OP_GET_LOCAL        4
-0055    | OP_RETURN
-0056    | OP_JUMP            56 -> 60
+0049   31 OP_GET_LOCAL        4
+0051    | OP_RETURN
+0052    | OP_JUMP            52 -> 56
+0055    | OP_POP
+0056    | OP_LOOP            56 -> 25
 0059    | OP_POP
-0060    | OP_LOOP            60 -> 29
-0063    | OP_POP
-0064    | OP_POP
-0065    | OP_NIL
-0066    | OP_RETURN
+0060    | OP_POP
+0061    | OP_NIL
+0062    | OP_RETURN
