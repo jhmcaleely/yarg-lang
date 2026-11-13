@@ -325,14 +325,13 @@ void runtimeError(ObjRoutine* routine, const char* format, ...) {
     resetRoutine(routine);
 }
 
-static ValueCell* slot(ObjRoutine* routine, size_t index) {
-    size_t sliceIndex = index / SLICE_MAX;
-
-    return &routine->stackSlices[sliceIndex]->elements[index % SLICE_MAX];
-}
-
 void push(ObjRoutine* routine, Value value) {
-    ValueCell* nextSlot = slot(routine, routine->stackTopIndex);
+
+    size_t index = routine->stackTopIndex;
+    size_t sliceIndex = index / SLICE_MAX;
+    size_t cellIndex = index % SLICE_MAX;
+
+    ValueCell* nextSlot = &routine->stackSlices[sliceIndex]->elements[cellIndex];
 
     nextSlot->value = value;
     nextSlot->cellType = NULL;
@@ -364,9 +363,7 @@ Value pop(ObjRoutine* routine) {
 }
 
 void popN(ObjRoutine* routine, size_t count) {
-    for (size_t i = 0; i < count; i++) {
-        pop(routine);
-    }
+    routine->stackTopIndex -= count;
 }
 
 void popFrame(ObjRoutine* routine, CallFrame* frame) {
@@ -374,15 +371,21 @@ void popFrame(ObjRoutine* routine, CallFrame* frame) {
 }
 
 Value peek(ObjRoutine* routine, int distance) {
-    ValueCell* cell = peekCell(routine, distance);
-    return cell->value;
+
+    size_t index = routine->stackTopIndex - 1 - distance;
+    size_t sliceIndex = index / SLICE_MAX;
+    size_t cellIndex = index % SLICE_MAX;
+
+    return routine->stackSlices[sliceIndex]->elements[cellIndex].value;
 }
 
 ValueCell* peekCell(ObjRoutine* routine, int distance) {
 
-    ValueCell* targetCell = slot(routine, routine->stackTopIndex - 1 - distance);
+    size_t index = routine->stackTopIndex - 1 - distance;
+    size_t sliceIndex = index / SLICE_MAX;
+    size_t cellIndex = index % SLICE_MAX;
 
-    return targetCell;
+    return &routine->stackSlices[sliceIndex]->elements[cellIndex];
 }
 
 ValueCellTarget peekCellTarget(ObjRoutine* routine, int distance) {

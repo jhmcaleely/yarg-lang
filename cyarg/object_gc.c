@@ -48,6 +48,8 @@ void vm_objects_init(vm_mutex* mutex) {
 static void collectGarbage();
 
 void vm_objects_free() {
+    collectGarbage();
+    
     Obj* object = vm_objects.objects;
     while (object != NULL) {
         Obj* next = object->next;
@@ -100,15 +102,15 @@ void pinObj(Obj* object) {
 }
 
 void gc_objects(size_t newSize) {
-    size_t before = heap_bytes_allocated();
+//   size_t before = heap_bytes_allocated();
 #ifdef DEBUG_STRESS_GC
     collectGarbage();
 #endif
 
-    before += newSize;
-    if (before > vm_objects.nextGC) {
-        collectGarbage();
-    }
+//    before += newSize;
+//    if (before > vm_objects.nextGC) {
+//        collectGarbage();
+//    }
 }
 
 void markObject(Obj* object) {
