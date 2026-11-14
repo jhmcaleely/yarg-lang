@@ -190,8 +190,7 @@ bool loadBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
         if (IS_NIL(compileError)) {
             setStructField(loadResult, 1, compileFunction);
         }
-        popN(routineContext, 2);
-        push(routineContext, loadResult);
+        replaceNTop(routineContext, 2, loadResult);
     } else {
         runtimeError(routineContext, "Argument to load must be a byte array or a string.");
         return false;
