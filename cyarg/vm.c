@@ -289,8 +289,7 @@ static InterpretResult callValue(ObjRoutine* routine, Value callee, int argCount
         NativeFn native = AS_NATIVE(callee);
         Value result = NIL_VAL;
         if (native(routine, argCount, &result)) {
-            popN(routine, argCount + 1);
-            push(routine, result);
+            replaceNTop(routine, argCount + 1, result);
             return INTERPRET_OK;
         } else {
             return INTERPRET_RUNTIME_ERROR;
@@ -299,8 +298,7 @@ static InterpretResult callValue(ObjRoutine* routine, Value callee, int argCount
         BuiltinFun builtin = AS_BUILTIN(callee);
         Value result = NIL_VAL;
         if (builtin(routine, argCount, &result)) {
-            popN(routine, argCount + 1);
-            push(routine, result);
+            replaceNTop(routine, argCount + 1, result);
             return INTERPRET_OK;
         } else {
             return INTERPRET_RUNTIME_ERROR;
@@ -368,8 +366,7 @@ static void bindMethod(ObjRoutine* routine, ObjClass* klass, ObjString* name) {
     }
 
     ObjBoundMethod* bound = newBoundMethod(peek(routine, 0), AS_CLOSURE(method));
-    pop(routine);
-    push(routine, BOUNDMETHOD_VAL(bound));
+    replaceTop(routine, BOUNDMETHOD_VAL(bound));
 }
 
 static ObjUpvalue* captureUpvalue(ObjRoutine* routine, ValueCell* local, size_t stackOffset) {
@@ -431,8 +428,7 @@ static bool derefArrayElement(ObjRoutine* routine) {
         tempRootPop();
     }
 
-    popN(routine, 2);
-    push(routine, result);
+    replaceNTop(routine, 2, result);
     return true;
 }
 
@@ -448,8 +444,7 @@ static bool derefMapElement(ObjRoutine* routine) {
     if (!tableGet(&map->entries, AS_STRING(key), &result)) {
         result = NIL_VAL;
     }
-    popN(routine, 2);
-    push(routine, result);
+    replaceNTop(routine, 2, result);
     return true;
 }
 
@@ -465,8 +460,7 @@ static bool derefStructElement(ObjRoutine* routine) {
     size_t index = as_positive_integer(indexVal);
     Value result = structField(container, index);
 
-    popN(routine, 2);
-    push(routine, result);
+    replaceNTop(routine, 2, result);
     return true;
 }
 
@@ -547,8 +541,7 @@ static void derefPtr(ObjRoutine* routine) {
 
     Value target = pointerDestination(pointerVal);
 
-    pop(routine);
-    push(routine, target);
+    replaceTop(routine, target);
 }
 
 static bool isFalsey(Value value) {
@@ -560,8 +553,7 @@ static void concatenate(ObjRoutine* routine) {
     ObjString* a = AS_STRING(peek(routine, 1));
 
     ObjString* result = concatenateStrings(a, b);
-    popN(routine, 2);
-    push(routine, STRING_VAL(result));
+    replaceNTop(routine, 2, STRING_VAL(result));
 }
 
 static void promote(Value *left, Value *right)
@@ -921,8 +913,7 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_VALUE_BY_VALUE: {
                 Value rhs = peek(routine, 0);
                 Value lhs = duplicateValue(rhs);
-                pop(routine);
-                push(routine, lhs);
+                replaceTop(routine, lhs);
                 break;
             }
             case OP_GET_UPVALUE: {
@@ -956,8 +947,7 @@ InterpretResult run(ObjRoutine* routine) {
 
                     Value value;
                     if (tableGet(&instance->fields, name, &value)) {
-                        pop(routine); // Instance
-                        push(routine, value);
+                        replaceTop(routine, value);
                         break;
                     }
 
@@ -972,8 +962,7 @@ InterpretResult run(ObjRoutine* routine) {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     Value result = structField(structVal, index);
-                    pop(routine);
-                    push(routine, result);
+                    replaceTop(routine, result);
                 } else if (isStructPointer(peek(routine, 0))) {
                     Value pointerVal = peek(routine, 0);
                     ObjString* name = READ_STRING();
@@ -988,8 +977,7 @@ InterpretResult run(ObjRoutine* routine) {
                     Value result = structFieldPointer(structVal, index);
 
                     tempRootPop();
-                    pop(routine);
-                    push(routine, result);
+                    replaceTop(routine, result);
                 } else if (IS_INT(peek(routine, 0))) {
                     Value i = pop(routine);
                     Int *b = AS_INT(i);
@@ -1015,8 +1003,7 @@ InterpretResult run(ObjRoutine* routine) {
                     ObjInstance* instance = AS_INSTANCE(peek(routine, 1));
                     tableSet(&instance->fields, READ_STRING(), peek(routine, 0));
                     Value value = pop(routine);
-                    pop(routine);
-                    push(routine, value);
+                    replaceTop(routine, value);
                 } else if (IS_STRUCT(peek(routine, 1))) {
                     Value structVal = peek(routine, 1);
                     ObjString* name = READ_STRING();
@@ -1029,9 +1016,8 @@ InterpretResult run(ObjRoutine* routine) {
                         runtimeError(routine, "cannot assign to field type.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    Value result = pop(routine);                 
-                    pop(routine);
-                    push(routine, result);
+                    Value result = pop(routine);
+                    replaceTop(routine, result);
                 }
                 break;
             }
@@ -1319,8 +1305,7 @@ InterpretResult run(ObjRoutine* routine) {
             case OP_LEN_BUILTIN: {
                 Value result = NIL_VAL;
                 if (lenBuiltin(routine, 1, &result)) {
-                    popN(routine, 1);
-                    push(routine, result);
+                    replaceTop(routine, result);
                 } else {
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -1336,8 +1321,7 @@ InterpretResult run(ObjRoutine* routine) {
                 }
                 Value result = NIL_VAL;
                 if (builtinFn(routine, argCount, &result)) {
-                    popN(routine, argCount);
-                    push(routine, result);
+                    replaceNTop(routine, argCount, result);
                 } else {
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -1501,8 +1485,7 @@ InterpretResult run(ObjRoutine* routine) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
 
-                popN(routine, 2);
-                push(routine, YARGTYPE_VAL(typeObject));
+                replaceNTop(routine, 2, YARGTYPE_VAL(typeObject));
                 break;
             }
             case OP_DEREF_PTR: {
@@ -1514,8 +1497,7 @@ InterpretResult run(ObjRoutine* routine) {
                 Value lhs = peek(routine, 1);
 
                 if (setPointerDestination(lhs, rhs)) {
-                    popN(routine, 2);
-                    push(routine, rhs);
+                    replaceNTop(routine, 2, rhs);
                 } else {
                     runtimeError(routine, "Cannot set pointer target to incompatible type.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -1539,8 +1521,7 @@ InterpretResult run(ObjRoutine* routine) {
 
                 Value result = createPackedValueContainerAt((void*)address, pointerType);
 
-                popN(routine, 3);
-                push(routine, result);
+                replaceNTop(routine, 3, result);
                 break;
             }
         }
@@ -1656,8 +1637,7 @@ void unaryIntOp(ObjRoutine* routine, int op) {
     allocateIntValue(&negI, a->d_);
     int_set_t(a, AS_INT(negI));
     int_neg(AS_INT(negI));
-    pop(routine);
-    push(routine, negI);
+    replaceTop(routine, negI);
 }
 
 void binaryIntOp(ObjRoutine* routine, char const *c)
@@ -1710,8 +1690,8 @@ void binaryIntOp(ObjRoutine* routine, char const *c)
     default:
         assert(!"IntOp");
     }
-    popN(routine, 2);
-    push(routine, r);
+    
+    replaceNTop(routine, 2, r);
 }
 
 void binaryIntBoolOp(ObjRoutine* routine, char const *op)

@@ -454,6 +454,25 @@ ValueCellTarget peekCellTarget(ObjRoutine* routine, int distance) {
     return result;
 }
 
+void replaceTop(ObjRoutine* routine, Value value) {
+    assert(stackInvariant(routine));
+    if (routine->stackTopCell - 1 < routine->currentSliceBase) {
+        size_t index = routine->stackTopIndex - 1;
+        size_t sliceIndex = index / SLICE_MAX;
+        size_t cellIndex = index % SLICE_MAX;
+        ValueCell* cell = &routine->stackSlices[sliceIndex]->elements[cellIndex];
+        cell->value = value;
+    } else {
+        routine->stackTopCell[-1].value = value;
+    }
+}
+
+void replaceNTop(ObjRoutine* routine, size_t count, Value value) {
+    assert(stackInvariant(routine));
+    popN(routine, count - 1);
+    replaceTop(routine, value);
+}
+
 ObjString* routineToString(Value routineVal) {
     assert(!IS_NIL(routineVal));
     assert(IS_ROUTINE(routineVal));
