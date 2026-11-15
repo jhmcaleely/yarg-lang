@@ -20,7 +20,7 @@
 
 bool addSlice(ObjRoutine* routine);
 
-static bool stackInvariant(ObjRoutine* routine) {
+static bool stackInvariant(const ObjRoutine* routine) {
     size_t index = routine->stackTopIndex;
     size_t sliceIndex = index / SLICE_MAX;
     size_t cellIndex = index % SLICE_MAX;
@@ -423,7 +423,7 @@ void popFrame(ObjRoutine* routine, CallFrame* frame) {
     routine->currentSliceBase = routine->stackSlices[sliceIndex]->elements;
 }
 
-Value peek(ObjRoutine* routine, int distance) {
+Value peek(const ObjRoutine* routine, int distance) {
 
     assert(stackInvariant(routine));
 
@@ -439,7 +439,7 @@ Value peek(ObjRoutine* routine, int distance) {
     }
 }
 
-ValueCell* peekCell(ObjRoutine* routine, int distance) {
+ValueCell* peekCell(const ObjRoutine* routine, int distance) {
 
     size_t index = routine->stackTopIndex - 1 - distance;
     size_t sliceIndex = index / SLICE_MAX;
@@ -448,7 +448,7 @@ ValueCell* peekCell(ObjRoutine* routine, int distance) {
     return &routine->stackSlices[sliceIndex]->elements[cellIndex];
 }
 
-ValueCellTarget peekCellTarget(ObjRoutine* routine, int distance) {
+ValueCellTarget peekCellTarget(const ObjRoutine* routine, int distance) {
     ValueCell* target = peekCell(routine, distance);
     ValueCellTarget result = { .value = &target->value, .cellType = target->cellType};
     return result;
