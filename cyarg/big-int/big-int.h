@@ -141,6 +141,8 @@ IntComp int_is(Int const *, Int const *);
 IntComp int_is_abs(Int const *, Int const *);
 IntRange int_is_range(Int const *, int64_t, uint64_t);
 
+IntComp int_concrete2_is(IntConcrete2 const *, IntConcrete2 const *);
+
 // output
 char const *int_to_s(Int const *, char *, int n);
 int64_t int_to_i64(Int const *);
