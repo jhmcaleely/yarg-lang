@@ -686,6 +686,53 @@ IntComp int_is(Int const *a, Int const *b)
     return r;
 }
 
+IntComp int_concrete2_is(IntConcrete2 const *a, IntConcrete2 const *b)
+{
+    IntComp r;
+    if (a == b)
+    {
+        r = INT_EQ;
+    }
+    else
+    {
+        uint32_t ah = a->w_[0];
+        uint32_t bh = b->w_[0];
+        if (a->neg_ != b->neg_)
+        {
+            if (ah == 0 && bh == 0) // check for zero and -ve zero
+            {
+                r = INT_EQ;
+            }
+            else
+            {
+                r = a->neg_ ? INT_LT : INT_GT;
+            }
+        }
+        else // same sign
+        {
+            if (ah > bh)
+                r = INT_GT;
+            else if (ah < bh)
+                r = INT_LT;
+            else
+                r = INT_EQ;
+            
+            if (a->neg_)
+            {
+                if (r == INT_LT)
+                {
+                    r = INT_GT;
+                }
+                else if (r == INT_GT)
+                {
+                    r = INT_LT;
+                }
+            }
+        }
+    }
+    return r;
+}
+
 IntComp int_is_abs(Int const *a, Int const *b)
 {
     if (a->d_ == b->d_) // same length
