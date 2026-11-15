@@ -33,7 +33,8 @@
 VM vm;
 
 static void binaryIntOp(ObjRoutine* routine, char const *c);
-static void binaryIntBoolOp(ObjRoutine* routine, char const *c);
+static void binaryIntBoolOp(ObjRoutine* routine, char const *c, const Int* a, const Int* b);
+static void binarySmallIntBoolOp(ObjRoutine* routine, char const *c, const BigSmallInt* a, const BigSmallInt* b);
 static void unaryIntOp(ObjRoutine* routine, int op);
 
 void vmPinnedRoutineHandler(size_t handler) {
@@ -742,8 +743,22 @@ InterpretResult run(ObjRoutine* routine) {
             double b = AS_DOUBLE(pop(routine)); \
             double a = AS_DOUBLE(pop(routine)); \
             push(routine, BOOL_VAL(a op b)); \
+        } else if (IS_SMALL_INT(peek(routine, 0)) && IS_SMALL_INT(peek(routine, 1))) { \
+            BigSmallInt b = AS_BIG_SMALL_INT(pop(routine)); \
+            BigSmallInt a = AS_BIG_SMALL_INT(pop(routine)); \
+            binarySmallIntBoolOp(routine, #op, &a, &b); \
+        } else if (IS_BIG_INT(peek(routine, 0)) && IS_BIG_INT(peek(routine, 1))) { \
+            Value v_b = pop(routine); \
+            Value v_a = pop(routine); \
+            const Int* b = AS_INT(v_b); \
+            const Int* a = AS_INT(v_a); \
+            binaryIntBoolOp(routine, #op, a, b); \
         } else if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) { \
-            binaryIntBoolOp(routine, #op); \
+            Value v_b = pop(routine); \
+            Value v_a = pop(routine); \
+            const Int* b = AS_INT(v_b); \
+            const Int* a = AS_INT(v_a); \
+            binaryIntBoolOp(routine, #op, a, b); \
         } else { \
             runtimeBinaryOpTypeError(routine, #op, "numbers, integers or unsigned integers."); \
             return INTERPRET_RUNTIME_ERROR; \
@@ -1029,16 +1044,36 @@ InterpretResult run(ObjRoutine* routine) {
                 break;
             }
             case OP_EQUAL: case OP_GREATER: case OP_LESS: {
-                if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) {
+                if (IS_SMALL_INT(peek(routine, 0)) && IS_SMALL_INT(peek(routine, 1))) {
+                    BigSmallInt b = AS_BIG_SMALL_INT(pop(routine)); \
+                    BigSmallInt a = AS_BIG_SMALL_INT(pop(routine)); \
+
                     switch (instruction) {
                     case OP_EQUAL:
-                        binaryIntBoolOp(routine, "==");
+                        binarySmallIntBoolOp(routine, "==", &a, &b);
                         break;
                     case OP_GREATER:
-                        binaryIntBoolOp(routine, ">");
+                        binarySmallIntBoolOp(routine, ">", &a, &b);
                         break;
                     case OP_LESS:
-                        binaryIntBoolOp(routine, "<");
+                        binarySmallIntBoolOp(routine, "<", &a, &b);
+                        break;
+                    }
+                    break;
+                } else if (IS_INT(peek(routine, 0)) && IS_INT(peek(routine, 1))) {
+                    Value v_b = pop(routine);
+                    Value v_a = pop(routine);
+                    const Int* b = AS_INT(v_b);
+                    const Int* a = AS_INT(v_a);
+                    switch (instruction) {
+                    case OP_EQUAL:
+                        binaryIntBoolOp(routine, "==", a, b);
+                        break;
+                    case OP_GREATER:
+                        binaryIntBoolOp(routine, ">", a, b);
+                        break;
+                    case OP_LESS:
+                        binaryIntBoolOp(routine, "<", a, b);
                         break;
                     }
                 } else {
@@ -1694,13 +1729,33 @@ void binaryIntOp(ObjRoutine* routine, char const *c)
     replaceNTop(routine, 2, r);
 }
 
-void binaryIntBoolOp(ObjRoutine* routine, char const *op)
+void binarySmallIntBoolOp(ObjRoutine* routine, char const *op, const BigSmallInt* a, const BigSmallInt* b) {
+    IntComp ic = int_concrete2_is(&a->i_, &b->i_);
+    bool r;
+    switch (*op)
+    {
+    case '<':
+        assert(op[1] == 0);
+        r = ic == INT_LT;
+        break;
+    case '>':
+        assert(op[1] == 0);
+        r = ic == INT_GT;
+        break;
+    case '=':
+        assert(op[1] == '=' && op[2] == 0);
+        r = ic == INT_EQ;
+        break;
+    default:
+        assert(!"BinaryOp");
+    }
+    push(routine, BOOL_VAL(r));
+}
+
+void binaryIntBoolOp(ObjRoutine* routine, char const *op, const Int* a, const Int* b)
 {
-    Value vb = pop(routine);
-    Value va = pop(routine);
-    Int *a = AS_INT(va);
-    Int *b = AS_INT(vb);
-    IntComp ic = int_is(a, b);
+    IntComp ic;
+    ic = int_is(a, b);
     bool r;
     switch (*op)
     {
