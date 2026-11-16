@@ -26,6 +26,6 @@ var REG_ALIAS_SET_BITS = uint32(0x2) << 12;
 var REG_ALIAS_CLR_BITS = uint32(0x3) << 12;
 
 fun reg_write_masked(rw, val, mask) { 
-    var uint32 reg = peek(rw);
-    poke rw, REG_ALIAS_XOR_BITS, (reg ^ uint32(val)) & uint32(mask);
+    var reg = peek(rw);
+    poke rw, REG_ALIAS_XOR_BITS, (uint32(reg) ^ uint32(val)) & uint32(mask);
 }
