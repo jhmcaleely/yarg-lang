@@ -1,0 +1,16 @@
+// Conway's Life displayed on a 4tronix CUBE:BIT LED cube driven
+// by a Raspberry Pi Pico.
+
+import("conway-life-display/conway");
+import("conway-life-display/cube_bit");
+import("conway-life-display/display");
+
+cube_bit_init();
+
+var iteration = 0;
+while (iteration < 10) {
+    display_on_surface(surface_world);
+    surface_world = next_generation(surface_world, surface_neighbour_of);
+    iteration = iteration + 1;
+}
+    
