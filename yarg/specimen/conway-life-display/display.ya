@@ -1,0 +1,25 @@
+// Conway's Life displayed on a 4tronix CUBE:BIT LED cube driven
+
+// The Life array for the CUBE:BIT Led Cube.
+var surface_world = make_world(56);
+
+// RGB array of two pixels. 0 for dead, 1 for live
+var display_pixels = [ [uint8(0), uint8(255), uint8(0)], [uint8(255), uint8(0), uint8(0)] ];
+
+fun display_on_surface(world) {
+
+    for (var k = 0; k < len(world); k = k + 1) {
+        set_pixel(surface_leds[k], display_pixels[world[k]]);
+    }
+    
+    write_pixels();
+}
+
+fun surface_neighbour_of(cell, neighbour) {
+    var led = surface_neighbourhoods[cell][neighbour];
+    for (var i = 0; i < len(surface_neighbourhoods); i = i + 1) {
+        if (surface_leds[i] == led) {
+            return i;
+        }
+    }
+}
