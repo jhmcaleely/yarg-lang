@@ -68,7 +68,7 @@ fun ws2812_init(gpio_pin, pio_num, sm_num, offset) {
 
     var uint32 sm_cycles_per_bit = uint32(ws2812_T1 + ws2812_T2 + ws2812_T3);
     var uint32 sm_target_freq = uint32(ws2812freq) * sm_cycles_per_bit;
-    var uint32 sys_clock_hz = c_clock_get_hz(clock_sys);
+    var uint32 sys_clock_hz = uint32(c_clock_get_hz(clock_sys));
     var uint32 clkdiv_int_target = sys_clock_hz / sm_target_freq;
     uint32 clkdiv_frac_target = 0;
     if (clkdiv_int_target != 0) {
