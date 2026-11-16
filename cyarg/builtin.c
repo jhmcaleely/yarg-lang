@@ -521,8 +521,14 @@ bool pinBuiltin(ObjRoutine* routineContext, int argCount, Value* result) {
     } else if (IS_UNIFORMARRAY(arg)) {
         *result = pinPackedValueContainer(arg);
         return true;
+    } else if (IS_ADDRESS(arg)) {
+        *result = arg;
+        return true;
+    } else if (IS_POINTER(arg)) {
+        *result = pinPackedValueContainer(arg);
+        return true;
     } else {
-        runtimeError(routineContext, "Expected a routine or uniform array.");
+        runtimeError(routineContext, "Expected a routine, uniform array, pointer or address.");
         return false;
     }
 }
