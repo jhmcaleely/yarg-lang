@@ -20,6 +20,15 @@
 
 bool addSlice(ObjRoutine* routine);
 
+static bool stackInvariant(ObjRoutine* routine) {
+    size_t index = routine->stackTopIndex;
+    size_t sliceIndex = index / SLICE_MAX;
+    size_t cellIndex = index % SLICE_MAX;
+
+    return routine->stackTopCell == &routine->stackSlices[sliceIndex]->elements[cellIndex] &&
+           routine->currentSliceBase == routine->stackSlices[sliceIndex]->elements;
+}
+
 void initRoutine(ObjRoutine* routine) {
     routine->entryFunction = NULL;
     routine->entryArg = NIL_VAL;
@@ -57,6 +66,11 @@ void resetRoutine(ObjRoutine* routine) {
     initDynamicObjArray(&routine->runtimeErrors);
 
     routine->stackTopIndex = 0;
+    routine->currentSliceBase = routine->stackSlices[0]->elements;
+    routine->stackTopCell = &routine->currentSliceBase[0];
+
+    assert(stackInvariant(routine));
+
     routine->frameCount = 0;
     routine->openUpvalues = NULL;
 }
@@ -327,28 +341,33 @@ void runtimeError(ObjRoutine* routine, const char* format, ...) {
     resetRoutine(routine);
 }
 
-static ValueCell* slot(ObjRoutine* routine, size_t index) {
-    size_t sliceIndex = index / SLICE_MAX;
-
-    return &routine->stackSlices[sliceIndex]->elements[index % SLICE_MAX];
-}
-
 void push(ObjRoutine* routine, Value value) {
-    ValueCell* nextSlot = slot(routine, routine->stackTopIndex);
 
-    nextSlot->value = value;
-    nextSlot->cellType = NULL;
+    routine->stackTopCell->value = value;
+    routine->stackTopCell->cellType = NULL;
+
     routine->stackTopIndex++;
 
-    if (((routine->stackTopIndex / SLICE_MAX) + 1) > routine->sliceCount) {
+    size_t sliceIndex = routine->stackTopIndex / SLICE_MAX;
+    size_t cellIndex = routine->stackTopIndex % SLICE_MAX;
+
+    if (sliceIndex >= routine->sliceCount) {
         if (routine->addSlice) {
             if (!routine->addSlice(routine)) {
                 runtimeError(routine, "Value stack size exceeded.");
+            } else {
+                routine->stackTopCell = &routine->stackSlices[sliceIndex]->elements[cellIndex];
+                routine->currentSliceBase = routine->stackSlices[sliceIndex]->elements;
             }
         } else {
             runtimeError(routine, "Fixed Value stack size exceeded.");
         }
+    } else {
+        routine->stackTopCell = &routine->stackSlices[sliceIndex]->elements[cellIndex];
+        routine->currentSliceBase = routine->stackSlices[sliceIndex]->elements;
     }
+
+    assert(stackInvariant(routine));
 }
 
 void pushTyped(ObjRoutine* routine, Value value, Value type) {
@@ -359,30 +378,76 @@ void pushTyped(ObjRoutine* routine, Value value, Value type) {
 
 Value pop(ObjRoutine* routine) {
 
-    Value ret = peek(routine, 0);
+    Value ret;
+    if (routine->stackTopCell > routine->currentSliceBase) {
+        ret = routine->stackTopCell[-1].value;
+    } else {
+
+        size_t index = routine->stackTopIndex - 1;
+        size_t sliceIndex = index / SLICE_MAX;
+        size_t cellIndex = index % SLICE_MAX;
+
+        ret = routine->stackSlices[sliceIndex]->elements[cellIndex].value;
+    }
+
     routine->stackTopIndex--;
+    routine->stackTopCell--;
+    if (routine->stackTopCell < routine->currentSliceBase) {
+        size_t index = routine->stackTopIndex;
+        size_t sliceIndex = index / SLICE_MAX;
+        size_t cellIndex = index % SLICE_MAX;
+        routine->stackTopCell = &routine->stackSlices[sliceIndex]->elements[cellIndex];
+        routine->currentSliceBase = routine->stackSlices[sliceIndex]->elements;
+    }
+
+    assert(stackInvariant(routine));
 
     return ret;
 }
 
 void popN(ObjRoutine* routine, size_t count) {
     routine->stackTopIndex -= count;
+
+    size_t index = routine->stackTopIndex;
+    size_t sliceIndex = index / SLICE_MAX;
+    size_t cellIndex = index % SLICE_MAX;
+    routine->stackTopCell = &routine->stackSlices[sliceIndex]->elements[cellIndex];
+    routine->currentSliceBase = routine->stackSlices[sliceIndex]->elements;
 }
 
 void popFrame(ObjRoutine* routine, CallFrame* frame) {
     routine->stackTopIndex = frame->stackEntryIndex;
+
+    size_t index = routine->stackTopIndex;
+    size_t sliceIndex = index / SLICE_MAX;
+    size_t cellIndex = index % SLICE_MAX;
+    routine->stackTopCell = &routine->stackSlices[sliceIndex]->elements[cellIndex];
+    routine->currentSliceBase = routine->stackSlices[sliceIndex]->elements;
 }
 
 Value peek(ObjRoutine* routine, int distance) {
-    ValueCell* cell = peekCell(routine, distance);
-    return cell->value;
+
+    assert(stackInvariant(routine));
+
+    if (routine->stackTopCell - 1 - distance >= routine->currentSliceBase) {
+        return routine->stackTopCell[-1 - distance].value;
+    } else {
+
+        size_t index = routine->stackTopIndex - 1 - distance;
+        size_t sliceIndex = index / SLICE_MAX;
+        size_t cellIndex = index % SLICE_MAX;
+
+        return routine->stackSlices[sliceIndex]->elements[cellIndex].value;
+    }
 }
 
 ValueCell* peekCell(ObjRoutine* routine, int distance) {
 
-    ValueCell* targetCell = slot(routine, routine->stackTopIndex - 1 - distance);
+    size_t index = routine->stackTopIndex - 1 - distance;
+    size_t sliceIndex = index / SLICE_MAX;
+    size_t cellIndex = index % SLICE_MAX;
 
-    return targetCell;
+    return &routine->stackSlices[sliceIndex]->elements[cellIndex];
 }
 
 ValueCellTarget peekCellTarget(ObjRoutine* routine, int distance) {

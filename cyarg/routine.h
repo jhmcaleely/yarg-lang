@@ -43,12 +43,14 @@ typedef struct ObjRoutine {
     CallFrame frames[FRAMES_MAX];
     int frameCount;
 
+    size_t stackTopIndex;
+    ValueCell* stackTopCell;
+    ValueCell* currentSliceBase;
+
     StackSlice** stackSlices;
     size_t stackSliceCapacity;
     size_t sliceCount;
     
-    size_t stackTopIndex;
-
     StackSlice stk;
     DynamicObjArray additionalSlicesArray;
     AddSliceFn addSlice;
