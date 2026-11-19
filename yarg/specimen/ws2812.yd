@@ -1,0 +1,538 @@
+ws2812.ya
+      1 | import("pio");
+0000    1 OP_GET_GLOBAL       0 string:'import'
+0002    | OP_CONSTANT         1 string:'pio'
+0004    | OP_CALL             1
+0006    | OP_POP
+      2 | import("pio-instructions");
+0007    2 OP_GET_GLOBAL       0 string:'import'
+0009    | OP_CONSTANT         2 string:'pio-instructions'
+0011    | OP_CALL             1
+0013    | OP_POP
+      3 | import("clock");
+0014    3 OP_GET_GLOBAL       0 string:'import'
+0016    | OP_CONSTANT         3 string:'clock'
+0018    | OP_CALL             1
+0020    | OP_POP
+      4 | import("gpio");
+0021    4 OP_GET_GLOBAL       0 string:'import'
+0023    | OP_CONSTANT         4 string:'gpio'
+0025    | OP_CALL             1
+0027    | OP_POP
+      5 | import("dma");
+0028    5 OP_GET_GLOBAL       0 string:'import'
+0030    | OP_CONSTANT         5 string:'dma'
+0032    | OP_CALL             1
+0034    | OP_POP
+      7 | var uint16[4] ws2812_program;
+0035    7 OP_TYPE_LITERAL  uint16
+0037    | OP_IMMEDIATE_P8     4
+0039    | OP_TYPE_INDEXED_COLLECTION
+0040    | OP_INITIALISE_DEFAULT
+0041    | OP_DEFINE_GLOBAL    6 string:'ws2812_program'
+      8 | var ws2812_wrap_target = 0;
+0043    8 OP_IMMEDIATE_P8     0
+0045    | OP_DEFINE_GLOBAL    7 string:'ws2812_wrap_target'
+      9 | ws2812_program[0] = uint16(0x6321); // out    x, 1            side 0 [3]
+0047    9 OP_GET_GLOBAL       6 string:'ws2812_program'
+0049    | OP_IMMEDIATE_P8     0
+0051    | OP_IMMEDIATE_P16  25377
+0054    | OP_CALL_BUILTIN  uint16    1
+0057    | OP_SET_ELEMENT
+0058    | OP_POP
+     10 | ws2812_program[1] = uint16(0x1223); // jmp    !x, 3           side 1 [2]
+0059   10 OP_GET_GLOBAL       6 string:'ws2812_program'
+0061    | OP_IMMEDIATE_P8     1
+0063    | OP_IMMEDIATE_P16   4643
+0066    | OP_CALL_BUILTIN  uint16    1
+0069    | OP_SET_ELEMENT
+0070    | OP_POP
+     11 | ws2812_program[2] = uint16(0x1200); // jmp    0               side 1 [2]
+0071   11 OP_GET_GLOBAL       6 string:'ws2812_program'
+0073    | OP_IMMEDIATE_P8     2
+0075    | OP_IMMEDIATE_P16   4608
+0078    | OP_CALL_BUILTIN  uint16    1
+0081    | OP_SET_ELEMENT
+0082    | OP_POP
+     12 | ws2812_program[3] = uint16(0xa242); // nop                    side 0 [2]
+0083   12 OP_GET_GLOBAL       6 string:'ws2812_program'
+0085    | OP_IMMEDIATE_P8     3
+0087    | OP_IMMEDIATE_P16  41538
+0090    | OP_CALL_BUILTIN  uint16    1
+0093    | OP_SET_ELEMENT
+0094    | OP_POP
+     13 | var ws2812_wrap = 3;
+0095   13 OP_IMMEDIATE_P8     3
+0097    | OP_DEFINE_GLOBAL    8 string:'ws2812_wrap'
+     15 | var ws2812_T1 = 3;
+0099   15 OP_IMMEDIATE_P8     3
+0101    | OP_DEFINE_GLOBAL    9 string:'ws2812_T1'
+     16 | var ws2812_T2 = 3;
+0103   16 OP_IMMEDIATE_P8     3
+0105    | OP_DEFINE_GLOBAL   10 string:'ws2812_T2'
+     17 | var ws2812_T3 = 4;
+0107   17 OP_IMMEDIATE_P8     4
+0109    | OP_DEFINE_GLOBAL   11 string:'ws2812_T3'
+     19 | var ws2812freq = 800000;
+0111   19 OP_IMMEDIATE_P24    800000
+0115    | OP_DEFINE_GLOBAL   12 string:'ws2812freq'
+     20 | var rgbw = false;
+0117   20 OP_FALSE
+0118    | OP_DEFINE_GLOBAL   13 string:'rgbw'
+     22 | fun local_write_masked(variable, val, mask) {
+0120   22 OP_CLOSURE         15 <fn local_write_masked>
+0122    | OP_DEFINE_GLOBAL   14 string:'local_write_masked'
+     27 | fun ws2812_init(gpio_pin, pio_num, sm_num, offset) {
+0124   27 OP_CLOSURE         17 <fn ws2812_init>
+0126    | OP_DEFINE_GLOBAL   16 string:'ws2812_init'
+     89 | fun ws2812_set_pixels(channel, pixels) {
+0128   89 OP_CLOSURE         19 <fn ws2812_set_pixels>
+0130    | OP_DEFINE_GLOBAL   18 string:'ws2812_set_pixels'
+0132    | OP_NIL
+0133    | OP_RETURN
+ws2812.ya:  23:local_write_masked()
+     23 |     uint32 reg = uint32(variable) ^ ((uint32(variable) ^ uint32(val)) & uint32(mask));
+0000   23 OP_TYPE_LITERAL  uint32
+0002    | OP_GET_LOCAL        1
+0004    | OP_CALL_BUILTIN  uint32    1
+0007    | OP_GET_LOCAL        1
+0009    | OP_CALL_BUILTIN  uint32    1
+0012    | OP_GET_LOCAL        2
+0014    | OP_CALL_BUILTIN  uint32    1
+0017    | OP_BITXOR
+0018    | OP_GET_LOCAL        3
+0020    | OP_CALL_BUILTIN  uint32    1
+0023    | OP_BITAND
+0024    | OP_BITXOR
+0025    | OP_VALUE_BY_VALUE
+0026    | OP_INITIALISE
+     24 |     return reg;
+0027   24 OP_GET_LOCAL        4
+0029    | OP_RETURN
+0030    | OP_NIL
+0031    | OP_RETURN
+ws2812.ya:  29:ws2812_init()
+     29 |     pio_add_program_at_offset(pio_num, ws2812_program, 0);
+0000   29 OP_GET_GLOBAL       0 string:'pio_add_program_at_offset'
+0002    | OP_GET_LOCAL        2
+0004    | OP_VALUE_BY_VALUE
+0005    | OP_GET_GLOBAL       1 string:'ws2812_program'
+0007    | OP_VALUE_BY_VALUE
+0008    | OP_IMMEDIATE_P8     0
+0010    | OP_CALL             3
+0012    | OP_POP
+     30 |     gpio_set_function(gpio_pin, gpio_func_pio[pio_num]);
+0013   30 OP_GET_GLOBAL       2 string:'gpio_set_function'
+0015    | OP_GET_LOCAL        1
+0017    | OP_VALUE_BY_VALUE
+0018    | OP_GET_GLOBAL       3 string:'gpio_func_pio'
+0020    | OP_GET_LOCAL        2
+0022    | OP_ELEMENT
+0023    | OP_VALUE_BY_VALUE
+0024    | OP_CALL             2
+0026    | OP_POP
+     32 |     poke pio[pio_num].sm[sm_num].execctrl, REG_ALIAS_CLR_BITS, 0x1 << PIO_SM_EXECCTRL_OUT_STICKY_LSB;
+0027   32 OP_IMMEDIATE_P8     1
+0029    | OP_GET_GLOBAL       4 string:'PIO_SM_EXECCTRL_OUT_STICKY_LSB'
+0031    | OP_LEFT_SHIFT
+0032    | OP_GET_GLOBAL       5 string:'pio'
+0034    | OP_GET_LOCAL        2
+0036    | OP_ELEMENT
+0037    | OP_GET_PROPERTY     6 string:'sm'
+0039    | OP_GET_LOCAL        3
+0041    | OP_ELEMENT
+0042    | OP_GET_PROPERTY     7 string:'execctrl'
+0044    | OP_GET_GLOBAL       8 string:'REG_ALIAS_CLR_BITS'
+0046    | OP_ADD
+0047    | OP_POKE
+     34 |     poke pio[pio_num].sm[sm_num].pinctrl, (uint32(1) << PIO_SM_PINCTRL_SET_COUNT_LSB) | (gpio_pin << PIO_SM_PINCTRL_SET_BASE_LSB);
+0048   34 OP_IMMEDIATE_P8     1
+0050    | OP_CALL_BUILTIN  uint32    1
+0053    | OP_GET_GLOBAL       9 string:'PIO_SM_PINCTRL_SET_COUNT_LSB'
+0055    | OP_LEFT_SHIFT
+0056    | OP_GET_LOCAL        1
+0058    | OP_GET_GLOBAL      10 string:'PIO_SM_PINCTRL_SET_BASE_LSB'
+0060    | OP_LEFT_SHIFT
+0061    | OP_BITOR
+0062    | OP_GET_GLOBAL       5 string:'pio'
+0064    | OP_GET_LOCAL        2
+0066    | OP_ELEMENT
+0067    | OP_GET_PROPERTY     6 string:'sm'
+0069    | OP_GET_LOCAL        3
+0071    | OP_ELEMENT
+0072    | OP_GET_PROPERTY    11 string:'pinctrl'
+0074    | OP_POKE
+     35 |     uint16 instruction = pio_encode_instr_and_args(pio_instr_bits_set, pio_pindirs & uint32(7), 0x1f);
+0075   35 OP_TYPE_LITERAL  uint16
+0077    | OP_GET_GLOBAL      12 string:'pio_encode_instr_and_args'
+0079    | OP_GET_GLOBAL      13 string:'pio_instr_bits_set'
+0081    | OP_VALUE_BY_VALUE
+0082    | OP_GET_GLOBAL      14 string:'pio_pindirs'
+0084    | OP_IMMEDIATE_P8     7
+0086    | OP_CALL_BUILTIN  uint32    1
+0089    | OP_BITAND
+0090    | OP_VALUE_BY_VALUE
+0091    | OP_IMMEDIATE_P8    31
+0093    | OP_CALL             3
+0095    | OP_VALUE_BY_VALUE
+0096    | OP_INITIALISE
+     36 |     poke pio[pio_num].sm[sm_num].instr, uint32(instruction);
+0097   36 OP_GET_LOCAL        5
+0099    | OP_CALL_BUILTIN  uint32    1
+0102    | OP_GET_GLOBAL       5 string:'pio'
+0104    | OP_GET_LOCAL        2
+0106    | OP_ELEMENT
+0107    | OP_GET_PROPERTY     6 string:'sm'
+0109    | OP_GET_LOCAL        3
+0111    | OP_ELEMENT
+0112    | OP_GET_PROPERTY    15 string:'instr'
+0114    | OP_POKE
+     38 |     uint32 shiftctrl = (uint32(1) << PIO_SM_SHIFTCTRL_IN_SHIFTDIR_LSB) |
+0115   38 OP_TYPE_LITERAL  uint32
+0117    | OP_IMMEDIATE_P8     1
+0119    | OP_CALL_BUILTIN  uint32    1
+0122    | OP_GET_GLOBAL      16 string:'PIO_SM_SHIFTCTRL_IN_SHIFTDIR_LSB'
+0124    | OP_LEFT_SHIFT
+0125    | OP_IMMEDIATE_P8     0
+0127    | OP_CALL_BUILTIN  uint32    1
+0130    | OP_GET_GLOBAL      17 string:'PIO_SM_SHIFTCTRL_AUTOPUSH_LSB'
+0132    | OP_LEFT_SHIFT
+0133    | OP_BITOR
+0134    | OP_IMMEDIATE_P8    32
+0136    | OP_CALL_BUILTIN  uint32    1
+0139    | OP_IMMEDIATE_P8    31
+0141    | OP_CALL_BUILTIN  uint32    1
+0144    | OP_BITAND
+0145    | OP_GET_GLOBAL      18 string:'PIO_SM_SHIFTCTRL_PUSH_THRESH_LSB'
+0147    | OP_LEFT_SHIFT
+0148    | OP_BITOR
+0149    | OP_VALUE_BY_VALUE
+0150    | OP_INITIALISE
+     42 |     uint32 execctrl = (uint32(offset + ws2812_wrap_target) << PIO_SM_EXECCTRL_WRAP_BOTTOM_LSB) |
+0151   42 OP_TYPE_LITERAL  uint32
+0153    | OP_GET_LOCAL        4
+0155    | OP_GET_GLOBAL      19 string:'ws2812_wrap_target'
+0157    | OP_ADD
+0158    | OP_CALL_BUILTIN  uint32    1
+0161    | OP_GET_GLOBAL      20 string:'PIO_SM_EXECCTRL_WRAP_BOTTOM_LSB'
+0163    | OP_LEFT_SHIFT
+0164    | OP_GET_LOCAL        4
+0166    | OP_GET_GLOBAL      21 string:'ws2812_wrap'
+0168    | OP_ADD
+0169    | OP_CALL_BUILTIN  uint32    1
+0172    | OP_GET_GLOBAL      22 string:'PIO_SM_EXECCTRL_WRAP_TOP_LSB'
+0174    | OP_LEFT_SHIFT
+0175    | OP_BITOR
+0176    | OP_VALUE_BY_VALUE
+0177    | OP_INITIALISE
+     45 |     uint32 pinctrl = (uint32(1) << PIO_SM_PINCTRL_SIDESET_COUNT_LSB);
+0178   45 OP_TYPE_LITERAL  uint32
+0180    | OP_IMMEDIATE_P8     1
+0182    | OP_CALL_BUILTIN  uint32    1
+0185    | OP_GET_GLOBAL      23 string:'PIO_SM_PINCTRL_SIDESET_COUNT_LSB'
+0187    | OP_LEFT_SHIFT
+0188    | OP_VALUE_BY_VALUE
+0189    | OP_INITIALISE
+     47 |     execctrl = local_write_masked(execctrl, uint32(0) << PIO_SM_EXECCTRL_SIDE_EN_LSB | uint32(0) << PIO_SM_EXECCTRL_SIDE_PINDIR_LSB
+0190   47 OP_GET_GLOBAL      24 string:'local_write_masked'
+0192    | OP_GET_LOCAL        7
+0194    | OP_VALUE_BY_VALUE
+0195    | OP_IMMEDIATE_P8     0
+0197    | OP_CALL_BUILTIN  uint32    1
+0200    | OP_GET_GLOBAL      25 string:'PIO_SM_EXECCTRL_SIDE_EN_LSB'
+0202    | OP_LEFT_SHIFT
+0203    | OP_IMMEDIATE_P8     0
+0205    | OP_CALL_BUILTIN  uint32    1
+0208    | OP_GET_GLOBAL      26 string:'PIO_SM_EXECCTRL_SIDE_PINDIR_LSB'
+0210    | OP_LEFT_SHIFT
+0211    | OP_BITOR
+0212    | OP_VALUE_BY_VALUE
+0213    | OP_GET_GLOBAL      27 string:'PIO_SM_EXECCTRL_SIDE_EN_BITS'
+0215    | OP_GET_GLOBAL      28 string:'PIO_SM_EXECCTRL_SIDE_PINDIR_BITS'
+0217    | OP_BITOR
+0218    | OP_VALUE_BY_VALUE
+0219    | OP_CALL             3
+0221    | OP_VALUE_BY_VALUE
+0222    | OP_SET_LOCAL        7
+0224    | OP_POP
+     50 |     pinctrl = local_write_masked(pinctrl, uint32(gpio_pin) << PIO_SM_PINCTRL_SIDESET_BASE_LSB
+0225   50 OP_GET_GLOBAL      24 string:'local_write_masked'
+0227    | OP_GET_LOCAL        8
+0229    | OP_VALUE_BY_VALUE
+0230    | OP_GET_LOCAL        1
+0232    | OP_CALL_BUILTIN  uint32    1
+0235    | OP_GET_GLOBAL      29 string:'PIO_SM_PINCTRL_SIDESET_BASE_LSB'
+0237    | OP_LEFT_SHIFT
+0238    | OP_VALUE_BY_VALUE
+0239    | OP_GET_GLOBAL      30 string:'PIO_SM_PINCTRL_SIDESET_BASE_BITS'
+0241    | OP_VALUE_BY_VALUE
+0242    | OP_CALL             3
+0244    | OP_VALUE_BY_VALUE
+0245    | OP_SET_LOCAL        8
+0247    | OP_POP
+     53 |     uint32 rgbval = 32;
+0248   53 OP_TYPE_LITERAL  uint32
+0250    | OP_IMMEDIATE_P8    32
+0252    | OP_INITIALISE
+     54 |     if (!rgbw) {
+0253   54 OP_GET_GLOBAL      31 string:'rgbw'
+0255    | OP_NOT
+0256    | OP_JUMP_IF_FALSE  256 -> 268
+0259    | OP_POP
+     55 |         rgbval = 24;
+0260   55 OP_IMMEDIATE_P8    24
+0262    | OP_SET_LOCAL        9
+0264    | OP_POP
+0265    | OP_JUMP           265 -> 269
+0268    | OP_POP
+     58 |     shiftctrl = local_write_masked(shiftctrl, (uint32(0) << PIO_SM_SHIFTCTRL_OUT_SHIFTDIR_LSB) |
+0269   58 OP_GET_GLOBAL      24 string:'local_write_masked'
+0271    | OP_GET_LOCAL        6
+0273    | OP_VALUE_BY_VALUE
+0274    | OP_IMMEDIATE_P8     0
+0276    | OP_CALL_BUILTIN  uint32    1
+0279    | OP_GET_GLOBAL      32 string:'PIO_SM_SHIFTCTRL_OUT_SHIFTDIR_LSB'
+0281    | OP_LEFT_SHIFT
+0282    | OP_IMMEDIATE_P8     1
+0284    | OP_CALL_BUILTIN  uint32    1
+0287    | OP_GET_GLOBAL      33 string:'PIO_SM_SHIFTCTRL_AUTOPULL_LSB'
+0289    | OP_LEFT_SHIFT
+0290    | OP_BITOR
+0291    | OP_GET_LOCAL        9
+0293    | OP_CALL_BUILTIN  uint32    1
+0296    | OP_IMMEDIATE_P8    31
+0298    | OP_CALL_BUILTIN  uint32    1
+0301    | OP_BITAND
+0302    | OP_GET_GLOBAL      34 string:'PIO_SM_SHIFTCTRL_PULL_THRESH_LSB'
+0304    | OP_LEFT_SHIFT
+0305    | OP_BITOR
+0306    | OP_VALUE_BY_VALUE
+0307    | OP_GET_GLOBAL      35 string:'PIO_SM_SHIFTCTRL_OUT_SHIFTDIR_BITS'
+0309    | OP_GET_GLOBAL      36 string:'PIO_SM_SHIFTCTRL_AUTOPULL_BITS'
+0311    | OP_BITOR
+0312    | OP_GET_GLOBAL      37 string:'PIO_SM_SHIFTCTRL_PULL_THRESH_BITS'
+0314    | OP_BITOR
+0315    | OP_VALUE_BY_VALUE
+0316    | OP_CALL             3
+0318    | OP_VALUE_BY_VALUE
+0319    | OP_SET_LOCAL        6
+0321    | OP_POP
+     65 |     shiftctrl = local_write_masked(shiftctrl, 
+0322   65 OP_GET_GLOBAL      24 string:'local_write_masked'
+0324    | OP_GET_LOCAL        6
+0326    | OP_VALUE_BY_VALUE
+0327    | OP_GET_GLOBAL      38 string:'PIO_FIFO_JOIN_TX'
+0329    | OP_GET_GLOBAL      39 string:'PIO_SM_SHIFTCTRL_FJOIN_TX_LSB'
+0331    | OP_LEFT_SHIFT
+0332    | OP_VALUE_BY_VALUE
+0333    | OP_GET_GLOBAL      40 string:'PIO_SM_SHIFTCTRL_FJOIN_TX_BITS'
+0335    | OP_GET_GLOBAL      41 string:'PIO_SM_SHIFTCTRL_FJOIN_RX_BITS'
+0337    | OP_BITOR
+0338    | OP_VALUE_BY_VALUE
+0339    | OP_CALL             3
+0341    | OP_VALUE_BY_VALUE
+0342    | OP_SET_LOCAL        6
+0344    | OP_POP
+     69 |     var uint32 sm_cycles_per_bit = uint32(ws2812_T1 + ws2812_T2 + ws2812_T3);
+0345   69 OP_TYPE_LITERAL  uint32
+0347    | OP_GET_GLOBAL      42 string:'ws2812_T1'
+0349    | OP_GET_GLOBAL      43 string:'ws2812_T2'
+0351    | OP_ADD
+0352    | OP_GET_GLOBAL      44 string:'ws2812_T3'
+0354    | OP_ADD
+0355    | OP_CALL_BUILTIN  uint32    1
+0358    | OP_VALUE_BY_VALUE
+0359    | OP_INITIALISE
+     70 |     var uint32 sm_target_freq = uint32(ws2812freq) * sm_cycles_per_bit;
+0360   70 OP_TYPE_LITERAL  uint32
+0362    | OP_GET_GLOBAL      45 string:'ws2812freq'
+0364    | OP_CALL_BUILTIN  uint32    1
+0367    | OP_GET_LOCAL       10
+0369    | OP_MULTIPLY
+0370    | OP_VALUE_BY_VALUE
+0371    | OP_INITIALISE
+     71 |     var uint32 sys_clock_hz = uint32(c_clock_get_hz(clock_sys));
+0372   71 OP_TYPE_LITERAL  uint32
+0374    | OP_GET_GLOBAL      46 string:'c_clock_get_hz'
+0376    | OP_GET_GLOBAL      47 string:'clock_sys'
+0378    | OP_VALUE_BY_VALUE
+0379    | OP_CALL             1
+0381    | OP_CALL_BUILTIN  uint32    1
+0384    | OP_VALUE_BY_VALUE
+0385    | OP_INITIALISE
+     72 |     var uint32 clkdiv_int_target = sys_clock_hz / sm_target_freq;
+0386   72 OP_TYPE_LITERAL  uint32
+0388    | OP_GET_LOCAL       12
+0390    | OP_GET_LOCAL       11
+0392    | OP_DIVIDE
+0393    | OP_VALUE_BY_VALUE
+0394    | OP_INITIALISE
+     73 |     uint32 clkdiv_frac_target = 0;
+0395   73 OP_TYPE_LITERAL  uint32
+0397    | OP_IMMEDIATE_P8     0
+0399    | OP_INITIALISE
+     74 |     if (clkdiv_int_target != 0) {
+0400   74 OP_GET_LOCAL       13
+0402    | OP_IMMEDIATE_P8     0
+0404    | OP_EQUAL
+0405    | OP_NOT
+0406    | OP_JUMP_IF_FALSE  406 -> 436
+0409    | OP_POP
+     75 |         clkdiv_frac_target = ((256 * sys_clock_hz) - (256 * sm_target_freq * clkdiv_int_target)) / sm_target_freq;
+0410   75 OP_IMMEDIATE_P16    256
+0413    | OP_GET_LOCAL       12
+0415    | OP_MULTIPLY
+0416    | OP_IMMEDIATE_P16    256
+0419    | OP_GET_LOCAL       11
+0421    | OP_MULTIPLY
+0422    | OP_GET_LOCAL       13
+0424    | OP_MULTIPLY
+0425    | OP_SUBTRACT
+0426    | OP_GET_LOCAL       11
+0428    | OP_DIVIDE
+0429    | OP_VALUE_BY_VALUE
+0430    | OP_SET_LOCAL       14
+0432    | OP_POP
+0433    | OP_JUMP           433 -> 437
+0436    | OP_POP
+     78 |     var uint16 clkdiv_int = uint16(clkdiv_int_target);
+0437   78 OP_TYPE_LITERAL  uint16
+0439    | OP_GET_LOCAL       13
+0441    | OP_CALL_BUILTIN  uint16    1
+0444    | OP_VALUE_BY_VALUE
+0445    | OP_INITIALISE
+     79 |     var uint8 clkdiv_frac = uint8(clkdiv_frac_target);
+0446   79 OP_TYPE_LITERAL  uint8
+0448    | OP_GET_LOCAL       14
+0450    | OP_CALL_BUILTIN  uint8    1
+0453    | OP_VALUE_BY_VALUE
+0454    | OP_INITIALISE
+     81 |     uint32 clkdiv = (uint32(clkdiv_frac) << PIO_SM_CLKDIV_FRAC_LSB) |
+0455   81 OP_TYPE_LITERAL  uint32
+0457    | OP_GET_LOCAL       16
+0459    | OP_CALL_BUILTIN  uint32    1
+0462    | OP_GET_GLOBAL      48 string:'PIO_SM_CLKDIV_FRAC_LSB'
+0464    | OP_LEFT_SHIFT
+0465    | OP_GET_LOCAL       15
+0467    | OP_CALL_BUILTIN  uint32    1
+0470    | OP_GET_GLOBAL      49 string:'PIO_SM_CLKDIV_INT_LSB'
+0472    | OP_LEFT_SHIFT
+0473    | OP_BITOR
+0474    | OP_VALUE_BY_VALUE
+0475    | OP_INITIALISE
+     84 |     pio_sm_init(pio_num, sm_num, offset, clkdiv, execctrl, shiftctrl, pinctrl);
+0476   84 OP_GET_GLOBAL      50 string:'pio_sm_init'
+0478    | OP_GET_LOCAL        2
+0480    | OP_VALUE_BY_VALUE
+0481    | OP_GET_LOCAL        3
+0483    | OP_VALUE_BY_VALUE
+0484    | OP_GET_LOCAL        4
+0486    | OP_VALUE_BY_VALUE
+0487    | OP_GET_LOCAL       17
+0489    | OP_VALUE_BY_VALUE
+0490    | OP_GET_LOCAL        7
+0492    | OP_VALUE_BY_VALUE
+0493    | OP_GET_LOCAL        6
+0495    | OP_VALUE_BY_VALUE
+0496    | OP_GET_LOCAL        8
+0498    | OP_VALUE_BY_VALUE
+0499    | OP_CALL             7
+0501    | OP_POP
+     86 |     pio_sm_set_enabled(pio_num, sm_num, true);
+0502   86 OP_GET_GLOBAL      51 string:'pio_sm_set_enabled'
+0504    | OP_GET_LOCAL        2
+0506    | OP_VALUE_BY_VALUE
+0507    | OP_GET_LOCAL        3
+0509    | OP_VALUE_BY_VALUE
+0510    | OP_TRUE
+0511    | OP_CALL             3
+0513    | OP_POP
+0514    | OP_NIL
+0515    | OP_RETURN
+ws2812.ya:  92:ws2812_set_pixels()
+     92 |     poke dma.channel[channel].trans_count, len(pixels);
+0000   92 OP_GET_LOCAL        2
+0002    | OP_LEN
+0003    | OP_GET_GLOBAL       0 string:'dma'
+0005    | OP_GET_PROPERTY     1 string:'channel'
+0007    | OP_GET_LOCAL        1
+0009    | OP_ELEMENT
+0010    | OP_GET_PROPERTY     2 string:'trans_count'
+0012    | OP_POKE
+     93 |     poke dma.channel[channel].read_addr, pin(pixels);
+0013   93 OP_GET_LOCAL        2
+0015    | OP_CALL_BUILTIN  pin    1
+0018    | OP_GET_GLOBAL       0 string:'dma'
+0020    | OP_GET_PROPERTY     1 string:'channel'
+0022    | OP_GET_LOCAL        1
+0024    | OP_ELEMENT
+0025    | OP_GET_PROPERTY     3 string:'read_addr'
+0027    | OP_POKE
+     94 |     poke dma.channel[channel].write_addr, pin(pio[ws2812_pio].txf[ws2812_sm]);
+0028   94 OP_GET_GLOBAL       4 string:'pio'
+0030    | OP_GET_GLOBAL       5 string:'ws2812_pio'
+0032    | OP_ELEMENT
+0033    | OP_GET_PROPERTY     6 string:'txf'
+0035    | OP_GET_GLOBAL       7 string:'ws2812_sm'
+0037    | OP_ELEMENT
+0038    | OP_CALL_BUILTIN  pin    1
+0041    | OP_GET_GLOBAL       0 string:'dma'
+0043    | OP_GET_PROPERTY     1 string:'channel'
+0045    | OP_GET_LOCAL        1
+0047    | OP_ELEMENT
+0048    | OP_GET_PROPERTY     8 string:'write_addr'
+0050    | OP_POKE
+     96 |     reg_write_masked(dma.channel[channel].al1_ctrl, 0x10, 0x10); // increment read addr
+0051   96 OP_GET_GLOBAL       9 string:'reg_write_masked'
+0053    | OP_GET_GLOBAL       0 string:'dma'
+0055    | OP_GET_PROPERTY     1 string:'channel'
+0057    | OP_GET_LOCAL        1
+0059    | OP_ELEMENT
+0060    | OP_GET_PROPERTY    10 string:'al1_ctrl'
+0062    | OP_VALUE_BY_VALUE
+0063    | OP_IMMEDIATE_P8    16
+0065    | OP_IMMEDIATE_P8    16
+0067    | OP_CALL             3
+0069    | OP_POP
+     97 |     reg_write_masked(dma.channel[channel].al1_ctrl, 0x8, 0xc); // 32 bit
+0070   97 OP_GET_GLOBAL       9 string:'reg_write_masked'
+0072    | OP_GET_GLOBAL       0 string:'dma'
+0074    | OP_GET_PROPERTY     1 string:'channel'
+0076    | OP_GET_LOCAL        1
+0078    | OP_ELEMENT
+0079    | OP_GET_PROPERTY    10 string:'al1_ctrl'
+0081    | OP_VALUE_BY_VALUE
+0082    | OP_IMMEDIATE_P8     8
+0084    | OP_IMMEDIATE_P8    12
+0086    | OP_CALL             3
+0088    | OP_POP
+    100 |     reg_write_masked(dma.channel[channel].ctrl_trig, 0x1, 0x1);
+0089  100 OP_GET_GLOBAL       9 string:'reg_write_masked'
+0091    | OP_GET_GLOBAL       0 string:'dma'
+0093    | OP_GET_PROPERTY     1 string:'channel'
+0095    | OP_GET_LOCAL        1
+0097    | OP_ELEMENT
+0098    | OP_GET_PROPERTY    11 string:'ctrl_trig'
+0100    | OP_VALUE_BY_VALUE
+0101    | OP_IMMEDIATE_P8     1
+0103    | OP_IMMEDIATE_P8     1
+0105    | OP_CALL             3
+0107    | OP_POP
+    102 |     while((peek(dma.channel[channel].ctrl_trig) & 0x1000000) == 0x1000000) {
+0108  102 OP_GET_GLOBAL       0 string:'dma'
+0110    | OP_GET_PROPERTY     1 string:'channel'
+0112    | OP_GET_LOCAL        1
+0114    | OP_ELEMENT
+0115    | OP_GET_PROPERTY    11 string:'ctrl_trig'
+0117    | OP_VALUE_BY_VALUE
+0118    | OP_CALL_BUILTIN  peek    1
+0121    | OP_CONSTANT        12 int:'16777216'
+0123    | OP_BITAND
+0124    | OP_CONSTANT        12 int:'16777216'
+0126    | OP_EQUAL
+0127    | OP_JUMP_IF_FALSE  127 -> 134
+0130    | OP_POP
+0131    | OP_LOOP           131 -> 108
+0134    | OP_POP
+0135    | OP_NIL
+0136    | OP_RETURN

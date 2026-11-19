@@ -1,0 +1,354 @@
+conway.ya
+     15 | var live = 1;
+0000   15 OP_IMMEDIATE_P8     1
+0002    | OP_DEFINE_GLOBAL    0 string:'live'
+     16 | var dead = 0;
+0004   16 OP_IMMEDIATE_P8     0
+0006    | OP_DEFINE_GLOBAL    1 string:'dead'
+     19 | var uint32 maxRand = 0x7fffffff;
+0008   19 OP_TYPE_LITERAL  uint32
+0010    | OP_CONSTANT         3 int:'2147483647'
+0012    | OP_INITIALISE
+0013    | OP_DEFINE_GLOBAL    2 string:'maxRand'
+     20 | var uint32 seed = 4;
+0015   20 OP_TYPE_LITERAL  uint32
+0017    | OP_IMMEDIATE_P8     4
+0019    | OP_INITIALISE
+0020    | OP_DEFINE_GLOBAL    4 string:'seed'
+     21 | fun rand()
+0022   21 OP_CLOSURE          6 <fn rand>
+0024    | OP_DEFINE_GLOBAL    5 string:'rand'
+     44 | fun random_state() {
+0026   44 OP_CLOSURE          8 <fn random_state>
+0028    | OP_DEFINE_GLOBAL    7 string:'random_state'
+     54 | fun make_world(size) {
+0030   54 OP_CLOSURE         10 <fn make_world>
+0032    | OP_DEFINE_GLOBAL    9 string:'make_world'
+     63 | fun neighbour_weight(world, cell, neighbour_of) {
+0034   63 OP_CLOSURE         12 <fn neighbour_weight>
+0036    | OP_DEFINE_GLOBAL   11 string:'neighbour_weight'
+     72 | fun next_state(state, alive_neighbours) {
+0038   72 OP_CLOSURE         14 <fn next_state>
+0040    | OP_DEFINE_GLOBAL   13 string:'next_state'
+     85 | fun next_generation(world, neighbour_of) {
+0042   85 OP_CLOSURE         16 <fn next_generation>
+0044    | OP_DEFINE_GLOBAL   15 string:'next_generation'
+0046    | OP_NIL
+0047    | OP_RETURN
+conway.ya:  23:rand()
+     23 |     var uint32 next = seed;
+0000   23 OP_TYPE_LITERAL  uint32
+0002    | OP_GET_GLOBAL       0 string:'seed'
+0004    | OP_VALUE_BY_VALUE
+0005    | OP_INITIALISE
+     24 |     var uint32 result;
+0006   24 OP_TYPE_LITERAL  uint32
+0008    | OP_INITIALISE_DEFAULT
+     26 |     next = next * 1103515245;
+0009   26 OP_GET_LOCAL        1
+0011    | OP_CONSTANT         1 int:'1103515245'
+0013    | OP_MULTIPLY
+0014    | OP_VALUE_BY_VALUE
+0015    | OP_SET_LOCAL        1
+0017    | OP_POP
+     27 |     next = next + 12345;
+0018   27 OP_GET_LOCAL        1
+0020    | OP_IMMEDIATE_P16  12345
+0023    | OP_ADD
+0024    | OP_VALUE_BY_VALUE
+0025    | OP_SET_LOCAL        1
+0027    | OP_POP
+     28 |     result = (next / 65536) % 2048;
+0028   28 OP_GET_LOCAL        1
+0030    | OP_IMMEDIATE_P24     65536
+0034    | OP_DIVIDE
+0035    | OP_IMMEDIATE_P16   2048
+0038    | OP_MODULO
+0039    | OP_VALUE_BY_VALUE
+0040    | OP_SET_LOCAL        2
+0042    | OP_POP
+     30 |     next = next * 1103515245;
+0043   30 OP_GET_LOCAL        1
+0045    | OP_CONSTANT         1 int:'1103515245'
+0047    | OP_MULTIPLY
+0048    | OP_VALUE_BY_VALUE
+0049    | OP_SET_LOCAL        1
+0051    | OP_POP
+     31 |     next = next + 12345;
+0052   31 OP_GET_LOCAL        1
+0054    | OP_IMMEDIATE_P16  12345
+0057    | OP_ADD
+0058    | OP_VALUE_BY_VALUE
+0059    | OP_SET_LOCAL        1
+0061    | OP_POP
+     32 |     result = result << 10;
+0062   32 OP_GET_LOCAL        2
+0064    | OP_IMMEDIATE_P8    10
+0066    | OP_LEFT_SHIFT
+0067    | OP_VALUE_BY_VALUE
+0068    | OP_SET_LOCAL        2
+0070    | OP_POP
+     33 |     result = result ^ ((next / 65536) % 1024);
+0071   33 OP_GET_LOCAL        2
+0073    | OP_GET_LOCAL        1
+0075    | OP_IMMEDIATE_P24     65536
+0079    | OP_DIVIDE
+0080    | OP_IMMEDIATE_P16   1024
+0083    | OP_MODULO
+0084    | OP_BITXOR
+0085    | OP_VALUE_BY_VALUE
+0086    | OP_SET_LOCAL        2
+0088    | OP_POP
+     35 |     next = next * 1103515245;
+0089   35 OP_GET_LOCAL        1
+0091    | OP_CONSTANT         1 int:'1103515245'
+0093    | OP_MULTIPLY
+0094    | OP_VALUE_BY_VALUE
+0095    | OP_SET_LOCAL        1
+0097    | OP_POP
+     36 |     next = next + 12345;
+0098   36 OP_GET_LOCAL        1
+0100    | OP_IMMEDIATE_P16  12345
+0103    | OP_ADD
+0104    | OP_VALUE_BY_VALUE
+0105    | OP_SET_LOCAL        1
+0107    | OP_POP
+     37 |     result = result << 10;
+0108   37 OP_GET_LOCAL        2
+0110    | OP_IMMEDIATE_P8    10
+0112    | OP_LEFT_SHIFT
+0113    | OP_VALUE_BY_VALUE
+0114    | OP_SET_LOCAL        2
+0116    | OP_POP
+     38 |     result = result ^ ((next / 65536) % 1024);
+0117   38 OP_GET_LOCAL        2
+0119    | OP_GET_LOCAL        1
+0121    | OP_IMMEDIATE_P24     65536
+0125    | OP_DIVIDE
+0126    | OP_IMMEDIATE_P16   1024
+0129    | OP_MODULO
+0130    | OP_BITXOR
+0131    | OP_VALUE_BY_VALUE
+0132    | OP_SET_LOCAL        2
+0134    | OP_POP
+     40 |     seed = next;
+0135   40 OP_GET_LOCAL        1
+0137    | OP_VALUE_BY_VALUE
+0138    | OP_SET_GLOBAL       0 string:'seed'
+0140    | OP_POP
+     41 |     return next & maxRand;
+0141   41 OP_GET_LOCAL        1
+0143    | OP_GET_GLOBAL       2 string:'maxRand'
+0145    | OP_BITAND
+0146    | OP_RETURN
+0147    | OP_NIL
+0148    | OP_RETURN
+conway.ya:  46:random_state()
+     46 |     if (rand() > maxRand / 2) {
+0000   46 OP_GET_GLOBAL       0 string:'rand'
+0002    | OP_CALL             0
+0004    | OP_GET_GLOBAL       1 string:'maxRand'
+0006    | OP_IMMEDIATE_P8     2
+0008    | OP_DIVIDE
+0009    | OP_GREATER
+0010    | OP_JUMP_IF_FALSE   10 -> 20
+0013    | OP_POP
+     47 |         return 0;
+0014   47 OP_IMMEDIATE_P8     0
+0016    | OP_RETURN
+0017    | OP_JUMP            17 -> 24
+0020    | OP_POP
+     49 |     else {
+0021   49 OP_IMMEDIATE_P8     1
+0023    | OP_RETURN
+0024    | OP_NIL
+0025    | OP_RETURN
+conway.ya:  56:make_world()
+     56 |     var world = new(any[size]);
+0000   56 OP_NIL
+0001    | OP_GET_LOCAL        1
+0003    | OP_TYPE_INDEXED_COLLECTION
+0004    | OP_CALL_BUILTIN  new    1
+0007    | OP_VALUE_BY_VALUE
+     57 |     for (var c = 0; c < len(world); c = c + 1) {
+0008   57 OP_IMMEDIATE_P8     0
+0010    | OP_GET_LOCAL        3
+0012    | OP_GET_LOCAL        2
+0014    | OP_LEN
+0015    | OP_LESS
+0016    | OP_JUMP_IF_FALSE   16 -> 48
+0019    | OP_POP
+0020    | OP_JUMP            20 -> 35
+0023    | OP_GET_LOCAL        3
+0025    | OP_IMMEDIATE_P8     1
+0027    | OP_ADD
+0028    | OP_VALUE_BY_VALUE
+0029    | OP_SET_LOCAL        3
+0031    | OP_POP
+0032    | OP_LOOP            32 -> 10
+     58 |         world[c] = random_state();
+0035   58 OP_GET_LOCAL        2
+0037    | OP_GET_LOCAL        3
+0039    | OP_GET_GLOBAL       0 string:'random_state'
+0041    | OP_CALL             0
+0043    | OP_SET_ELEMENT
+0044    | OP_POP
+0045    | OP_LOOP            45 -> 23
+0048    | OP_POP
+0049    | OP_POP
+     60 |     return world;
+0050   60 OP_GET_LOCAL        2
+0052    | OP_RETURN
+0053    | OP_NIL
+0054    | OP_RETURN
+conway.ya:  64:neighbour_weight()
+     64 |     var result = 0;
+0000   64 OP_IMMEDIATE_P8     0
+     65 |     for (var i = 0; i < 8; i = i + 1) {
+0002   65 OP_IMMEDIATE_P8     0
+0004    | OP_GET_LOCAL        5
+0006    | OP_IMMEDIATE_P8     8
+0008    | OP_LESS
+0009    | OP_JUMP_IF_FALSE    9 -> 55
+0012    | OP_POP
+0013    | OP_JUMP            13 -> 28
+0016    | OP_GET_LOCAL        5
+0018    | OP_IMMEDIATE_P8     1
+0020    | OP_ADD
+0021    | OP_VALUE_BY_VALUE
+0022    | OP_SET_LOCAL        5
+0024    | OP_POP
+0025    | OP_LOOP            25 -> 4
+     66 |         var world_offset = neighbour_of(cell, i);
+0028   66 OP_GET_LOCAL        3
+0030    | OP_GET_LOCAL        2
+0032    | OP_VALUE_BY_VALUE
+0033    | OP_GET_LOCAL        5
+0035    | OP_VALUE_BY_VALUE
+0036    | OP_CALL             2
+0038    | OP_VALUE_BY_VALUE
+     67 |         result = result + world[world_offset];
+0039   67 OP_GET_LOCAL        4
+0041    | OP_GET_LOCAL        1
+0043    | OP_GET_LOCAL        6
+0045    | OP_ELEMENT
+0046    | OP_ADD
+0047    | OP_VALUE_BY_VALUE
+0048    | OP_SET_LOCAL        4
+0050    | OP_POP
+0051    | OP_POP
+0052    | OP_LOOP            52 -> 16
+0055    | OP_POP
+0056    | OP_POP
+     69 |     return result;
+0057   69 OP_GET_LOCAL        4
+0059    | OP_RETURN
+0060    | OP_NIL
+0061    | OP_RETURN
+conway.ya:  73:next_state()
+     73 |     var new_state = dead;
+0000   73 OP_GET_GLOBAL       0 string:'dead'
+0002    | OP_VALUE_BY_VALUE
+     75 |     if (state == live and (alive_neighbours == 2 or alive_neighbours == 3)) {
+0003   75 OP_GET_LOCAL        1
+0005    | OP_GET_GLOBAL       1 string:'live'
+0007    | OP_EQUAL
+0008    | OP_JUMP_IF_FALSE    8 -> 29
+0011    | OP_POP
+0012    | OP_GET_LOCAL        2
+0014    | OP_IMMEDIATE_P8     2
+0016    | OP_EQUAL
+0017    | OP_JUMP_IF_FALSE   17 -> 23
+0020    | OP_JUMP            20 -> 29
+0023    | OP_POP
+0024    | OP_GET_LOCAL        2
+0026    | OP_IMMEDIATE_P8     3
+0028    | OP_EQUAL
+0029    | OP_JUMP_IF_FALSE   29 -> 42
+0032    | OP_POP
+     76 |         new_state = live;
+0033   76 OP_GET_GLOBAL       1 string:'live'
+0035    | OP_VALUE_BY_VALUE
+0036    | OP_SET_LOCAL        3
+0038    | OP_POP
+0039    | OP_JUMP            39 -> 71
+0042    | OP_POP
+     78 |     else if (state == dead and alive_neighbours == 3) {
+0043   78 OP_GET_LOCAL        1
+0045    | OP_GET_GLOBAL       0 string:'dead'
+0047    | OP_EQUAL
+0048    | OP_JUMP_IF_FALSE   48 -> 57
+0051    | OP_POP
+0052    | OP_GET_LOCAL        2
+0054    | OP_IMMEDIATE_P8     3
+0056    | OP_EQUAL
+0057    | OP_JUMP_IF_FALSE   57 -> 70
+0060    | OP_POP
+     79 |         new_state = live;
+0061   79 OP_GET_GLOBAL       1 string:'live'
+0063    | OP_VALUE_BY_VALUE
+0064    | OP_SET_LOCAL        3
+0066    | OP_POP
+0067    | OP_JUMP            67 -> 71
+0070    | OP_POP
+     82 |     return new_state;
+0071   82 OP_GET_LOCAL        3
+0073    | OP_RETURN
+0074    | OP_NIL
+0075    | OP_RETURN
+conway.ya:  86:next_generation()
+     86 |     var next_gen = new(any[len(world)]);
+0000   86 OP_NIL
+0001    | OP_GET_LOCAL        1
+0003    | OP_LEN
+0004    | OP_TYPE_INDEXED_COLLECTION
+0005    | OP_CALL_BUILTIN  new    1
+0008    | OP_VALUE_BY_VALUE
+     87 |     for (var cell = 0; cell < len(world); cell = cell + 1) {
+0009   87 OP_IMMEDIATE_P8     0
+0011    | OP_GET_LOCAL        4
+0013    | OP_GET_LOCAL        1
+0015    | OP_LEN
+0016    | OP_LESS
+0017    | OP_JUMP_IF_FALSE   17 -> 73
+0020    | OP_POP
+0021    | OP_JUMP            21 -> 36
+0024    | OP_GET_LOCAL        4
+0026    | OP_IMMEDIATE_P8     1
+0028    | OP_ADD
+0029    | OP_VALUE_BY_VALUE
+0030    | OP_SET_LOCAL        4
+0032    | OP_POP
+0033    | OP_LOOP            33 -> 11
+     88 |         var nw = neighbour_weight(world, cell, neighbour_of);
+0036   88 OP_GET_GLOBAL       0 string:'neighbour_weight'
+0038    | OP_GET_LOCAL        1
+0040    | OP_VALUE_BY_VALUE
+0041    | OP_GET_LOCAL        4
+0043    | OP_VALUE_BY_VALUE
+0044    | OP_GET_LOCAL        2
+0046    | OP_VALUE_BY_VALUE
+0047    | OP_CALL             3
+0049    | OP_VALUE_BY_VALUE
+     89 |         next_gen[cell] = next_state(world[cell], nw);
+0050   89 OP_GET_LOCAL        3
+0052    | OP_GET_LOCAL        4
+0054    | OP_GET_GLOBAL       1 string:'next_state'
+0056    | OP_GET_LOCAL        1
+0058    | OP_GET_LOCAL        4
+0060    | OP_ELEMENT
+0061    | OP_VALUE_BY_VALUE
+0062    | OP_GET_LOCAL        5
+0064    | OP_VALUE_BY_VALUE
+0065    | OP_CALL             2
+0067    | OP_SET_ELEMENT
+0068    | OP_POP
+0069    | OP_POP
+0070    | OP_LOOP            70 -> 24
+0073    | OP_POP
+0074    | OP_POP
+     92 |     return next_gen;
+0075   92 OP_GET_LOCAL        3
+0077    | OP_RETURN
+0078    | OP_NIL
+0079    | OP_RETURN

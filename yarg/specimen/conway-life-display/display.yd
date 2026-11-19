@@ -1,0 +1,140 @@
+display.ya
+      4 | var surface_world = make_world(56);
+0000    4 OP_GET_GLOBAL       1 string:'make_world'
+0002    | OP_IMMEDIATE_P8    56
+0004    | OP_CALL             1
+0006    | OP_VALUE_BY_VALUE
+0007    | OP_DEFINE_GLOBAL    0 string:'surface_world'
+      7 | var display_pixels = [ [uint8(0), uint8(255), uint8(0)], [uint8(255), uint8(0), uint8(0)] ];
+0009    7 OP_NIL
+0010    | OP_IMMEDIATE_P8     2
+0012    | OP_TYPE_INDEXED_COLLECTION
+0013    | OP_CALL_BUILTIN  new    1
+0016    | OP_IMMEDIATE_P8     0
+0018    | OP_NIL
+0019    | OP_IMMEDIATE_P8     3
+0021    | OP_TYPE_INDEXED_COLLECTION
+0022    | OP_CALL_BUILTIN  new    1
+0025    | OP_IMMEDIATE_P8     0
+0027    | OP_IMMEDIATE_P8     0
+0029    | OP_CALL_BUILTIN  uint8    1
+0032    | OP_SET_ELEMENT
+0033    | OP_IMMEDIATE_P8     1
+0035    | OP_IMMEDIATE_P8   255
+0037    | OP_CALL_BUILTIN  uint8    1
+0040    | OP_SET_ELEMENT
+0041    | OP_IMMEDIATE_P8     2
+0043    | OP_IMMEDIATE_P8     0
+0045    | OP_CALL_BUILTIN  uint8    1
+0048    | OP_SET_ELEMENT
+0049    | OP_SET_ELEMENT
+0050    | OP_IMMEDIATE_P8     1
+0052    | OP_NIL
+0053    | OP_IMMEDIATE_P8     3
+0055    | OP_TYPE_INDEXED_COLLECTION
+0056    | OP_CALL_BUILTIN  new    1
+0059    | OP_IMMEDIATE_P8     0
+0061    | OP_IMMEDIATE_P8   255
+0063    | OP_CALL_BUILTIN  uint8    1
+0066    | OP_SET_ELEMENT
+0067    | OP_IMMEDIATE_P8     1
+0069    | OP_IMMEDIATE_P8     0
+0071    | OP_CALL_BUILTIN  uint8    1
+0074    | OP_SET_ELEMENT
+0075    | OP_IMMEDIATE_P8     2
+0077    | OP_IMMEDIATE_P8     0
+0079    | OP_CALL_BUILTIN  uint8    1
+0082    | OP_SET_ELEMENT
+0083    | OP_SET_ELEMENT
+0084    | OP_VALUE_BY_VALUE
+0085    | OP_DEFINE_GLOBAL    2 string:'display_pixels'
+      9 | fun display_on_surface(world) {
+0087    9 OP_CLOSURE          4 <fn display_on_surface>
+0089    | OP_DEFINE_GLOBAL    3 string:'display_on_surface'
+     18 | fun surface_neighbour_of(cell, neighbour) {
+0091   18 OP_CLOSURE          6 <fn surface_neighbour_of>
+0093    | OP_DEFINE_GLOBAL    5 string:'surface_neighbour_of'
+0095    | OP_NIL
+0096    | OP_RETURN
+display.ya:  11:display_on_surface()
+     11 |     for (var k = 0; k < len(world); k = k + 1) {
+0000   11 OP_IMMEDIATE_P8     0
+0002    | OP_GET_LOCAL        2
+0004    | OP_GET_LOCAL        1
+0006    | OP_LEN
+0007    | OP_LESS
+0008    | OP_JUMP_IF_FALSE    8 -> 50
+0011    | OP_POP
+0012    | OP_JUMP            12 -> 27
+0015    | OP_GET_LOCAL        2
+0017    | OP_IMMEDIATE_P8     1
+0019    | OP_ADD
+0020    | OP_VALUE_BY_VALUE
+0021    | OP_SET_LOCAL        2
+0023    | OP_POP
+0024    | OP_LOOP            24 -> 2
+     12 |         set_pixel(surface_leds[k], display_pixels[world[k]]);
+0027   12 OP_GET_GLOBAL       0 string:'set_pixel'
+0029    | OP_GET_GLOBAL       1 string:'surface_leds'
+0031    | OP_GET_LOCAL        2
+0033    | OP_ELEMENT
+0034    | OP_VALUE_BY_VALUE
+0035    | OP_GET_GLOBAL       2 string:'display_pixels'
+0037    | OP_GET_LOCAL        1
+0039    | OP_GET_LOCAL        2
+0041    | OP_ELEMENT
+0042    | OP_ELEMENT
+0043    | OP_VALUE_BY_VALUE
+0044    | OP_CALL             2
+0046    | OP_POP
+0047    | OP_LOOP            47 -> 15
+0050    | OP_POP
+0051    | OP_POP
+     15 |     write_pixels();
+0052   15 OP_GET_GLOBAL       3 string:'write_pixels'
+0054    | OP_CALL             0
+0056    | OP_POP
+0057    | OP_NIL
+0058    | OP_RETURN
+display.ya:  19:surface_neighbour_of()
+     19 |     var led = surface_neighbourhoods[cell][neighbour];
+0000   19 OP_GET_GLOBAL       0 string:'surface_neighbourhoods'
+0002    | OP_GET_LOCAL        1
+0004    | OP_ELEMENT
+0005    | OP_GET_LOCAL        2
+0007    | OP_ELEMENT
+0008    | OP_VALUE_BY_VALUE
+     20 |     for (var i = 0; i < len(surface_neighbourhoods); i = i + 1) {
+0009   20 OP_IMMEDIATE_P8     0
+0011    | OP_GET_LOCAL        4
+0013    | OP_GET_GLOBAL       0 string:'surface_neighbourhoods'
+0015    | OP_LEN
+0016    | OP_LESS
+0017    | OP_JUMP_IF_FALSE   17 -> 58
+0020    | OP_POP
+0021    | OP_JUMP            21 -> 36
+0024    | OP_GET_LOCAL        4
+0026    | OP_IMMEDIATE_P8     1
+0028    | OP_ADD
+0029    | OP_VALUE_BY_VALUE
+0030    | OP_SET_LOCAL        4
+0032    | OP_POP
+0033    | OP_LOOP            33 -> 11
+     21 |         if (surface_leds[i] == led) {
+0036   21 OP_GET_GLOBAL       1 string:'surface_leds'
+0038    | OP_GET_LOCAL        4
+0040    | OP_ELEMENT
+0041    | OP_GET_LOCAL        3
+0043    | OP_EQUAL
+0044    | OP_JUMP_IF_FALSE   44 -> 54
+0047    | OP_POP
+     22 |             return i;
+0048   22 OP_GET_LOCAL        4
+0050    | OP_RETURN
+0051    | OP_JUMP            51 -> 55
+0054    | OP_POP
+0055    | OP_LOOP            55 -> 24
+0058    | OP_POP
+0059    | OP_POP
+0060    | OP_NIL
+0061    | OP_RETURN

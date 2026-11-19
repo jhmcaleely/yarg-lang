@@ -1,0 +1,44 @@
+main.ya
+      4 | import("conway");
+0000    4 OP_GET_GLOBAL       0 string:'import'
+0002    | OP_CONSTANT         1 string:'conway'
+0004    | OP_CALL             1
+0006    | OP_POP
+      5 | import("cube_bit");
+0007    5 OP_GET_GLOBAL       0 string:'import'
+0009    | OP_CONSTANT         2 string:'cube_bit'
+0011    | OP_CALL             1
+0013    | OP_POP
+      6 | import("display");
+0014    6 OP_GET_GLOBAL       0 string:'import'
+0016    | OP_CONSTANT         3 string:'display'
+0018    | OP_CALL             1
+0020    | OP_POP
+      8 | cube_bit_init();
+0021    8 OP_GET_GLOBAL       4 string:'cube_bit_init'
+0023    | OP_CALL             0
+0025    | OP_POP
+     10 | while (true) {
+0026   10 OP_TRUE
+0027    | OP_JUMP_IF_FALSE   27 -> 56
+0030    | OP_POP
+     12 |     display_on_surface(surface_world);
+0031   12 OP_GET_GLOBAL       5 string:'display_on_surface'
+0033    | OP_GET_GLOBAL       6 string:'surface_world'
+0035    | OP_VALUE_BY_VALUE
+0036    | OP_CALL             1
+0038    | OP_POP
+     13 |     surface_world = next_generation(surface_world, surface_neighbour_of);
+0039   13 OP_GET_GLOBAL       7 string:'next_generation'
+0041    | OP_GET_GLOBAL       6 string:'surface_world'
+0043    | OP_VALUE_BY_VALUE
+0044    | OP_GET_GLOBAL       8 string:'surface_neighbour_of'
+0046    | OP_VALUE_BY_VALUE
+0047    | OP_CALL             2
+0049    | OP_VALUE_BY_VALUE
+0050    | OP_SET_GLOBAL       6 string:'surface_world'
+0052    | OP_POP
+0053    | OP_LOOP            53 -> 26
+0056    | OP_POP
+0057    | OP_NIL
+0058    | OP_RETURN
