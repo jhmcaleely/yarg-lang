@@ -144,9 +144,9 @@ bool keyValueStorePlace(KeyValueStore const *kvs, ObjString const *key, ValueCel
 }
 
 bool keyValueStoreSet(KeyValueStore *kvs, ObjString const *key, ValueCell const *v) {
-    if (strcmp(key->chars, "reps") == 0) {
-        v = v;
-    }
+//    if (strcmp(key->chars, "reps") == 0) {
+//        v = v;
+//    }
     ValueCellStoreNode *newN = ALLOCATE(ValueCellStoreNode, 1);
     newN->l = newN->r = newN->t = 0;
 
@@ -275,9 +275,9 @@ void keyValueStoreMark(KeyValueStore *kvs) {
 }
 
 ValueCellStoreNode *kvsGet(KeyValueStore const *kvs, char const *s) {
-    if (strcmp(s, "reps") == 0) {
-        s = s;
-    }
+//    if (strcmp(s, "reps") == 0) {
+//        s = s;
+//    }
     ValueCellStoreNode *n = kvs->root;
     while (n != 0) {
         int cmp = strcmp(s, n->key->chars);
