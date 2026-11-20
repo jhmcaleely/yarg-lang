@@ -370,7 +370,7 @@ static ObjString* structToString(Value stVal) {
 ObjString* valueToString(Value value) {
 
     if (is_nil(value)) {
-        return copyString("nil", 3);
+        return unownedString("nil", 3);
     } else if (value.type == &yargTypes.implementation_obj) {
         // implementation object
         return objectToString(value.as.obj);

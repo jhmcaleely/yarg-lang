@@ -30,7 +30,7 @@ void freeFunction(ObjFunction* function) {
 
 ObjString* functionToString(const ObjFunction* function) {
     if (function->fName == NULL) {
-        return copyString("<script>", 8);
+        return unownedString("<script>", 8);
     }
     char buffer[64];
     snprintf(buffer, sizeof(buffer), "<fn %s>", function->fName->chars);

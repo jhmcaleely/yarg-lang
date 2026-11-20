@@ -125,7 +125,7 @@ ObjFunction *loadPackageFromBuffer(ObjRoutine* context, uint8_t* buffer, size_t 
     DP(names__ = (uint32_t)(next - body));
     if (h->numLines_ > 0) {
         for (int i = 0; i < h->numChunks_; i++) {
-            functions[i]->fName = copyString((char *)next, (int)strlen((char *)next)); // todo - mark as xip
+            functions[i]->fName = unownedString((char *)next, (int)strlen((char *)next));
             next += 16;
         }
     }
@@ -146,7 +146,7 @@ ObjFunction *loadPackageFromBuffer(ObjRoutine* context, uint8_t* buffer, size_t 
             switch (type) {
             case PACK_CONST_TYPE_S: {
                 char *thisString = (char *)&stringFile[index];
-                ObjString *obj = copyString(thisString, (int)strlen(thisString)); // mark as xip
+                ObjString *obj = unownedString(thisString, (int)strlen(thisString));
                 appendToDynamicValueArray(&currentFunction->chunk.constants, STRING_VAL(obj));
                 DP(printf(":\"%s\"", thisString));
                 break;

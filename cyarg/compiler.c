@@ -89,9 +89,9 @@ static void initCompiler(Compiler* compiler, FunctionType type, ObjString* name,
     local->depth = 0;
     local->isCaptured = false;
     if (type != TYPE_FUNCTION) {
-        local->name = copyString("this", 4);
+        local->name = unownedString("this", 4);
     } else {
-        local->name = copyString("", 0);
+        local->name = unownedString("", 0);
     }
 }
 
@@ -482,7 +482,7 @@ static void generateByValueExpression(ObjExpr* expr, bool byValueExpected) {
 
 static void generateExprNamedVariable(ObjExprNamedVariable* var) {
 
-    ObjString* this_ = copyString("this", 4);
+    ObjString* this_ = unownedString("this", 4);
     if (identifiersEqual(this_, var->name) && currentClass == NULL) {
         errorAt("this", "Can't use 'this' outside of a class.");
         return;
@@ -695,9 +695,9 @@ static void generateExprSuper(ObjExprSuper* super) {
     }
     uint8_t name = identifierConstant(super->name);
 
-    ObjString* this_ = copyString("this", 4);
+    ObjString* this_ = unownedString("this", 4);
     push(current->context, STRING_VAL(this_));
-    ObjString* super_ = copyString("super", 5);
+    ObjString* super_ = unownedString("super", 5);
     push(current->context, STRING_VAL(super_));
 
     generateGetNamedVariable(this_);
@@ -1066,7 +1066,7 @@ static void generateStmtMethodDeclaration(ObjStmtFunDeclaration* method) {
     uint8_t constant = identifierConstant(method->name);
 
     FunctionType type = TYPE_METHOD;
-    ObjString* init = copyString("init", 4);
+    ObjString* init = unownedString("init", 4);
     push(current->context, STRING_VAL(init));
     if (identifiersEqual(method->name, init)) {
         type = TYPE_INITIALIZER;
@@ -1094,7 +1094,7 @@ static void generateStmtClassDeclaration(ObjStmtClassDeclaration* decl) {
         generateGetNamedVariable(((ObjExprNamedVariable*)decl->superclass)->name);
 
         beginScope();
-        ObjString* super = copyString("super", 5);
+        ObjString* super = unownedString("super", 5);
         push(current->context, STRING_VAL(super));
         addLocal(super);
         defineVariable(0);

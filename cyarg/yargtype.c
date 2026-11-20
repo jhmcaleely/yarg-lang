@@ -471,30 +471,30 @@ bool isSupportedMapKeyType(const ObjConcreteYargType* type) {
 
 static ObjString* typeLiteralToString(const ObjConcreteYargType* type) {
     if (type == NULL) {
-        return copyString("any", 3);
+        return unownedString("any", 3);
     }
 
     switch (type->yt) {
-        case TypeBool: return copyString("bool", 4);
-        case TypeDouble: return copyString("mfloat64", 8);
-        case TypeInt: return copyString("int", 3);
-        case TypeInt8: return copyString("int8", 4);
-        case TypeUint8: return copyString("uint8", 5);
-        case TypeInt16: return copyString("int16", 5);
-        case TypeUint16: return copyString("uint16", 6);
-        case TypeInt32: return copyString("int32", 5);
-        case TypeUint32: return copyString("uint32", 6);
-        case TypeInt64: return copyString("int64", 5);
-        case TypeUint64: return copyString("uint64", 6);
-        case TypeAddress: return copyString("address", 7);
-        case TypeString: return copyString("string", 6);
-        case TypeClass: return copyString("Class", 5);
-        case TypeInstance: return copyString("Instance", 8);
-        case TypeFunction: return copyString("Function", 8);
-        case TypeRoutine: return copyString("Routine", 7);
-        case TypeChannel: return copyString("Channel", 7);
-        case TypeSyncGroup: return copyString("SyncGroup", 9);
-        case TypeYargType: return copyString("Type", 4);
+        case TypeBool: return unownedString("bool", 4);
+        case TypeDouble: return unownedString("mfloat64", 8);
+        case TypeInt: return unownedString("int", 3);
+        case TypeInt8: return unownedString("int8", 4);
+        case TypeUint8: return unownedString("uint8", 5);
+        case TypeInt16: return unownedString("int16", 5);
+        case TypeUint16: return unownedString("uint16", 6);
+        case TypeInt32: return unownedString("int32", 5);
+        case TypeUint32: return unownedString("uint32", 6);
+        case TypeInt64: return unownedString("int64", 5);
+        case TypeUint64: return unownedString("uint64", 6);
+        case TypeAddress: return unownedString("address", 7);
+        case TypeString: return unownedString("string", 6);
+        case TypeClass: return unownedString("Class", 5);
+        case TypeInstance: return unownedString("Instance", 8);
+        case TypeFunction: return unownedString("Function", 8);
+        case TypeRoutine: return unownedString("Routine", 7);
+        case TypeChannel: return unownedString("Channel", 7);
+        case TypeSyncGroup: return unownedString("SyncGroup", 9);
+        case TypeYargType: return unownedString("Type", 4);
         case TypeArray: {
             const ObjConcreteYargTypeArray* array = (const ObjConcreteYargTypeArray*) type;
             ObjString* typeStr = typeLiteralToString(array->element_type);
@@ -548,7 +548,7 @@ static ObjString* typeLiteralToString(const ObjConcreteYargType* type) {
             return result;
         }
         default: {
-            return copyString("Unknown", 7);
+            return unownedString("Unknown", 7);
         }
     }
 }
@@ -556,7 +556,7 @@ static ObjString* typeLiteralToString(const ObjConcreteYargType* type) {
 ObjString* typeToString(const ObjConcreteYargType* type) {
     ObjString* literalStr = typeLiteralToString(type);
     tempRootPush(STRING_VAL(literalStr));
-    ObjString* prefix = copyString("Type:", 5);
+    ObjString* prefix = unownedString("Type:", 5);
     tempRootPush(STRING_VAL(prefix));
     ObjString* result = concatenateStrings(prefix, literalStr);
     tempRootPop();

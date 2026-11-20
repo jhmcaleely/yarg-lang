@@ -51,7 +51,7 @@ ObjString* objectToString(const Obj* value) {
             return copyString(buffer, (int)strlen(buffer));
             }
         case OBJ_NATIVE:
-            return copyString("<native fn>", 11);
+            return unownedString("<native fn>", 11);
         case OBJ_BUILTIN:
             return builtinToString((const ObjBuiltin*)value);
         case OBJ_CHANNELCONTAINER: {
@@ -69,7 +69,7 @@ ObjString* objectToString(const Obj* value) {
         }
         case OBJ_UPVALUE: {
             const ObjUpvalue* upvalue = (const ObjUpvalue*)value;
-            return copyString("upvalue", 7);
+            return unownedString("upvalue", 7);
         }
         case OBJ_YARGTYPE:
         case OBJ_YARGTYPE_ARRAY:

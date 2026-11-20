@@ -124,7 +124,7 @@ void fatalVMError(const char* format, ...) {
 }
 
 static void defineNative(ObjRoutine* context, const char* name, NativeFn function) {
-    ObjString* nameString = copyString(name, (int)strlen(name));
+    ObjString* nameString = unownedString(name, (int)strlen(name));
     push(context, STRING_VAL(nameString));
     ObjNative* native = newNative(function);
     push(context, IMPL_OBJ_VAL(native));
@@ -134,7 +134,7 @@ static void defineNative(ObjRoutine* context, const char* name, NativeFn functio
 }
 
 static void defineGlobal(ObjRoutine* context, const char* name, Value value) {
-    ObjString* nameString = copyString(name, (int)strlen(name));
+    ObjString* nameString = unownedString(name, (int)strlen(name));
     push(context, STRING_VAL(nameString));
 
     keyValueStoreSetValue(&vm.globals, nameString, &value);
@@ -176,7 +176,7 @@ void initVMRuntime(void) {
     vm.bootFunction.obj.type = OBJ_FUNCTION;
     initFunction(&vm.bootFunction);
 
-    vm.initString = copyString("init", 4);
+    vm.initString = unownedString("init", 4);
 
     defineNative(&vm.core0, "clock", clockNative);
     defineNative(&vm.core0, "c_clock_get_hz", clock_get_hzNative);
