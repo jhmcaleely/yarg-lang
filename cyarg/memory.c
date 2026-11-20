@@ -64,3 +64,18 @@ void vm_free(void* pointer) {
     vm_mutex_exit(heap_instance.mutex);
     return;
 }
+
+void* vm_logged_allocate(size_t size) {
+    if (size == 0) return NULL;
+
+    vm_mutex_enter_blocking(heap_instance.mutex);
+
+    gc_objects(size);
+
+    void* result = heap_logged_allocate(size);
+    if (result == NULL) {
+        fatalVMError("Available memory exhausted.");
+    }
+    vm_mutex_exit(heap_instance.mutex);
+    return result;
+}

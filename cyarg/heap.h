@@ -20,6 +20,7 @@ void heap_free(void* pointer);
 size_t heap_bytes_allocated();
 
 // debug support
+void* heap_logged_allocate(size_t size);
 bool heap_invariant();
 void heap_log_diagnostics();
 #endif

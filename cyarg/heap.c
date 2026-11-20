@@ -20,6 +20,11 @@ typedef struct heap_item {
 typedef struct heap {
 #ifdef CYARG_CSTDLIB_HEAP
     size_t bytes_allocated;
+    size_t items_allocated;
+    size_t peak_bytes_allocated;
+
+    size_t logged_bytes_allocated;
+    size_t logged_items_allocated;
 #else
     O1HeapInstance* instance;
 #if defined(CYARG_SELF_HOSTED)
@@ -36,6 +41,10 @@ heap cyarg_heap;
 void heap_init() {
 #if defined CYARG_CSTDLIB_HEAP
     cyarg_heap.bytes_allocated = 0;
+    cyarg_heap.items_allocated = 0;
+    cyarg_heap.peak_bytes_allocated = 0;
+    cyarg_heap.logged_bytes_allocated = 0;
+    cyarg_heap.logged_items_allocated = 0;
     return;
 #else
     cyarg_heap.instance = o1heapInit(&cyarg_heap.heapArena[0], sizeof(cyarg_heap.heapArena));
@@ -46,6 +55,10 @@ void heap_init() {
 void* heap_allocate(size_t size) {
 #if defined CYARG_CSTDLIB_HEAP
     cyarg_heap.bytes_allocated += size;
+    cyarg_heap.items_allocated += 1;
+    if (cyarg_heap.bytes_allocated > cyarg_heap.peak_bytes_allocated) {
+        cyarg_heap.peak_bytes_allocated = cyarg_heap.bytes_allocated;
+    }
     heap_item* item = malloc(size + sizeof(heap_item));
     if (item == NULL) {
         return NULL;
@@ -63,6 +76,7 @@ void* heap_reallocate(void* old_pointer, size_t new_size) {
     heap_item* old_item = (heap_item*)((uint8_t*)old_pointer - offsetof(heap_item, data));
     if (old_pointer != NULL) {
         cyarg_heap.bytes_allocated -= old_item->size;
+        cyarg_heap.items_allocated -= 1;
     }
 
     if (new_size == 0) {
@@ -77,6 +91,10 @@ void* heap_reallocate(void* old_pointer, size_t new_size) {
     if (item != NULL) {
         item->size = new_size;
         cyarg_heap.bytes_allocated += new_size;
+        cyarg_heap.items_allocated += 1;
+        if (cyarg_heap.bytes_allocated > cyarg_heap.peak_bytes_allocated) {
+            cyarg_heap.peak_bytes_allocated = cyarg_heap.bytes_allocated;
+        }
 //        printf("%p realloc: %zu (from %p)\n", item, item->size, old_pointer == NULL ? NULL : old_item);
         return &item->data[0];
     }
@@ -116,6 +134,11 @@ size_t heap_bytes_allocated() {
 void heap_log_diagnostics() {
 #if defined CYARG_CSTDLIB_HEAP
     fprintf(stderr, "Heap bytes allocated: %zu\n", cyarg_heap.bytes_allocated);
+    fprintf(stderr, "Heap items allocated: %zu\n", cyarg_heap.items_allocated);
+    fprintf(stderr, "Heap peak bytes allocated: %zu\n", cyarg_heap.peak_bytes_allocated);
+
+    fprintf(stderr, "Heap logged bytes allocated: %zu\n", cyarg_heap.logged_bytes_allocated);
+    fprintf(stderr, "Heap logged items allocated: %zu\n", cyarg_heap.logged_items_allocated);
 #else
     O1HeapDiagnostics diagnostics = o1heapGetDiagnostics(cyarg_heap.instance);
     fprintf(stderr, "Heap bytes allocated: %zu\n", diagnostics.allocated);
@@ -127,5 +150,18 @@ bool heap_invariant() {
     return true;
 #else
     return o1heapDoInvariantsHold(cyarg_heap.instance);
+#endif
+}
+
+void* heap_logged_allocate(size_t size) {
+#if defined CYARG_CSTDLIB_HEAP
+    void* result = heap_allocate(size);
+    if (result != NULL) {
+        cyarg_heap.logged_bytes_allocated += size;
+        cyarg_heap.logged_items_allocated += 1;
+    }
+    return result;
+#else
+    return o1heapAllocate(cyarg_heap.instance, size);
 #endif
 }

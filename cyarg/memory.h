@@ -29,4 +29,6 @@ void vm_free(void* pointer);
 #define GROW_ARRAY(type, pointer, oldCount, newCount) \
     (type*)vm_reallocate(pointer, sizeof(type) * (newCount))
 
+void* vm_logged_allocate(size_t size);
+
 #endif

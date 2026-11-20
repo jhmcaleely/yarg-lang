@@ -14,6 +14,7 @@
 #endif
 
 #include "common.h"
+#include "heap.h"
 #include "object_gc_impl.h"
 #include "compiler.h"
 #include "debug.h"
@@ -209,6 +210,7 @@ void initVMRuntime(void) {
 }
 
 void freeVM(void) {
+    heap_log_diagnostics();
     keyValueStoreFree(&vm.globals);
 #if defined CYARG_ORDERED_STRING_TREE
     stringStoreInit(&vm.stringStore); // nothing allocated in the string store
