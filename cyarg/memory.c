@@ -33,6 +33,7 @@ void* vm_allocate(size_t newSize) {
 
     void* result = heap_allocate(newSize);
     if (result == NULL) {
+        heap_log_diagnostics();
         fatalVMError("Available memory exhausted.");
     }
     vm_mutex_exit(heap_instance.mutex);

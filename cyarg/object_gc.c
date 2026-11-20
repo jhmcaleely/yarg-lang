@@ -102,15 +102,15 @@ void pinObj(Obj* object) {
 }
 
 void gc_objects(size_t newSize) {
-//   size_t before = heap_bytes_allocated();
+   size_t before = heap_bytes_allocated();
 #ifdef DEBUG_STRESS_GC
     collectGarbage();
 #endif
 
-//    before += newSize;
-//    if (before > vm_objects.nextGC) {
-//        collectGarbage();
-//    }
+    before += newSize;
+    if (before > vm_objects.nextGC) {
+        collectGarbage();
+    }
 }
 
 void markObject(Obj* object) {
