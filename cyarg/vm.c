@@ -210,7 +210,7 @@ void initVMRuntime(void) {
 }
 
 void freeVM(void) {
-//    heap_log_diagnostics();
+    heap_log_diagnostics();
     keyValueStoreFree(&vm.globals);
 #if defined CYARG_ORDERED_STRING_TREE
     stringStoreInit(&vm.stringStore); // nothing allocated in the string store
