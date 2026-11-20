@@ -120,7 +120,7 @@ ObjString* takeString(char* chars, int length) {
 ObjString* copyString(const char* chars, int length) {
     ObjString *s = stringStoreGet(&vm.stringStore, chars, length);
     if (s == NULL) {
-        char *heapChars = ALLOCATE(char, length + 1);
+        char *heapChars = vm_logged_allocate(sizeof(char) * (length + 1));
         memcpy(heapChars, chars, length);
         heapChars[length] = '\0';
         s = allocateString(heapChars, length);
