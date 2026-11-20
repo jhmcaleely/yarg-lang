@@ -13,7 +13,7 @@ typedef struct ObjConcreteYargType ObjConcreteYargType;
 #define IS_INSTANCE(value)     isObjType(value, OBJ_INSTANCE)
 #define IS_ROUTINE(value)      isObjType(value, OBJ_ROUTINE)
 #define IS_CHANNEL(value)      isObjType(value, OBJ_CHANNELCONTAINER)
-#define IS_STRING(value)       isObjType(value, OBJ_STRING)
+#define IS_STRING(value)       (isObjType(value, OBJ_STRING) || isObjType(value, OBJ_UNOWNED_STRING))
 #define IS_YARGTYPE(value)     (isObjType(value, OBJ_YARGTYPE) || isObjType(value, OBJ_YARGTYPE_ARRAY) || isObjType(value, OBJ_YARGTYPE_STRUCT) || isObjType(value, OBJ_YARGTYPE_POINTER) || isObjType(value, OBJ_YARGTYPE_MAP))
 #define IS_SYNCGROUP(value)    isObjType(value, OBJ_SYNCGROUP)
 #define IS_MAP(value)          isObjType(value, OBJ_MAP)
@@ -89,6 +89,7 @@ ObjString* mapToString(const ObjMap* map);
 ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);
 ObjString* copyStringWithEscapes(const char* chars, int length);
+ObjString* unownedString(const char* chars, int length);
 ObjString* concatenateStrings(ObjString* a, ObjString* b);
 
 ObjInt* allocateIntObject(size_t numDigits);

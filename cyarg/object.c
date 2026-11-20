@@ -62,6 +62,7 @@ ObjString* objectToString(const Obj* value) {
             const ObjSyncGroup* syncGroup = (const ObjSyncGroup*)value;
             return syncGroupToString(syncGroup);
         }
+        case OBJ_UNOWNED_STRING: 
         case OBJ_STRING: {
             const ObjString* string = (const ObjString*)value;
             return copyString(string->chars, string->length);

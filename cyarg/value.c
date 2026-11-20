@@ -30,6 +30,7 @@ bool is_promotable_to_val(Obj* object) {
 
     switch (object->type) {
         case OBJ_STRING:
+        case OBJ_UNOWNED_STRING:
         case OBJ_INT:
         case OBJ_CLASS:
         case OBJ_YARGTYPE:
@@ -45,7 +46,7 @@ Value as_val(Obj* object) {
     }
     if (object == NULL) {
         return NIL_VAL;
-    } else if (object->type == OBJ_STRING) {
+    } else if (object->type == OBJ_STRING || object->type == OBJ_UNOWNED_STRING) {
         return TYPED_VAL(object, &yargTypes.string);
     } else if (object->type == OBJ_INT) {
         return TYPED_VAL(object, &yargTypes.integer);

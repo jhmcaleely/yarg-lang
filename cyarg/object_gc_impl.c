@@ -123,6 +123,7 @@ void blackenObject(Obj* object) {
             break;
         }
         case OBJ_STRING: break;
+        case OBJ_UNOWNED_STRING: break;
         case OBJ_INT: break;
         case OBJ_MAP: {
             ObjMap* map = (ObjMap*)object;
@@ -406,6 +407,7 @@ void freeObject(Obj* object) {
             break;
         }
         case OBJ_STRING: heap_free(((ObjString*)object)->chars); break;
+        case OBJ_UNOWNED_STRING: break;
         case OBJ_UPVALUE: break;
         case OBJ_CHANNELCONTAINER: gc_freeChannelObject((ObjChannelContainer*)object); break;
         case OBJ_PACKEDSTORAGE: gc_freePackedStorage((ObjPackedStorage*)object); break;

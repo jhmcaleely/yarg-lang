@@ -115,6 +115,13 @@ ObjString* takeString(char* chars, int length) {
     return s;
 }
 
+ObjString* unownedString(const char* chars, int length) {
+    ObjString *string = ALLOCATE_OBJ(ObjString, OBJ_UNOWNED_STRING);
+    string->length = length;
+    string->chars = chars;
+    string = stringStoreStore(&vm.stringStore, string);
+    return string;
+}
 
 #if defined CYARG_ORDERED_STRING_TREE
 ObjString* copyString(const char* chars, int length) {
