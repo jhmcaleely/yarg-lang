@@ -425,9 +425,9 @@ static Token number(ObjScanner* scanner) {
     if (radix == 10 && peek(scanner) == '.' && isDigit(peekNext(scanner))) {
         // Consume the ".".
         advance(scanner);
-    }
 
-    while (isRadixDigit(peek(scanner), radix)) advance(scanner);
+        while (isRadixDigit(peek(scanner), radix)) advance(scanner);
+    }
 
     // Look for an exponent.
     if (radix == 10 &&
@@ -438,9 +438,9 @@ static Token number(ObjScanner* scanner) {
         if (peek(scanner) == '-') {
             advance(scanner);
         }
-    }
 
-    while (isRadixDigit(peek(scanner), radix)) advance(scanner);
+        while (isRadixDigit(peek(scanner), radix)) advance(scanner);
+    }
 
     return makeToken(scanner, TOKEN_NUMBER);
 }
@@ -454,10 +454,7 @@ static Token address(ObjScanner* scanner) {
 
 static Token string(ObjScanner* scanner) {
     while (peek(scanner) != '"' && !isAtEnd(scanner)) {
-        if (peek(scanner) == '\\')
-        {
-            advance(scanner);
-        }
+        if (peek(scanner) == '\\') advance(scanner);
         if (peek(scanner) == '\n') scanner->line++;
         advance(scanner);
     }
