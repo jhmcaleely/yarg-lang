@@ -1,0 +1,5 @@
+[wokwi]
+version = 1
+firmware = "../build/test-hardware.uf2"
+elf = "../cyarg/build/target-pico/cyarg.elf"
+gdbServerPort  = 3333
