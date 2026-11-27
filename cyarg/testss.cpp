@@ -8,12 +8,14 @@
 extern "C" {
 #include "stringstore.h"
 #include "yargobject.h"
+#include "value_cell.h"
 }
 
 #include <vector>
 #include <string>
 #include <random>
 #include <cassert>
+#include <array>
 
 const int subsetSize{1000};
 
@@ -59,7 +61,7 @@ int main(void)
         int r{uniform_dist(gen)};
         ObjString *toFind = objStrings[r];
         std::string s{toFind->chars};
-        ObjString *t = stringStoreGet(&testSs, s.c_str());
+        ObjString *t = stringStoreGet(&testSs, s.c_str(), (int)s.size());
         assert(s == t->chars);
     }
 

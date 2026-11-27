@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13.0) # Pico SDK requires at least 3.13
 
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # some common definitions for all builds of the cyarg source tree
@@ -33,8 +33,9 @@ include(cyarg_pico_sdk_setup.cmake)
 # The PICO SDK will also need CXX & ASM toolchains to assemble the firmware image
 project(cyarg VERSION 0.1.0 LANGUAGES C CXX ASM)
 elseif (CYARG_SDK STREQUAL "GENERIC_POSIX_C")
-project(cyarg VERSION 0.1.0 LANGUAGES C)
+project(cyarg VERSION 0.1.0 LANGUAGES C CXX)
 add_executable(big-int)
+add_executable(testss)
 endif()
 
 add_executable(cyarg)
@@ -194,7 +195,17 @@ target_sources(big-int
         )
 target_compile_definitions(big-int PRIVATE CYARG_FEATURE_TEST_INT)
 
-install(TARGETS cyarg big-int DESTINATION bin)
+target_sources(testss
+    PRIVATE
+        testss.cpp
+        stringstore.h
+        stringstore.c
+        value_cell.h
+        yargobject.h
+        )
+target_compile_definitions(testss PRIVATE CYARG_PTHREADS_SYNC)
+
+install(TARGETS cyarg big-int testss DESTINATION bin)
 elseif(CYARG_SDK STREQUAL "PICO_SDK")
 include(cyarg_pico_sdk_targets.cmake)
 endif()
