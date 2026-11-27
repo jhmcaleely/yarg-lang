@@ -34,6 +34,7 @@ include(cyarg_pico_sdk_setup.cmake)
 project(cyarg VERSION 0.1.0 LANGUAGES C CXX ASM)
 elseif (CYARG_SDK STREQUAL "GENERIC_POSIX_C")
 project(cyarg VERSION 0.1.0 LANGUAGES C)
+add_executable(big-int)
 endif()
 
 add_executable(cyarg)
@@ -185,6 +186,15 @@ endif()
 if (CYARG_SDK STREQUAL "GENERIC_POSIX_C")
 # Add the math library for the definition of pow()
 target_link_libraries(cyarg m)
+
+target_sources(big-int 
+    PRIVATE
+        big-int/big-int.h
+        big-int/big-int.c
+        )
+target_compile_definitions(big-int PRIVATE CYARG_FEATURE_TEST_INT)
+
+install(TARGETS cyarg big-int DESTINATION bin)
 elseif(CYARG_SDK STREQUAL "PICO_SDK")
 include(cyarg_pico_sdk_targets.cmake)
 endif()

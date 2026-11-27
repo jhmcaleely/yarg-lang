@@ -146,7 +146,7 @@ jobs:
           cd cyarg
           cmake --preset host-test
           cmake --build build/host-test --parallel $(nproc)
-          cp build/host-test/cyarg ../bin/cyarg
+          cmake --install build/host-test --prefix ..
       
       - name: Run cyarg Test suite
         run: ./test/cyarg-run.sh
@@ -157,6 +157,9 @@ jobs:
           cd hostyarg
           go test ./...
           cd ..
+      
+      - name: Run big-int Test suite
+        run: ./test/big-int-run.sh
 
       - name: Run yarg-expect Test suite
         run: ./bin/yarg runtests -tests "test/yarg-expect" -interpreter "bin/cyarg" -lib "yarg/specimen"

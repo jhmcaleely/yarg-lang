@@ -11,6 +11,7 @@ popd >/dev/null
 ./bin/yarg runtests -tests "test/yarg-expect" -interpreter "bin/cyarg" -lib "yarg/specimen" || TEST_ERROR=1
 
 ./test/bc-run.sh || TEST_ERROR=1
+./test/big-int-run.sh || TEST_ERROR=1
 
 ./test/test-benchmark.sh || TEST_ERROR=1
 echo "Benchmark run for execution correctness. Results are only meaningful on target"
