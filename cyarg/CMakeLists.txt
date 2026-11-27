@@ -1,106 +1,66 @@
-# PICO SDK defaults to 3.13 minimum
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.13.0) # Pico SDK requires at least 3.13
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# == DO NOT EDIT THE FOLLOWING LINES for the Raspberry Pi Pico VS Code Extension to work ==
-if(WIN32)
-    set(USERHOME $ENV{USERPROFILE})
-else()
-    set(USERHOME $ENV{HOME})
-endif()
-set(sdkVersion 2.3.1)
-set(toolchainVersion 14_2_Rel1)
-set(picotoolVersion 2.3.1)
-set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
-if (EXISTS ${picoVscode})
-    include(${picoVscode})
-endif()
-# ====================================================================================
-
 # some common definitions for all builds of the cyarg source tree
 # note that some have corresponding cmake configuration options for
 # CMakeUserPresets.json
-add_compile_definitions(CYARG_ORDERED_STRING_TREE)
-#add_compile_definitions(CYARG_CSTDLIB_HEAP)
-#add_compile_definitions(DEBUG_STRESS_GC)
-#add_compile_definitions(DEBUG_LOG_GC)
+# Here at the top of the file for convenience and ease of discovery by
+# those building the project.
+add_compile_definitions(cyarg CYARG_ORDERED_STRING_TREE)
+#add_compile_definitions(cyarg CYARG_CSTDLIB_HEAP)
+#add_compile_definitions(cyarg DEBUG_STRESS_GC)
+#add_compile_definitions(cyarg DEBUG_LOG_GC)
 
-
-# Yarg device selection: RASPBERRY_PI_PICO or GENERIC_HOST
+# Yarg device selection: RASPBERRY_PI_PICO or GENERIC_POSIX_HOST
 # determines if cyarg is built as hosted or self-hosted binary
 # for Pico, sets the PICO_BOARD variable for the Pico SDK
 if (YARG_DEVICE STREQUAL "RASPBERRY_PI_PICO")
 set(CYARG_HOSTING "SELF_HOSTED" CACHE STRING "cyarg built as self-hosting binary")
+set(CYARG_SDK "PICO_SDK" CACHE STRING "SDK to use for the build")
 set(PICO_BOARD "pico" CACHE STRING "Raspberry Pi Pico board")
-elseif (YARG_DEVICE STREQUAL "GENERIC_HOST")
+elseif (YARG_DEVICE STREQUAL "GENERIC_POSIX_HOST")
 set(CYARG_HOSTING "HOSTED" CACHE STRING "cyarg built as hosted binary")
+set(CYARG_SDK "GENERIC_POSIX_C" CACHE STRING "SDK to use for the build")
 endif()
+
+# Project definition, and language toolchain requirements
+if (CYARG_SDK STREQUAL "PICO_SDK")
+# must be pulled in before the project is defined
+include(cyarg_pico_sdk_setup.cmake)
+# The PICO SDK will also need CXX & ASM toolchains to assemble the firmware image
+project(cyarg VERSION 0.1.0 LANGUAGES C CXX ASM)
+elseif (CYARG_SDK STREQUAL "GENERIC_POSIX_C")
+project(cyarg VERSION 0.1.0 LANGUAGES C)
+endif()
+
+add_executable(cyarg)
 
 # configures defaults for hosting and self hosted builds.
 if (CYARG_HOSTING STREQUAL "SELF_HOSTED")
-add_compile_definitions(CYARG_SELF_HOSTED)
-add_compile_definitions(CYARG_FEATURE_SELF_HOSTED_REPL)
+target_compile_definitions(cyarg PRIVATE CYARG_SELF_HOSTED)
+target_compile_definitions(cyarg PRIVATE CYARG_FEATURE_SELF_HOSTED_REPL)
 set(CYARG_FEATURE_FILESYSTEM "LITTLEFS" CACHE STRING "Filesystem feature to include")
 elseif(CYARG_HOSTING STREQUAL "HOSTED")
-add_compile_definitions(CYARG_OS_HOSTED)
-add_compile_definitions(CYARG_FEATURE_HOSTED_REPL)
+target_compile_definitions(cyarg PRIVATE CYARG_OS_HOSTED)
+target_compile_definitions(cyarg PRIVATE CYARG_FEATURE_HOSTED_REPL)
+target_compile_definitions(cyarg PRIVATE CYARG_PTHREADS_SYNC)
 set(CYARG_FEATURE_FILESYSTEM "CSTDLIB" CACHE STRING "Filesystem feature to include")
 set(CYARG_FEATURE_TEST_SYSTEM "TRUE" CACHE STRING "Include the test system")
 endif()
 
-if (YARG_DEVICE STREQUAL "RASPBERRY_PI_PICO")
-add_compile_definitions(CYARG_PICO_SDK_TARGET)
-add_compile_definitions(CYARG_PICO_STDLIB)
-add_compile_definitions(CYARG_PICO_SDK_SYNC)
-add_compile_definitions(CYARG_PICO_BUSY_SYNC)
-add_compile_definitions(PICO_STACK_SIZE=0x1000)
-elseif(YARG_DEVICE STREQUAL "GENERIC_HOST")
-add_compile_definitions(CYARG_PTHREADS_SYNC)
-endif()
-
 if (CYARG_FEATURE_HEAP STREQUAL "CSTDLIB")
-add_compile_definitions(CYARG_CSTDLIB_HEAP)
+target_compile_definitions(cyarg PRIVATE CYARG_CSTDLIB_HEAP)
 endif()
 
-if(YARG_DEVICE STREQUAL "RASPBERRY_PI_PICO")
-# Pull in Raspberry Pi Pico SDK (must be before project)
-include(pico_sdk_import.cmake)
-endif()
-
-if(PICO_BOARD)
-set(PICO_USE_FASTEST_SUPPORTED_CLOCK 1)
-set(SKIP_PICO_MALLOC 1)
-endif()
-
-# The PICO SDK will also need CXX & ASM toolchains to assemble the firmware image
-project(cyarg VERSION 0.1.0 LANGUAGES C CXX ASM)
-
-if (PICO_BOARD)
-# Initialise the Raspberry Pi Pico SDK
-pico_sdk_init()
-endif()
-
-
-if (PICO_BOARD)
-# a library that wraps the C heap functions, so we can intercept 
-# them and manage memory ourselves.
-pico_add_library(vm_c_heap)
-target_sources(vm_c_heap INTERFACE vm-c-heap/vm-c-heap.c)
-pico_wrap_function(vm_c_heap malloc)
-pico_wrap_function(vm_c_heap calloc)
-pico_wrap_function(vm_c_heap realloc)
-pico_wrap_function(vm_c_heap free)
-endif()
-
-add_executable(cyarg 
+target_sources(cyarg PRIVATE
+    main.c
     common.h
     print.h
     chunk.h
     chunk.c
-    main.c
     memory.h
     memory.c
     debug.h
@@ -175,9 +135,6 @@ target_sources(cyarg
       pack.c
       hosted.c
       hosted.h)
-endif()
-
-if (CYARG_HOSTING STREQUAL "HOSTED")
 target_sources(cyarg PRIVATE bootstrap/cyarg_hosted_ylib.c)
 else()
 target_sources(cyarg PRIVATE bootstrap/cyarg_ylib.c)
@@ -213,7 +170,7 @@ target_sources(cyarg
       test-system/testIntrinsics.h
       )
 
-add_compile_definitions(CYARG_FEATURE_TEST_SYSTEM)
+target_compile_definitions(cyarg PRIVATE CYARG_FEATURE_TEST_SYSTEM)
 endif()
 
 if (CYARG_FEATURE_INTERACTIVE_TRACE STREQUAL "TRUE")
@@ -225,38 +182,9 @@ if (CYARG_FEATURE_DEBUG_LOG_GC STREQUAL "TRUE")
 add_compile_definitions(DEBUG_LOG_GC)
 endif()
 
-
-if (PICO_BOARD)
-# Setup the firmware image and details of the executable it will host
-
-pico_set_program_name(cyarg "cyarg")
-pico_set_program_version(cyarg "0.1.0")
-
-# Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(cyarg 1)
-pico_enable_stdio_usb(cyarg 1)
-
-# Add the standard library to the build
-target_link_libraries(cyarg
-        hardware_pio
-        hardware_flash
-        vm_c_heap
-        pico_stdlib
-        pico_multicore
-        pico_sync
-        )
-
-# Add the standard include files to the build
-target_include_directories(cyarg PRIVATE
-  ${CMAKE_CURRENT_LIST_DIR}
-)
-
-pico_set_linker_script(cyarg ${CMAKE_SOURCE_DIR}/memmap_custom.ld)
-
-pico_add_extra_outputs(cyarg)
-endif()
-
-if (YARG_DEVICE STREQUAL "GENERIC_HOST")
+if (CYARG_SDK STREQUAL "GENERIC_POSIX_C")
 # Add the math library for the definition of pow()
 target_link_libraries(cyarg m)
+elseif(CYARG_SDK STREQUAL "PICO_SDK")
+include(cyarg_pico_sdk_targets.cmake)
 endif()

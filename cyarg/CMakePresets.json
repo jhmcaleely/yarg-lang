@@ -8,7 +8,7 @@
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
-                "YARG_DEVICE": "GENERIC_HOST",
+                "YARG_DEVICE": "GENERIC_POSIX_HOST",
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_TOOLCHAIN_FILE": "",
                 "CYARG_FEATURE_INTERACTIVE_TRACE": "TRUE",
@@ -22,7 +22,7 @@
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
-                "YARG_DEVICE": "GENERIC_HOST",
+                "YARG_DEVICE": "GENERIC_POSIX_HOST",
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_TOOLCHAIN_FILE": ""
             }
@@ -34,7 +34,7 @@
             "generator": "Xcode",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
-                "YARG_DEVICE": "GENERIC_HOST",
+                "YARG_DEVICE": "GENERIC_POSIX_HOST",
                 "CMAKE_TOOLCHAIN_FILE": ""
             },
             "condition": {
